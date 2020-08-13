@@ -1,0 +1,10 @@
+LIBS = @LIBS@
+LDFLAGS = @LDFLAGS@
+CPPFLAGS = @CPPFLAGS@
+
+HDF5 = @hdf_tar_install@
+
+ifeq "locallibhdf5-@locallibhdf5@" "locallibhdf5-yes"
+    CPPFLAGS += -I./hdf5/include/
+    LDFLAGS += hdf5/lib/libhdf5.a -ldl
+endif
