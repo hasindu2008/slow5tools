@@ -67,6 +67,7 @@ autom4te.cache
 *.swp
 /tmp/
 /htslib
+/src/htslib
 /hdf5
 /.vscode
 src/config.h
