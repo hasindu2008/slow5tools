@@ -1,3 +1,12 @@
+# slow5tools
+A toolset for converting to and from SLOW5 files.
+
+TODO: remove below
+
+
+
+
+
 # f5c
 
 An optimised re-implementation of the call-methylation module in [Nanopolish](https://github.com/jts/nanopolish). Given a set of basecalled Nanopore reads and the raw signals, f5c detects the methylated cytosine bases. f5c can optionally utilise NVIDIA graphics cards for acceleration.
