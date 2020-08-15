@@ -3,28 +3,31 @@
 
 #include <errno.h>
 
-#define WARN "[%s::WARNING]\033[1;33m "
-#define ERR "[%s::ERROR]\033[1;31m "
-#define CEND "\033[0m\n"
+#define WARNING_PREFIX "[%s::WARNING]\033[1;33m "
+#define ERROR_PREFIX "[%s::ERROR]\033[1;31m "
+#define INFO_PREFIX "[%s::INFO]\033[1;34m "
+#define SUCCESS_PREFIX "[%s::SUCCESS]\033[1;32m "
+#define DEBUG_PREFIX "[%s::DEBUG]\033[1;35m " 
+#define NO_COLOUR "\033[0m\n"
 
 #define STDERR(arg, ...)                                                      \
     fprintf(stderr, "[%s] " arg "\n", __func__,                        \
             __VA_ARGS__)
 #define WARNING(arg, ...)                                                      \
-    fprintf(stderr, "[%s::WARNING]\033[1;33m " arg "\033[0m\n", __func__,      \
+    fprintf(stderr, WARNING_PREFIX arg NO_COLOUR, __func__,      \
             __VA_ARGS__)
 #define ERROR(arg, ...)                                                        \
-    fprintf(stderr, "[%s::ERROR]\033[1;31m " arg "\033[0m\n", __func__,        \
+    fprintf(stderr, ERROR_PREFIX arg NO_COLOUR, __func__,        \
             __VA_ARGS__)
 #define INFO(arg, ...)                                                         \
-    fprintf(stderr, "[%s::INFO]\033[1;34m " arg "\033[0m\n", __func__,         \
+    fprintf(stderr, INFO_PREFIX arg NO_COLOUR, __func__,         \
             __VA_ARGS__)
 #define SUCCESS(arg, ...)                                                      \
-    fprintf(stderr, "[%s::SUCCESS]\033[1;32m " arg "\033[0m\n", __func__,      \
+    fprintf(stderr, SUCCESS_PREFIX arg NO_COLOUR, __func__,      \
             __VA_ARGS__)
 #define DEBUG(arg, ...)                                                        \
     fprintf(stderr,                                                            \
-            "[%s::DEBUG]\033[1;35m Error occured at %s:%d. " arg "\033[0m\n",  \
+            DEBUG_PREFIX "Error occured at %s:%d. " arg NO_COLOUR,  \
             __func__, __FILE__, __LINE__ - 2, __VA_ARGS__)
 
 #define MALLOC_CHK(ret) malloc_chk((void*)ret, __func__, __FILE__, __LINE__ - 1)
