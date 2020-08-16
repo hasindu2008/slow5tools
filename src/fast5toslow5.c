@@ -6,6 +6,28 @@
     #include <execinfo.h>
 #endif
 
+#define USAGE_MSG \
+    "Convert fast5 file(s) to slow5.\n" \
+    "\n" \
+    "Usage: fast5toslow5 [OPTIONS] [FAST5_FILE/DIR_1 ...]\n" \
+    "\n" \
+    "OPTIONS:\n" \
+    "    -d [NUM], --max-depth=[NUM]\n" \
+    "        Sets the maximum depth to search directories for fast5 files.\n" \
+    "        Default: No maximum depth.\n" \
+    "        E.g. NUM=1: Reads the files within a specified directory but\n" \
+    "        not those within subdirectories.\n" \
+    "\n" \
+    "    -h|--help\n" \
+    "        Prints helpful message.\n" \
+    "\n" \
+    "    -o|--output [SLOW5_FILE]\n" \
+    "        Outputs slow5 contents to SLOW5_FILE.\n" \
+    "        Default: Stdout.\n" \
+    "\n" \
+    "    -v|--verbose\n" \
+    "        Output more information while converting.\n"
+
 // Backtrace buffer threshold of functions
 #define BT_BUF_SIZE (100)
 // Number of backtrace calls from the segmentation fault source to the handler
@@ -31,10 +53,16 @@ void segv_handler(int sig) {
     exit(EXIT_FAILURE);
 }
 
-int main(void) {
+// Output usage to file
+void print_usage(FILE *fp_help) {
+    fprintf(fp_help, USAGE_MSG);
+}
+
+int main(int argc, char **argv) {
+    // Setup segmentation fault handler
     if (signal(SIGSEGV, segv_handler) == SIG_ERR) {
         WARNING("Segmentation fault signal handler failed to be setup.%s", "");
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
