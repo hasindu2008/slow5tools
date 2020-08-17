@@ -1,4 +1,5 @@
 #!/bin/sh
+# Usage ./test.sh
 # Tests that fast5toslow5 matches the expected output.
 
 # Note: 
