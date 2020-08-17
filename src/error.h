@@ -1,3 +1,5 @@
+// Sasha Jenner
+
 #ifndef ERROR_H
 #define ERROR_H
 
@@ -36,7 +38,7 @@ static inline void malloc_chk(void* ret, const char* func, const char* file,
         fprintf(stderr, ERROR_PREFIX "Failed to allocate memory : %s." NO_COLOUR,
                 func, strerror(errno));
         fprintf(stderr, DEBUG_PREFIX "Error occured at %s:%d. Try with a small batchsize "
-                "(-K and/or -B options) to reduce the peak memory.\n" NO_COLOUR,
+                "(-K and/or -B options) to reduce the peak memory." NO_COLOUR,
                 func, file, line);
 
         exit(EXIT_FAILURE);
@@ -48,7 +50,7 @@ static inline void f_chk(void* ret, const char* func, const char* file,
     if (ret == NULL) {
         fprintf(stderr, ERROR_PREFIX "Failed to open %s : %s." NO_COLOUR,
                 func, fopen_f, strerror(errno));
-        fprintf(stderr, DEBUG_PREFIX "Error occured at %s:%d.\n" NO_COLOUR,
+        fprintf(stderr, DEBUG_PREFIX "Error occured at %s:%d." NO_COLOUR,
                 func, file, line);
 
         exit(EXIT_FAILURE);
@@ -60,7 +62,7 @@ static inline void null_chk(void* ret, const char* func, const char* file,
     if (ret == NULL) {
         fprintf(stderr, ERROR_PREFIX "Unexpected NULL value : %s." NO_COLOUR,
                 func, strerror(errno));
-        fprintf(stderr, DEBUG_PREFIX "Error occured at %s:%d.\n" NO_COLOUR,
+        fprintf(stderr, DEBUG_PREFIX "Error occured at %s:%d." NO_COLOUR,
                 func, file, line);
 
         exit(EXIT_FAILURE);
@@ -72,7 +74,7 @@ static inline void neg_chk(int ret, const char* func, const char* file,
     if (ret < 0) {
         fprintf(stderr, ERROR_PREFIX "Unexpected negative value : %s." NO_COLOUR,
                 func, strerror(errno));
-        fprintf(stderr, DEBUG_PREFIX "Error occured at %s:%d.\n" NO_COLOUR,
+        fprintf(stderr, DEBUG_PREFIX "Error occured at %s:%d." NO_COLOUR,
                 func, file, line);
 
         exit(EXIT_FAILURE);

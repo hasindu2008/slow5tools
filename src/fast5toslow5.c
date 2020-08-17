@@ -1,3 +1,5 @@
+// Sasha Jenner
+
 #include "error.h"
 #include <signal.h>
 #include <unistd.h>
@@ -5,6 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <fcntl.h>
 
 #ifdef HAVE_EXECINFO_H
     #include <execinfo.h>
@@ -78,7 +81,7 @@ int main(int argc, char **argv) {
 
     // Default options
     long max_depth = -1;
-    FILE *f_out = stdout;
+    int fd_out = STDOUT_FILENO;
     bool verbose = false;
 
     // Input arguments
@@ -140,8 +143,17 @@ int main(int argc, char **argv) {
     }
 
     // Parse output argument
-    if (arg_fname_out != NULL) {
+    if (arg_fname_out != NULL) { 
+        int new_fd = open(arg_fname_out, O_CREAT|O_WRONLY|O_TRUNC);
 
+        // An error occured
+        if (new_fd == -1) {
+            ERROR("File '%s' could not be opened - %s.", 
+                  arg_fname_out, strerror(errno));
+            return EXIT_FAILURE;
+        } else {
+            fd_out = new_fd;
+        }
     }
 
     // Check for remaining files to parse
@@ -149,6 +161,10 @@ int main(int argc, char **argv) {
         MESSAGE("expected fast5 files or directories%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         return EXIT_FAILURE;
+    }
+
+    if (fd_out != STDOUT_FILENO) {
+        close(fd_out); // TODO check errors
     }
 
     return EXIT_SUCCESS;
