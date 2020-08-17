@@ -1,7 +1,7 @@
-/* @f5c
+/* @slow5tools
 **
-** main 
-** @author: Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+** main
+** @author: Hasindu Gamaarachchi (hasindu@garvan.org.au)
 ** @@
 ******************************************************************************/
 
@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
-#include "f5cmisc.h"
+#include "slow5misc.h"
 #include "error.h"
 
 #ifdef HAVE_EXECINFO_H
@@ -39,19 +39,14 @@ void sig_handler(int sig) {
     exit(EXIT_FAILURE);
 }
 
-int meth_main(int argc, char* argv[], int8_t mode);
-int index_main(int argc, char** argv);
+
 int fastt_main(int argc, char** argv);
-int freq_main(int argc, char **argv);
+
 
 int print_usage(FILE *fp_help){
 
-    fprintf(fp_help,"Usage: f5c <command> [options]\n\n");
+    fprintf(fp_help,"Usage: slow5tools <command> [options]\n\n");
     fprintf(fp_help,"command:\n");
-    fprintf(fp_help,"         index               Build an index mapping from basecalled reads to the signals measured by the sequencer (same as nanopolish index)\n");
-    fprintf(fp_help,"         call-methylation    Classify nucleotides as methylated or not (optimised nanopolish call-methylation)\n");
-    fprintf(fp_help,"         meth-freq           Calculate methylation frequency at genomic CpG sites (optimised nanopolish calculate_methylation_frequency.py)\n");
-    fprintf(fp_help,"         eventalign          Align nanopore events to reference k-mers (optimised nanopolish eventalign)\n");
     fprintf(fp_help,"         fastt               Convert fast5 files in given directories recursively to fastt (tsv format)\n\n");
 
     if(fp_help==stderr){
@@ -64,7 +59,7 @@ int print_usage(FILE *fp_help){
         assert(0);
     }
 
-    
+
 }
 
 
@@ -80,16 +75,16 @@ int main(int argc, char* argv[]){
     }
     else if(strcmp(argv[1],"fastt")==0){
         ret=fastt_main(argc-1, argv+1);
-	}    
+	}
     else if(strcmp(argv[1],"--version")==0 || strcmp(argv[1],"-V")==0){
-        fprintf(stdout,"F5C %s\n",F5C_VERSION);
+        fprintf(stdout,"slow5tools %s\n",SLOW5_VERSION);
         exit(EXIT_SUCCESS);
     }
     else if(strcmp(argv[1],"--help")==0 || strcmp(argv[1],"-h")==0){
         print_usage(stdout);
     }
     else{
-        fprintf(stderr,"[f5c] Unrecognised command %s\n",argv[1]);
+        fprintf(stderr,"[slow5tools] Unrecognised command %s\n",argv[1]);
         print_usage(stderr);
     }
 

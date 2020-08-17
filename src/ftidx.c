@@ -1,5 +1,5 @@
 /*  ftidx.c -- FASTT (FAST5 in TSV) random access.
-	adpapted from htslib/faidx.c by Hasindu Gamaarachchi <hasindu@unsw.edu.au>
+	adpapted from htslib/faidx.c by Hasindu Gamaarachchi <hasindu@garvan.org.au>
 */
 
 /*  faidx.c -- FASTA and FASTQ random access.
@@ -57,7 +57,7 @@ DEALINGS IN THE SOFTWARE.  */
 #include <fcntl.h>
 #endif
 
-#ifdef ASYNC    
+#ifdef ASYNC
     #include <aio.h>
 #endif
 
@@ -88,7 +88,7 @@ typedef struct {
 
     int is_compressed;
     int is_gzip;
-} BGZF;    
+} BGZF;
 
     /**
      * Read one line from a BGZF file. It is faster than bgzf_getc()
@@ -99,7 +99,7 @@ typedef struct {
      * @return       length of the string; -1 on end-of-file; <= -2 on error
      */
     static inline int bgzf_getline(BGZF *fp, int delim, kstring_t *str){
-        
+
         str->m = 20*1024*1024;
         str->s = (char *)malloc(sizeof(char)*20*1024*1024);
         str->l=getline(&(str->s),&(str->m),fp->fp);
@@ -115,7 +115,7 @@ typedef struct {
         str->s = (char *)malloc(sizeof(char)*str->m);
     #ifdef UN_BUFFERED
         size_t ret=read(fp->fd,str->s,num_elements);
-    #else    
+    #else
         size_t ret=fread(str->s,1,num_elements,fp->fp);
     #endif
         str->l = ret;
@@ -124,9 +124,9 @@ typedef struct {
             exit(EXIT_FAILURE);
         }
         return ret;
-    } 
+    }
 
-#ifdef ASYNC 
+#ifdef ASYNC
 static inline size_t f5read_async(BGZF *fp, kstring_t *str, size_t num_elements,struct aiocb *aiocb, uint64_t offset, int i){
         str->m = num_elements;
         str->s = (char *)malloc(sizeof(char)*str->m);
@@ -140,12 +140,12 @@ static inline size_t f5read_async(BGZF *fp, kstring_t *str, size_t num_elements,
         if(ret<0){
             fprintf(stderr,"Reading error has occurred :%s\n",strerror(errno));
             exit(EXIT_FAILURE);
-        }        
+        }
         str->l = num_elements;
- 
+
         return str->l;
-    } 
-#endif    
+    }
+#endif
 
     /**
      *  Position in uncompressed BGZF
@@ -168,7 +168,7 @@ static inline size_t f5read_async(BGZF *fp, kstring_t *str, size_t num_elements,
     int bgzf_close(BGZF *fp){
     #ifdef UN_BUFFERED
         close(fp->fd);
-    #else   
+    #else
         fclose(fp->fp);
     #endif
     #ifdef ASYNC
@@ -191,13 +191,13 @@ static inline size_t f5read_async(BGZF *fp, kstring_t *str, size_t num_elements,
         BGZF *fp = (BGZF *)malloc(sizeof(BGZF));
         fp->is_compressed=0;
         fp->is_gzip=0;
-    #ifdef UN_BUFFERED   
+    #ifdef UN_BUFFERED
         fp->fd = open(path,O_RDONLY );
         if(fp->fd<0){
             hts_log_error("File %s cannot be opened\n", path);
             exit(1);
         }
-    #else 
+    #else
         fp->fp = fopen(path,mode);
         if(fp->fp==NULL){
             hts_log_error("File %s cannot be opened\n", path);
@@ -258,7 +258,7 @@ static inline size_t f5read_async(BGZF *fp, kstring_t *str, size_t num_elements,
             return fseek(fp->fp, uoffset, SEEK_SET);
         #endif
         //hts_log_error("%s\n", "Not implemented");
-        //exit(1);  
+        //exit(1);
     }
 
 
@@ -363,11 +363,11 @@ static inline int fti_insert_index(ftidx_t *idx, const char *name, uint64_t len,
 
 
 static ftidx_t *fti_build_core(BGZF *bgzf) {
-	
+
 #ifdef ASYNC
 	fprintf(stderr,"%s","Recompile with ASYNC option off to build an index\n");
 	exit(1);
-#endif	
+#endif
 #ifdef UN_BUFFERED
 	fprintf(stderr,"%s","Recompile with UN_BUFFERED option off to build an index\n");
 	exit(1);
@@ -376,7 +376,7 @@ static ftidx_t *fti_build_core(BGZF *bgzf) {
 	fprintf(stderr,"%s","Recompile with BGFS_HFILE option on to build an index\n");
 	exit(1);
 #endif
-	
+
     kstring_t name = { 0, 0, NULL };
     kstring_t linebuffer = { 0, 0, NULL };
     //int c, read_done, line_num;
@@ -404,7 +404,7 @@ static ftidx_t *fti_build_core(BGZF *bgzf) {
             continue;
         }
         else{
-                
+
                 char *name=strtok(linebuffer.s,"\t");
                 line_len=linebuffer.l;
                 //fprintf(stderr,"%s %ld\n",name,seq_offset);
@@ -924,7 +924,7 @@ static char *fti_retrieve(const ftidx_t *fti, const ftidx1_t *val,
 }
 
 
-#ifdef ASYNC 
+#ifdef ASYNC
 static char *fti_retrieve_async(const ftidx_t *fti, const ftidx1_t *val,
                           uint64_t offset, long beg, long end, int *len,struct aiocb *aiocb, int i) {
     char *s;
@@ -1068,7 +1068,7 @@ char *fti_fetch(const ftidx_t *fti, const char *str, int *len)
     return fti_retrieve(fti, &val, val.seq_offset, beg, end, len);
 }
 
-#ifdef ASYNC    
+#ifdef ASYNC
 char *fti_fetch_async(const ftidx_t *fti, const char *str, int *len,struct aiocb *aiocb,int i)
 {
     ftidx1_t val;
@@ -1185,4 +1185,3 @@ int ftidx_has_seq(const ftidx_t *fti, const char *seq)
     if (iter == kh_end(fti->hash)) return 0;
     return 1;
 }
-

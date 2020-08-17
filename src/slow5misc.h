@@ -1,13 +1,10 @@
-#ifndef F5CMISC_H
-#define F5CMISC_H
+#ifndef SLOW5MISC_H
+#define SLOW5MISC_H
 
 #include "error.h"
-#include "f5c.h"
+#include "slow5.h"
 #include <sys/resource.h>
 #include <sys/time.h>
-
-#define MIN_CALIBRATION_VAR 2.5
-#define MAX_EVENT_TO_BP_RATIO 20
 
 // taken from minimap2/misc
 static inline double realtime(void) {

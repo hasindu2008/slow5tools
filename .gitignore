@@ -56,8 +56,8 @@ autom4te.cache
 
 #my
 /main
-/f5c
-/f5c_static
+/slow5tools
+/slow5tools_static
 /*.fast5
 *.fig
 /*.fa
@@ -71,5 +71,4 @@ autom4te.cache
 /hdf5
 /.vscode
 src/config.h
-test/ecoli_2kb_region/reads.fasta.index.readdb
 /profile.nvprof

@@ -1,7 +1,7 @@
 /* @f5c
 **
 ** f5c interface
-** @author: Hasindu Gamaarachchi (hasindu@unsw.edu.au)
+** @author: Hasindu Gamaarachchi (hasindu@garvan.org.au)
 ** @@
 ******************************************************************************/
 
@@ -15,7 +15,7 @@
 //required for eventalign
 #include <vector>
 
-#define F5C_VERSION "0.2-beta-dirty"
+#define SLOW5_VERSION "0.0"
 
 
 

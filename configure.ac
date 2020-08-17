@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.69])
-AC_INIT([f5c], [1.0], [hasindu@unsw.edu.au])
+AC_INIT([slow5tools], [1.0], [hasindu@garvan.org.au])
 #AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([src/main.c])
 AC_CONFIG_HEADERS([src/config.h])
@@ -21,12 +21,12 @@ EOF
 AC_ARG_ENABLE([systemhts],
   [AS_HELP_STRING([--enable-systemhts=yes|no],
                   [Use system wide HTS. Default is disabled.])],
-  [enable_systemhts=$enableval], [enable_systemhts=no])   
-   
+  [enable_systemhts=$enableval], [enable_systemhts=no])
+
 AC_ARG_ENABLE([localhdf5],
   [AS_HELP_STRING([--enable-localhdf5],
                   [Use local HDF5. Default is disabled.])],
-  [enable_localhdf5=$enableval], [enable_localhdf5=no]) 
+  [enable_localhdf5=$enableval], [enable_localhdf5=no])
 
 
 # Checks for programs.
@@ -79,30 +79,30 @@ if test "$enable_localhdf5" = yes; then
 	AC_CHECK_FILES([./hdf5/include/hdf5.h], [], [libhdf=no])
 	AC_CHECK_FILE([./hdf5/lib/libhdf5.a], [], [libhdf=no])
 	if test $libhdf != yes; then
-	  MSG_ERROR([local HDF5 library development files not found! 
+	  MSG_ERROR([local HDF5 library development files not found!
 		Make sure you run ./scripts/install-hdf5.sh
-	  ]) 			
+	  ])
 	fi
 	locallibhdf5=yes
 else
 	libhdf=yes
 	AC_SEARCH_LIBS([H5Fopen], [hdf5 hdf5_serial], [], [libhdf=no])
 	if test $libhdf != yes; then
-	  MSG_ERROR([HDF5 library development files not found! 
+	  MSG_ERROR([HDF5 library development files not found!
 	  On Debian based systems such as Ubuntu you may use sudo apt-get install libhdf5-dev.
 	  On RPM based systems such as Fedora you may use sudo dnf install hdf5-devel.
-	  ])  
+	  ])
 	fi
 
 	libhdfheader=no
 	AC_CHECK_HEADERS([hdf5.h hdf5/hdf5.h hdf5/serial/hdf5.h],[libhdfheader=yes;break;],[])
 	if test $libhdfheader != yes; then
-	  MSG_ERROR([HDF5 header files not found! 
+	  MSG_ERROR([HDF5 header files not found!
 	  On Debian based systems such as Ubuntu you may use sudo apt-get install libhdf5-dev.
 	  On RPM based systems such as Fedora you may use sudo dnf install hdf5-devel.
-	  ])  
+	  ])
 	fi
-	
+
 
 
 fi

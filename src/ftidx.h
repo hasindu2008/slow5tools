@@ -1,13 +1,13 @@
 /// @file htslib/ftidx.h
 /// FASTT random access.
 /*
-   adpapted from htslib/faidx.h by Hasindu Gamaarachchi <hasindu@unsw.edu.au>
+   adpapted from htslib/faidx.h by Hasindu Gamaarachchi <hasindu@garvan.org.au>
 */
 
 /*
 
 htslib/faidx.h:
- 
+
    Copyright (C) 2008, 2009, 2013, 2014, 2016, 2017-2018 Genome Research Ltd.
 
    Author: Heng Li <lh3@sanger.ac.uk>
@@ -66,7 +66,7 @@ typedef struct __ftidx_t ftidx_t;
 /// File format to be dealing with.
 enum fti_format_options {
     FTI_NONE,
-    FTI_FASTT, 
+    FTI_FASTT,
     FTI_FASTB //unused
 };
 

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "fast5lite.h"
-#include "f5cmisc.h"
+#include "slow5misc.h"
 #include "error.h"
 #include <iostream>
 #include <fstream>
@@ -60,8 +60,8 @@ int fast5_to_fastt(std::string fast5_path_str){
     fast5_file_t fast5_file = fast5_open(fast5_path);
 
     if (fast5_file.hdf5_file >= 0) {
-        
-        if(fast5_file.is_multi_fast5) { 
+
+        if(fast5_file.is_multi_fast5) {
             fprintf(stderr,"fastt not yet implemented for multi-fast5\n");
             exit(1);
         }
@@ -79,14 +79,14 @@ int fast5_to_fastt(std::string fast5_path_str){
                 WARNING("Fast5 file [%s] does not have a read ID and will be skipped", fast5_path_str.c_str());
                 bad_fast5_file++;
                 fast5_close(fast5_file);
-                free(fast5_path);   
-                return 0;         
+                free(fast5_path);
+                return 0;
             }
             fast5_close(fast5_file);
 
             //printf("@read_id\tn_samples\tdigitisation\toffset\trange\tsample_rate\traw_signal\tnum_bases\tsequence\nfast5_path");
 
-            printf("%s\t%lld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(), 
+            printf("%s\t%lld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
                     f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
             uint32_t j = 0;
             for (j = 0; j < f5.nsample-1; j++) {
@@ -103,7 +103,7 @@ int fast5_to_fastt(std::string fast5_path_str){
         WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path_str.c_str());
         bad_fast5_file++;
         free(fast5_path);
-        return 0;     
+        return 0;
     }
     free(f5.rawptr);
     free(fast5_path);
@@ -131,11 +131,11 @@ void recurse_dir(const std::string& path)
                 recurse_dir(full_fn);
             } else if (full_fn.find(".fast5") !=  std::string::npos) {
                 //write fast5
-                fast5_to_fastt(full_fn);    
+                fast5_to_fastt(full_fn);
             }
         }
     }
-} 
+}
 
 
 int fastt_main(int argc, char** argv){
@@ -151,13 +151,13 @@ int fastt_main(int argc, char** argv){
             case 'h':
                 fp_help=stdout;
                 break;
-            case 'i': 
+            case 'i':
                 tsvfile=optarg;
                 if(tsvfile==NULL){
                     fprintf(stderr,"File name cannot be empty\n");
                     exit(EXIT_FAILURE);
                 }
-                break;   
+                break;
             case ':':
                 fprintf(stderr, "Option -%c requires an operand\n", optopt);
                 exit(EXIT_FAILURE);
@@ -187,12 +187,12 @@ int fastt_main(int argc, char** argv){
                 if(record==NULL || len <0){
                     fprintf(stderr, "Error locating %s\n",
                         argv[i]);
-                    exit(EXIT_FAILURE);  
+                    exit(EXIT_FAILURE);
                 }
                 printf("%s\n",record);
 				free(record);
             }
-            fti_destroy(ftidx);        
+            fti_destroy(ftidx);
         }
         else{
             // build ftidx
@@ -219,7 +219,7 @@ int fastt_main(int argc, char** argv){
                 "\nQuery : \n"
                 "   f5c fastt -i <reads.fastt|reads.fastt.gz> [readsID1 readID3 ...]\n"
                 "       Extracts entries specified by readID from a fastt\n"
-                );        
+                );
             if(fp_help == stdout){
                 exit(EXIT_SUCCESS);
             }
