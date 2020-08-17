@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #define STDERR_PREFIX "[%s] "
+#define MESSAGE_PREFIX "%s: "
 #define WARNING_PREFIX "[%s::WARNING]\033[1;33m "
 #define ERROR_PREFIX "[%s::ERROR]\033[1;31m "
 #define INFO_PREFIX "[%s::INFO]\033[1;34m "
@@ -16,6 +17,7 @@
 #define NO_COLOUR "\033[0m\n"
 
 #define STDERR(msg, ...) fprintf(stderr, STDERR_PREFIX msg "\n", __func__, __VA_ARGS__)
+#define MESSAGE(msg, ...) fprintf(stderr, MESSAGE_PREFIX msg "\n", argv[0], __VA_ARGS__)
 #define WARNING(msg, ...) fprintf(stderr, WARNING_PREFIX msg NO_COLOUR, __func__, __VA_ARGS__)
 #define ERROR(msg, ...) fprintf(stderr, ERROR_PREFIX msg NO_COLOUR, __func__, __VA_ARGS__)
 #define INFO(msg, ...) fprintf(stderr, INFO_PREFIX msg NO_COLOUR, __func__, __VA_ARGS__)
