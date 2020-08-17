@@ -2,8 +2,7 @@
 
 #include "error.h"
 #include <signal.h>
-#include <unistd.h>
-#include <getopt.h>
+#include <unistd.h> #include <getopt.h>
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
@@ -66,6 +65,7 @@ void segv_handler(int sig) {
 }
 
 int main(int argc, char **argv) {
+
     // Setup segmentation fault handler
     if (signal(SIGSEGV, segv_handler) == SIG_ERR) {
         WARNING("Segmentation fault signal handler failed to be setup.%s", "");
@@ -99,9 +99,7 @@ int main(int argc, char **argv) {
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 return EXIT_SUCCESS;
             case 'o':
-                arg_fname_out = optarg;
-                break;
-            case 'v':
+                arg_fname_out = optarg; break; case 'v':
                 verbose = true;
                 break;
             default: // case '?' 
@@ -144,13 +142,19 @@ int main(int argc, char **argv) {
 
     // Parse output argument
     if (arg_fname_out != NULL) { 
-        int new_fd = open(arg_fname_out, O_CREAT|O_WRONLY|O_TRUNC);
+
+        // Create new file or
+        // Truncate existing file
+        // 664 permissions
+        int new_fd = open(arg_fname_out, O_CREAT|O_WRONLY|O_TRUNC,
+                          S_IRUSR|S_IWUSR | S_IRGRP|S_IWGRP | S_IROTH);
 
         // An error occured
         if (new_fd == -1) {
             ERROR("File '%s' could not be opened - %s.", 
                   arg_fname_out, strerror(errno));
             return EXIT_FAILURE;
+            
         } else {
             fd_out = new_fd;
         }
@@ -163,8 +167,18 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
+
+    // Do the converting
+
+
+
+
     if (fd_out != STDOUT_FILENO) {
-        close(fd_out); // TODO check errors
+        // Close output file
+        if (close(fd_out) == -1) {
+            ERROR("File '%s' failed on closing - %s.",
+                  arg_fname_out, strerror(errno));
+        } 
     }
 
     return EXIT_SUCCESS;
