@@ -22,7 +22,7 @@
 // TODO put all in header file
 
 #define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
-#define VERSION_MSG "Version: 0.0\n" // TODO change
+#define VERSION_MSG "%s 0.0\n" // TODO change
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
@@ -119,7 +119,7 @@ int main(int argc, char **argv){
                 verbose = true;
                 break;
             case 'V':
-                fprintf(stdout, VERSION_MSG);
+                fprintf(stdout, VERSION_MSG, argv[0]);
                 return EXIT_SUCCESS;
             default: // case '?' 
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
