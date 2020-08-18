@@ -1,16 +1,13 @@
 // Sasha Jenner
+// TODO add --version flag?
 
 #include "error.h"
-#include <signal.h>
-#include <unistd.h> #include <getopt.h>
+#include <unistd.h> 
+#include <getopt.h>
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
-
-#ifdef HAVE_EXECINFO_H
-    #include <execinfo.h>
-#endif
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -20,69 +17,33 @@
     "\n" \
     "OPTIONS:\n" \
     "    -d, --max-depth=[NUM]\n" \
-    "        Sets the maximum depth to search directories for fast5 files.\n" \
+    "        Set the maximum depth to search directories for fast5 files.\n" \
     "        NUM must be a non-negative integer.\n" \
     "        Default: No maximum depth.\n" \
     "\n" \
-    "        E.g. NUM=1: Reads the files within a specified directory but\n" \
+    "        E.g. NUM=1: Read the files within a specified directory but\n" \
     "        not those within subdirectories.\n" \
     "\n" \
     "    -h, --help\n" \
-    "        Prints this message.\n" \
+    "        Print this message and exit.\n" \
     "\n" \
     "    -o, --output=[SLOW5_FILE]\n" \
-    "        Outputs slow5 contents to SLOW5_FILE.\n" \
+    "        Output slow5 contents to SLOW5_FILE.\n" \
     "        Default: Stdout.\n" \
-    "\n" \
-    "    -v, --verbose\n" \
-    "        Output more information while converting.\n"
-
-// Backtrace buffer threshold of functions
-#define BT_BUF_SIZE (100)
-// Number of backtrace calls from the segmentation fault source to the handler
-#define SEG_FAULT_BT_SIZE (2)
-#define SEG_FAULT_MSG "I regret to inform that a segmentation fault occurred. " \
-                      "But at least it is better than a wrong answer."
 
 
-// Segmentation fault handler
-void segv_handler(int sig) {
-
-    ERROR(SEG_FAULT_MSG "%s", "");
-
-#ifdef HAVE_EXECINFO_H
-    void *buffer[BT_BUF_SIZE];
-    int size = backtrace(buffer, BT_BUF_SIZE);
-    NEG_CHK(size);
-    fprintf(stderr, DEBUG_PREFIX "Here is the backtrace:\n",
-            __func__);
-    backtrace_symbols_fd(buffer + SEG_FAULT_BT_SIZE, size - SEG_FAULT_BT_SIZE, 
-                         STDERR_FILENO);
-    fprintf(stderr, NO_COLOUR);
-#endif
-
-    exit(EXIT_FAILURE);
-}
-
-int main(int argc, char **argv) {
-
-    // Setup segmentation fault handler
-    if (signal(SIGSEGV, segv_handler) == SIG_ERR) {
-        WARNING("Segmentation fault signal handler failed to be setup.%s", "");
-    }
+int f2s_main(int argc, char **argv) {
 
     static struct option long_options[] = {
         {"max-depth", required_argument, NULL, 'd' },
         {"help", no_argument, NULL, 'h' },
         {"output", required_argument, NULL, 'o' },
-        {"verbose", no_argument, NULL, 'v' },
         {NULL, 0, NULL, 0 }
     };
 
     // Default options
     long max_depth = -1;
     int fd_out = STDOUT_FILENO;
-    bool verbose = false;
 
     // Input arguments
     char *arg_max_depth = NULL;
@@ -90,7 +51,7 @@ int main(int argc, char **argv) {
 
     char opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "d:ho:v", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "d:ho:", long_options, NULL)) != -1) {
         switch (opt) {
             case 'd':
                 arg_max_depth = optarg;
@@ -99,9 +60,8 @@ int main(int argc, char **argv) {
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 return EXIT_SUCCESS;
             case 'o':
-                arg_fname_out = optarg; break; case 'v':
-                verbose = true;
-                break;
+                arg_fname_out = optarg; 
+                break; 
             default: // case '?' 
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 return EXIT_FAILURE;
