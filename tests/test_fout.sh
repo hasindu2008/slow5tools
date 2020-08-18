@@ -1,12 +1,12 @@
 #!/bin/sh
-# Usage ./test.sh
-# Tests that fast5toslow5 matches the expected output.
+# Usage $0
+# Tests that f2s matches the expected output.
 
 # Note: 
 #
 # - Don't move this file from "slow5/tests/". 
 #   Requires subdirectory "data/" with testing dataset(s),
-#   and "fast5toslow5" executable in parent directory.
+#   and "slow5tools" executable in parent directory.
 #
 # - Expects testing datasets with the following structure:
 #     - dataset/
@@ -32,15 +32,17 @@ if [ ! -d $DATA_DIR ]; then
     exit 1
 fi
 
-# Path to fast5toslow5
-F5_TO_S5_PATH="$REL_PATH/../fast5toslow5"
-# Ensure fast5toslow5 exists
+# Path to slow5tools 
+SLOW5TOOLS_PATH="$REL_PATH/../slow5tools"
+# Ensure slow5tools exists
 if [ ! -f $DATA_DIR ]; then
-    echo "ERROR: Missing fast5toslow5 \"$F5_TO_S5_PATH\""
+    echo "ERROR: Missing slow5tools \"$SLOW5TOOLS_PATH\""
 
     echo "Exiting"
     exit 1
 fi
+
+CMD_FAST5_TO_SLOW5="f2s"
 
 
 # Folder name in datasets containing FAST5 files
@@ -53,6 +55,6 @@ SLOW5_ACTUAL="actual.slow5"
 
 # Iterate through each testset
 for testset in "$DATA_DIR/*"; do
-    "$F5_TO_S5_PATH" "$testset/$FAST5_FOLDER" -o "$testset/$SLOW5_ACTUAL"
+    "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" -o "$testset/$SLOW5_ACTUAL"
     diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL"
 done
