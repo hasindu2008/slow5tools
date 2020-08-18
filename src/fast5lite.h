@@ -2,8 +2,8 @@
 #define FAST5LITE_H
 
 #ifndef HAVE_CONFIG_H
-#    define HAVE_CONFIG_H
-#    include "config.h"
+//#    define HAVE_CONFIG_H // TODO fix
+//#    include "config.h"
 #endif
 
 #ifdef HAVE_HDF5_SERIAL_HDF5_H
@@ -30,7 +30,7 @@
 #include <assert.h>
 
 #include "error.h"
-#include <string>
+//#include <string> // TODO what is this
 
 //#define SINGLE_FAST5_ONLY 1 //comment to enable multi fast5 support
 
