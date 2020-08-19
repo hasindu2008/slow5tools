@@ -8,6 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include "slow5.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -25,16 +26,30 @@
     "        not those within subdirectories.\n" \
     "\n" \
     "    -h, --help\n" \
-    "        Print this message and exit.\n" \
+    "        Display this message and exit.\n" \
     "\n" \
     "    -o, --output=[SLOW5_FILE]\n" \
     "        Output slow5 contents to SLOW5_FILE.\n" \
     "        Default: Stdout.\n" \
 
+int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
-int f2s_main(int argc, char **argv) {
+    // Debug: print arguments
+    if (meta != NULL && meta->debug) {
+        fprintf(stderr, DEBUG_PREFIX "argv=[", 
+                argv[0], __FILE__, __func__, __LINE__);
+        for (int i = 0; i < argc; ++ i) {
+            fprintf(stderr, "\"%s\"", argv[i]);
+            if (i == argc - 1) {
+                fprintf(stderr, "]");
+            } else {
+                fprintf(stderr, ", ");
+            }
+        }
+        fprintf(stderr, NO_COLOUR);
+    }
 
-    static struct option long_options[] = {
+    static struct option long_opts[] = {
         {"max-depth", required_argument, NULL, 'd' },
         {"help", no_argument, NULL, 'h' },
         {"output", required_argument, NULL, 'o' },
@@ -51,7 +66,7 @@ int f2s_main(int argc, char **argv) {
 
     char opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "d:ho:", long_options, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "d:ho:", long_opts, NULL)) != -1) {
         switch (opt) {
             case 'd':
                 arg_max_depth = optarg;
@@ -122,7 +137,7 @@ int f2s_main(int argc, char **argv) {
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        MESSAGE("expected fast5 files or directories%s", "");
+        MESSAGE("missing fast5 files or directories%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         return EXIT_FAILURE;
     }
