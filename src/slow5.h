@@ -8,16 +8,22 @@
 #ifndef F5C_H
 #define F5C_H
 
-
-#include "fast5lite.h"
-#include "ftidx.h"
+//#include "fast5lite.h"
+//#include "ftidx.h"
 
 //required for eventalign
-#include <vector>
+//#include <vector>
 
 #define SLOW5_VERSION "0.0"
 
+struct program_meta {
+    bool debug;
+    bool verbose;
+};
 
-
+struct command {
+    char *name;
+    int (*main)(int, char **, struct program_meta *);
+};
 
 #endif
