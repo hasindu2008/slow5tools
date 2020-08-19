@@ -36,7 +36,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
-        fprintf(stderr, DEBUG_PREFIX "argv=[", 
+        fprintf(stderr, DEBUG_PREFIX "argv=[",
                 argv[0], __FILE__, __func__, __LINE__);
         for (int i = 0; i < argc; ++ i) {
             fprintf(stderr, "\"%s\"", argv[i]);
