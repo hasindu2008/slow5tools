@@ -64,17 +64,19 @@ SLOW5_EXPECTED="expected.slow5"
 # File name of actual SLOW5 output
 SLOW5_ACTUAL="actual.slow5"
 
+declare -i ret=0
+
 # Iterate through each testset
 for testset in $DATA_DIR/*; do
     "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" > "$testset/$SLOW5_ACTUAL" 2>/dev/null
-    if ! diff <(sort "$testset/$SLOW5_EXPECTED") <(sort "$testset/$SLOW5_ACTUAL"); then
-        echo $testset "failed"
-
-        # Change back to original directory
-        cd - >/dev/null
-        echo "Exiting"
-        exit 1
+    if diff <(sort "$testset/$SLOW5_EXPECTED") <(sort "$testset/$SLOW5_ACTUAL") 2>/dev/null ; then
+        echo SUCCESS: $testset
+    else
+        echo FAILED: $testset
+        ret=1
     fi
 done
 
-echo "Test successful"
+# Change back to original directory
+cd - >/dev/null
+exit $ret
