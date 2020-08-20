@@ -36,6 +36,10 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
+        if (meta->verbose) {
+            VERBOSE("printing the arguments given%s","");
+        }
+
         fprintf(stderr, DEBUG_PREFIX "argv=[",
                 __FILE__, __func__, __LINE__);
         for (int i = 0; i < argc; ++ i) {
@@ -67,24 +71,40 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     char opt;
     // Parse options
     while ((opt = getopt_long(argc, argv, "d:ho:", long_opts, NULL)) != -1) {
+
+        if (meta->debug) {
+            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+                  opt, optarg, optind, opterr, optopt);
+        }
+
         switch (opt) {
             case 'd':
                 arg_max_depth = optarg;
                 break;
             case 'h':
+                if (meta->verbose) {
+                    VERBOSE("displaying large help message%s","");
+                }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
+
+                EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
             case 'o':
                 arg_fname_out = optarg; 
                 break; 
             default: // case '?' 
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
     }
 
     // Parse maximum depth argument
     if (arg_max_depth != NULL) {
+
+        if (meta != NULL && meta->verbose) {
+            VERBOSE("parsing maximum depth%s","");
+        }
 
         // Check it is a number
         
@@ -93,6 +113,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         if (arg_len == 0) {
             MESSAGE(stderr, "invalid max depth -- '%s'", arg_max_depth);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         }
 
@@ -102,6 +124,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                     !(i == 0 && arg_max_depth[i] == '+')) {
                 MESSAGE(stderr, "invalid max depth -- '%s'", arg_max_depth);
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
             }
         }
@@ -118,6 +142,10 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     // Parse output argument
     if (arg_fname_out != NULL) { 
 
+        if (meta != NULL && meta->verbose) {
+            VERBOSE("parsing output filename%s","");
+        }
+
         // Create new file or
         // Truncate existing file
         // 664 permissions
@@ -128,6 +156,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         if (new_fd == -1) {
             ERROR("File '%s' could not be opened - %s.", 
                   arg_fname_out, strerror(errno));
+
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
             
         } else {
@@ -139,6 +169,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     if (optind >= argc) {
         MESSAGE(stderr, "missing fast5 files or directories%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
 
@@ -156,5 +188,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         } 
     }
 
+    EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
 }
