@@ -22,7 +22,7 @@
 
 #define STDERR(msg, ...) fprintf(stderr, STDERR_PREFIX msg "\n", __func__, __VA_ARGS__)
 #define MESSAGE(file, msg, ...) fprintf(file, MESSAGE_PREFIX msg "\n", argv[0], __VA_ARGS__)
-#define VERBOSE(msg, ...) fprintf(stdout, VERBOSE_PREFIX msg NO_COLOUR, argv[0], __VA_ARGS__)
+#define VERBOSE(msg, ...) fprintf(stderr, VERBOSE_PREFIX msg NO_COLOUR, argv[0], __VA_ARGS__)
 #define DEBUG(msg, ...) fprintf(stderr, DEBUG_PREFIX msg NO_COLOUR, __FILE__, __func__, \
                                 __LINE__, __VA_ARGS__);
 #define WARNING(msg, ...) fprintf(stderr, WARNING_PREFIX msg NO_COLOUR, __func__, __VA_ARGS__)
