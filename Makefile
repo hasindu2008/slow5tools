@@ -13,7 +13,6 @@ OBJ = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/f2s.o \
 	  $(BUILD_DIR)/ftidx.o \
 	  $(BUILD_DIR)/kstring.o \
-      $(BUILD_DIR)/nanopolish_fast5_io.o \
 	  src/htslib/libhts.a
 
 
@@ -35,9 +34,6 @@ $(BUILD_DIR)/fastt_main.o: src/fastt_main.c src/slow5.h src/fast5lite.h src/slow
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/ftidx.o: src/ftidx.c src/ftidx.h
-	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
-
-$(BUILD_DIR)/nanopolish_fast5_io.o: src/nanopolish_fast5_io.c src/fast5lite.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/kstring.o: src/kstring.c src/kstring.h

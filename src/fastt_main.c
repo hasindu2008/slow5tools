@@ -55,17 +55,47 @@ int fast5_to_fastt(std::string fast5_path_str){
         (char*)malloc(fast5_path_str.size() + 10); // is +10 needed? do errorcheck
     strcpy(fast5_path, fast5_path_str.c_str());
 
-    fast5_t f5;
+
 
     fast5_file_t fast5_file = fast5_open(fast5_path);
 
     if (fast5_file.hdf5_file >= 0) {
 
+        //TODO: can optimise for performance
         if(fast5_file.is_multi_fast5) {
-            fprintf(stderr,"fastt not yet implemented for multi-fast5\n");
-            exit(1);
+            std::vector<std::string> read_groups = fast5_get_multi_read_groups(fast5_file);
+            std::string prefix = "read_";
+            for(size_t group_idx = 0; group_idx < read_groups.size(); ++group_idx) {
+                std::string group_name = read_groups[group_idx];
+                if(group_name.find(prefix) == 0) {
+                    std::string read_id = group_name.substr(prefix.size());
+                        fast5_t f5;
+                        int32_t ret=fast5_read_multi_fast5(fast5_file, &f5, read_id);
+                        if(ret<0){
+                            WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path_str.c_str());
+                            bad_fast5_file++;
+                            fast5_close(fast5_file);
+                            free(fast5_path);
+                            return 0;
+                        }
+
+                        printf("%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+                                f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
+                        uint32_t j = 0;
+                        for (j = 0; j < f5.nsample-1; j++) {
+                            printf("%d,", (int)f5.rawptr[j]);
+                        }
+                        if(j<f5.nsample){
+                            printf("%d", (int)f5.rawptr[j]);
+                            j++;
+                        }
+                        printf("\t%d\t%s\t%s\n",0,".",fast5_path);
+                        free(f5.rawptr);
+                }
+            }
         }
         else{
+            fast5_t f5;
             int32_t ret=fast5_read_single_fast5(fast5_file, &f5);
             if(ret<0){
                 WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path_str.c_str());
@@ -82,11 +112,12 @@ int fast5_to_fastt(std::string fast5_path_str){
                 free(fast5_path);
                 return 0;
             }
+
             fast5_close(fast5_file);
 
             //printf("@read_id\tn_samples\tdigitisation\toffset\trange\tsample_rate\traw_signal\tnum_bases\tsequence\nfast5_path");
 
-            printf("%s\t%lld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+            printf("%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
                     f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
             uint32_t j = 0;
             for (j = 0; j < f5.nsample-1; j++) {
@@ -97,6 +128,8 @@ int fast5_to_fastt(std::string fast5_path_str){
                 j++;
             }
             printf("\t%d\t%s\t%s\n",0,".",fast5_path);
+
+            free(f5.rawptr);
         }
     }
     else{
@@ -105,7 +138,7 @@ int fast5_to_fastt(std::string fast5_path_str){
         free(fast5_path);
         return 0;
     }
-    free(f5.rawptr);
+
     free(fast5_path);
     return 1;
 
@@ -234,7 +267,7 @@ int fastt_main(int argc, char** argv, struct program_meta *meta){
             recurse_dir(path);
         }
 
-        fprintf(stderr, "\n[%s] total reads: %ld, bad fast5: %ld",
+        fprintf(stderr, "\n[%s] total reads: %ld, bad fast5: %ld\n",
                 __func__,total_reads,bad_fast5_file);
         //fprintf(stderr,"\n[%s] total bases: %.1f Mbases",__func__,core->sum_bases/(float)(1000*1000));
     }
