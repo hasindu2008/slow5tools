@@ -22,21 +22,32 @@
 # Relative path to "slow5/tests/"
 REL_PATH="$(dirname $0)/" 
 
+# Change directory to tests folder
+# since filenames are output relative this directory
+# and will influence test results
+cd $REL_PATH
+
 # Folder containing testing datasets
-DATA_DIR="$REL_PATH/data/"
+DATA_DIR="data"
 # Ensure data directory exists
 if [ ! -d $DATA_DIR ]; then
-    echo "ERROR: Missing data directory \"$DATA_DIR\""
+    echo "ERROR: Missing data directory \""$REL_PATH"/"$DATA_DIR"\""
+
+    # Change back to original directory
+    cd - >/dev/null
 
     echo "Exiting"
     exit 1
 fi
 
 # Path to slow5tools 
-SLOW5TOOLS_PATH="$REL_PATH/../slow5tools"
+SLOW5TOOLS_PATH="../slow5tools"
 # Ensure slow5tools exists
 if [ ! -f $SLOW5TOOLS_PATH ]; then
-    echo "ERROR: Missing slow5tools \"$SLOW5TOOLS_PATH\""
+    echo "ERROR: Missing slow5tools \""$REL_PATH"/"$SLOW5TOOLS_PATH"\""
+
+    # Change back to original directory
+    cd - >/dev/null
 
     echo "Exiting"
     exit 1
@@ -55,6 +66,15 @@ SLOW5_ACTUAL="actual.slow5"
 
 # Iterate through each testset
 for testset in $DATA_DIR/*; do
-    "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" > "$testset/$SLOW5_ACTUAL"
-    diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL"
+    "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" > "$testset/$SLOW5_ACTUAL" 2>/dev/null
+    if ! diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL"; then
+        echo $testset "failed"
+
+        # Change back to original directory
+        cd - >/dev/null
+        echo "Exiting"
+        exit 1
+    fi
 done
+
+echo "Test successful"
