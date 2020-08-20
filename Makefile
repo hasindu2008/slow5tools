@@ -10,6 +10,7 @@ BUILD_DIR = build
 BINARY = slow5tools
 OBJ = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/fastt_main.o \
+      $(BUILD_DIR)/f2s.o \
 	  $(BUILD_DIR)/ftidx.o \
 	  $(BUILD_DIR)/kstring.o \
       $(BUILD_DIR)/nanopolish_fast5_io.o \
@@ -25,6 +26,9 @@ $(BINARY): src/config.h $(HDF5_LIB) $(OBJ)
 	$(CXX) $(CFLAGS) $(OBJ) $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/main.o: src/main.c src/slow5misc.h src/error.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/f2s.o: src/f2s.c src/slow5.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/fastt_main.o: src/fastt_main.c src/slow5.h src/fast5lite.h src/slow5misc.h src/error.h
@@ -79,7 +83,6 @@ dist: distclean
 binary:
 	mkdir -p slow5tools-$(VERSION)
 	make clean
-	make cuda=1 && mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux_cuda && make clean
 	make && mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux
 	cp -r README.md LICENSE docs slow5tools-$(VERSION)/
 	mkdir -p slow5tools-$(VERSION)/scripts

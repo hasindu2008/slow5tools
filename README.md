@@ -36,7 +36,7 @@ sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development
 VERSION=v0.2-beta
 wget "https://github.com/hasindu2008/f5c/releases/download/$VERSION/f5c-$VERSION-release.tar.gz" && tar xvf f5c-$VERSION-release.tar.gz && cd f5c-$VERSION/
 scripts/install-hts.sh  # download and compile the htslib
-./configure             
+./configure
 make                    # make cuda=1 to enable CUDA support
 ```
 The commands to install hdf5 (and zlib) __development libraries__ on some popular distributions :
@@ -55,7 +55,7 @@ Instruction to build a docker image is detailed [here](https://hasindu2008.githu
 
 ### NVIDIA CUDA support
 
-To build for the GPU, you need to have the CUDA toolkit installed. Make nvcc (NVIDIA C Compiler) is in your PATH.  
+To build for the GPU, you need to have the CUDA toolkit installed. Make nvcc (NVIDIA C Compiler) is in your PATH.
 
 The building instructions are the same as above except that you should call make as :
 ```

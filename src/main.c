@@ -71,7 +71,7 @@ void segv_handler(int sig) {
     NEG_CHK(size);
     fprintf(stderr, DEBUG_PREFIX "Here is the backtrace:\n",
             __FILE__, __func__, __LINE__);
-    backtrace_symbols_fd(buffer + SEG_FAULT_BT_SIZE, size - SEG_FAULT_BT_SIZE, 
+    backtrace_symbols_fd(buffer + SEG_FAULT_BT_SIZE, size - SEG_FAULT_BT_SIZE,
                          STDERR_FILENO);
     fprintf(stderr, NO_COLOUR);
 #endif
@@ -169,7 +169,7 @@ int main(int argc, char **argv){
                 EXIT_MSG(EXIT_SUCCESS, argv, &meta);
                 return EXIT_SUCCESS;
 
-            default: // case '?' 
+            default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, &meta);
                 return EXIT_FAILURE;
@@ -191,16 +191,16 @@ int main(int argc, char **argv){
         for (size_t i = 0; i < num_cmds; ++ i) {
             if (strcmp(argv[optind_copy], cmds[i].name) == 0) {
                 cmd_found = true;
-                
+
                 // Combining argv[0] and the command name
                 // TODO this can be made quicker by putting argv[0] before command name and using both in command program
                 // but then it's less neat and modular
-                
+
                 size_t argv_0_len = strlen(argv[0]);
                 size_t cmd_len = strlen(argv[optind_copy]);
                 size_t combined_len = argv_0_len + 1 + cmd_len + 1; // +2 for ' ' and '\0'
 
-                combined_name = malloc(combined_len * sizeof *combined_name);
+                combined_name = (char *) malloc(combined_len * sizeof *combined_name);
                 MALLOC_CHK(combined_name);
                 memcpy(combined_name, argv[0], argv_0_len);
                 combined_name[argv_0_len] = ' ';

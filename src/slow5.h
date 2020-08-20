@@ -24,7 +24,7 @@ struct program_meta {
 };
 
 struct command {
-    char *name;
+    const char *name;
     int (*main)(int, char **, struct program_meta *);
 };
 
@@ -34,8 +34,8 @@ static inline void exit_msg(int exit_code, char **argv, struct program_meta *met
                             const char *file, const char *func, int line) {
     if (meta != NULL) {
         if (meta->verbose) {
-            VERBOSE("exiting with %s", 
-                    exit_code == EXIT_SUCCESS ? "SUCCESS" : 
+            VERBOSE("exiting with %s",
+                    exit_code == EXIT_SUCCESS ? "SUCCESS" :
                     exit_code == EXIT_FAILURE ? "FAILURE" :
                     "UNKNOWN OUTCOME");
         }
