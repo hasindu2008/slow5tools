@@ -11,7 +11,8 @@
 
 #define STDERR_PREFIX "[%s] "
 #define MESSAGE_PREFIX "%s: "
-#define DEBUG_PREFIX "%s [%s:%s:%d]: \033[1;35m"
+#define VERBOSE_PREFIX "[INFO] %s: \033[1;34m" 
+#define DEBUG_PREFIX "[DEBUG] %s:%s:%d: \033[1;35m"
 #define WARNING_PREFIX "[%s::WARNING]\033[1;33m "
 #define ERROR_PREFIX "[%s::ERROR]\033[1;31m "
 #define INFO_PREFIX "[%s::INFO]\033[1;34m "
@@ -20,15 +21,16 @@
 #define NO_COLOUR "\033[0m\n"
 
 #define STDERR(msg, ...) fprintf(stderr, STDERR_PREFIX msg "\n", __func__, __VA_ARGS__)
-#define MESSAGE(msg, ...) fprintf(stderr, MESSAGE_PREFIX msg "\n", argv[0], __VA_ARGS__)
-#define DEBUG(msg, ...) fprintf(stderr, DEBUG_PREFIX msg NO_COLOUR, argv[0], __FILE__, __func__, \
+#define MESSAGE(file, msg, ...) fprintf(file, MESSAGE_PREFIX msg "\n", argv[0], __VA_ARGS__)
+#define VERBOSE(msg, ...) fprintf(stdout, VERBOSE_PREFIX msg NO_COLOUR, argv[0], __VA_ARGS__)
+#define DEBUG(msg, ...) fprintf(stderr, DEBUG_PREFIX msg NO_COLOUR, __FILE__, __func__, \
                                 __LINE__, __VA_ARGS__);
 #define WARNING(msg, ...) fprintf(stderr, WARNING_PREFIX msg NO_COLOUR, __func__, __VA_ARGS__)
 #define ERROR(msg, ...) fprintf(stderr, ERROR_PREFIX msg NO_COLOUR, __func__, __VA_ARGS__)
 #define INFO(msg, ...) fprintf(stderr, INFO_PREFIX msg NO_COLOUR, __func__, __VA_ARGS__)
 #define SUCCESS(msg, ...) fprintf(stderr, SUCCESS_PREFIX msg NO_COLOUR, __func__, __VA_ARGS__)
 #define DEBUG2(msg, ...) fprintf(stderr, DEBUG2_PREFIX "Error occured at %s:%d. " msg NO_COLOUR, \
-                                __func__, __FILE__, __LINE__ - 1, __VA_ARGS__) // TODO why -2
+                                 __func__, __FILE__, __LINE__ - 1, __VA_ARGS__) // TODO why -2
 
 #define MALLOC_CHK(ret) malloc_chk((void*) ret, __func__, __FILE__, __LINE__ - 1)
 #define F_CHK(ret, filename) f_chk((void*) ret, __func__, __FILE__, __LINE__ - 1, filename)
