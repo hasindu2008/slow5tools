@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Usage $0
 # Tests that f2s matches the expected output.
 
@@ -67,7 +67,7 @@ SLOW5_ACTUAL="actual.slow5"
 # Iterate through each testset
 for testset in $DATA_DIR/*; do
     "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" > "$testset/$SLOW5_ACTUAL" 2>/dev/null
-    if ! diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL"; then
+    if ! diff <(sort "$testset/$SLOW5_EXPECTED") <(sort "$testset/$SLOW5_ACTUAL"); then
         echo $testset "failed"
 
         # Change back to original directory
