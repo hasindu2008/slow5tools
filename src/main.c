@@ -24,7 +24,7 @@
 // TODO add verbose information
 
 #define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
-#define VERSION_MSG "%s 0.0\n" // TODO change
+#define VERSION_MSG "%s " SLOW5_VERSION "\n" // TODO change
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
@@ -69,16 +69,23 @@ void segv_handler(int sig) {
     int size = backtrace(buffer, BT_BUF_SIZE);
     NEG_CHK(size);
     fprintf(stderr, DEBUG_PREFIX "Here is the backtrace:\n",
-            __func__);
+            __FILE__, __func__, __LINE__);
     backtrace_symbols_fd(buffer + SEG_FAULT_BT_SIZE, size - SEG_FAULT_BT_SIZE, 
                          STDERR_FILENO);
     fprintf(stderr, NO_COLOUR);
 #endif
 
+    // TODO add exit msg here?
     exit(EXIT_FAILURE);
 }
 
 int main(int argc, char **argv){
+
+    // Default options
+    struct program_meta meta = {
+        .debug = false,
+        .verbose = false
+    };
 
     //double realtime0 = realtime(); // TODO uncomment
 
@@ -90,6 +97,7 @@ int main(int argc, char **argv){
     // No arguments given
     if (argc <= 1) {
         fprintf(stderr, USAGE_MSG HELP_SMALL_MSG, argv[0], argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, &meta);
         return EXIT_FAILURE;
     }
 
@@ -97,12 +105,6 @@ int main(int argc, char **argv){
         {"f2s", f2s_main}
     };
     static size_t num_cmds = sizeof (cmds) / sizeof (struct command);
-
-    // Default options
-    struct program_meta meta = {
-        .debug = false,
-        .verbose = false
-    };
 
     static struct option long_opts[] = {
         {"debug", no_argument, NULL, 'd' },
@@ -115,13 +117,22 @@ int main(int argc, char **argv){
     char opt;
     // Parse options up to first non-option argument (command)
     while ((opt = getopt_long(argc, argv, "+dhvV", long_opts, NULL)) != -1) {
-        switch (opt) {
 
+        if (meta.debug) {
+            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+                  opt, optarg, optind, opterr, optopt);
+        }
+
+        switch (opt) {
             case 'd':
                 // Print arguments
                 if (!meta.debug) {
+                    if (meta.verbose) {
+                        VERBOSE("printing the arguments given%s","");
+                    }
+
                     fprintf(stderr, DEBUG_PREFIX "argv=[",
-                            argv[0], __FILE__, __func__, __LINE__);
+                            __FILE__, __func__, __LINE__);
                     for (int i = 0; i < argc; ++ i) {
                         fprintf(stderr, "\"%s\"", argv[i]);
                         if (i == argc - 1) {
@@ -137,21 +148,33 @@ int main(int argc, char **argv){
 
                 break;
             case 'h':
+                if (meta.verbose) {
+                    VERBOSE("displaying large help message%s","");
+                }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0], argv[0]);
+
+                EXIT_MSG(EXIT_SUCCESS, argv, &meta);
                 return EXIT_SUCCESS;
             case 'v':
                 meta.verbose = true;
                 break;
             case 'V':
+                if (meta.verbose) {
+                    VERBOSE("displaying version information%s","");
+                }
                 fprintf(stdout, VERSION_MSG, argv[0]);
+
+                EXIT_MSG(EXIT_SUCCESS, argv, &meta);
                 return EXIT_SUCCESS;
 
             default: // case '?' 
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+                EXIT_MSG(EXIT_FAILURE, argv, &meta);
                 return EXIT_FAILURE;
         }
     }
-    int optind_copy = optind;
+    // Reset optind for future use
+    const int optind_copy = optind;
     optind = 0;
 
 
@@ -184,26 +207,32 @@ int main(int argc, char **argv){
                 argv[optind_copy] = combined_name;
 
                 // Calling command program
+                if (meta.verbose) {
+                    VERBOSE("using command %s", cmds[i].name);
+                }
                 cmd_ret = cmds[i].main(argc - optind_copy, argv + optind_copy, &meta);
             }
         }
 
         // No command found
         if (!cmd_found) {
-            MESSAGE("invalid command -- '%s'", argv[optind_copy]);
+            MESSAGE(stderr, "invalid command -- '%s'", argv[optind_copy]);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+            EXIT_MSG(EXIT_FAILURE, argv, &meta);
             return EXIT_FAILURE;
 
         } else {
             free(combined_name);
             combined_name = NULL;
+            EXIT_MSG(cmd_ret, argv, &meta);
             return cmd_ret;
         }
 
     // No remaining non-option arguments
     } else {
-        MESSAGE("missing command%s", "");
+        MESSAGE(stderr, "missing command%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, &meta);
         return EXIT_FAILURE;
     }
 
