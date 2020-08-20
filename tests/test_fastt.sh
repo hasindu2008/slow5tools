@@ -69,7 +69,8 @@ declare -i ret=0
 # Iterate through each testset
 for testset in $DATA_DIR/*; do
     "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" > "$testset/$SLOW5_ACTUAL"
-    if diff <(sort "$testset/$SLOW5_EXPECTED") <(sort "$testset/$SLOW5_ACTUAL") 2>&1 >/dev/null ; then
+    # TODO change cut to finding it by column name 
+    if diff <(sort "$testset/$SLOW5_EXPECTED" | cut -f1-9) <(sort "$testset/$SLOW5_ACTUAL" | cut -f1-9) 2>&1 >/dev/null ; then
         echo SUCCESS: $testset
     else
         echo FAILED: $testset
