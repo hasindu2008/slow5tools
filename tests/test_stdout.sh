@@ -111,7 +111,10 @@ good_exp=(
 "$VERSION"
 "$F2S_HELP_LARGE"
 "$F2S_HELP_LARGE"
-"$F2S_HELP_LARGE"
+"[INFO] $SLOW5TOOLS_PATH: \033[1;34musing command $CMD_F2S\033[0m
+[INFO] $F2S_PATH: \033[1;34mdisplaying large help information\033[0m
+$F2S_HELP_LARGE
+[INFO] $SLOW5TOOLS_PATH: \033[1;34mexiting with SUCCESS\033[0m"
 "$SLOW5TOOLS_PATH [main.c:main:124]: \033[1;35margv=[\""$SLOW5TOOLS_PATH"\", \"-dV\"]\033[0m
 $VERSION"
 "$SLOW5TOOLS_PATH [main.c:main:124]: \033[1;35margv=[\"$SLOW5TOOLS_PATH\", \"-d\", \"f2s\", \"-h\"]\033[0m
