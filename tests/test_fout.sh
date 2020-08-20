@@ -42,7 +42,7 @@ if [ ! -f $SLOW5TOOLS_PATH ]; then
     exit 1
 fi
 
-CMD_FAST5_TO_SLOW5="f2s"
+CMD_FAST5_TO_SLOW5="fastt"
 
 
 # Folder name in datasets containing FAST5 files
@@ -54,7 +54,7 @@ SLOW5_EXPECTED="expected.slow5"
 SLOW5_ACTUAL="actual.slow5"
 
 # Iterate through each testset
-for testset in "$DATA_DIR/*"; do
-    "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" -o "$testset/$SLOW5_ACTUAL"
+for testset in $DATA_DIR/*; do
+    "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" > "$testset/$SLOW5_ACTUAL"
     diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL"
 done
