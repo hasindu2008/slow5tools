@@ -5,6 +5,8 @@
 #include "slow5.h"
 #include <sys/resource.h>
 #include <sys/time.h>
+#include <stdint.h>
+#include <math.h>
 
 // taken from minimap2/misc
 static inline double realtime(void) {
