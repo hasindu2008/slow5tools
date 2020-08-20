@@ -13,7 +13,7 @@ REL_PATH="$(dirname $0)/"
 # Path to slow5tools 
 SLOW5TOOLS_PATH="$REL_PATH/../slow5tools"
 # Ensure slow5tools exists
-if [ ! -f $DATA_DIR ]; then
+if [ ! -f $SLOW5TOOLS_PATH ]; then
     echo "ERROR: Missing slow5tools \"$SLOW5TOOLS_PATH\""
 
     echo "Exiting"
@@ -86,6 +86,8 @@ good_cmds=(
 ""$SLOW5TOOLS_PATH" -v f2s --help"
 ""$SLOW5TOOLS_PATH" -d 2>&1 1>&2"
 ""$SLOW5TOOLS_PATH" -d f2s -h 2>&1"
+""$SLOW5TOOLS_PATH" -dh 2>&1"
+""$SLOW5TOOLS_PATH" -d --help 2>&1"
 )
 
 good_act=( 
@@ -98,6 +100,8 @@ good_act=(
 "$("$SLOW5TOOLS_PATH" -v f2s --help)"
 "$("$SLOW5TOOLS_PATH" -dV 2>&1)"
 "$("$SLOW5TOOLS_PATH" -d f2s -h 2>&1)"
+"$("$SLOW5TOOLS_PATH" -dh 2>&1)"
+"$("$SLOW5TOOLS_PATH" -d --help 2>&1)"
 )
 
 good_exp=(
@@ -113,6 +117,10 @@ $VERSION"
 "$SLOW5TOOLS_PATH [main.c:main:124]: \033[1;35margv=[\"$SLOW5TOOLS_PATH\", \"-d\", \"f2s\", \"-h\"]\033[0m
 $F2S_PATH [f2s.c:f2s_main:40]: \033[1;35margv=[\"$F2S_PATH\", \"-h\"]\033[0m
 $F2S_HELP_LARGE"
+"$SLOW5TOOLS_PATH [main.c:main:124]: \033[1;35margv=[\""$SLOW5TOOLS_PATH"\", \"-dh\"]\033[0m
+$HELP_LARGE"
+"$SLOW5TOOLS_PATH [main.c:main:124]: \033[1;35margv=[\""$SLOW5TOOLS_PATH"\", \"-d\", \"--help\"]\033[0m
+$HELP_LARGE"
 )
 
 # Bad input 
@@ -122,6 +130,14 @@ declare -a bad_act
 declare -a bad_exp
 
 bad_cmds=(
+""$SLOW5TOOLS_PATH" -hd"
+""$SLOW5TOOLS_PATH" --help -me"
+""$SLOW5TOOLS_PATH" -hdabc lol"
+""$SLOW5TOOLS_PATH" --help me alot"
+""$SLOW5TOOLS_PATH" -Vd"
+""$SLOW5TOOLS_PATH" --version -me"
+""$SLOW5TOOLS_PATH" -Vdabc lol"
+""$SLOW5TOOLS_PATH" --version me alot"
 ""$SLOW5TOOLS_PATH" -v 2>&1 1>/dev/null" # Just stderr
 ""$SLOW5TOOLS_PATH" --verbose 2>&1 1>/dev/null"
 ""$SLOW5TOOLS_PATH" -v 2>/dev/null"
@@ -129,19 +145,41 @@ bad_cmds=(
 ""$SLOW5TOOLS_PATH" f2s 2>&1 1>/dev/null"
 ""$SLOW5TOOLS_PATH" f2s 2>/dev/null"
 ""$SLOW5TOOLS_PATH" -z 2>&1"
+""$SLOW5TOOLS_PATH" -dh ahh lol 2>&1"
+""$SLOW5TOOLS_PATH" -d --help --bye --mate 2>&1"
+""$SLOW5TOOLS_PATH" -dh f2s 2>&1"
 )
 
 bad_act=( 
-"$("$SLOW5TOOLS_PATH" -v 2>&1 1>&2)"
-"$("$SLOW5TOOLS_PATH" --verbose 2>&1 1>&2)"
+"$("$SLOW5TOOLS_PATH" -hd)"
+"$("$SLOW5TOOLS_PATH" --help -me)"
+"$("$SLOW5TOOLS_PATH" -hdabc lol)"
+"$("$SLOW5TOOLS_PATH" --help me alot)"
+"$("$SLOW5TOOLS_PATH" -Vd)"
+"$("$SLOW5TOOLS_PATH" --version -me)"
+"$("$SLOW5TOOLS_PATH" -Vdabc lol)"
+"$("$SLOW5TOOLS_PATH" --version me alot)"
+"$("$SLOW5TOOLS_PATH" -v 2>&1)"
+"$("$SLOW5TOOLS_PATH" --verbose 2>&1)"
 "$("$SLOW5TOOLS_PATH" -v 2>/dev/null)"
 "$("$SLOW5TOOLS_PATH" --verbose 2>/dev/null)"
 "$("$SLOW5TOOLS_PATH" f2s 2>&1 1>&2)"
 "$("$SLOW5TOOLS_PATH" f2s 2>/dev/null)"
 "$("$SLOW5TOOLS_PATH" -z 2>&1)"
+"$("$SLOW5TOOLS_PATH" -dh ahh lol 2>&1)"
+"$("$SLOW5TOOLS_PATH" -d --help --bye --mate 2>&1)"
+"$("$SLOW5TOOLS_PATH" -dh f2s 2>&1)"
 )
 
 bad_exp=(
+"$HELP_LARGE"
+"$HELP_LARGE"
+"$HELP_LARGE"
+"$HELP_LARGE"
+"$VERSION"
+"$VERSION"
+"$VERSION"
+"$VERSION"
 "$SLOW5TOOLS_PATH: missing command
 $HELP_SMALL"
 "$SLOW5TOOLS_PATH: missing command
@@ -153,6 +191,12 @@ $F2S_HELP_SMALL"
 ""
 "$SLOW5TOOLS_PATH: invalid option -- 'z'
 $HELP_SMALL"
+"$SLOW5TOOLS_PATH [main.c:main:124]: \033[1;35margv=[\""$SLOW5TOOLS_PATH"\", \"-dh\", \"ahh\", \"lol\"]\033[0m
+$HELP_LARGE"
+"$SLOW5TOOLS_PATH [main.c:main:124]: \033[1;35margv=[\""$SLOW5TOOLS_PATH"\", \"-d\", \"--help\", \"--bye\", \"--mate\"]\033[0m
+$HELP_LARGE"
+"$SLOW5TOOLS_PATH [main.c:main:124]: \033[1;35margv=[\""$SLOW5TOOLS_PATH"\", \"-dh\", \"f2s\"]\033[0m
+$HELP_LARGE"
 )
 
 
