@@ -37,7 +37,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
         fprintf(stderr, DEBUG_PREFIX "argv=[",
-                argv[0], __FILE__, __func__, __LINE__);
+                __FILE__, __func__, __LINE__);
         for (int i = 0; i < argc; ++ i) {
             fprintf(stderr, "\"%s\"", argv[i]);
             if (i == argc - 1) {
@@ -91,7 +91,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         // Cannot be empty 
         size_t arg_len = strlen(arg_max_depth);
         if (arg_len == 0) {
-            MESSAGE("invalid max depth -- '%s'", arg_max_depth);
+            MESSAGE(stderr, "invalid max depth -- '%s'", arg_max_depth);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
             return EXIT_FAILURE;
         }
@@ -100,7 +100,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             // Not a digit and first char is not a '+'
             if (!isdigit((unsigned char) arg_max_depth[i]) && 
                     !(i == 0 && arg_max_depth[i] == '+')) {
-                MESSAGE("invalid max depth -- '%s'", arg_max_depth);
+                MESSAGE(stderr, "invalid max depth -- '%s'", arg_max_depth);
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 return EXIT_FAILURE;
             }
@@ -137,7 +137,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        MESSAGE("missing fast5 files or directories%s", "");
+        MESSAGE(stderr, "missing fast5 files or directories%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         return EXIT_FAILURE;
     }
