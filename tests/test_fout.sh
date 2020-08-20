@@ -35,7 +35,7 @@ fi
 # Path to slow5tools 
 SLOW5TOOLS_PATH="$REL_PATH/../slow5tools"
 # Ensure slow5tools exists
-if [ ! -f $DATA_DIR ]; then
+if [ ! -f $SLOW5TOOLS_PATH ]; then
     echo "ERROR: Missing slow5tools \"$SLOW5TOOLS_PATH\""
 
     echo "Exiting"
