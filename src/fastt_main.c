@@ -138,7 +138,7 @@ void recurse_dir(const std::string& path)
 }
 
 
-int fastt_main(int argc, char** argv){
+int fastt_main(int argc, char** argv, struct program_meta *meta){
 
 
     realtime0 = realtime();

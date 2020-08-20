@@ -28,7 +28,7 @@ struct command {
     int (*main)(int, char **, struct program_meta *);
 };
 
-# define EXIT_MSG(exit_code, argv, meta) exit_msg(exit_code, argv, meta, __FILE__, __func__, __LINE__);
+#define EXIT_MSG(exit_code, argv, meta) exit_msg(exit_code, argv, meta, __FILE__, __func__, __LINE__);
 
 static inline void exit_msg(int exit_code, char **argv, struct program_meta *meta,
                             const char *file, const char *func, int line) {
