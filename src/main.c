@@ -21,7 +21,6 @@
 #endif
 
 // TODO put all in header file
-// TODO add verbose information
 
 #define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
 #define VERSION_MSG "%s " SLOW5_VERSION "\n" // TODO change
@@ -85,7 +84,7 @@ int main(int argc, char **argv){
     // Initial time
     double init_realtime = realtime();
 
-    // Return code
+    // Assume success
     int ret = EXIT_SUCCESS;
 
     // Default options
@@ -105,11 +104,11 @@ int main(int argc, char **argv){
         ret = EXIT_FAILURE;
 
     } else {
-        static struct command cmds[] = {
+        const struct command cmds[] = {
             {"f2s", f2s_main},
             {"fastt", fastt_main}
         };
-        static size_t num_cmds = sizeof (cmds) / sizeof (struct command);
+        const size_t num_cmds = sizeof (cmds) / sizeof (struct command);
 
         static struct option long_opts[] = {
             {"debug", no_argument, NULL, 'd' },

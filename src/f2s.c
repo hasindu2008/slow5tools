@@ -53,6 +53,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         fprintf(stderr, NO_COLOUR);
     }
 
+    // No arguments given
+    if (argc <= 1) {
+        fprintf(stderr, USAGE_MSG HELP_SMALL_MSG, argv[0], argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+
     static struct option long_opts[] = {
         {"max-depth", required_argument, NULL, 'd' },
         {"help", no_argument, NULL, 'h' },
@@ -62,7 +69,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     long max_depth = -1;
-    int fd_out = STDOUT_FILENO;
+    FILE *f_out = stdout;
 
     // Input arguments
     char *arg_max_depth = NULL;
@@ -148,12 +155,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
         // Create new file or
         // Truncate existing file
-        // 664 permissions
-        int new_fd = open(arg_fname_out, O_CREAT|O_WRONLY|O_TRUNC,
-                          S_IRUSR|S_IWUSR | S_IRGRP|S_IWGRP | S_IROTH);
+        // 666 permissions by default
+        FILE *new_file = fopen(arg_fname_out, "w");
 
         // An error occured
-        if (new_fd == -1) {
+        if (new_file == NULL) {
             ERROR("File '%s' could not be opened - %s.", 
                   arg_fname_out, strerror(errno));
 
@@ -161,7 +167,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             return EXIT_FAILURE;
             
         } else {
-            fd_out = new_fd;
+            f_out = new_file;
         }
     }
 
@@ -180,9 +186,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
 
 
-    if (fd_out != STDOUT_FILENO) {
+    if (f_out != stdout) {
         // Close output file
-        if (close(fd_out) == -1) {
+        if (fclose(f_out) == EOF) {
             ERROR("File '%s' failed on closing - %s.",
                   arg_fname_out, strerror(errno));
         } 
