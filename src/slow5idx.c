@@ -176,8 +176,7 @@ int slow5_index_load(SLOW5_FILE *fp,
 
 
 typedef struct {
-    uint32_t line_len, line_blen;
-    uint64_t len;
+    uint64_t slow5_record_size;
     uint64_t slow5_record_offset;
 } slow5idx1_t;
 KHASH_MAP_INIT_STR(s, slow5idx1_t)
@@ -194,7 +193,7 @@ struct __slow5idx_t {
 #define kroundup32(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
 #endif
 
-static inline int slow5idx_insert_index(slow5idx_t *idx, const char *name, uint64_t len, uint32_t line_len, uint32_t line_blen, uint64_t slow5_record_offset)
+static inline int slow5idx_insert_index(slow5idx_t *idx, const char *name, uint64_t slow5_record_size,  uint64_t slow5_record_offset)
 {
     if (!name) {
         ERROR("%s","Malformed line");
@@ -207,7 +206,7 @@ static inline int slow5idx_insert_index(slow5idx_t *idx, const char *name, uint6
     slow5idx1_t *v = &kh_value(idx->hash, k);
 
     if (! absent) {
-        WARNING("Ignoring duplicate sequence \"%s\" at byte offset %" PRIu64 "", name, slow5_record_offset);
+        WARNING("Ignoring duplicate read ID \"%s\" at byte offset %" PRIu64 "", name, slow5_record_offset);
         free(name_key);
         return 0;
     }
@@ -222,9 +221,7 @@ static inline int slow5idx_insert_index(slow5idx_t *idx, const char *name, uint6
         idx->name = tmp;
     }
     idx->name[idx->n++] = name_key;
-    v->len = len;
-    v->line_len = line_len;
-    v->line_blen = line_blen;
+    v->slow5_record_size = slow5_record_size;
     v->slow5_record_offset = slow5_record_offset;
 
     return 0;
@@ -238,8 +235,7 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
     //int c, read_done, line_num;
     slow5idx_t *idx;
     uint64_t slow5_record_offset;
-    uint64_t seq_len, qual_len;
-    uint64_t char_len, cl, line_len, ll;
+    uint64_t cl, slow5_record_size, ll;
     //enum read_state {OUT_READ, IN_NAME, IN_SEQ, SEQ_END, IN_QUAL} state;
 
     idx = (slow5idx_t*)calloc(1, sizeof(slow5idx_t));
@@ -247,7 +243,7 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
     idx->format = SLOW5IDX_ASCII;
 
     //state = OUT_READ, read_done = 0, line_num = 1;
-    slow5_record_offset = seq_len = qual_len = char_len = cl = line_len = ll = 0;
+    slow5_record_offset = cl = slow5_record_size = ll = 0;
 
     linebuffer.l=0;
 
@@ -262,12 +258,12 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
         else{
 
                 char *name=strtok(linebuffer.s,"\t");
-                line_len=linebuffer.l;
+                slow5_record_size=linebuffer.l;
                 //fprintf(stderr,"%s %ld\n",name,slow5_record_offset);
-                if (slow5idx_insert_index(idx, name, seq_len, line_len, char_len, slow5_record_offset) != 0){
+                if (slow5idx_insert_index(idx, name, slow5_record_size,  slow5_record_offset) != 0){
                     goto slow5idxl;
                 }
-                seq_len = qual_len = char_len = line_len = 0;
+                slow5_record_size = 0;
                 slow5_record_offset = slow5_utell(slow5);
                 //line_num++;
                 linebuffer.l=0;
@@ -301,8 +297,8 @@ static int slow5idx_save(const slow5idx_t *slow5idx, FILE *fp) {
 
         if (slow5idx->format == SLOW5IDX_ASCII) {
             snprintf(buf, sizeof(buf),
-                 "\t%" PRIu64 "\t%" PRIu64 "\t%" PRIu32 "\t%" PRIu32 "\t%" PRIu32 "\n",
-                 x.len, x.slow5_record_offset, x.line_blen, x.line_len,0);
+                 "\t%" PRIu64 "\t%" PRIu64 "\n",
+                 x.slow5_record_offset, x.slow5_record_size);
         } else {
             assert(0);
         }
@@ -331,8 +327,7 @@ static slow5idx_t *slow5idx_read(FILE *fp, const char *fname, int format)
     if (!buf) goto slow5idxl;
 
     while ((l = getline(&buf, &buf_size, fp)) > 0) {
-        uint32_t line_len, line_blen, n;
-        uint64_t len;
+        uint64_t slow5_record_size,  n;
         uint64_t slow5_record_offset;
 
         for (p = buf; *p && !isspace_c(*p); ++p);
@@ -342,9 +337,9 @@ static slow5idx_t *slow5idx_read(FILE *fp, const char *fname, int format)
         }
 
         if (format == SLOW5IDX_ASCII) {
-            n = sscanf(p, "%" SCNu64 "%" SCNu64 "%" SCNu32 "%" SCNu32 "", &len, &slow5_record_offset, &line_blen, &line_len);
+            n = sscanf(p, "%" SCNu64 "%" SCNu64 "", &slow5_record_offset,  &slow5_record_size);
 
-            if (n != 4) {
+            if (n != 2) {
                 ERROR("Could not understand SLOW5 index %s line %zd", fname, lnum);
                 goto slow5idxl;
             }
@@ -352,17 +347,13 @@ static slow5idx_t *slow5idx_read(FILE *fp, const char *fname, int format)
             assert(0);
         }
 
-        if (slow5idx_insert_index(slow5idx, buf, len, line_len, line_blen, slow5_record_offset) != 0) {
+        if (slow5idx_insert_index(slow5idx, buf, slow5_record_size,  slow5_record_offset) != 0) {
             goto slow5idxl;
         }
 
         if (buf[l - 1] == '\n') ++lnum;
     }
 
-    if (l < 0) {
-        ERROR("Error while reading %s: %s", fname, strerror(errno));
-        goto slow5idxl;
-    }
     free(buf);
     return slow5idx;
 
@@ -636,7 +627,7 @@ static char *slow5idx_retrieve(const slow5idx_t *slow5idx, const slow5idx1_t *va
     int c = 0;
     // int ret = slow5_useek(slow5idx->slow5,
     //                      offset
-    //                      + beg / val->line_blen * val->line_len
+    //                      + beg / val->line_blen * val->slow5_record_size
     //                      + beg % val->line_blen, SEEK_SET);
     int ret = slow5_useek(slow5idx->slow5,
                          offset, SEEK_SET);
@@ -677,7 +668,7 @@ static char *slow5idx_retrieve(const slow5idx_t *slow5idx, const slow5idx1_t *va
 }
 
 
-
+//todo: no need to parse a region string. only need to parse a readID
 static int slow5idx_get_val(const slow5idx_t *slow5idx, const char *str, int *len, slow5idx1_t *val, long *fbeg, long *fend) {
     char *s, *ep;
     size_t i, l, k, name_end;
@@ -720,7 +711,7 @@ static int slow5idx_get_val(const slow5idx_t *slow5idx, const char *str, int *le
         }
     } else iter = kh_get(s, h, str);
     if(iter == kh_end(h)) {
-        WARNING("Reference %s not found in file, returning empty sequence", str);
+        WARNING("Read ID %s not found in file, returning empty record", str);
         free(s);
         *len = -2;
         return 1;
@@ -740,20 +731,20 @@ static int slow5idx_get_val(const slow5idx_t *slow5idx, const char *str, int *le
             beg = strtol(s + name_end + 1, &ep, 10);
             for (i = ep - s; i < k;) if (s[i++] == '-') break;
         }
-        end = i < k? strtol(s + i, &ep, 10) : val->len;
+        end = i < k? strtol(s + i, &ep, 10) : val->slow5_record_size;
         if (beg > 0) --beg;
         // Check for out of range numbers.  Only going to be a problem on
         // 32-bit platforms with >2Gb sequence length.
-        if (errno == ERANGE && (uint64_t) val->len > LONG_MAX) {
+        if (errno == ERANGE && (uint64_t) val->slow5_record_size > LONG_MAX) {
             ERROR("Positions in range %s are too large for this platform", s);
             free(s);
             *len = -3;
             return 1;
         }
         errno = save_errno;
-    } else beg = 0, end = val->len;
-    if (beg >= val->len) beg = val->len;
-    if (end >= val->len) end = val->len;
+    } else beg = 0, end = val->slow5_record_size;
+    if (beg >= val->slow5_record_size) beg = val->slow5_record_size;
+    if (end >= val->slow5_record_size) end = val->slow5_record_size;
     if (beg > end) beg = end;
     free(s);
 

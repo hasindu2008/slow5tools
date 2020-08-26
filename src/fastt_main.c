@@ -222,7 +222,7 @@ int fastt_main(int argc, char** argv, struct program_meta *meta){
                         argv[i]);
                     exit(EXIT_FAILURE);
                 }
-                printf("%s\n",record);
+                printf("%s",record);
 				free(record);
             }
             slow5idx_destroy(slow5idx);
