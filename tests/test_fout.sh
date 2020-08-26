@@ -25,6 +25,7 @@ REL_PATH="$(dirname $0)/"
 # Change directory to tests folder
 # since filenames are output relative this directory
 # and will influence test results
+# TODO necessary?
 cd $REL_PATH
 
 # Folder containing testing datasets
@@ -54,6 +55,7 @@ if [ ! -f $SLOW5TOOLS_PATH ]; then
 fi
 
 CMD_FAST5_TO_SLOW5="fastt"
+CMD_SLOW5_IDX="fastt -i"
 
 
 # Folder name in datasets containing FAST5 files
@@ -64,20 +66,42 @@ SLOW5_EXPECTED="expected.slow5"
 # File name of actual SLOW5 output
 SLOW5_ACTUAL="actual.slow5"
 
+# File name of expected SLOW5 index output
+SLOW5_IDX_EXPECTED="expected.slow5.fti"
+# File name of actual SLOW5 index output
+SLOW5_IDX_ACTUAL="actual.slow5.fti"
+
 declare -i ret=0
 
 # Iterate through each testset
 for testset in $DATA_DIR/*; do
-    "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" > "$testset/$SLOW5_ACTUAL" 2>/dev/null
+    echo "$testset :"
+    "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" 2>/dev/null | sort -r > "$testset/$SLOW5_ACTUAL"
+    "$SLOW5TOOLS_PATH" $CMD_SLOW5_IDX "$testset/$SLOW5_ACTUAL" 2>/dev/null
     # TODO change cut to finding it by column name 
-    if diff <(sort "$testset/$SLOW5_EXPECTED" | cut -f1-9) <(sort "$testset/$SLOW5_ACTUAL" | cut -f1-9) 2>&1 >/dev/null ; then
-        echo SUCCESS: $testset
+    if diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL" 2>&1 >/dev/null; then
+        echo "SUCCESS fast5 -> slow5"
     else
-        echo FAILED: $testset
+        echo "FAILED fast5 -> slow5"
         ret=1
     fi
+
+    if diff "$testset/$SLOW5_IDX_EXPECTED" "$testset/$SLOW5_IDX_ACTUAL" 2>&1 >/dev/null; then
+        echo "SUCCESS slow5 index"
+    else
+        echo "FAILED slow5 index"
+        ret=1
+    fi
+
+    echo ""
 done
 
 # Change back to original directory
 cd - >/dev/null
+
+if [ $ret -eq 0 ]; then
+    echo "PASSED"
+else
+    echo "FAILED"
+fi
 exit $ret
