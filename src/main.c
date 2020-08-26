@@ -79,7 +79,7 @@ void segv_handler(int sig) {
     exit(EXIT_FAILURE);
 }
 
-int main(int argc, char **argv){
+int main(const int argc, char **argv){
 
     // Initial time
     double init_realtime = realtime();
@@ -200,8 +200,6 @@ int main(int argc, char **argv){
                         cmd_found = true;
 
                         // Combining argv[0] and the command name
-                        // TODO this can be made quicker by putting argv[0] before command name and using both in command program
-                        // but then it's less neat and modular
 
                         size_t argv_0_len = strlen(argv[0]);
                         size_t cmd_len = strlen(argv[optind_copy]);
@@ -213,13 +211,19 @@ int main(int argc, char **argv){
                         combined_name[argv_0_len] = ' ';
                         memcpy(combined_name + argv_0_len + 1, argv[optind_copy], cmd_len);
                         combined_name[combined_len - 1] = '\0';
-                        argv[optind_copy] = combined_name;
+
+                        // Creating new argv array for the command program
+                        char **cmd_argv = (char **) malloc(argc * sizeof *cmd_argv);
+                        memcpy(cmd_argv, argv, argc * sizeof *cmd_argv);
+                        cmd_argv[optind_copy] = combined_name;
 
                         // Calling command program
                         if (meta.verbose) {
                             VERBOSE("using command %s", cmds[i].name);
                         }
-                        ret = cmds[i].main(argc - optind_copy, argv + optind_copy, &meta);
+                        ret = cmds[i].main(argc - optind_copy, cmd_argv + optind_copy, &meta);
+
+                        break;
                     }
                 }
 
@@ -240,6 +244,20 @@ int main(int argc, char **argv){
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 ret = EXIT_FAILURE;
             }
+        }
+    }
+
+    fprintf(stderr, "\n");
+    if (meta.verbose) {
+        VERBOSE("printing command given%s", "");
+    }
+    fprintf(stderr, "cmd: ");
+    for (int i = 0; i < argc; ++ i) {
+        fprintf(stderr, "%s", argv[i]);
+        if (i == argc - 1) {
+            fprintf(stderr, "\n");
+        } else {
+            fprintf(stderr, " ");
         }
     }
 
