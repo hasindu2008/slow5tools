@@ -75,7 +75,7 @@ declare -i ret=0
 
 # Iterate through each testset
 for testset in $DATA_DIR/*; do
-    echo "$testset :"
+    echo "$testset"
     "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" 2>/dev/null | sort -r > "$testset/$SLOW5_ACTUAL"
     "$SLOW5TOOLS_PATH" $CMD_SLOW5_IDX "$testset/$SLOW5_ACTUAL" 2>/dev/null
     # TODO change cut to finding it by column name 
