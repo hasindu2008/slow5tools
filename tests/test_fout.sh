@@ -2,9 +2,9 @@
 # Usage $0
 # Tests that f2s matches the expected output.
 
-# Note: 
+# Note:
 #
-# - Don't move this file from "slow5/tests/". 
+# - Don't move this file from "slow5/tests/".
 #   Requires subdirectory "data/" with testing dataset(s),
 #   and "slow5tools" executable in parent directory.
 #
@@ -20,7 +20,7 @@
 
 
 # Relative path to "slow5/tests/"
-REL_PATH="$(dirname $0)/" 
+REL_PATH="$(dirname $0)/"
 
 # Change directory to tests folder
 # since filenames are output relative this directory
@@ -41,7 +41,7 @@ if [ ! -d $DATA_DIR ]; then
     exit 1
 fi
 
-# Path to slow5tools 
+# Path to slow5tools
 SLOW5TOOLS_PATH="../slow5tools"
 # Ensure slow5tools exists
 if [ ! -f $SLOW5TOOLS_PATH ]; then
@@ -69,7 +69,7 @@ SLOW5_ACTUAL="actual.slow5"
 # File name of expected SLOW5 index output
 SLOW5_IDX_EXPECTED="expected.slow5.fti"
 # File name of actual SLOW5 index output
-SLOW5_IDX_ACTUAL="actual.slow5.fti"
+SLOW5_IDX_ACTUAL="actual.slow5.s5i"
 
 declare -i ret=0
 
@@ -78,7 +78,7 @@ for testset in $DATA_DIR/*; do
     echo "$testset"
     "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" 2>/dev/null | sort -r > "$testset/$SLOW5_ACTUAL"
     "$SLOW5TOOLS_PATH" $CMD_SLOW5_IDX "$testset/$SLOW5_ACTUAL" 2>/dev/null
-    # TODO change cut to finding it by column name 
+    # TODO change cut to finding it by column name
     if diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL" 2>&1 >/dev/null; then
         echo "SUCCESS fast5 -> slow5"
     else

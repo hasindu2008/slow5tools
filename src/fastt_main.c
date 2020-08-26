@@ -11,7 +11,7 @@
 #include <dirent.h>
 #include <getopt.h>
 #include <unistd.h>
-#include "ftidx.h"
+#include "slow5idx.h"
 
 static double realtime0=0;
 static int64_t bad_fast5_file=0;
@@ -205,9 +205,9 @@ int fastt_main(int argc, char** argv, struct program_meta *meta){
 
     if(tsvfile!=NULL){
         if(argc-optind >= 1){
-            ftidx_t *ftidx= fti_load(tsvfile);
-            if (ftidx == NULL) {
-                fprintf(stderr, "Error loading ftidx for %s\n",
+            slow5idx_t *slow5idx= slow5idx_load(tsvfile);
+            if (slow5idx == NULL) {
+                fprintf(stderr, "Error loading slow5idx for %s\n",
                         tsvfile);
                 exit(EXIT_FAILURE);
             }
@@ -216,7 +216,7 @@ int fastt_main(int argc, char** argv, struct program_meta *meta){
                 int len=0;
                 fprintf(stderr, "Fetching %s\n",
                         argv[i]);
-                char *record = fti_fetch(ftidx, argv[i], &len);
+                char *record = slow5idx_fetch(slow5idx, argv[i], &len);
                 if(record==NULL || len <0){
                     fprintf(stderr, "Error locating %s\n",
                         argv[i]);
@@ -225,13 +225,13 @@ int fastt_main(int argc, char** argv, struct program_meta *meta){
                 printf("%s\n",record);
 				free(record);
             }
-            fti_destroy(ftidx);
+            slow5idx_destroy(slow5idx);
         }
         else{
-            // build ftidx
-            int ret = fti_build(tsvfile);
+            // build slow5idx
+            int ret = slow5idx_build(tsvfile);
             if (ret != 0) {
-                fprintf(stderr, "Error running ftidx_build on %s\n",
+                fprintf(stderr, "Error running slow5idx_build on %s\n",
                         tsvfile);
                 exit(EXIT_FAILURE);
             }
