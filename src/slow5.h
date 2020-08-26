@@ -17,6 +17,18 @@
 #include "error.h"
 
 #define SLOW5_VERSION "0.0"
+#define SLOW5_HEADER \
+    "#" \
+    "read_id\t" \
+    "n_samples\t" \
+    "digitisation\t" \
+    "offset\t" \
+    "range\t" \
+    "sample_rate\t" \
+    "raw_signal\t" \
+    "num_bases\t" \
+    "sequence\t" \
+    "fast5_path\n" 
 
 struct program_meta {
     bool debug;
