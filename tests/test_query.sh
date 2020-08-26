@@ -19,7 +19,7 @@
 REL_PATH="$(dirname $0)/" 
 
 # Folder containing testing datasets
-DATA_DIR="data"
+DATA_DIR="$REL_PATH/data"
 # Ensure data directory exists
 if [ ! -d $DATA_DIR ]; then
     echo "ERROR: Missing data directory \""$REL_PATH"/"$DATA_DIR"\""
@@ -29,7 +29,7 @@ if [ ! -d $DATA_DIR ]; then
 fi
 
 # Path to slow5tools 
-SLOW5TOOLS_PATH="../slow5tools"
+SLOW5TOOLS_PATH="$REL_PATH/../slow5tools"
 # Ensure slow5tools exists
 if [ ! -f $SLOW5TOOLS_PATH ]; then
     echo "ERROR: Missing slow5tools \""$REL_PATH"/"$SLOW5TOOLS_PATH"\""
@@ -60,6 +60,8 @@ for testset in $DATA_DIR/*; do
     total_tests+=$n_tests
 
     echo Testing $n_tests reads
+    echo ""
+
     for i in $(seq 1 $n_tests); do
         declare -i rand_line=$(( 2 + RANDOM % ($n_lines - 2) ))
         rand_read="$(sed "${rand_line}q;d" "$testset/$SLOW5_EXPECTED")"
@@ -77,8 +79,6 @@ $rand_readid
 "
         fi
     done
-
-    echo ""
 done
 
 if [ $ret -eq 0 ]; then
