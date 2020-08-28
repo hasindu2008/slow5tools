@@ -12,12 +12,10 @@
   Index SLOW5 files and extract the record for a given read ID.
 
   The SLOW5 file index columns for SLOW5 are:
-    - read name
-    - 0 unused
+    - read ID
     - offset: number of bytes to skip to get to the start of the line
         from the beginning of the file
-    - 0 unused
-    - 0 the size of the line in bytes
+    - 0 the size of the line in bytes (including \n)
 
  */
 
@@ -74,17 +72,18 @@ slow5idx_t *slow5idx_load3(const char *fn, const char *fnslow5idx, const char *f
 
 /// Load index from "fn.s5i".
 /** @param  fn  File name of the SLOW5 file
-    @return Pointer to a slow5idx_t struct on success, NULL on slow5idxlure.
+    @return Pointer to a slow5idx_t struct on success, NULL on failure.
 
-This function is equivalent to slow5idx_load3(fn, NULL, NULL, SLOW5IDX_CREATE|SLOW5IDX_CACHE);
+This function is equivalent to slow5idx_load3(fn, NULL, NULL, SLOW5IDX_CREATE);
 */
 slow5idx_t *slow5idx_load(const char *fn);
 
+//todo: reg is just readID now,
 /// Fetch the sequence in a region
 /** @param  slow5idx  Pointer to the slow5idx_t struct
     @param  reg  Region in the format "chr2:20,000-30,000"
     @param  len  Length of the region; -2 if seq not present, -1 general error
-    @return      Pointer to the sequence; `NULL` on slow5idxlure
+    @return      Pointer to the sequence; `NULL` on failure
 
 The returned sequence is allocated by `malloc()` family and should be destroyed
 by end users by calling `free()` on it.
