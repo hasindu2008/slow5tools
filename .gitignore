@@ -72,3 +72,6 @@ autom4te.cache
 /.vscode
 src/config.h
 /profile.nvprof
+
+# testing output
+actual*
