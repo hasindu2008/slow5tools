@@ -8,6 +8,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "slow5.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
@@ -31,6 +33,25 @@
     "    -o, --output=[SLOW5_FILE]\n" \
     "        Output slow5 contents to SLOW5_FILE.\n" \
     "        Default: Stdout.\n" \
+
+// adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file 
+bool is_dir(const char *path) {
+    struct stat path_stat;
+    if (stat(path, &path_stat) == -1) {
+        ERROR("Stat failed to retrive file information%s", "");
+        return false;
+    }
+
+    return S_ISDIR(path_stat.st_mode);
+}
+
+void recurse_dir(const char *f_path, FILE *f_out) {
+    if (is_dir(f_path)) {
+
+    } else {
+        // Open FAST5 and convert to SLOW5 into f_out
+    }
+}
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
@@ -155,7 +176,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
         // Create new file or
         // Truncate existing file
-        // 666 permissions by default
         FILE *new_file = fopen(arg_fname_out, "w");
 
         // An error occured
@@ -182,8 +202,14 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
 
     // Do the converting
+    fprintf(f_out, SLOW5_HEADER);
 
+    for (int i = optind; i < argc; ++ i) {
+        // Recursive way
+        recurse_dir(argv[i], f_out);
 
+        // TODO iterative way
+    }
 
 
     if (f_out != stdout) {
