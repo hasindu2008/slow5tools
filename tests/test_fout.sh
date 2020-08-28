@@ -11,7 +11,7 @@
 # - Expects testing datasets with the following structure:
 #     - dataset/
 #         |- expected.slow5
-#         |- expected.slow5.fti
+#         |- expected.slow5.fti TODO change extension here
 #         |- expected_bin.slow5
 #         |- fast5_files/
 #             |- expected_1.fast5
@@ -67,7 +67,7 @@ SLOW5_EXPECTED="expected.slow5"
 SLOW5_ACTUAL="actual.slow5"
 
 # File name of expected SLOW5 index output
-SLOW5_IDX_EXPECTED="expected.slow5.fti"
+SLOW5_IDX_EXPECTED="expected.slow5.s5i"
 # File name of actual SLOW5 index output
 SLOW5_IDX_ACTUAL="actual.slow5.s5i"
 
@@ -76,9 +76,10 @@ declare -i ret=0
 # Iterate through each testset
 for testset in $DATA_DIR/*; do
     echo "$testset"
+
     "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" 2>/dev/null | sort -r > "$testset/$SLOW5_ACTUAL"
     "$SLOW5TOOLS_PATH" $CMD_SLOW5_IDX "$testset/$SLOW5_ACTUAL" 2>/dev/null
-    # TODO change cut to finding it by column name
+
     if diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL" 2>&1 >/dev/null; then
         echo "SUCCESS fast5 -> slow5"
     else
