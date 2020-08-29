@@ -10,7 +10,10 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include "slow5.h"
+
+#include "fast5lite.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -34,7 +37,11 @@
     "        Output slow5 contents to SLOW5_FILE.\n" \
     "        Default: Stdout.\n" \
 
+static uint64_t bad_fast5_file = 0;
+static uint64_t total_reads = 0;
+
 // adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file 
+/*
 bool is_dir(const char *path) {
     struct stat path_stat;
     if (stat(path, &path_stat) == -1) {
@@ -44,12 +51,152 @@ bool is_dir(const char *path) {
 
     return S_ISDIR(path_stat.st_mode);
 }
+*/
+
+bool has_fast5_ext(const char *f_path) {
+    bool ret = false;
+
+    if (f_path != NULL) {
+        size_t f_path_len = strlen(f_path);
+        size_t fast5_ext_len = strlen(FAST5_EXTENSION);
+
+        if (f_path_len >= fast5_ext_len && 
+                strcmp(f_path + (f_path_len - fast5_ext_len), FAST5_EXTENSION) == 0) {
+            ret = true;
+        }
+    }
+
+    return ret;
+}
+
+int fast5_to_slow5(const char *fast5_path){
+
+    total_reads++;
+
+    fast5_file_t fast5_file = fast5_open(fast5_path);
+
+    if (fast5_file.hdf5_file >= 0) {
+
+        //TODO: can optimise for performance
+        if(fast5_file.is_multi_fast5) {
+            std::vector<std::string> read_groups = fast5_get_multi_read_groups(fast5_file);
+            std::string prefix = "read_";
+            for(size_t group_idx = 0; group_idx < read_groups.size(); ++group_idx) {
+                std::string group_name = read_groups[group_idx];
+                if(group_name.find(prefix) == 0) {
+                    std::string read_id = group_name.substr(prefix.size());
+                        fast5_t f5;
+                        int32_t ret=fast5_read_multi_fast5(fast5_file, &f5, read_id);
+                        if(ret<0){
+                            WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
+                            bad_fast5_file++;
+                            fast5_close(fast5_file);
+                            return 0;
+                        }
+
+                        printf("%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+                                f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
+                        uint32_t j = 0;
+                        for (j = 0; j < f5.nsample-1; j++) {
+                            printf("%d,", (int)f5.rawptr[j]);
+                        }
+                        if(j<f5.nsample){
+                            printf("%d", (int)f5.rawptr[j]);
+                            j++;
+                        }
+                        printf("\t%d\t%s\t%s\n",0,".",fast5_path);
+                        free(f5.rawptr);
+                }
+            }
+        }
+        else{
+            fast5_t f5;
+            int32_t ret=fast5_read_single_fast5(fast5_file, &f5);
+            if(ret<0){
+                WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
+                bad_fast5_file++;
+                fast5_close(fast5_file);
+                return 0;
+            }
+            std::string read_id = fast5_get_read_id_single_fast5(fast5_file);
+            if (read_id==""){
+                WARNING("Fast5 file [%s] does not have a read ID and will be skipped", fast5_path);
+                bad_fast5_file++;
+                fast5_close(fast5_file);
+                return 0;
+            }
+
+            fast5_close(fast5_file);
+
+            //printf("@read_id\tn_samples\tdigitisation\toffset\trange\tsample_rate\traw_signal\tnum_bases\tsequence\nfast5_path");
+
+            printf("%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+                    f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
+            uint32_t j = 0;
+            for (j = 0; j < f5.nsample-1; j++) {
+                printf("%d,", (int)f5.rawptr[j]);
+            }
+            if(j<f5.nsample){
+                printf("%d", (int)f5.rawptr[j]);
+                j++;
+            }
+            printf("\t%d\t%s\t%s\n",0,".",fast5_path);
+
+            free(f5.rawptr);
+        }
+    }
+    else{
+        WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
+        bad_fast5_file++;
+        return 0;
+    }
+
+    return 1;
+
+}
 
 void recurse_dir(const char *f_path, FILE *f_out) {
-    if (is_dir(f_path)) {
+
+    DIR *dir;
+    struct dirent *ent;
+
+    dir = opendir(f_path);
+
+    if (dir == NULL) {
+        if (errno == ENOTDIR) {
+            // If it has the fast5 extension
+            if (has_fast5_ext(f_path)) {
+                // Open FAST5 and convert to SLOW5 into f_out
+                fast5_to_slow5(f_path);
+            }
+
+        } else {
+            WARNING("File '%s' failed to open - %s.", 
+                    f_path, strerror(errno));
+        }
 
     } else {
-        // Open FAST5 and convert to SLOW5 into f_out
+        // Iterate through sub files
+        while ((ent = readdir(dir)) != NULL) {
+            if (strcmp(ent->d_name, ".") != 0 && 
+                    strcmp(ent->d_name, "..") != 0) {
+
+                // Make sub path string
+                // f_path + '/' + ent->d_name + '\0'
+                size_t sub_f_path_len = strlen(f_path) + 1 + strlen(ent->d_name) + 1;
+                char *sub_f_path = (char *) malloc(sizeof *sub_f_path * sub_f_path_len);
+                MALLOC_CHK(sub_f_path);
+                snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
+
+                // Recurse
+                recurse_dir(sub_f_path, f_out);
+
+                free(sub_f_path);
+                sub_f_path = NULL;
+            }
+        }
+
+        closedir(dir);
     }
 }
 
@@ -211,12 +358,18 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         // TODO iterative way
     }
 
+    MESSAGE(stderr, "total reads: %lu, bad fast5: %lu\n",
+            total_reads, bad_fast5_file);
+
 
     if (f_out != stdout) {
         // Close output file
         if (fclose(f_out) == EOF) {
             ERROR("File '%s' failed on closing - %s.",
                   arg_fname_out, strerror(errno));
+
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
         } 
     }
 
