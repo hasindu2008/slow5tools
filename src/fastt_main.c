@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "fast5lite.h"
+//#include "fast5lite.h"
 #include "slow5misc.h"
 #include "error.h"
 #include <iostream>
@@ -14,6 +14,7 @@
 #include "slow5idx.h"
 
 static double realtime0=0;
+/*
 static int64_t bad_fast5_file=0;
 static int64_t total_reads=0;
 
@@ -169,7 +170,7 @@ void recurse_dir(const std::string& path)
         }
     }
 }
-
+*/
 
 int fastt_main(int argc, char** argv, struct program_meta *meta){
 
@@ -259,6 +260,7 @@ int fastt_main(int argc, char** argv, struct program_meta *meta){
             exit(EXIT_FAILURE);
         }
 
+        /*
         printf("#read_id\tn_samples\tdigitisation\toffset\trange\tsample_rate\traw_signal\tnum_bases\tsequence\tfast5_path\n");
 
         int i;
@@ -270,6 +272,7 @@ int fastt_main(int argc, char** argv, struct program_meta *meta){
         fprintf(stderr, "\n[%s] total reads: %ld, bad fast5: %ld\n",
                 __func__,total_reads,bad_fast5_file);
         //fprintf(stderr,"\n[%s] total bases: %.1f Mbases",__func__,core->sum_bases/(float)(1000*1000));
+        */
     }
 
 
