@@ -54,7 +54,7 @@ if [ ! -f $SLOW5TOOLS_PATH ]; then
     exit 1
 fi
 
-CMD_FAST5_TO_SLOW5="fastt"
+CMD_FAST5_TO_SLOW5="f2s"
 CMD_SLOW5_IDX="fastt -i"
 
 
