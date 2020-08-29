@@ -78,6 +78,7 @@ for testset in $DATA_DIR/*; do
     echo "$testset"
 
     "$SLOW5TOOLS_PATH" "$CMD_FAST5_TO_SLOW5" "$testset/$FAST5_FOLDER" 2>/dev/null | sort -r > "$testset/$SLOW5_ACTUAL"
+    rm "$testset/$SLOW5_IDX_ACTUAL"
     "$SLOW5TOOLS_PATH" $CMD_SLOW5_IDX "$testset/$SLOW5_ACTUAL" 2>/dev/null
 
     if diff "$testset/$SLOW5_EXPECTED" "$testset/$SLOW5_ACTUAL" 2>&1 >/dev/null; then
