@@ -57,6 +57,7 @@
                       "But at least it is better than a wrong answer."
 
 int (f2s_main)(int, char **, struct program_meta *);
+int (index_main)(int, char **, struct program_meta *);
 int (fastt_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
@@ -106,6 +107,7 @@ int main(const int argc, char **argv){
     } else {
         const struct command cmds[] = {
             {"f2s", f2s_main},
+            {"index", index_main},
             {"fastt", fastt_main}
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (struct command);
