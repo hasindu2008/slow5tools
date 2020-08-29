@@ -257,7 +257,7 @@ std::string fast5_get_raw_read_group(fast5_file_t fh, const std::string& read_id
 
 
 // from nanopolish_fast5_io.cpp
-static inline fast5_file_t fast5_open(char* filename) {
+static inline fast5_file_t fast5_open(const char* filename) {
     fast5_file_t fh;
     fh.hdf5_file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
 
