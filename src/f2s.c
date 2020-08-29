@@ -14,6 +14,7 @@
 #include "slow5.h"
 
 #include "fast5lite.h"
+#include "slow5misc.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -37,6 +38,7 @@
     "        Output slow5 contents to SLOW5_FILE.\n" \
     "        Default: Stdout.\n" \
 
+static double init_realtime = 0;
 static uint64_t bad_fast5_file = 0;
 static uint64_t total_reads = 0;
 
@@ -176,6 +178,9 @@ void recurse_dir(const char *f_path, FILE *f_out) {
         }
 
     } else {
+        fprintf(stderr, "[%s::%.3f*%.2f] Extracting fast5 from %s\n", __func__, 
+                realtime() - init_realtime, cputime() / (realtime() - init_realtime), f_path);
+
         // Iterate through sub files
         while ((ent = readdir(dir)) != NULL) {
             if (strcmp(ent->d_name, ".") != 0 && 
@@ -201,6 +206,8 @@ void recurse_dir(const char *f_path, FILE *f_out) {
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
+
+    init_realtime = realtime();
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
@@ -358,7 +365,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         // TODO iterative way
     }
 
-    MESSAGE(stderr, "total reads: %lu, bad fast5: %lu\n",
+    MESSAGE(stderr, "total reads: %lu, bad fast5: %lu",
             total_reads, bad_fast5_file);
 
 
