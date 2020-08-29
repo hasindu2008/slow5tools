@@ -16,7 +16,9 @@
 
 #include "error.h"
 
-#define SLOW5_VERSION "0.0"
+#define FAST5_EXTENSION ".fast5"
+
+#define SLOW5_VERSION "1.0"
 #define SLOW5_HEADER \
     "#" \
     "read_id\t" \
