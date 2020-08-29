@@ -20,9 +20,12 @@
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
-    "Convert fast5 file(s) to slow5.\n" \
+    "Convert fast5 file(s) to slow5 or blow5.\n" \
     "\n" \
     "OPTIONS:\n" \
+    "    -b, --binary\n" \
+    "        Convert to blow5, rather than the default slow5.\n" \
+    "\n" \
     "    -d, --max-depth=[NUM]\n" \
     "        Set the maximum depth to search directories for fast5 files.\n" \
     "        NUM must be a non-negative integer.\n" \
@@ -34,8 +37,8 @@
     "    -h, --help\n" \
     "        Display this message and exit.\n" \
     "\n" \
-    "    -o, --output=[SLOW5_FILE]\n" \
-    "        Output slow5 contents to SLOW5_FILE.\n" \
+    "    -o, --output=[FILE]\n" \
+    "        Output slow5 or blow5 contents to FILE.\n" \
     "        Default: Stdout.\n" \
 
 static double init_realtime = 0;
@@ -71,7 +74,7 @@ bool has_fast5_ext(const char *f_path) {
     return ret;
 }
 
-int fast5_to_slow5(const char *fast5_path){
+int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
 
     total_reads++;
 
@@ -96,17 +99,17 @@ int fast5_to_slow5(const char *fast5_path){
                             return 0;
                         }
 
-                        printf("%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+                        fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
                                 f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
                         uint32_t j = 0;
                         for (j = 0; j < f5.nsample-1; j++) {
-                            printf("%d,", (int)f5.rawptr[j]);
+                            fprintf(f_out, "%d,", (int)f5.rawptr[j]);
                         }
                         if(j<f5.nsample){
-                            printf("%d", (int)f5.rawptr[j]);
+                            fprintf(f_out, "%d", (int)f5.rawptr[j]);
                             j++;
                         }
-                        printf("\t%d\t%s\t%s\n",0,".",fast5_path);
+                        fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
                         free(f5.rawptr);
                 }
             }
@@ -130,19 +133,20 @@ int fast5_to_slow5(const char *fast5_path){
 
             fast5_close(fast5_file);
 
-            //printf("@read_id\tn_samples\tdigitisation\toffset\trange\tsample_rate\traw_signal\tnum_bases\tsequence\nfast5_path");
+            //fprintf(f_out, 
+            //"@read_id\tn_samples\tdigitisation\toffset\trange\tsample_rate\traw_signal\tnum_bases\tsequence\nfast5_path");
 
-            printf("%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+            fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
                     f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
             uint32_t j = 0;
             for (j = 0; j < f5.nsample-1; j++) {
-                printf("%d,", (int)f5.rawptr[j]);
+                fprintf(f_out, "%d,", (int)f5.rawptr[j]);
             }
             if(j<f5.nsample){
-                printf("%d", (int)f5.rawptr[j]);
+                fprintf(f_out, "%d", (int)f5.rawptr[j]);
                 j++;
             }
-            printf("\t%d\t%s\t%s\n",0,".",fast5_path);
+            fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
 
             free(f5.rawptr);
         }
@@ -157,7 +161,7 @@ int fast5_to_slow5(const char *fast5_path){
 
 }
 
-void recurse_dir(const char *f_path, FILE *f_out) {
+void recurse_dir(const char *f_path, FILE *f_out, bool binary_out) {
 
     DIR *dir;
     struct dirent *ent;
@@ -169,7 +173,7 @@ void recurse_dir(const char *f_path, FILE *f_out) {
             // If it has the fast5 extension
             if (has_fast5_ext(f_path)) {
                 // Open FAST5 and convert to SLOW5 into f_out
-                fast5_to_slow5(f_path);
+                fast5_to_slow5(f_path, f_out, binary_out);
             }
 
         } else {
@@ -194,7 +198,7 @@ void recurse_dir(const char *f_path, FILE *f_out) {
                 snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
 
                 // Recurse
-                recurse_dir(sub_f_path, f_out);
+                recurse_dir(sub_f_path, f_out, binary_out);
 
                 free(sub_f_path);
                 sub_f_path = NULL;
@@ -236,6 +240,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
+        {"binary", no_argument, NULL, 'b' },
         {"max-depth", required_argument, NULL, 'd' },
         {"help", no_argument, NULL, 'h' },
         {"output", required_argument, NULL, 'o' },
@@ -245,6 +250,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     // Default options
     long max_depth = -1;
     FILE *f_out = stdout;
+    bool binary_out = false;
 
     // Input arguments
     char *arg_max_depth = NULL;
@@ -260,6 +266,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         switch (opt) {
+            case 'b':
+                binary_out = true;
+                break;
             case 'd':
                 arg_max_depth = optarg;
                 break;
@@ -360,7 +369,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     for (int i = optind; i < argc; ++ i) {
         // Recursive way
-        recurse_dir(argv[i], f_out);
+        recurse_dir(argv[i], f_out, binary_out);
 
         // TODO iterative way
     }
