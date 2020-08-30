@@ -55,7 +55,7 @@ if [ ! -f $SLOW5TOOLS_PATH ]; then
 fi
 
 CMD_FAST5_TO_SLOW5="f2s"
-CMD_SLOW5_IDX="fastt -i"
+CMD_SLOW5_IDX="index"
 
 
 # Folder name in datasets containing FAST5 files

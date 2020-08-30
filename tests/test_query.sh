@@ -38,7 +38,7 @@ if [ ! -f $SLOW5TOOLS_PATH ]; then
     exit 1
 fi
 
-CMD_SLOW5_IDX_QUERY="fastt -i"
+CMD_SLOW5_IDX_QUERY="extract"
 
 
 # File name of expected SLOW5 output
