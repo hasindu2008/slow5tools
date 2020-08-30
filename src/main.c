@@ -5,20 +5,7 @@
 ** @@
 ******************************************************************************/
 
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <getopt.h>
-#include <stdbool.h>
-#include "slow5misc.h"
 #include "slow5.h"
-#include "error.h"
-
-#ifdef HAVE_EXECINFO_H
-    #include <execinfo.h>
-#endif
 
 // TODO put all in header file
 

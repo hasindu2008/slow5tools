@@ -1,20 +1,7 @@
 // Sasha Jenner
-// TODO add --version flag?
-
-#include "error.h"
-#include <unistd.h> 
-#include <getopt.h>
-#include <stdbool.h>
-#include <string.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include "slow5.h"
 
 #include "fast5lite.h"
-#include "slow5misc.h"
+#include "slow5.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"

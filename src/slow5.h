@@ -1,20 +1,39 @@
-/* @f5c
+/* @slow5
 **
-** f5c interface
+** slow5 interface
 ** @author: Hasindu Gamaarachchi (hasindu@garvan.org.au)
+** @author: Sasha Jenner (jenner.sasha@gmail.com)
 ** @@
 ******************************************************************************/
 
-#ifndef F5C_H
-#define F5C_H
+#ifndef SLOW5_H
+#define SLOW5_H
 
-//#include "fast5lite.h"
-//#include "ftidx.h"
+#include "fast5lite.h"
+#include "slow5idx.h"
+#include "slow5misc.h"
+#include "error.h"
+
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+#include <getopt.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+
+#ifdef HAVE_EXECINFO_H
+    #include <execinfo.h>
+#endif
+
 
 //required for eventalign
 //#include <vector>
-
-#include "error.h"
 
 #define FAST5_EXTENSION ".fast5"
 
@@ -42,6 +61,7 @@ struct command {
     int (*main)(int, char **, struct program_meta *);
 };
 
+// TODO in misc or here?
 #define EXIT_MSG(exit_code, argv, meta) exit_msg(exit_code, argv, meta, __FILE__, __func__, __LINE__);
 
 static inline void exit_msg(int exit_code, char **argv, struct program_meta *meta,
