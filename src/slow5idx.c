@@ -99,7 +99,7 @@ SLOW5_FILE* slow5_open(const char* path, const char *mode){
     fp->fp = fopen(path,mode);
     if(fp->fp==NULL){
         ERROR("File %s cannot be opened\n", path);
-        exit(1);
+        exit(1); // TODO exit or return NULL and handle later?
     }
     return fp;
 }
@@ -254,20 +254,20 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
             linebuffer.l=0;
             slow5_record_offset = slow5_utell(slow5);
             continue;
-        }
-        else{
 
-                char *name=strtok(linebuffer.s,"\t");
-                slow5_record_size=linebuffer.l;
-                //fprintf(stderr,"%s %ld\n",name,slow5_record_offset);
-                if (slow5idx_insert_index(idx, name, slow5_record_size,  slow5_record_offset) != 0){
-                    goto slow5idxl;
-                }
-                slow5_record_size = 0;
-                slow5_record_offset = slow5_utell(slow5);
-                //line_num++;
-                linebuffer.l=0;
-                //name.l=0;
+        } else {
+
+            char *name=strtok(linebuffer.s,"\t");
+            slow5_record_size=linebuffer.l;
+            //fprintf(stderr,"%s %ld\n",name,slow5_record_offset);
+            if (slow5idx_insert_index(idx, name, slow5_record_size,  slow5_record_offset) != 0){
+                goto slow5idxl;
+            }
+            slow5_record_size = 0;
+            slow5_record_offset = slow5_utell(slow5);
+            //line_num++;
+            linebuffer.l=0;
+            //name.l=0;
         }
     }
 
