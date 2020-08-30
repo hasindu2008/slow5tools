@@ -101,14 +101,19 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
 
                         fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
                                 f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
-                        uint32_t j = 0;
-                        for (j = 0; j < f5.nsample-1; j++) {
-                            fprintf(f_out, "%d,", (int)f5.rawptr[j]);
+
+                        if (binary_out) {
+                            fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
+                        } else {
+                            for (uint16_t j = 0; j < f5.nsample; ++ j) {
+                                if (j == f5.nsample - 1) {
+                                    fprintf(f_out, "%hu", f5.rawptr[j]);
+                                } else {
+                                    fprintf(f_out, "%hu,", f5.rawptr[j]);
+                                }
+                            }
                         }
-                        if(j<f5.nsample){
-                            fprintf(f_out, "%d", (int)f5.rawptr[j]);
-                            j++;
-                        }
+
                         fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
                         free(f5.rawptr);
                 }
@@ -138,17 +143,23 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
 
             fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
                     f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
-            uint32_t j = 0;
-            for (j = 0; j < f5.nsample-1; j++) {
-                fprintf(f_out, "%d,", (int)f5.rawptr[j]);
+
+            if (binary_out) {
+                fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
+            } else {
+                for (uint16_t j = 0; j < f5.nsample; ++ j) {
+                    if (j == f5.nsample - 1) {
+                        fprintf(f_out, "%hu", f5.rawptr[j]);
+                    } else {
+                        fprintf(f_out, "%hu,", f5.rawptr[j]);
+                    }
+                }
             }
-            if(j<f5.nsample){
-                fprintf(f_out, "%d", (int)f5.rawptr[j]);
-                j++;
-            }
+
             fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
 
             free(f5.rawptr);
+            f5.rawptr = NULL;
         }
     }
     else{
@@ -258,7 +269,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     char opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "d:ho:", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "bd:ho:", long_opts, NULL)) != -1) {
 
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",

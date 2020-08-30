@@ -34,7 +34,7 @@
 #include <vector>
 
 typedef struct {
-    int16_t* rawptr;   // raw signal (float is not the best datatype type though)
+    int16_t* rawptr;   // raw signal
     uint64_t nsample; // number of samples
 
     //	Information for scaling raw data from ADC values to pA (are these duplicates?)
