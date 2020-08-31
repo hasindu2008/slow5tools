@@ -92,7 +92,7 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
                         if (binary_out) {
                             fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
                         } else {
-                            for (uint16_t j = 0; j < f5.nsample; ++ j) {
+                            for (uint32_t j = 0; j < f5.nsample; ++ j) {
                                 if (j == f5.nsample - 1) {
                                     fprintf(f_out, "%hu", f5.rawptr[j]);
                                 } else {
@@ -134,7 +134,7 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
             if (binary_out) {
                 fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
             } else {
-                for (uint16_t j = 0; j < f5.nsample; ++ j) {
+                for (uint32_t j = 0; j < f5.nsample; ++ j) {
                     if (j == f5.nsample - 1) {
                         fprintf(f_out, "%hu", f5.rawptr[j]);
                     } else {
