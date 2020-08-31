@@ -88,7 +88,7 @@ int main(const int argc, char **argv){
 
     // No arguments given
     if (argc <= 1) {
-        fprintf(stderr, USAGE_MSG HELP_SMALL_MSG, argv[0], argv[0]);
+        fprintf(stderr, HELP_LARGE_MSG, argv[0], argv[0]);
         ret = EXIT_FAILURE;
 
     } else {

@@ -33,7 +33,7 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
 
     // No arguments given
     if (argc <= 1) {
-        fprintf(stderr, USAGE_MSG HELP_SMALL_MSG, argv[0], argv[0]);
+        fprintf(stderr, HELP_LARGE_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
