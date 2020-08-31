@@ -70,7 +70,7 @@ typedef struct{
 
 
 //
-static std::vector<std::string> fast5_get_multi_read_groups(fast5_file_t fh)
+static inline  std::vector<std::string> fast5_get_multi_read_groups(fast5_file_t fh)
 {
     std::vector<std::string> out;
     ssize_t buffer_size = 0;
@@ -114,7 +114,7 @@ static std::vector<std::string> fast5_get_multi_read_groups(fast5_file_t fh)
 
 
 // from nanopolish_fast5_io.cpp
-static std::string fast5_get_raw_read_internal_name(fast5_file_t fh)
+static inline  std::string fast5_get_raw_read_internal_name(fast5_file_t fh)
 {
     // This code is From scrappie's fast5_interface
 
@@ -137,7 +137,7 @@ static std::string fast5_get_raw_read_internal_name(fast5_file_t fh)
 }
 
 // from nanopolish_fast5_io.cpp
-static std::string fast5_get_string_attribute(fast5_file_t fh, const std::string& group_name, const std::string& attribute_name)
+static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std::string& group_name, const std::string& attribute_name)
 {
     hid_t group, attribute, attribute_type, native_type;
     std::string out;
@@ -243,7 +243,7 @@ close_group:
 
 
 // from nanopolish_fast5_io.cpp
-static std::string fast5_get_raw_read_group(fast5_file_t fh, const std::string& read_id)
+static inline std::string fast5_get_raw_read_group(fast5_file_t fh, const std::string& read_id)
 {
     if(fh.is_multi_fast5) {
         return "/read_" + read_id + "/Raw";
