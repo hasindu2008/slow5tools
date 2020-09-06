@@ -11,7 +11,7 @@
 # - Expects testing datasets with the following structure:
 #     - dataset/
 #         |- expected.slow5
-#         |- expected.slow5.fti
+#         |- expected.slow5.s5i
 
 
 
@@ -63,7 +63,7 @@ for testset in $DATA_DIR/*; do
     echo ""
 
     for i in $(seq 1 $n_tests); do
-        declare -i rand_line=$(( 2 + RANDOM % ($n_lines - 2) ))
+        declare -i rand_line=$(( 3 + RANDOM % ($n_lines - 3) )) # TODO change to check for #
         rand_read="$(sed "${rand_line}q;d" "$testset/$SLOW5_EXPECTED")"
         rand_readid="$(echo "$rand_read" | cut -f1)"
         query_read="$("$SLOW5TOOLS_PATH" $CMD_SLOW5_IDX_QUERY "$testset/$SLOW5_EXPECTED" "$rand_readid" 2>/dev/null)"
