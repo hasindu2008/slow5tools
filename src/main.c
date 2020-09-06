@@ -10,7 +10,7 @@
 // TODO put all in header file
 
 #define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
-#define VERSION_MSG "%s " SLOW5_VERSION "\n" // TODO change
+#define VERSION_MSG "%s " VERSION "\n" // TODO change
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
@@ -19,6 +19,8 @@
     "COMMANDS:\n" \
     "    f2s - convert fast5 file(s) to slow5\n" \
     "    s2f - convert slow5 file(s) to fast5\n" \
+    "    index - create a slow5 or blow5 index file.\n" \
+    "    extract - display the read entry for each specified read id.\n" \
     "\n" \
     "ARGS:\n" \
     "    Try '%s [COMMAND] --help' for more information.\n" \
@@ -97,7 +99,7 @@ int main(const int argc, char **argv){
             {"index", index_main},
             {"extract", extract_main},
         };
-        const size_t num_cmds = sizeof (cmds) / sizeof (struct command);
+        const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
         static struct option long_opts[] = {
             {"debug", no_argument, NULL, 'd' },
