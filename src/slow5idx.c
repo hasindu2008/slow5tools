@@ -56,8 +56,9 @@ static inline int slow5_getline(SLOW5_FILE *fp, int delim, kstring_t *str){
 //later necessary for slow5 binary version
 static inline size_t f5read(SLOW5_FILE *fp, kstring_t *str, size_t num_elements){
     str->m = num_elements;
+    // TODO need to free?
     str->s = (char *)malloc(sizeof(char)*str->m);
-    size_t ret=fread(str->s,1,num_elements,fp->fp);
+    size_t ret=fread(str->s,sizeof *str->s,num_elements,fp->fp);
     str->l = ret;
     if(ret!=num_elements){
         fprintf(stderr,"Reading error has occurred :%s\n",strerror(errno));
@@ -170,7 +171,7 @@ int slow5_index_load(SLOW5_FILE *fp,
                     const char *bname, const char *suffix){
     ERROR("%s\n", "Not implemented");
     exit(1);
-    }
+}
 
 
 
@@ -205,7 +206,7 @@ static inline int slow5idx_insert_index(slow5idx_t *idx, const char *name, uint6
     khint_t k = kh_put(s, idx->hash, name_key, &absent);
     slow5idx1_t *v = &kh_value(idx->hash, k);
 
-    if (! absent) {
+    if (!absent) {
         WARNING("Ignoring duplicate read ID \"%s\" at byte offset %" PRIu64 "", name, slow5_record_offset);
         free(name_key);
         return 0;
@@ -213,7 +214,7 @@ static inline int slow5idx_insert_index(slow5idx_t *idx, const char *name, uint6
 
     if (idx->n == idx->m) {
         char **tmp;
-        idx->m = idx->m? idx->m<<1 : 16;
+        idx->m = idx->m ? idx->m<<1 : 16;
         if (!(tmp = (char**)realloc(idx->name, sizeof(char*) * idx->m))) {
             ERROR("%s","Out of memory");
             return -1;
@@ -240,34 +241,143 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
 
     idx = (slow5idx_t*)calloc(1, sizeof(slow5idx_t));
     idx->hash = kh_init(s);
-    idx->format = SLOW5IDX_ASCII;
+    //idx->format = SLOW5IDX_ASCII;
 
     //state = OUT_READ, read_done = 0, line_num = 1;
     slow5_record_offset = cl = slow5_record_size = ll = 0;
 
     linebuffer.l=0;
 
-    while (slow5_getline(slow5, '\n', &linebuffer) >0 ) {
-        if (linebuffer.s[0] == '#' || linebuffer.s[0] == '\n' || linebuffer.s[0] == '\r') { //comments and header
-            //fprintf(stderr,"%s\n",linebuffer.s);
-            //line_num++;
-            linebuffer.l=0;
-            slow5_record_offset = slow5_utell(slow5);
-            continue;
+    // Check for file format type
+    if (slow5_getline(slow5, '\n', &linebuffer) > 0) {
+        // Split "##file_format=[NAME]v[VERSION]"
+        
+        bool bad_header = true;
+        char *format = strtok(linebuffer.s, "="); // "#file_format"
 
-        } else {
+        if (format != NULL && strcmp(format, GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER) == 0) {
+            format = strtok(NULL, "="); // "[NAME]v[VERSION]"
 
-            char *name=strtok(linebuffer.s,"\t");
-            slow5_record_size=linebuffer.l;
-            //fprintf(stderr,"%s %ld\n",name,slow5_record_offset);
-            if (slow5idx_insert_index(idx, name, slow5_record_size,  slow5_record_offset) != 0){
+            if (format != NULL) {
+                char *filetype = strtok(format, "v"); // "[NAME]"
+
+                if (filetype != NULL) {
+                    for (size_t i = 0; i < sizeof(formats)/sizeof(*formats); ++ i) {
+                        if (strcmp(filetype, formats[i].name) == 0) {
+                            bad_header = false;
+                            idx->format = formats[i].format;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bad_header) {
+            // TODO deal better with bad header
+            ERROR("bad file type%s", "");
+            exit(1);
+        }
+    }
+
+    // TODO empty file?
+    
+    if (idx->format == SLOW5IDX_ASCII) {
+
+        while (slow5_getline(slow5, '\n', &linebuffer) > 0) {
+            if (linebuffer.s[0] == '#' || linebuffer.s[0] == '\n' || linebuffer.s[0] == '\r') { //comments and header
+                //fprintf(stderr,"%s\n",linebuffer.s);
+                //line_num++;
+                linebuffer.l = 0; // TODO why resetting it here
+                slow5_record_offset = slow5_utell(slow5);
+                continue;
+
+            } else {
+                char *name = strtok(linebuffer.s, "\t");
+                slow5_record_size = linebuffer.l;
+                //fprintf(stderr,"%s %ld\n",name,slow5_record_offset);
+                if (slow5idx_insert_index(idx, name, slow5_record_size, slow5_record_offset) != 0){
+                    goto slow5idxl;
+                }
+                slow5_record_size = 0;
+                slow5_record_offset = slow5_utell(slow5);
+                //line_num++;
+                linebuffer.l = 0; // TODO why resetting it here
+                //name.l=0;
+            }
+        }
+
+    } else if (idx->format == SLOW5IDX_BINARY) {
+        
+        bool past_header = false;
+        while (!past_header && slow5_getline(slow5, '\n', &linebuffer) > 0) {
+            if (linebuffer.l > 1 && linebuffer.s[1] != '#') { // column header reached
+                past_header = true;
+            }
+        }
+        
+        slow5_record_offset = slow5_utell(slow5);
+
+        // Get size of file
+        struct stat buf;
+        if (fstat(fileno(slow5->fp), &buf) == -1) {
+            ERROR("fstat failed%s", ""); // TODO change
+        }
+
+        while (slow5_record_offset < buf.st_size) {
+            slow5_record_size = 0;
+
+            // Obtain read id
+            size_t read_id_len = 0;
+            if (fread(&read_id_len, sizeof read_id_len, 1, slow5->fp) <= 0) {
+                //ERROR
+            }
+            if (f5read(slow5, &linebuffer, read_id_len) <= 0) {
+                //ERROR
+            }
+            
+            // Get size of record
+
+            uint64_t nsamples = 0;
+            if (fread(&nsamples, sizeof nsamples, 1, slow5->fp) <= 0) {
+                //ERROR
+            }
+            size_t bytes_to_raw_signal = sizeof ((fast5_t){0}).digitisation + 
+                sizeof ((fast5_t){0}).offset +
+                sizeof ((fast5_t){0}).range +
+                sizeof ((fast5_t){0}).sample_rate +
+                sizeof *((fast5_t){0}).rawptr * nsamples +
+                sizeof (uint64_t); // num_bases size TODO remove or put in header
+
+            if (fseek(slow5->fp, bytes_to_raw_signal, SEEK_CUR) == -1) {
+                //ERROR
+            }
+
+            // Obtain sequence length
+            size_t sequence_len = 0;
+            if (fread(&sequence_len, sizeof sequence_len, 1, slow5->fp) <= 0) {
+                //ERROR
+            }
+            if (fseek(slow5->fp, sequence_len * sizeof (char), SEEK_CUR) == -1) {
+                //ERROR
+            }
+
+            // Obtain fast5_path length
+            size_t fast5_path_len = 0;
+            if (fread(&fast5_path_len, sizeof fast5_path_len, 1, slow5->fp) <= 0) {
+                //ERROR
+            }
+            if (fseek(slow5->fp, fast5_path_len * sizeof (char), SEEK_CUR) == -1) {
+                //ERROR
+            }
+
+            long curr_pos = slow5_utell(slow5);
+            slow5_record_size = curr_pos - slow5_record_offset;
+
+            if (slow5idx_insert_index(idx, linebuffer.s, slow5_record_size, slow5_record_offset) != 0){
                 goto slow5idxl;
             }
-            slow5_record_size = 0;
-            slow5_record_offset = slow5_utell(slow5);
-            //line_num++;
-            linebuffer.l=0;
-            //name.l=0;
+            slow5_record_offset = curr_pos;
         }
     }
 
@@ -296,6 +406,10 @@ static int slow5idx_save(const slow5idx_t *slow5idx, FILE *fp) {
         x = kh_value(slow5idx->hash, k);
 
         if (slow5idx->format == SLOW5IDX_ASCII) {
+            snprintf(buf, sizeof(buf),
+                 "\t%" PRIu64 "\t%" PRIu64 "\n",
+                 x.slow5_record_offset, x.slow5_record_size);
+        } else if (slow5idx->format == SLOW5IDX_BINARY) {
             snprintf(buf, sizeof(buf),
                  "\t%" PRIu64 "\t%" PRIu64 "\n",
                  x.slow5_record_offset, x.slow5_record_size);
@@ -410,13 +524,18 @@ static int slow5idx_build3_core(const char *fn, const char *fnslow5idx, const ch
 
     if (slow5idx->format == SLOW5IDX_ASCII) {
         file_type   = "SLOW5_ASCII";
+        if (!fnslow5idx) {
+            if (ksprintf(&slow5idx_kstr, "%s.s5i", fn) < 0) goto slow5idxl;
+            fnslow5idx = slow5idx_kstr.s;
+        }
+    } else if (slow5idx->format == SLOW5IDX_BINARY) {
+        file_type   = "SLOW5_BINARY";
+        if (!fnslow5idx) {
+            if (ksprintf(&slow5idx_kstr, "%s.b5i", fn) < 0) goto slow5idxl;
+            fnslow5idx = slow5idx_kstr.s;
+        }
     } else {
         assert(0);
-    }
-
-    if (!fnslow5idx) {
-        if (ksprintf(&slow5idx_kstr, "%s.s5i", fn) < 0) goto slow5idxl;
-        fnslow5idx = slow5idx_kstr.s;
     }
 
     if (!fngzi) {
@@ -494,6 +613,16 @@ static slow5idx_t *slow5idx_load3_core(const char *fn, const char *fnslow5idx, c
 
     if (format == SLOW5IDX_ASCII) {
         file_type   = "SLOW5_ASCII";
+        if (fnslow5idx == NULL) {
+            if (ksprintf(&slow5idx_kstr, "%s.s5i", fn) < 0) goto slow5idxl;
+            fnslow5idx = slow5idx_kstr.s;
+        }
+    } else if (slow5idx->format == SLOW5IDX_BINARY) {
+        file_type   = "SLOW5_BINARY";
+        if (fnslow5idx == NULL) {
+            if (ksprintf(&slow5idx_kstr, "%s.b5i", fn) < 0) goto slow5idxl;
+            fnslow5idx = slow5idx_kstr.s;
+        }
     } else {
         assert(0);
     }
@@ -501,10 +630,6 @@ static slow5idx_t *slow5idx_load3_core(const char *fn, const char *fnslow5idx, c
     if (fn == NULL)
         return NULL;
 
-    if (fnslow5idx == NULL) {
-        if (ksprintf(&slow5idx_kstr, "%s.slow5idx", fn) < 0) goto slow5idxl;
-        fnslow5idx = slow5idx_kstr.s;
-    }
     if (fngzi == NULL) {
         if (ksprintf(&gzi_kstr, "%s.gzi", fn) < 0) goto slow5idxl;
         fngzi = gzi_kstr.s;

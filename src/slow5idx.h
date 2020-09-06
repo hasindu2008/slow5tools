@@ -7,6 +7,8 @@
 #ifndef SLOW5IDX_H
 #define SLOW5IDX_H
 
+#include "slow5.h"
+
 /** @file
 
   Index SLOW5 files and extract the record for a given read ID.
@@ -28,6 +30,16 @@ enum slow5idx_format_options {
     SLOW5IDX_ASCII,
     SLOW5IDX_BINARY, //later used for binary
     SLOW5IDX_GZIP //later used for compressed
+};
+
+struct format_map {
+    const char *name;
+    enum slow5idx_format_options format;
+};
+
+static const struct format_map formats[] = {
+    { SLOW5_NAME, SLOW5IDX_ASCII },
+    { BLOW5_NAME, SLOW5IDX_BINARY},
 };
 
 /// Build index for a SLOW5.
