@@ -10,7 +10,6 @@
 #define SLOW5_H
 
 #include "fast5lite.h"
-#include "slow5idx.h"
 #include "slow5misc.h"
 #include "error.h"
 
@@ -35,11 +34,19 @@
 //required for eventalign
 //#include <vector>
 
-#define FAST5_EXTENSION ".fast5"
+#define FAST5_NAME "fast5"
+#define FAST5_EXTENSION "." FAST5_NAME
 
-#define SLOW5_VERSION "1.0"
+#define VERSION "0.1"
+#define GLOBAL_HEADER_PREFIX "##"
+#define COLUMN_HEADER_PREFIX "#"
+
+#define SLOW5_NAME "slow5"
+#define SLOW5_EXTENSION "." SLOW5_NAME
+#define FILE_FORMAT_HEADER "file_format"
+#define SLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "=" SLOW5_NAME "v" VERSION "\n"
 #define SLOW5_HEADER \
-    "#" \
+    COLUMN_HEADER_PREFIX \
     "read_id\t" \
     "n_samples\t" \
     "digitisation\t" \
@@ -50,6 +57,12 @@
     "num_bases\t" \
     "sequence\t" \
     "fast5_path\n" 
+
+#define BLOW5_NAME "blow5"
+#define BLOW5_EXTENSION "." BLOW5_NAME
+#define BLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "=" BLOW5_NAME "v" VERSION "\n"
+
+#include "slow5idx.h" // TODO move?
 
 struct program_meta {
     bool debug;
