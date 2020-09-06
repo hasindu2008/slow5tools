@@ -61,6 +61,60 @@ bool has_fast5_ext(const char *f_path) {
     return ret;
 }
 
+void write_data(FILE *f_out, const std::string read_id, const fast5_t f5, const char *fast5_path, bool binary_out) {
+
+    if (binary_out) {
+        // write length of string
+        size_t read_id_len = read_id.length();
+        fwrite(&read_id_len, sizeof read_id_len, 1, f_out); 
+
+        // write string
+        const char *read_id_c_str = read_id.c_str();
+        fwrite(read_id_c_str, sizeof *read_id_c_str, read_id_len, f_out);
+
+        // write other data
+        fwrite(&f5.nsample, sizeof f5.nsample, 1, f_out);
+        fwrite(&f5.digitisation, sizeof f5.digitisation, 1, f_out);
+        fwrite(&f5.offset, sizeof f5.offset, 1, f_out);
+        fwrite(&f5.range, sizeof f5.range, 1, f_out);
+        fwrite(&f5.sample_rate, sizeof f5.sample_rate, 1, f_out);
+    } else {
+        fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+                f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
+    }
+
+    if (binary_out) {
+        fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
+    } else {
+        for (uint64_t j = 0; j < f5.nsample; ++ j) {
+            if (j == f5.nsample - 1) {
+                fprintf(f_out, "%hu", f5.rawptr[j]);
+            } else {
+                fprintf(f_out, "%hu,", f5.rawptr[j]);
+            }
+        }
+    }
+
+    if (binary_out) {
+        //todo change to variable
+        
+        uint64_t num_bases = 0;
+        fwrite(&num_bases, sizeof num_bases, 1, f_out);
+
+        const char *sequences = ".";
+        size_t sequences_len = strlen(sequences);
+        fwrite(&sequences_len, sizeof sequences_len, 1, f_out); 
+        fwrite(sequences, sizeof *sequences, sequences_len, f_out);
+
+        size_t fast5_path_len = strlen(fast5_path);
+        fwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out); 
+        fwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
+    } else {
+        fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
+    }
+    free(f5.rawptr);
+}
+
 int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
 
     total_reads++;
@@ -70,83 +124,47 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
     if (fast5_file.hdf5_file >= 0) {
 
         //TODO: can optimise for performance
-        if(fast5_file.is_multi_fast5) {
+        if (fast5_file.is_multi_fast5) {
             std::vector<std::string> read_groups = fast5_get_multi_read_groups(fast5_file);
             std::string prefix = "read_";
-            for(size_t group_idx = 0; group_idx < read_groups.size(); ++group_idx) {
+            for (size_t group_idx = 0; group_idx < read_groups.size(); ++group_idx) {
                 std::string group_name = read_groups[group_idx];
-                if(group_name.find(prefix) == 0) {
+
+                if (group_name.find(prefix) == 0) {
                     std::string read_id = group_name.substr(prefix.size());
-                        fast5_t f5;
-                        int32_t ret=fast5_read_multi_fast5(fast5_file, &f5, read_id);
-                        if(ret<0){
-                            WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
-                            bad_fast5_file++;
-                            fast5_close(fast5_file);
-                            return 0;
-                        }
+                    fast5_t f5;
+                    int32_t ret = fast5_read_multi_fast5(fast5_file, &f5, read_id);
 
-                        fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
-                                f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
+                    if (ret < 0) {
+                        WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
+                        bad_fast5_file++;
+                        fast5_close(fast5_file);
+                        return 0;
+                    }
 
-                        if (binary_out) {
-                            fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
-                        } else {
-                            for (uint64_t j = 0; j < f5.nsample; ++ j) {
-                                if (j == f5.nsample - 1) {
-                                    fprintf(f_out, "%hu", f5.rawptr[j]);
-                                } else {
-                                    fprintf(f_out, "%hu,", f5.rawptr[j]);
-                                }
-                            }
-                        }
-
-                        fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
-                        free(f5.rawptr);
+                    write_data(f_out, read_id, f5, fast5_path, binary_out);
                 }
             }
-        }
-        else{
+
+        } else {
             fast5_t f5;
             int32_t ret=fast5_read_single_fast5(fast5_file, &f5);
-            if(ret<0){
+            if (ret < 0) {
                 WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
                 bad_fast5_file++;
                 fast5_close(fast5_file);
                 return 0;
             }
+
             std::string read_id = fast5_get_read_id_single_fast5(fast5_file);
-            if (read_id==""){
+            if (read_id == "") {
                 WARNING("Fast5 file [%s] does not have a read ID and will be skipped", fast5_path);
                 bad_fast5_file++;
                 fast5_close(fast5_file);
                 return 0;
             }
 
-            fast5_close(fast5_file);
-
-            //fprintf(f_out, 
-            //"@read_id\tn_samples\tdigitisation\toffset\trange\tsample_rate\traw_signal\tnum_bases\tsequence\nfast5_path");
-
-            fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
-                    f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
-
-            if (binary_out) {
-                fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
-            } else {
-                for (uint64_t j = 0; j < f5.nsample; ++ j) {
-                    if (j == f5.nsample - 1) {
-                        fprintf(f_out, "%hu", f5.rawptr[j]);
-                    } else {
-                        fprintf(f_out, "%hu,", f5.rawptr[j]);
-                    }
-                }
-            }
-
-            fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
-
-            free(f5.rawptr);
-            f5.rawptr = NULL;
+            write_data(f_out, read_id, f5, fast5_path, binary_out);
         }
     }
     else{
@@ -154,6 +172,8 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
         bad_fast5_file++;
         return 0;
     }
+
+    fast5_close(fast5_file);
 
     return 1;
 
@@ -363,6 +383,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
 
     // Do the converting
+    if (binary_out) {
+        fprintf(f_out, BLOW5_FILE_FORMAT);
+    } else {
+        fprintf(f_out, SLOW5_FILE_FORMAT);
+    }
     fprintf(f_out, SLOW5_HEADER);
 
     for (int i = optind; i < argc; ++ i) {
