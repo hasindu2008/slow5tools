@@ -28,6 +28,7 @@ static inline int isdigit_c(char c) { return isdigit((unsigned char) c); }
 typedef struct {
     int fd;     //unused fields are for expandability for binary and compressed
     FILE *fp;
+    int is_binary;
     int is_compressed;     //unused fields are for expandability for binary and compressed
     int is_gzip;     //unused fields are for expandability for binary and compressed
 } SLOW5_FILE;
@@ -94,7 +95,8 @@ int slow5_close(SLOW5_FILE *fp){
  * Open the specified file for reading or writing.
  */
 SLOW5_FILE* slow5_open(const char* path, const char *mode){
-    SLOW5_FILE *fp = (SLOW5_FILE *)malloc(sizeof(SLOW5_FILE));
+    SLOW5_FILE *fp = (SLOW5_FILE *) malloc(sizeof *fp);
+    fp->is_binary=0;
     fp->is_compressed=0;
     fp->is_gzip=0;
     fp->fp = fopen(path,mode);
@@ -182,6 +184,7 @@ typedef struct {
 } slow5idx1_t;
 KHASH_MAP_INIT_STR(s, slow5idx1_t)
 
+
 struct __slow5idx_t {
     SLOW5_FILE *slow5;
     int n, m;
@@ -228,6 +231,49 @@ static inline int slow5idx_insert_index(slow5idx_t *idx, const char *name, uint6
     return 0;
 }
 
+slow5idx_format_options slow5_get_format(SLOW5_FILE *slow5) {
+
+    kstring_t linebuffer = { 0, 0, NULL };
+    slow5idx_format_options ret = SLOW5IDX_ASCII; // TODO make default 'no format found' format
+
+    // Check for file format type
+    if (slow5_getline(slow5, '\n', &linebuffer) > 0) {
+        // Split "##file_format=[NAME]v[VERSION]"
+        
+        bool bad_header = true;
+        char *format = strtok(linebuffer.s, "="); // "#file_format"
+
+        if (format != NULL && strcmp(format, GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER) == 0) {
+            format = strtok(NULL, "="); // "[NAME]v[VERSION]"
+
+            if (format != NULL) {
+                char *filetype = strtok(format, "v"); // "[NAME]"
+
+                if (filetype != NULL) {
+                    for (size_t i = 0; i < sizeof(formats)/sizeof(*formats); ++ i) {
+                        if (strcmp(filetype, formats[i].name) == 0) {
+                            bad_header = false;
+                            ret = formats[i].format;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (bad_header) {
+            // TODO deal better with bad header
+            ERROR("bad file type%s", "");
+            exit(1);
+        }
+    }
+
+    // Place fp to beginning
+    // TODO needed?
+    //slow5_useek(slow5, 0L, SEEK_SET);
+
+    return ret;
+}
 
 static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
 
@@ -248,37 +294,7 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
 
     linebuffer.l=0;
 
-    // Check for file format type
-    if (slow5_getline(slow5, '\n', &linebuffer) > 0) {
-        // Split "##file_format=[NAME]v[VERSION]"
-        
-        bool bad_header = true;
-        char *format = strtok(linebuffer.s, "="); // "#file_format"
-
-        if (format != NULL && strcmp(format, GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER) == 0) {
-            format = strtok(NULL, "="); // "[NAME]v[VERSION]"
-
-            if (format != NULL) {
-                char *filetype = strtok(format, "v"); // "[NAME]"
-
-                if (filetype != NULL) {
-                    for (size_t i = 0; i < sizeof(formats)/sizeof(*formats); ++ i) {
-                        if (strcmp(filetype, formats[i].name) == 0) {
-                            bad_header = false;
-                            idx->format = formats[i].format;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (bad_header) {
-            // TODO deal better with bad header
-            ERROR("bad file type%s", "");
-            exit(1);
-        }
-    }
+    idx->format = slow5_get_format(slow5);
 
     // TODO empty file?
     
@@ -326,6 +342,8 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
 
         while (slow5_record_offset < buf.st_size) {
             slow5_record_size = 0;
+
+            // TODO do ERROR handling
 
             // Obtain read id
             size_t read_id_len = 0;
@@ -450,7 +468,7 @@ static slow5idx_t *slow5idx_read(FILE *fp, const char *fname, int format)
             *p = 0; ++p;
         }
 
-        if (format == SLOW5IDX_ASCII) {
+        if (format == SLOW5IDX_ASCII || format == SLOW5IDX_BINARY) {
             n = sscanf(p, "%" SCNu64 "%" SCNu64 "", &slow5_record_offset,  &slow5_record_size);
 
             if (n != 2) {
@@ -611,13 +629,17 @@ static slow5idx_t *slow5idx_load3_core(const char *fn, const char *fnslow5idx, c
     int res, gzi_index_needed = 0;
     const char *file_type;
 
+    // TODO refactor this
+    SLOW5_FILE *slow5 = slow5_open(fn, "rb");
+    format = slow5_get_format(slow5);
+
     if (format == SLOW5IDX_ASCII) {
         file_type   = "SLOW5_ASCII";
         if (fnslow5idx == NULL) {
             if (ksprintf(&slow5idx_kstr, "%s.s5i", fn) < 0) goto slow5idxl;
             fnslow5idx = slow5idx_kstr.s;
         }
-    } else if (slow5idx->format == SLOW5IDX_BINARY) {
+    } else if (format == SLOW5IDX_BINARY) {
         file_type   = "SLOW5_BINARY";
         if (fnslow5idx == NULL) {
             if (ksprintf(&slow5idx_kstr, "%s.b5i", fn) < 0) goto slow5idxl;
@@ -735,7 +757,7 @@ static slow5idx_t *slow5idx_load3_core(const char *fn, const char *fnslow5idx, c
 
 slow5idx_t *slow5idx_load3(const char *fn, const char *fnslow5idx, const char *fngzi,
                    int flags) {
-    return slow5idx_load3_core(fn, fnslow5idx, fngzi, flags, SLOW5IDX_ASCII);
+    return slow5idx_load3_core(fn, fnslow5idx, fngzi, flags, SLOW5IDX_ASCII); // TODO change format option
 }
 
 
@@ -770,7 +792,19 @@ static char *slow5idx_retrieve(const slow5idx_t *slow5idx, const slow5idx1_t *va
     // }
 
     kstring_t linebuffer = { 0, 0, NULL };
-    ret=slow5_getline(slow5idx->slow5, '\n', &linebuffer);
+    //ret=slow5_getline(slow5idx->slow5, '\n', &linebuffer);
+    
+    // testing
+    /*printf("%ld\n", offset);
+    ret = slow5_useek(slow5idx->slow5,
+                         2, SEEK_SET);
+    char *line = (char*) malloc(3000 + 1);
+    fread(line, 3000, 1, slow5idx->slow5->fp);
+    printf("%s\n", line);
+    return line;
+    */
+
+    ret = f5read(slow5idx->slow5, &linebuffer, end);
 
     // while ( l < end - beg && (c=slow5_getc(slow5idx->slow5))>=0 )
     //     if (isgraph(c)) s[l++] = c;

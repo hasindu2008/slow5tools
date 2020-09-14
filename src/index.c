@@ -87,7 +87,6 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
 
     char *f_in_name = argv[optind];
 
-    // Build index file TODO make blow5 indexable
     if (slow5idx_build(f_in_name) != 0) {
         fprintf(stderr, "Error running slow5idx_build on %s\n",
                 f_in_name);

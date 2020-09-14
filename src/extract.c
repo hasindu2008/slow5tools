@@ -108,10 +108,10 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
             slow5idx_destroy(index_f);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
-            
         }
 
-        printf("%s", record);
+        fwrite(record, len, 1, stdout);
+
         free(record);
     }
 

@@ -25,6 +25,7 @@ struct __slow5idx_t;
 /// Opaque structure representing SLOW5 index
 typedef struct __slow5idx_t slow5idx_t;
 
+
 /// File format to be dealing with.
 enum slow5idx_format_options {
     SLOW5IDX_ASCII,
