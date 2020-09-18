@@ -77,8 +77,8 @@ struct command {
 // TODO in misc or here?
 #define EXIT_MSG(exit_code, argv, meta) exit_msg(exit_code, argv, meta, __FILE__, __func__, __LINE__);
 
-static inline void exit_msg(int exit_code, char **argv, struct program_meta *meta,
-                            const char *file, const char *func, int line) {
+static inline void exit_msg(const int exit_code, char **argv, struct program_meta *meta,
+                            const char *file, const char *func, const int line) {
     if (meta != NULL) {
         if (meta->verbose) {
             VERBOSE("exiting with %s",

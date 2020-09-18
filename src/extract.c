@@ -1,14 +1,41 @@
 #include "slow5.h"
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5|BLOW5_FILE] [READ_ID]...\n"
+#define USAGE_MSG "Usage: %s [OPTION]... SLOW5|BLOW5_FILE [READ_ID]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "Display the read entry for each specified read id from a slow5 or blow5 file.\n" \
+    "With no READ_ID, read standard input for newline separated read ids.\n" \
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help\n" \
     "        Display this message and exit.\n" \
+
+bool fetch_record(slow5idx_t *index_f, const char *read_id, 
+        char **argv, struct program_meta *meta) {
+
+    bool success = true;
+
+    int len = 0;
+    fprintf(stderr, "Fetching %s\n", read_id);
+    char *record = slow5idx_fetch(index_f, read_id, &len);
+
+    if (record == NULL || len < 0) {
+        fprintf(stderr, "Error locating %s\n", read_id);
+
+        slow5idx_destroy(index_f);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        success = false;
+    }
+
+    if (success) {
+        fwrite(record, len, 1, stdout);
+
+        free(record);
+    }
+
+    return success;
+}
 
 int extract_main(int argc, char **argv, struct program_meta *meta) {
 
@@ -42,6 +69,8 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
         {"help", no_argument, NULL, 'h' },
         {NULL, 0, NULL, 0 }
     };
+
+    bool read_stdin = false;
 
     char opt;
     // Parse options
@@ -77,11 +106,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
 
     } else if (optind == argc - 1) {
-        MESSAGE(stderr, "missing read id(s)%s", "");
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
+        read_stdin = true;
     }
 
     char *f_in_name = argv[optind];
@@ -96,23 +121,53 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    for (int i = optind + 1; i < argc; ++ i){
+    if (read_stdin) {
+        size_t cap_ids = 10;
+        size_t num_ids = 0;
+        char **ids = (char **) malloc(cap_ids * sizeof *ids);
 
-        int len = 0;
-        fprintf(stderr, "Fetching %s\n", argv[i]);
-        char *record = slow5idx_fetch(index_f, argv[i], &len);
+        char *buf = NULL;
+        size_t cap_buf = 0;
+        while (getline(&buf, &cap_buf, stdin) != -1) {
 
-        if (record == NULL || len < 0) {
-            fprintf(stderr, "Error locating %s\n", argv[i]);
+            size_t len_buf = strlen(buf);
+            char *curr_id = strndup(buf, len_buf);
+            curr_id[len_buf - 1] = '\0'; // Removing '\n'
 
-            slow5idx_destroy(index_f);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
+            if (num_ids >= cap_ids) { 
+                // Double read id list capacity
+                cap_ids *= 2;
+                ids = (char **) realloc(ids, cap_ids * sizeof *ids);
+            }
+            ids[num_ids] = curr_id;
+            ++ num_ids;
+
+            // Reset for next line
+            free(buf);
+            buf = NULL;
+            cap_buf = 0;
+        }
+        // Free even after failure
+        free(buf);
+        buf = NULL;
+
+        for (size_t i = 0; i < num_ids; ++ i) {
+
+            bool success = fetch_record(index_f, ids[i], argv, meta);
+            if (!success) {
+                return EXIT_FAILURE;
+            }
         }
 
-        fwrite(record, len, 1, stdout);
+    } else {
 
-        free(record);
+        for (int i = optind + 1; i < argc; ++ i){
+
+            bool success = fetch_record(index_f, argv[i], argv, meta);
+            if (!success) {
+                return EXIT_FAILURE;
+            }
+        }
     }
 
     slow5idx_destroy(index_f);
