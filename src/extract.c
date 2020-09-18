@@ -22,15 +22,10 @@ bool fetch_record(slow5idx_t *index_f, const char *read_id,
 
     if (record == NULL || len < 0) {
         fprintf(stderr, "Error locating %s\n", read_id);
-
-        slow5idx_destroy(index_f);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
         success = false;
-    }
 
-    if (success) {
+    } else {
         fwrite(record, len, 1, stdout);
-
         free(record);
     }
 
@@ -121,6 +116,8 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
+    bool ret = EXIT_SUCCESS;
+
     if (read_stdin) {
         size_t cap_ids = 10;
         size_t num_ids = 0;
@@ -152,26 +149,24 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
         buf = NULL;
 
         for (size_t i = 0; i < num_ids; ++ i) {
-
             bool success = fetch_record(index_f, ids[i], argv, meta);
             if (!success) {
-                return EXIT_FAILURE;
+                ret = EXIT_FAILURE;
             }
         }
 
     } else {
 
         for (int i = optind + 1; i < argc; ++ i){
-
             bool success = fetch_record(index_f, argv[i], argv, meta);
             if (!success) {
-                return EXIT_FAILURE;
+                ret = EXIT_FAILURE;
             }
         }
     }
 
     slow5idx_destroy(index_f);
 
-    EXIT_MSG(EXIT_SUCCESS, argv, meta);
-    return EXIT_SUCCESS;
+    EXIT_MSG(ret, argv, meta);
+    return ret;
 }
