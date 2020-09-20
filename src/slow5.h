@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <zlib.h>
 
 #ifdef HAVE_EXECINFO_H
     #include <execinfo.h>

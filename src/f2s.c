@@ -7,11 +7,14 @@
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
-    "Convert fast5 file(s) to slow5 or blow5.\n" \
+    "Convert fast5 file(s) to slow5 or (compressed) blow5.\n" \
     "\n" \
     "OPTIONS:\n" \
     "    -b, --binary\n" \
     "        Convert to blow5, rather than the default slow5.\n" \
+    "\n" \
+    "    -c, --compress\n" \
+    "        Convert to compressed blow5.\n" \
     "\n" \
     "    -d, --max-depth=[NUM]\n" \
     "        Set the maximum depth to search directories for fast5 files.\n" \
@@ -31,6 +34,12 @@
 static double init_realtime = 0;
 static uint64_t bad_fast5_file = 0;
 static uint64_t total_reads = 0;
+
+enum FormatOut {
+    OUT_ASCII,
+    OUT_BINARY,
+    OUT_COMPRESS
+};
 
 // adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file 
 /*
@@ -61,9 +70,28 @@ bool has_fast5_ext(const char *f_path) {
     return ret;
 }
 
-void write_data(FILE *f_out, const std::string read_id, const fast5_t f5, const char *fast5_path, bool binary_out) {
+void write_data(void *arg_f_out, enum FormatOut format_out, const std::string read_id, const fast5_t f5, const char *fast5_path) {
 
-    if (binary_out) {
+    // Interpret file parameter
+    if (format_out == OUT_ASCII) {
+        FILE *f_out = (FILE *) arg_f_out;
+
+        fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+                f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
+
+        for (uint64_t j = 0; j < f5.nsample; ++ j) {
+            if (j == f5.nsample - 1) {
+                fprintf(f_out, "%hu", f5.rawptr[j]);
+            } else {
+                fprintf(f_out, "%hu,", f5.rawptr[j]);
+            }
+        }
+
+        fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
+
+    } else if (format_out == OUT_BINARY) {
+        FILE *f_out = (FILE *) arg_f_out;
+
         // write length of string
         size_t read_id_len = read_id.length();
         fwrite(&read_id_len, sizeof read_id_len, 1, f_out); 
@@ -78,24 +106,9 @@ void write_data(FILE *f_out, const std::string read_id, const fast5_t f5, const 
         fwrite(&f5.offset, sizeof f5.offset, 1, f_out);
         fwrite(&f5.range, sizeof f5.range, 1, f_out);
         fwrite(&f5.sample_rate, sizeof f5.sample_rate, 1, f_out);
-    } else {
-        fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
-                f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
-    }
 
-    if (binary_out) {
         fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
-    } else {
-        for (uint64_t j = 0; j < f5.nsample; ++ j) {
-            if (j == f5.nsample - 1) {
-                fprintf(f_out, "%hu", f5.rawptr[j]);
-            } else {
-                fprintf(f_out, "%hu,", f5.rawptr[j]);
-            }
-        }
-    }
 
-    if (binary_out) {
         //todo change to variable
         
         uint64_t num_bases = 0;
@@ -109,13 +122,46 @@ void write_data(FILE *f_out, const std::string read_id, const fast5_t f5, const 
         size_t fast5_path_len = strlen(fast5_path);
         fwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out); 
         fwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
-    } else {
-        fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
+            
+    } else if (format_out == OUT_COMPRESS) {
+        gzFile f_out = (gzFile) arg_f_out;
+
+        // write length of string
+        size_t read_id_len = read_id.length();
+        gzfwrite(&read_id_len, sizeof read_id_len, 1, f_out); 
+
+        // write string
+        const char *read_id_c_str = read_id.c_str();
+        gzfwrite(read_id_c_str, sizeof *read_id_c_str, read_id_len, f_out);
+
+        // write other data
+        gzfwrite(&f5.nsample, sizeof f5.nsample, 1, f_out);
+        gzfwrite(&f5.digitisation, sizeof f5.digitisation, 1, f_out);
+        gzfwrite(&f5.offset, sizeof f5.offset, 1, f_out);
+        gzfwrite(&f5.range, sizeof f5.range, 1, f_out);
+        gzfwrite(&f5.sample_rate, sizeof f5.sample_rate, 1, f_out);
+
+        gzfwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
+
+        //todo change to variable
+        
+        uint64_t num_bases = 0;
+        gzfwrite(&num_bases, sizeof num_bases, 1, f_out);
+
+        const char *sequences = ".";
+        size_t sequences_len = strlen(sequences);
+        gzfwrite(&sequences_len, sizeof sequences_len, 1, f_out); 
+        gzfwrite(sequences, sizeof *sequences, sequences_len, f_out);
+
+        size_t fast5_path_len = strlen(fast5_path);
+        gzfwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out); 
+        gzfwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
     }
+
     free(f5.rawptr);
 }
 
-int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
+int fast5_to_slow5(const char *fast5_path, void *f_out, enum FormatOut format_out) {
 
     total_reads++;
 
@@ -142,7 +188,7 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
                         return 0;
                     }
 
-                    write_data(f_out, read_id, f5, fast5_path, binary_out);
+                    write_data(f_out, format_out, read_id, f5, fast5_path);
                 }
             }
 
@@ -164,7 +210,7 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
                 return 0;
             }
 
-            write_data(f_out, read_id, f5, fast5_path, binary_out);
+            write_data(f_out, format_out, read_id, f5, fast5_path);
         }
     }
     else{
@@ -179,7 +225,7 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, bool binary_out) {
 
 }
 
-void recurse_dir(const char *f_path, FILE *f_out, bool binary_out) {
+void recurse_dir(const char *f_path, void *f_out, enum FormatOut format_out) {
 
     DIR *dir;
     struct dirent *ent;
@@ -191,7 +237,7 @@ void recurse_dir(const char *f_path, FILE *f_out, bool binary_out) {
             // If it has the fast5 extension
             if (has_fast5_ext(f_path)) {
                 // Open FAST5 and convert to SLOW5 into f_out
-                fast5_to_slow5(f_path, f_out, binary_out);
+                fast5_to_slow5(f_path, f_out, format_out);
             }
 
         } else {
@@ -216,7 +262,7 @@ void recurse_dir(const char *f_path, FILE *f_out, bool binary_out) {
                 snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
 
                 // Recurse
-                recurse_dir(sub_f_path, f_out, binary_out);
+                recurse_dir(sub_f_path, f_out, format_out);
 
                 free(sub_f_path);
                 sub_f_path = NULL;
@@ -259,6 +305,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     static struct option long_opts[] = {
         {"binary", no_argument, NULL, 'b' },
+        {"compress", no_argument, NULL, 'c' },
         {"max-depth", required_argument, NULL, 'd' },
         {"help", no_argument, NULL, 'h' },
         {"output", required_argument, NULL, 'o' },
@@ -267,8 +314,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     long max_depth = -1;
-    FILE *f_out = stdout;
-    bool binary_out = false;
+    void *f_out = stdout;
+    enum FormatOut format_out = OUT_ASCII;
 
     // Input arguments
     char *arg_max_depth = NULL;
@@ -276,7 +323,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     char opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "bd:ho:", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "bcd:ho:", long_opts, NULL)) != -1) {
 
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
@@ -285,7 +332,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
         switch (opt) {
             case 'b':
-                binary_out = true;
+                format_out = OUT_BINARY;
+                break;
+            case 'c':
+                format_out = OUT_COMPRESS;
+                f_out = gzdopen(STDOUT_FILENO, "w");
                 break;
             case 'd':
                 arg_max_depth = optarg;
@@ -357,7 +408,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
         // Create new file or
         // Truncate existing file
-        FILE *new_file = fopen(arg_fname_out, "w");
+        void *new_file;
+        if (format_out != OUT_COMPRESS) {
+            new_file = fopen(arg_fname_out, "w");
+        } else {
+            new_file = gzopen(arg_fname_out, "w");
+        }
 
         // An error occured
         if (new_file == NULL) {
@@ -383,16 +439,23 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
 
     // Do the converting
-    if (binary_out) {
-        fprintf(f_out, BLOW5_FILE_FORMAT);
-    } else {
-        fprintf(f_out, SLOW5_FILE_FORMAT);
+    switch (format_out) {
+        case OUT_ASCII:
+            fprintf((FILE *) f_out, SLOW5_FILE_FORMAT);
+            fprintf((FILE *) f_out, SLOW5_HEADER);
+            break;
+        case OUT_BINARY:
+            fprintf((FILE *) f_out, BLOW5_FILE_FORMAT);
+            fprintf((FILE *) f_out, SLOW5_HEADER);
+            break;
+        case OUT_COMPRESS:
+            gzprintf((gzFile) f_out, BLOW5_FILE_FORMAT);
+            gzprintf((gzFile) f_out, SLOW5_HEADER);
     }
-    fprintf(f_out, SLOW5_HEADER);
 
     for (int i = optind; i < argc; ++ i) {
         // Recursive way
-        recurse_dir(argv[i], f_out, binary_out);
+        recurse_dir(argv[i], f_out, format_out);
 
         // TODO iterative way
     }
@@ -400,16 +463,21 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     MESSAGE(stderr, "total reads: %lu, bad fast5: %lu",
             total_reads, bad_fast5_file);
 
-
-    if (f_out != stdout) {
-        // Close output file
-        if (fclose(f_out) == EOF) {
+    // Close output file 
+    if (format_out != OUT_COMPRESS) {
+        if (arg_fname_out != NULL && fclose((FILE *) f_out) == EOF) {
             ERROR("File '%s' failed on closing - %s.",
                   arg_fname_out, strerror(errno));
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         } 
+    } else if (gzclose_w((gzFile) f_out) != Z_OK) {
+        ERROR("File '%s' failed on closing - %s.",
+              arg_fname_out, strerror(errno));
+
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
