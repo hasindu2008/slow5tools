@@ -97,114 +97,107 @@ bool has_fast5_ext(const char *f_path) {
 void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx,
         const std::string read_id, const fast5_t f5, const char *fast5_path) {
 
-    long curr_pos = -1;
+    off_t start_pos = -1;
     if (f_idx != NULL) {
-        curr_pos = ftell(f_out);
-        fprintf(f_idx, "%s\t%ld\t", read_id.c_str(), curr_pos);
+        start_pos = ftello(f_out);
+        fprintf(f_idx, "%s\t%ld\t", read_id.c_str(), start_pos);
     }
 
     // Interpret file parameter
-    if (format_out == OUT_ASCII) {
-        
-        long curr_pos = ftell(f_out);
-        if (f_idx != NULL) {
-            fprintf(f_idx, "%ld\t", curr_pos);
-        }
+    switch (format_out) {
+        case OUT_ASCII: {
 
-        fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
-                f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
+            fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
+                    f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
 
-        for (uint64_t j = 0; j < f5.nsample; ++ j) {
-            if (j == f5.nsample - 1) {
-                fprintf(f_out, "%hu", f5.rawptr[j]);
-            } else {
-                fprintf(f_out, "%hu,", f5.rawptr[j]);
+            for (uint64_t j = 0; j < f5.nsample; ++ j) {
+                if (j == f5.nsample - 1) {
+                    fprintf(f_out, "%hu", f5.rawptr[j]);
+                } else {
+                    fprintf(f_out, "%hu,", f5.rawptr[j]);
+                }
             }
-        }
 
-        fprintf(f_out, "\t%d\t%s\t%s\n", 0, ".", fast5_path);
+            fprintf(f_out, "\t%d\t%s\t%s\n", 0, ".", fast5_path);
+        } break;
 
-    } else if (format_out == OUT_BINARY) {
+        case OUT_BINARY: {
+            // write length of string
+            size_t read_id_len = read_id.length();
+            fwrite(&read_id_len, sizeof read_id_len, 1, f_out); 
 
-        long curr_pos = -1;
-        if (f_idx != NULL) {
-            curr_pos = ftell(f_out);
-            fprintf(f_idx, "%ld\t", curr_pos);
-        }
+            // write string
+            const char *read_id_c_str = read_id.c_str();
+            fwrite(read_id_c_str, sizeof *read_id_c_str, read_id_len, f_out);
 
-        // write length of string
-        size_t read_id_len = read_id.length();
-        fwrite(&read_id_len, sizeof read_id_len, 1, f_out); 
+            // write other data
+            fwrite(&f5.nsample, sizeof f5.nsample, 1, f_out);
+            fwrite(&f5.digitisation, sizeof f5.digitisation, 1, f_out);
+            fwrite(&f5.offset, sizeof f5.offset, 1, f_out);
+            fwrite(&f5.range, sizeof f5.range, 1, f_out);
+            fwrite(&f5.sample_rate, sizeof f5.sample_rate, 1, f_out);
 
-        // write string
-        const char *read_id_c_str = read_id.c_str();
-        fwrite(read_id_c_str, sizeof *read_id_c_str, read_id_len, f_out);
+            fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
 
-        // write other data
-        fwrite(&f5.nsample, sizeof f5.nsample, 1, f_out);
-        fwrite(&f5.digitisation, sizeof f5.digitisation, 1, f_out);
-        fwrite(&f5.offset, sizeof f5.offset, 1, f_out);
-        fwrite(&f5.range, sizeof f5.range, 1, f_out);
-        fwrite(&f5.sample_rate, sizeof f5.sample_rate, 1, f_out);
-
-        fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
-
-        //todo change to variable
-        
-        uint64_t num_bases = 0;
-        fwrite(&num_bases, sizeof num_bases, 1, f_out);
-
-        const char *sequences = ".";
-        size_t sequences_len = strlen(sequences);
-        fwrite(&sequences_len, sizeof sequences_len, 1, f_out); 
-        fwrite(sequences, sizeof *sequences, sequences_len, f_out);
-
-        size_t fast5_path_len = strlen(fast5_path);
-        fwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out); 
-        fwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
-
-        if (f_idx != NULL) {
-            fprintf(f_idx, "%ld\n", ftell(f_out) - curr_pos);
-        }
+            //todo change to variable
             
-    } else if (format_out == OUT_COMPRESS) {
+            uint64_t num_bases = 0;
+            fwrite(&num_bases, sizeof num_bases, 1, f_out);
 
-        // write length of string
-        size_t read_id_len = read_id.length();
-        z_deflate_write(strmp, &read_id_len, sizeof read_id_len, f_out, Z_NO_FLUSH);
+            const char *sequences = ".";
+            size_t sequences_len = strlen(sequences);
+            fwrite(&sequences_len, sizeof sequences_len, 1, f_out); 
+            fwrite(sequences, sizeof *sequences, sequences_len, f_out);
 
-        // write string
-        const char *read_id_c_str = read_id.c_str();
-        z_deflate_write(strmp, read_id_c_str, sizeof *read_id_c_str * read_id_len, f_out, Z_NO_FLUSH);
+            size_t fast5_path_len = strlen(fast5_path);
+            fwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out); 
+            fwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
+         } break;
 
-        // write other data
-        z_deflate_write(strmp, &f5.nsample, sizeof f5.nsample, f_out, Z_NO_FLUSH);
-        z_deflate_write(strmp, &f5.digitisation, sizeof f5.digitisation, f_out, Z_NO_FLUSH);
-        z_deflate_write(strmp, &f5.offset, sizeof f5.offset, f_out, Z_NO_FLUSH);
-        z_deflate_write(strmp, &f5.range, sizeof f5.range, f_out, Z_NO_FLUSH);
-        z_deflate_write(strmp, &f5.sample_rate, sizeof f5.sample_rate, f_out, Z_NO_FLUSH);
+        case OUT_COMPRESS: {
+            // write length of string
+            size_t read_id_len = read_id.length();
+            z_deflate_write(strmp, &read_id_len, sizeof read_id_len, f_out, Z_NO_FLUSH);
 
-        z_deflate_write(strmp, f5.rawptr, sizeof *f5.rawptr * f5.nsample, f_out, Z_NO_FLUSH);
+            // write string
+            const char *read_id_c_str = read_id.c_str();
+            z_deflate_write(strmp, read_id_c_str, sizeof *read_id_c_str * read_id_len, f_out, Z_NO_FLUSH);
 
-        //todo change to variable
-        
-        uint64_t num_bases = 0;
-        z_deflate_write(strmp, &num_bases, sizeof num_bases, f_out, Z_NO_FLUSH);
+            // write other data
+            z_deflate_write(strmp, &f5.nsample, sizeof f5.nsample, f_out, Z_NO_FLUSH);
+            z_deflate_write(strmp, &f5.digitisation, sizeof f5.digitisation, f_out, Z_NO_FLUSH);
+            z_deflate_write(strmp, &f5.offset, sizeof f5.offset, f_out, Z_NO_FLUSH);
+            z_deflate_write(strmp, &f5.range, sizeof f5.range, f_out, Z_NO_FLUSH);
+            z_deflate_write(strmp, &f5.sample_rate, sizeof f5.sample_rate, f_out, Z_NO_FLUSH);
 
-        const char *sequences = ".";
-        size_t sequences_len = strlen(sequences);
-        z_deflate_write(strmp, &sequences_len, sizeof sequences_len, f_out, Z_NO_FLUSH);
-        z_deflate_write(strmp, sequences, sizeof *sequences * sequences_len, f_out, Z_NO_FLUSH);
+            z_deflate_write(strmp, f5.rawptr, sizeof *f5.rawptr * f5.nsample, f_out, Z_NO_FLUSH);
 
-        size_t fast5_path_len = strlen(fast5_path);
-        z_deflate_write(strmp, &fast5_path_len, sizeof fast5_path_len, f_out, Z_NO_FLUSH);
-        z_deflate_write(strmp, fast5_path, sizeof *fast5_path * fast5_path_len, f_out, Z_NO_FLUSH);
+            //todo change to variable
+            
+            uint64_t num_bases = 0;
+            z_deflate_write(strmp, &num_bases, sizeof num_bases, f_out, Z_NO_FLUSH);
+
+            const char *sequences = ".";
+            size_t sequences_len = strlen(sequences);
+            z_deflate_write(strmp, &sequences_len, sizeof sequences_len, f_out, Z_NO_FLUSH);
+            z_deflate_write(strmp, sequences, sizeof *sequences * sequences_len, f_out, Z_NO_FLUSH);
+
+            size_t fast5_path_len = strlen(fast5_path);
+            z_deflate_write(strmp, &fast5_path_len, sizeof fast5_path_len, f_out, Z_NO_FLUSH);
+            z_deflate_write(strmp, fast5_path, sizeof *fast5_path * fast5_path_len, f_out, Z_FINISH);
+
+            int ret = deflateReset(strmp);
+
+            if (ret != Z_OK) {
+                ERROR("deflateReset failed\n%s", ""); // testing
+            }
+        } break;
     }
 
     if (f_idx != NULL) {
-        fprintf(f_idx, "%ld\n", ftell(f_out) - curr_pos);
+        off_t end_pos = ftello(f_out);
+        fprintf(f_idx, "%ld\n", end_pos - start_pos);
     }
-
 
     free(f5.rawptr);
 }
@@ -502,9 +495,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             }
 
             char header[] = BLOW5_FILE_FORMAT SLOW5_HEADER;
-            ret = z_deflate_write(&strm, header, strlen(header), f_out, Z_NO_FLUSH);
+            ret = z_deflate_write(&strm, header, strlen(header), f_out, Z_FINISH);
+            if (ret != Z_STREAM_END) {
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
+                return EXIT_FAILURE;
+            }
+            ret = deflateReset(&strm);
             if (ret != Z_OK) {
-                deflateEnd(&strm);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
             }
@@ -521,15 +518,10 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     MESSAGE(stderr, "total reads: %lu, bad fast5: %lu",
             total_reads, bad_fast5_file);
 
-    // Output gzip footer to file
     if (format_out == OUT_COMPRESS) {
-        char empty[] = "";
-        ret = z_deflate_write(&strm, empty, strlen(empty), f_out, Z_FINISH);
-        deflateEnd(&strm);
+        ret = deflateEnd(&strm);
 
-        if (ret != Z_STREAM_END) {
-            ERROR("footer failed\n%s", ""); // testing
-
+        if (ret != Z_OK) {
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         }

@@ -47,13 +47,19 @@ int main(int argc, char **argv) {
 
         switch (ret) {
             case Z_MEM_ERROR:
-                printf("mem error\n");
+                fprintf(stderr, "mem error\n");
                 break;
             case Z_BUF_ERROR:
-                printf("buf error\n");
+                fprintf(stderr, "buf error\n");
                 break;
             case Z_DATA_ERROR:
-                printf("data error\n");
+                fprintf(stderr, "data error\n");
+                break;
+            case Z_OK:
+                fprintf(stderr, "ok\n");
+                break;
+            case Z_STREAM_END:
+                fprintf(stderr, "stream end\n");
                 break;
         }
 
@@ -67,5 +73,9 @@ int main(int argc, char **argv) {
     
     free(out);
 
-    return ret;
+    if (ret == Z_OK || ret == Z_STREAM_END) {
+        return EXIT_SUCCESS;
+    } else {
+        return EXIT_FAILURE;
+    }
 }
