@@ -66,6 +66,9 @@ int z_deflate_write(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, i
 
     } while (strmp->avail_out == 0);
 
+    free(out);
+    out = NULL;
+
     // If still input to deflate
     if (strmp->avail_in != 0) {
         ERROR("still more input to deflate\n%s", ""); // testing
