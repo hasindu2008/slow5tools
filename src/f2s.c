@@ -6,30 +6,15 @@
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
-    USAGE_MSG \
     "Convert fast5 file(s) to slow5 or (compressed) blow5.\n" \
+    USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -b, --binary\n" \
-    "        Convert to blow5, rather than the default slow5.\n" \
-    "\n" \
-    "    -c, --compress\n" \
-    "        Convert to compressed blow5.\n" \
-    "\n" \
-    "    -d, --max-depth=[NUM]\n" \
-    "        Set the maximum depth to search directories for fast5 files.\n" \
-    "        NUM must be a non-negative integer.\n" \
-    "        Default: No maximum depth.\n" \
-    "\n" \
-    "        E.g. NUM=1: Read the files within a specified directory but\n" \
-    "        not those within subdirectories.\n" \
-    "\n" \
-    "    -h, --help\n" \
-    "        Display this message and exit.\n" \
-    "\n" \
-    "    -o, --output=[FILE]\n" \
-    "        Output slow5 or blow5 contents to FILE.\n" \
-    "        Default: Stdout.\n" \
+    "    -b, --binary           convert to blow5\n" \
+    "    -c, --compress         convert to compressed blow5\n" \
+    "    -h, --help             display this message and exit\n" \
+    "    -i, --index=[FILE]     index converted file to FILE -- not default\n" \
+    "    -o, --output=[FILE]    output converted contents to FILE -- stdout\n" \
 
 static double init_realtime = 0;
 static uint64_t bad_fast5_file = 0;
@@ -54,6 +39,42 @@ bool is_dir(const char *path) {
 }
 */
 
+int z_deflate_write(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, int flush) {
+    int ret = Z_OK;
+
+    strmp->avail_in = size;
+    strmp->next_in = (Bytef *) ptr;
+
+    uLong out_sz = Z_OUT_CHUNK;
+    unsigned char *out = (unsigned char *) malloc(sizeof *out * out_sz);
+
+    do {
+        strmp->avail_out = out_sz;
+        strmp->next_out = out;
+
+        ret = deflate(strmp, flush);
+        if (ret == Z_STREAM_ERROR) {
+            ERROR("deflate failed\n%s", ""); // testing
+            return ret;
+        }
+
+        unsigned have = out_sz - strmp->avail_out;
+        if (fwrite(out, sizeof *out, have, f_out) != have || ferror(f_out)) {
+            ERROR("fwrite\n%s", ""); // testing
+            return Z_ERRNO;
+        }
+
+    } while (strmp->avail_out == 0);
+
+    // If still input to deflate
+    if (strmp->avail_in != 0) {
+        ERROR("still more input to deflate\n%s", ""); // testing
+        return Z_ERRNO;
+    }
+
+    return ret;
+}
+
 bool has_fast5_ext(const char *f_path) {
     bool ret = false;
 
@@ -70,11 +91,22 @@ bool has_fast5_ext(const char *f_path) {
     return ret;
 }
 
-void write_data(void *arg_f_out, enum FormatOut format_out, const std::string read_id, const fast5_t f5, const char *fast5_path) {
+void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx,
+        const std::string read_id, const fast5_t f5, const char *fast5_path) {
+
+    long curr_pos = -1;
+    if (f_idx != NULL) {
+        curr_pos = ftell(f_out);
+        fprintf(f_idx, "%s\t%ld\t", read_id.c_str(), curr_pos);
+    }
 
     // Interpret file parameter
     if (format_out == OUT_ASCII) {
-        FILE *f_out = (FILE *) arg_f_out;
+        
+        long curr_pos = ftell(f_out);
+        if (f_idx != NULL) {
+            fprintf(f_idx, "%ld\t", curr_pos);
+        }
 
         fprintf(f_out, "%s\t%ld\t%.1f\t%.1f\t%.1f\t%.1f\t", read_id.c_str(),
                 f5.nsample,f5.digitisation, f5.offset, f5.range, f5.sample_rate);
@@ -87,10 +119,15 @@ void write_data(void *arg_f_out, enum FormatOut format_out, const std::string re
             }
         }
 
-        fprintf(f_out, "\t%d\t%s\t%s\n",0,".",fast5_path);
+        fprintf(f_out, "\t%d\t%s\t%s\n", 0, ".", fast5_path);
 
     } else if (format_out == OUT_BINARY) {
-        FILE *f_out = (FILE *) arg_f_out;
+
+        long curr_pos = -1;
+        if (f_idx != NULL) {
+            curr_pos = ftell(f_out);
+            fprintf(f_idx, "%ld\t", curr_pos);
+        }
 
         // write length of string
         size_t read_id_len = read_id.length();
@@ -122,46 +159,55 @@ void write_data(void *arg_f_out, enum FormatOut format_out, const std::string re
         size_t fast5_path_len = strlen(fast5_path);
         fwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out); 
         fwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
+
+        if (f_idx != NULL) {
+            fprintf(f_idx, "%ld\n", ftell(f_out) - curr_pos);
+        }
             
     } else if (format_out == OUT_COMPRESS) {
-        gzFile f_out = (gzFile) arg_f_out;
 
         // write length of string
         size_t read_id_len = read_id.length();
-        gzfwrite(&read_id_len, sizeof read_id_len, 1, f_out); 
+        z_deflate_write(strmp, &read_id_len, sizeof read_id_len, f_out, Z_NO_FLUSH);
 
         // write string
         const char *read_id_c_str = read_id.c_str();
-        gzfwrite(read_id_c_str, sizeof *read_id_c_str, read_id_len, f_out);
+        z_deflate_write(strmp, read_id_c_str, sizeof *read_id_c_str * read_id_len, f_out, Z_NO_FLUSH);
 
         // write other data
-        gzfwrite(&f5.nsample, sizeof f5.nsample, 1, f_out);
-        gzfwrite(&f5.digitisation, sizeof f5.digitisation, 1, f_out);
-        gzfwrite(&f5.offset, sizeof f5.offset, 1, f_out);
-        gzfwrite(&f5.range, sizeof f5.range, 1, f_out);
-        gzfwrite(&f5.sample_rate, sizeof f5.sample_rate, 1, f_out);
+        z_deflate_write(strmp, &f5.nsample, sizeof f5.nsample, f_out, Z_NO_FLUSH);
+        z_deflate_write(strmp, &f5.digitisation, sizeof f5.digitisation, f_out, Z_NO_FLUSH);
+        z_deflate_write(strmp, &f5.offset, sizeof f5.offset, f_out, Z_NO_FLUSH);
+        z_deflate_write(strmp, &f5.range, sizeof f5.range, f_out, Z_NO_FLUSH);
+        z_deflate_write(strmp, &f5.sample_rate, sizeof f5.sample_rate, f_out, Z_NO_FLUSH);
 
-        gzfwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
+        z_deflate_write(strmp, f5.rawptr, sizeof *f5.rawptr * f5.nsample, f_out, Z_NO_FLUSH);
 
         //todo change to variable
         
         uint64_t num_bases = 0;
-        gzfwrite(&num_bases, sizeof num_bases, 1, f_out);
+        z_deflate_write(strmp, &num_bases, sizeof num_bases, f_out, Z_NO_FLUSH);
 
         const char *sequences = ".";
         size_t sequences_len = strlen(sequences);
-        gzfwrite(&sequences_len, sizeof sequences_len, 1, f_out); 
-        gzfwrite(sequences, sizeof *sequences, sequences_len, f_out);
+        z_deflate_write(strmp, &sequences_len, sizeof sequences_len, f_out, Z_NO_FLUSH);
+        z_deflate_write(strmp, sequences, sizeof *sequences * sequences_len, f_out, Z_NO_FLUSH);
 
         size_t fast5_path_len = strlen(fast5_path);
-        gzfwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out); 
-        gzfwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
+        z_deflate_write(strmp, &fast5_path_len, sizeof fast5_path_len, f_out, Z_NO_FLUSH);
+        z_deflate_write(strmp, fast5_path, sizeof *fast5_path * fast5_path_len, f_out, Z_NO_FLUSH);
     }
+
+    if (f_idx != NULL) {
+        fprintf(f_idx, "%ld\n", ftell(f_out) - curr_pos);
+    }
+
 
     free(f5.rawptr);
 }
 
-int fast5_to_slow5(const char *fast5_path, void *f_out, enum FormatOut format_out) {
+int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_out, 
+        z_streamp strmp, FILE *f_idx) {
 
     total_reads++;
 
@@ -188,7 +234,7 @@ int fast5_to_slow5(const char *fast5_path, void *f_out, enum FormatOut format_ou
                         return 0;
                     }
 
-                    write_data(f_out, format_out, read_id, f5, fast5_path);
+                    write_data(f_out, format_out, strmp, f_idx, read_id, f5, fast5_path);
                 }
             }
 
@@ -210,7 +256,7 @@ int fast5_to_slow5(const char *fast5_path, void *f_out, enum FormatOut format_ou
                 return 0;
             }
 
-            write_data(f_out, format_out, read_id, f5, fast5_path);
+            write_data(f_out, format_out, strmp, f_idx, read_id, f5, fast5_path);
         }
     }
     else{
@@ -225,7 +271,8 @@ int fast5_to_slow5(const char *fast5_path, void *f_out, enum FormatOut format_ou
 
 }
 
-void recurse_dir(const char *f_path, void *f_out, enum FormatOut format_out) {
+void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out, 
+        z_streamp strmp, FILE *f_idx) {
 
     DIR *dir;
     struct dirent *ent;
@@ -237,7 +284,7 @@ void recurse_dir(const char *f_path, void *f_out, enum FormatOut format_out) {
             // If it has the fast5 extension
             if (has_fast5_ext(f_path)) {
                 // Open FAST5 and convert to SLOW5 into f_out
-                fast5_to_slow5(f_path, f_out, format_out);
+                fast5_to_slow5(f_path, f_out, format_out, strmp, f_idx);
             }
 
         } else {
@@ -262,7 +309,7 @@ void recurse_dir(const char *f_path, void *f_out, enum FormatOut format_out) {
                 snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
 
                 // Recurse
-                recurse_dir(sub_f_path, f_out, format_out);
+                recurse_dir(sub_f_path, f_out, format_out, strmp, f_idx);
 
                 free(sub_f_path);
                 sub_f_path = NULL;
@@ -276,6 +323,9 @@ void recurse_dir(const char *f_path, void *f_out, enum FormatOut format_out) {
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     init_realtime = realtime();
+
+    int ret; // For checking return values of functions
+    z_stream strm; // Declare stream for compression output if specified
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
@@ -306,24 +356,24 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     static struct option long_opts[] = {
         {"binary", no_argument, NULL, 'b' },
         {"compress", no_argument, NULL, 'c' },
-        {"max-depth", required_argument, NULL, 'd' },
         {"help", no_argument, NULL, 'h' },
+        {"index", required_argument, NULL, 'i' },
         {"output", required_argument, NULL, 'o' },
         {NULL, 0, NULL, 0 }
     };
 
     // Default options
-    long max_depth = -1;
-    void *f_out = stdout;
+    FILE *f_out = stdout;
     enum FormatOut format_out = OUT_ASCII;
+    FILE *f_idx = NULL;
 
     // Input arguments
-    char *arg_max_depth = NULL;
     char *arg_fname_out = NULL;
+    char *arg_fname_idx = NULL;
 
     char opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "bcd:ho:", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "bchi:o:", long_opts, NULL)) != -1) {
 
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
@@ -336,10 +386,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 break;
             case 'c':
                 format_out = OUT_COMPRESS;
-                f_out = gzdopen(STDOUT_FILENO, "w");
-                break;
-            case 'd':
-                arg_max_depth = optarg;
                 break;
             case 'h':
                 if (meta->verbose) {
@@ -349,6 +395,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
+            case 'i':
+                arg_fname_idx = optarg; 
+                break; 
             case 'o':
                 arg_fname_out = optarg; 
                 break; 
@@ -356,46 +405,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
-        }
-    }
-
-    // Parse maximum depth argument
-    if (arg_max_depth != NULL) {
-
-        if (meta != NULL && meta->verbose) {
-            VERBOSE("parsing maximum depth%s","");
-        }
-
-        // Check it is a number
-        
-        // Cannot be empty 
-        size_t arg_len = strlen(arg_max_depth);
-        if (arg_len == 0) {
-            MESSAGE(stderr, "invalid max depth -- '%s'", arg_max_depth);
-            fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
-
-        for (size_t i = 0; i < arg_len; ++ i) {
-            // Not a digit and first char is not a '+'
-            if (!isdigit((unsigned char) arg_max_depth[i]) && 
-                    !(i == 0 && arg_max_depth[i] == '+')) {
-                MESSAGE(stderr, "invalid max depth -- '%s'", arg_max_depth);
-                fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-
-                EXIT_MSG(EXIT_FAILURE, argv, meta);
-                return EXIT_FAILURE;
-            }
-        }
-
-        // Parse argument
-        max_depth = strtol(arg_max_depth, NULL, 10);
-        // Check for overflow
-        if (errno == ERANGE) {
-            WARNING("Overflow of max depth '%s'. Setting to %ld instead.", 
-                    arg_max_depth, max_depth);
         }
     }
 
@@ -408,12 +417,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
         // Create new file or
         // Truncate existing file
-        void *new_file;
-        if (format_out != OUT_COMPRESS) {
-            new_file = fopen(arg_fname_out, "w");
-        } else {
-            new_file = gzopen(arg_fname_out, "w");
-        }
+        FILE *new_file;
+        new_file = fopen(arg_fname_out, "w");
 
         // An error occured
         if (new_file == NULL) {
@@ -428,6 +433,32 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    // Parse index argument
+    if (arg_fname_idx != NULL) { 
+
+        if (meta != NULL && meta->verbose) {
+            VERBOSE("parsing index filename%s","");
+        }
+
+        // Create new file or
+        // Truncate existing file
+        FILE *new_file;
+        new_file = fopen(arg_fname_idx, "w");
+
+        // An error occured
+        if (new_file == NULL) {
+            ERROR("File '%s' could not be opened - %s.", 
+                  arg_fname_idx, strerror(errno));
+
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+            
+        } else {
+            f_idx = new_file;
+        }
+    }
+
+
     // Check for remaining files to parse
     if (optind >= argc) {
         MESSAGE(stderr, "missing fast5 files or directories%s", "");
@@ -437,25 +468,49 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
+    if (format_out == OUT_COMPRESS) {
+    }
 
-    // Do the converting
+    // Output slow5 header
     switch (format_out) {
         case OUT_ASCII:
-            fprintf((FILE *) f_out, SLOW5_FILE_FORMAT);
-            fprintf((FILE *) f_out, SLOW5_HEADER);
+            fprintf(f_out, SLOW5_FILE_FORMAT);
+            fprintf(f_out, SLOW5_HEADER);
             break;
         case OUT_BINARY:
-            fprintf((FILE *) f_out, BLOW5_FILE_FORMAT);
-            fprintf((FILE *) f_out, SLOW5_HEADER);
+            fprintf(f_out, BLOW5_FILE_FORMAT);
+            fprintf(f_out, SLOW5_HEADER);
             break;
         case OUT_COMPRESS:
-            gzprintf((gzFile) f_out, BLOW5_FILE_FORMAT);
-            gzprintf((gzFile) f_out, SLOW5_HEADER);
+            // Initialise zlib stream structure
+            strm.zalloc = Z_NULL;
+            strm.zfree = Z_NULL;
+            strm.opaque = Z_NULL;
+            
+            ret = deflateInit2(&strm, 
+                    Z_DEFAULT_COMPRESSION, 
+                    Z_DEFLATED,
+                    MAX_WBITS | GZIP_WBITS, // Gzip compatible compression
+                    Z_MEM_DEFAULT,
+                    Z_DEFAULT_STRATEGY);
+            if (ret != Z_OK) {
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
+                return EXIT_FAILURE;
+            }
+
+            char header[] = BLOW5_FILE_FORMAT SLOW5_HEADER;
+            ret = z_deflate_write(&strm, header, strlen(header), f_out, Z_NO_FLUSH);
+            if (ret != Z_OK) {
+                deflateEnd(&strm);
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
+                return EXIT_FAILURE;
+            }
+            break;
     }
 
     for (int i = optind; i < argc; ++ i) {
         // Recursive way
-        recurse_dir(argv[i], f_out, format_out);
+        recurse_dir(argv[i], f_out, format_out, &strm, f_idx);
 
         // TODO iterative way
     }
@@ -463,18 +518,32 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     MESSAGE(stderr, "total reads: %lu, bad fast5: %lu",
             total_reads, bad_fast5_file);
 
-    // Close output file 
-    if (format_out != OUT_COMPRESS) {
-        if (arg_fname_out != NULL && fclose((FILE *) f_out) == EOF) {
-            ERROR("File '%s' failed on closing - %s.",
-                  arg_fname_out, strerror(errno));
+    // Output gzip footer to file
+    if (format_out == OUT_COMPRESS) {
+        char empty[] = "";
+        ret = z_deflate_write(&strm, empty, strlen(empty), f_out, Z_FINISH);
+        deflateEnd(&strm);
+
+        if (ret != Z_STREAM_END) {
+            ERROR("footer failed\n%s", ""); // testing
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
-        } 
-    } else if (gzclose_w((gzFile) f_out) != Z_OK) {
+        }
+    }
+
+    // Close output file 
+    if (arg_fname_out != NULL && fclose(f_out) == EOF) {
         ERROR("File '%s' failed on closing - %s.",
               arg_fname_out, strerror(errno));
+
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    } 
+
+    if (arg_fname_idx != NULL && fclose(f_idx) == EOF) {
+        ERROR("File '%s' failed on closing - %s.",
+              arg_fname_idx, strerror(errno));
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;

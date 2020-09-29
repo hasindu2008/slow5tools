@@ -63,6 +63,13 @@
 #define BLOW5_EXTENSION "." BLOW5_NAME
 #define BLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "=" BLOW5_NAME "v" VERSION "\n"
 
+/* Set windowBits=MAX_WBITS|GZIP_WBITS to obtain gzip deflation and inflation
+ * Used in deflateInit2 and inflateInit2 from zlib
+ **/
+#define GZIP_WBITS (16)
+#define Z_MEM_DEFAULT (8)
+#define Z_OUT_CHUNK (16384) // 2^14
+
 #include "slow5idx.h" // TODO move?
 
 struct program_meta {
