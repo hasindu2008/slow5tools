@@ -23,7 +23,7 @@ static uint64_t total_reads = 0;
 enum FormatOut {
     OUT_ASCII,
     OUT_BINARY,
-    OUT_COMPRESS
+    OUT_COMP,
 };
 
 // adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file 
@@ -154,7 +154,7 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
             fwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
          } break;
 
-        case OUT_COMPRESS: {
+        case OUT_COMP: {
             // write length of string
             size_t read_id_len = read_id.length();
             z_deflate_write(strmp, &read_id_len, sizeof read_id_len, f_out, Z_NO_FLUSH);
@@ -381,7 +381,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 format_out = OUT_BINARY;
                 break;
             case 'c':
-                format_out = OUT_COMPRESS;
+                format_out = OUT_COMP;
                 break;
             case 'h':
                 if (meta->verbose) {
@@ -464,7 +464,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    if (format_out == OUT_COMPRESS) {
+    if (format_out == OUT_COMP) {
     }
 
     // Output slow5 header
@@ -477,7 +477,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             fprintf(f_out, BLOW5_FILE_FORMAT);
             fprintf(f_out, SLOW5_HEADER);
             break;
-        case OUT_COMPRESS:
+        case OUT_COMP:
             // Initialise zlib stream structure
             strm.zalloc = Z_NULL;
             strm.zfree = Z_NULL;
@@ -518,7 +518,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     MESSAGE(stderr, "total reads: %lu, bad fast5: %lu",
             total_reads, bad_fast5_file);
 
-    if (format_out == OUT_COMPRESS) {
+    if (format_out == OUT_COMP) {
         ret = deflateEnd(&strm);
 
         if (ret != Z_OK) {

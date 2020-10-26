@@ -26,12 +26,11 @@ static inline int isdigit_c(char c) { return isdigit((unsigned char) c); }
 
 
 typedef struct {
-    int fd;     //unused fields are for expandability for binary and compressed
+    int fd;
     FILE *fp;
-    int is_binary;
-    int is_compressed;     //unused fields are for expandability for binary and compressed
-    int is_gzip;     //unused fields are for expandability for binary and compressed
+    slow5_format format;
 } SLOW5_FILE;
+
 
 /**
  * Read one line from a SLOW5 file.
@@ -79,6 +78,90 @@ long slow5_utell(SLOW5_FILE *fp){
     return ftell(fp->fp);
 }
 
+
+/** Return if the file is gzip compressed
+ *  Leaves file pointer unchanged
+ *
+ * @param fp  SLOW5_FILE file handle
+ * @return    `bool` value:
+ *   - false  if the file is not plain GZIP-compressed
+ *   - true   if the file is plain GZIP-compressed
+ */
+bool is_slow5_gzip(SLOW5_FILE *slow5) {
+    bool is_gzip = true;
+
+    long pos = ftell(slow5->fp);
+    if (pos != 0L) {
+        rewind(slow5->fp);
+    }
+
+    unsigned char magic[NUM_MAGIC_BYTES];
+    // Avoid endianness issues
+    for (int i = 0; i < NUM_MAGIC_BYTES; ++ i) {
+        size_t ret = fread(magic + i, sizeof *magic, 1, slow5->fp);
+        if (ret != 1 || magic[i] != GZIP_MAGIC_NUM[i]) {
+            is_gzip = false;
+            break;
+        }
+    }
+
+    // Set file pointer back to previous position
+    fseek(slow5->fp, pos, SEEK_SET);
+
+    return is_gzip;
+}
+
+
+slow5_format slow5_get_format(SLOW5_FILE *slow5) {
+
+    kstring_t linebuffer = { 0, 0, NULL };
+    slow5_format ret = SLOW5_ASCII; // TODO make default 'no format found' format
+
+    if (is_slow5_gzip(slow5)) {
+        ret = SLOW5_COMP;
+    } else {
+
+        // Check for file format type
+        if (slow5_getline(slow5, '\n', &linebuffer) > 0) {
+            // Split "##file_format=[NAME]v[VERSION]"
+
+            bool bad_header = true;
+            char *format = strtok(linebuffer.s, "="); // "#file_format"
+
+            if (format != NULL && strcmp(format, GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER) == 0) {
+                format = strtok(NULL, "="); // "[NAME]v[VERSION]"
+
+                if (format != NULL) {
+                    char *filetype = strtok(format, "v"); // "[NAME]"
+
+                    if (filetype != NULL) {
+                        for (size_t i = 0; i < sizeof(formats)/sizeof(*formats); ++ i) {
+                            if (strcmp(filetype, formats[i].name) == 0) {
+                                bad_header = false;
+                                ret = formats[i].format;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (bad_header) {
+                // TODO deal better with bad header
+                ERROR("bad file type%s", "");
+                exit(1);
+            }
+        }
+    }
+
+    // Place fp to beginning
+    // TODO needed?
+    //slow5_useek(slow5, 0L, SEEK_SET);
+
+    return ret;
+}
+
+
 /**
  * Close the SLOW5_FILE and free all associated resources.
  *
@@ -91,36 +174,25 @@ int slow5_close(SLOW5_FILE *fp){
     return 0;
 }
 
+
 /**
  * Open the specified file for reading or writing.
  */
 SLOW5_FILE* slow5_open(const char* path, const char *mode){
     SLOW5_FILE *fp = (SLOW5_FILE *) malloc(sizeof *fp);
-    fp->is_binary=0;
-    fp->is_compressed=0;
-    fp->is_gzip=0;
-    fp->fp = fopen(path,mode);
-    if(fp->fp==NULL){
+
+    fp->fp = fopen(path, mode);
+    if(fp->fp == NULL){
         ERROR("File %s cannot be opened\n", path);
         exit(1); // TODO exit or return NULL and handle later?
     }
+    fp->fd = fileno(fp->fp);
+
+    fp->format = slow5_get_format(fp);
+
     return fp;
 }
 
-
-
-/** Return the file's compression format
- *
- * @param fp  SLOW5_FILE file handle
- * @return    A small integer matching the corresponding
- *            `enum htsCompression` value:
- *   - 0 / `no_compression` if the file is uncompressed
- *   - 1 / `gzip` if the file is plain GZIP-compressed
- *   - 2 / `customzip`
- */
-int slow5_compression(SLOW5_FILE *fp){
-    return 0;
-}
 
     /**
  *  Position SLOW5_FILE at the uncompressed offset
@@ -190,7 +262,6 @@ struct __slow5idx_t {
     int n, m;
     char **name;
     khash_t(s) *hash;
-    enum slow5idx_format_options format;
 };
 
 #ifndef kroundup32
@@ -231,50 +302,6 @@ static inline int slow5idx_insert_index(slow5idx_t *idx, const char *name, uint6
     return 0;
 }
 
-slow5idx_format_options slow5_get_format(SLOW5_FILE *slow5) {
-
-    kstring_t linebuffer = { 0, 0, NULL };
-    slow5idx_format_options ret = SLOW5IDX_ASCII; // TODO make default 'no format found' format
-
-    // Check for file format type
-    if (slow5_getline(slow5, '\n', &linebuffer) > 0) {
-        // Split "##file_format=[NAME]v[VERSION]"
-        
-        bool bad_header = true;
-        char *format = strtok(linebuffer.s, "="); // "#file_format"
-
-        if (format != NULL && strcmp(format, GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER) == 0) {
-            format = strtok(NULL, "="); // "[NAME]v[VERSION]"
-
-            if (format != NULL) {
-                char *filetype = strtok(format, "v"); // "[NAME]"
-
-                if (filetype != NULL) {
-                    for (size_t i = 0; i < sizeof(formats)/sizeof(*formats); ++ i) {
-                        if (strcmp(filetype, formats[i].name) == 0) {
-                            bad_header = false;
-                            ret = formats[i].format;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (bad_header) {
-            // TODO deal better with bad header
-            ERROR("bad file type%s", "");
-            exit(1);
-        }
-    }
-
-    // Place fp to beginning
-    // TODO needed?
-    //slow5_useek(slow5, 0L, SEEK_SET);
-
-    return ret;
-}
-
 static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
 
     kstring_t name = { 0, 0, NULL };
@@ -287,32 +314,28 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
 
     idx = (slow5idx_t*)calloc(1, sizeof(slow5idx_t));
     idx->hash = kh_init(s);
-    //idx->format = SLOW5IDX_ASCII;
 
     //state = OUT_READ, read_done = 0, line_num = 1;
     slow5_record_offset = cl = slow5_record_size = ll = 0;
 
     linebuffer.l=0;
 
-    idx->format = slow5_get_format(slow5);
-
     // TODO empty file?
-    
-    if (idx->format == SLOW5IDX_ASCII) {
+
+    if (slow5->format == SLOW5_ASCII) {
 
         while (slow5_getline(slow5, '\n', &linebuffer) > 0) {
-            if (linebuffer.s[0] == '#' || linebuffer.s[0] == '\n' || linebuffer.s[0] == '\r') { //comments and header
+            if (linebuffer.s[0] == '#' || linebuffer.s[0] == '\n' || linebuffer.s[0] == '\r') { //comments / header / emptylines
                 //fprintf(stderr,"%s\n",linebuffer.s);
                 //line_num++;
                 linebuffer.l = 0; // TODO why resetting it here
                 slow5_record_offset = slow5_utell(slow5);
-                continue;
 
             } else {
                 char *name = strtok(linebuffer.s, "\t");
                 slow5_record_size = linebuffer.l;
                 //fprintf(stderr,"%s %ld\n",name,slow5_record_offset);
-                if (slow5idx_insert_index(idx, name, slow5_record_size, slow5_record_offset) != 0){
+                if (slow5idx_insert_index(idx, name, slow5_record_size, slow5_record_offset) != 0) {
                     goto slow5idxl;
                 }
                 slow5_record_size = 0;
@@ -323,20 +346,20 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
             }
         }
 
-    } else if (idx->format == SLOW5IDX_BINARY) {
-        
+    } else if (slow5->format == SLOW5_BINARY) {
+
         bool past_header = false;
         while (!past_header && slow5_getline(slow5, '\n', &linebuffer) > 0) {
             if (linebuffer.l > 1 && linebuffer.s[1] != '#') { // column header reached
                 past_header = true;
             }
         }
-        
+
         slow5_record_offset = slow5_utell(slow5);
 
         // Get size of file
         struct stat buf;
-        if (fstat(fileno(slow5->fp), &buf) == -1) {
+        if (fstat(slow5->fd, &buf) == -1) {
             ERROR("fstat failed%s", ""); // TODO change
         }
 
@@ -353,14 +376,14 @@ static slow5idx_t *slow5idx_build_core(SLOW5_FILE *slow5) {
             if (f5read(slow5, &linebuffer, read_id_len) <= 0) {
                 //ERROR
             }
-            
+
             // Get size of record
 
             uint64_t nsamples = 0;
             if (fread(&nsamples, sizeof nsamples, 1, slow5->fp) <= 0) {
                 //ERROR
             }
-            size_t bytes_to_raw_signal = sizeof ((fast5_t){0}).digitisation + 
+            size_t bytes_to_raw_signal = sizeof ((fast5_t){0}).digitisation +
                 sizeof ((fast5_t){0}).offset +
                 sizeof ((fast5_t){0}).range +
                 sizeof ((fast5_t){0}).sample_rate +
@@ -423,17 +446,10 @@ static int slow5idx_save(const slow5idx_t *slow5idx, FILE *fp) {
         assert(k < kh_end(slow5idx->hash));
         x = kh_value(slow5idx->hash, k);
 
-        if (slow5idx->format == SLOW5IDX_ASCII) {
-            snprintf(buf, sizeof(buf),
-                 "\t%" PRIu64 "\t%" PRIu64 "\n",
-                 x.slow5_record_offset, x.slow5_record_size);
-        } else if (slow5idx->format == SLOW5IDX_BINARY) {
-            snprintf(buf, sizeof(buf),
-                 "\t%" PRIu64 "\t%" PRIu64 "\n",
-                 x.slow5_record_offset, x.slow5_record_size);
-        } else {
-            assert(0);
-        }
+        // TODO later add other index formats than ascii
+        snprintf(buf, sizeof(buf),
+             "\t%" PRIu64 "\t%" PRIu64 "\n",
+             x.slow5_record_offset, x.slow5_record_size);
 
         if (fputs(slow5idx->name[i], fp) < 0) return -1;
         if (fputs(buf, fp) < 0) return -1;
@@ -468,16 +484,16 @@ static slow5idx_t *slow5idx_read(FILE *fp, const char *fname, int format)
             *p = 0; ++p;
         }
 
-        if (format == SLOW5IDX_ASCII || format == SLOW5IDX_BINARY) {
+        //if (format == SLOW5IDX_ASCII || format == SLOW5IDX_BINARY) {
             n = sscanf(p, "%" SCNu64 "%" SCNu64 "", &slow5_record_offset,  &slow5_record_size);
 
             if (n != 2) {
                 ERROR("Could not understand SLOW5 index %s line %zd", fname, lnum);
                 goto slow5idxl;
             }
-        } else {
+        /*} else {
             assert(0);
-        }
+        }*/
 
         if (slow5idx_insert_index(slow5idx, buf, slow5_record_size,  slow5_record_offset) != 0) {
             goto slow5idxl;
@@ -507,7 +523,7 @@ void slow5idx_destroy(slow5idx_t *slow5idx)
 }
 
 
-static int slow5idx_build3_core(const char *fn, const char *fnslow5idx, const char *fngzi)
+static int slow5idx_build3_core(const char *fname_s5, const char *fname_s5i, const char *fname_gzi)
 {
     kstring_t slow5idx_kstr = { 0, 0, NULL };
     kstring_t gzi_kstr = { 0, 0, NULL };
@@ -517,79 +533,85 @@ static int slow5idx_build3_core(const char *fn, const char *fnslow5idx, const ch
     int save_errno, res;
     const char *file_type;
 
-    slow5 = slow5_open(fn, "r");
+    slow5 = slow5_open(fname_s5, "r");
 
-    if ( !slow5 ) {
-        ERROR("Failed to open the file %s", fn);
+    if (!slow5) {
+        ERROR("Failed to open the file %s", fname_s5);
         goto slow5idxl;
     }
 
-    if ( slow5->is_compressed ) {
+    // TODO decide if necessary
+    /*
+    if (slow5->is_compressed) {
         if (slow5_index_build_init(slow5) != 0) {
             ERROR("%s","Failed to allocate slow5 index");
             goto slow5idxl;
         }
     }
+    */
 
     slow5idx = slow5idx_build_core(slow5);
 
-    if ( !slow5idx ) {
+    if (!slow5idx) {
+        /*
         if (slow5->is_compressed && slow5->is_gzip) {
             ERROR("%s","Cannot index files compressed with gzip, please use bgzip");
         }
+        */
         goto slow5idxl;
     }
 
-    if (slow5idx->format == SLOW5IDX_ASCII) {
+    if (!fname_s5i) {
+        if (ksprintf(&slow5idx_kstr, "%s.index", fname_s5) < 0) goto slow5idxl;
+        fname_s5i = slow5idx_kstr.s;
+    }
+
+    if (slow5idx->slow5->format == SLOW5_ASCII) {
         file_type   = "SLOW5_ASCII";
-        if (!fnslow5idx) {
-            if (ksprintf(&slow5idx_kstr, "%s.s5i", fn) < 0) goto slow5idxl;
-            fnslow5idx = slow5idx_kstr.s;
-        }
-    } else if (slow5idx->format == SLOW5IDX_BINARY) {
+    } else if (slow5idx->slow5->format == SLOW5_BINARY) {
         file_type   = "SLOW5_BINARY";
-        if (!fnslow5idx) {
-            if (ksprintf(&slow5idx_kstr, "%s.b5i", fn) < 0) goto slow5idxl;
-            fnslow5idx = slow5idx_kstr.s;
-        }
     } else {
         assert(0);
     }
 
-    if (!fngzi) {
-        if (ksprintf(&gzi_kstr, "%s.gzi", fn) < 0) goto slow5idxl;
-        fngzi = gzi_kstr.s;
+    /*
+    if (!fname_gzi) {
+        if (ksprintf(&gzi_kstr, "%s.gzi", fname_s5) < 0) goto slow5idxl;
+        fname_gzi = gzi_kstr.s;
     }
+    */
 
+    /*
     if ( slow5->is_compressed ) {
-        if (slow5_index_dump(slow5, fngzi, NULL) < 0) {
-            ERROR("Failed to make slow5 index %s", fngzi);
+        if (slow5_index_dump(slow5, fname_gzi, NULL) < 0) {
+            ERROR("Failed to make slow5 index %s", fname_gzi);
             goto slow5idxl;
         }
     }
+    */
 
     res = slow5_close(slow5);
     slow5 = NULL;
 
     if (res < 0) {
-        ERROR("Error on closing %s : %s", fn, strerror(errno));
+        ERROR("Error on closing %s : %s", fname_s5, strerror(errno));
         goto slow5idxl;
     }
 
-    fp = fopen(fnslow5idx, "wb");
+    fp = fopen(fname_s5i, "wb");
 
-    if ( !fp ) {
-        ERROR("Failed to open %s index %s : %s", file_type, fnslow5idx, strerror(errno));
+    if (!fp) {
+        ERROR("Failed to open %s index %s : %s", file_type, fname_s5i, strerror(errno));
         goto slow5idxl;
     }
 
     if (slow5idx_save(slow5idx, fp) != 0) {
-        ERROR("Failed to write %s index %s : %s", file_type, fnslow5idx, strerror(errno));
+        ERROR("Failed to write %s index %s : %s", file_type, fname_s5i, strerror(errno));
         goto slow5idxl;
     }
 
     if (fclose(fp) != 0) {
-        ERROR("Failed on closing %s index %s : %s", file_type, fnslow5idx, strerror(errno));
+        ERROR("Failed on closing %s index %s : %s", file_type, fname_s5i, strerror(errno));
         goto slow5idxl;
     }
 
@@ -609,18 +631,18 @@ static int slow5idx_build3_core(const char *fn, const char *fnslow5idx, const ch
 }
 
 //this wrapper is there for future expandability for a library API to allow custom file extensions and multiplexing
-int slow5idx_build3(const char *fn, const char *fnslow5idx, const char *fngzi) {
-    return slow5idx_build3_core(fn, fnslow5idx, fngzi);
+int slow5idx_build3(const char *fname_s5, const char *fname_s5i, const char *fname_gzi) {
+    return slow5idx_build3_core(fname_s5, fname_s5i, fname_gzi);
 }
 
 //this wrapper is there for future expandability for a library API to allow custom file extensions and multiplexing
-int slow5idx_build(const char *fn) {
-    return slow5idx_build3(fn, NULL, NULL);
+int slow5idx_build(const char *fname_s5) {
+    return slow5idx_build3(fname_s5, NULL, NULL);
 }
 
 
-static slow5idx_t *slow5idx_load3_core(const char *fn, const char *fnslow5idx, const char *fngzi,
-                   int flags, int format)
+static slow5idx_t *slow5idx_load3_core(const char *fname_s5, const char *fname_s5i, const char *fname_gzi,
+                   int flags)
 {
     kstring_t slow5idx_kstr = { 0, 0, NULL };
     kstring_t gzi_kstr = { 0, 0, NULL };
@@ -630,50 +652,50 @@ static slow5idx_t *slow5idx_load3_core(const char *fn, const char *fnslow5idx, c
     const char *file_type;
 
     // TODO refactor this
-    SLOW5_FILE *slow5 = slow5_open(fn, "rb");
-    format = slow5_get_format(slow5);
+    SLOW5_FILE *slow5 = slow5_open(fname_s5, "rb");
 
-    if (format == SLOW5IDX_ASCII) {
-        file_type   = "SLOW5_ASCII";
-        if (fnslow5idx == NULL) {
-            if (ksprintf(&slow5idx_kstr, "%s.s5i", fn) < 0) goto slow5idxl;
-            fnslow5idx = slow5idx_kstr.s;
-        }
-    } else if (format == SLOW5IDX_BINARY) {
+    if (fname_s5i == NULL) {
+        if (ksprintf(&slow5idx_kstr, "%s.index", fname_s5) < 0) goto slow5idxl;
+        fname_s5i = slow5idx_kstr.s;
+    }
+
+    if (slow5->format == SLOW5_ASCII) {
+        file_type   = "SLOW5_ASCII"; // TODO refactor
+    } else if (slow5->format == SLOW5_BINARY) {
         file_type   = "SLOW5_BINARY";
-        if (fnslow5idx == NULL) {
-            if (ksprintf(&slow5idx_kstr, "%s.b5i", fn) < 0) goto slow5idxl;
-            fnslow5idx = slow5idx_kstr.s;
-        }
+    } else if (slow5->format == SLOW5_COMP) {
+        file_type   = "SLOW5_COMP";
     } else {
         assert(0);
     }
 
-    if (fn == NULL)
+    if (fname_s5 == NULL) // TODO move this stupid line
         return NULL;
 
-    if (fngzi == NULL) {
-        if (ksprintf(&gzi_kstr, "%s.gzi", fn) < 0) goto slow5idxl;
-        fngzi = gzi_kstr.s;
+    /*
+    if (fname_gzi == NULL) {
+        if (ksprintf(&gzi_kstr, "%s.gzi", fname_s5) < 0) goto slow5idxl;
+        fname_gzi = gzi_kstr.s;
     }
+    */
 
-    fp = fopen(fnslow5idx, "rb");
+    fp = fopen(fname_s5i, "rb");
 
     if (fp) {
         // index file present, check if a compressed index is needed
-        FILE *gz = NULL;
-        SLOW5_FILE *slow5 = slow5_open(fn, "rb");
+        //FILE *gz = NULL;
 
-        if (slow5 == 0) {
-            ERROR("Failed to open %s file %s", file_type, fn);
+        if (slow5 == NULL) {
+            ERROR("Failed to open %s file %s", file_type, fname_s5);
             goto slow5idxl;
         }
 
+        /*
         if (slow5_compression(slow5) == 2) { // SLOW5_FILE compression
-            if ((gz = fopen(fngzi, "rb")) == 0) {
+            if ((gz = fopen(fname_gzi, "rb")) == 0) {
 
                 if (!(flags & SLOW5IDX_CREATE) || errno != ENOENT) {
-                    ERROR("Failed to open %s index %s: %s", file_type, fngzi, strerror(errno));
+                    ERROR("Failed to open %s index %s: %s", file_type, fname_gzi, strerror(errno));
                     slow5_close(slow5);
                     goto slow5idxl;
                 }
@@ -682,66 +704,69 @@ static slow5idx_t *slow5idx_load3_core(const char *fn, const char *fnslow5idx, c
                 res = fclose(fp); // closed as going to be re-indexed
 
                 if (res < 0) {
-                    ERROR("Failed on closing %s index %s : %s", file_type, fnslow5idx, strerror(errno));
+                    ERROR("Failed on closing %s index %s : %s", file_type, fname_s5i, strerror(errno));
                     goto slow5idxl;
                 }
             } else {
                 res = fclose(gz);
 
                 if (res < 0) {
-                    ERROR("Failed on closing %s index %s : %s", file_type, fngzi, strerror(errno));
+                    ERROR("Failed on closing %s index %s : %s", file_type, fname_gzi, strerror(errno));
                     goto slow5idxl;
                 }
             }
         }
+        */
 
         slow5_close(slow5);
     }
 
     if (fp == 0 || gzi_index_needed) {
         if (!(flags & SLOW5IDX_CREATE) || errno != ENOENT) {
-            ERROR("Failed to open %s index %s: %s", file_type, fnslow5idx, strerror(errno));
+            ERROR("Failed to open %s index %s: %s", file_type, fname_s5i, strerror(errno));
             goto slow5idxl;
         }
 
         INFO("Build %s index", file_type);
 
-        if (slow5idx_build3_core(fn, fnslow5idx, fngzi) < 0) {
+        if (slow5idx_build3_core(fname_s5, fname_s5i, fname_gzi) < 0) {
             goto slow5idxl;
         }
 
-        fp = fopen(fnslow5idx, "rb");
+        fp = fopen(fname_s5i, "rb");
         if (fp == 0) {
-            ERROR("Failed to open %s index %s: %s", file_type, fnslow5idx, strerror(errno));
+            ERROR("Failed to open %s index %s: %s", file_type, fname_s5i, strerror(errno));
             goto slow5idxl;
         }
     }
 
-    slow5idx = slow5idx_read(fp, fnslow5idx, format);
+    slow5idx = slow5idx_read(fp, fname_s5i, slow5->format);
     if (slow5idx == NULL) {
-        ERROR("Failed to read %s index %s", file_type, fnslow5idx);
+        ERROR("Failed to read %s index %s", file_type, fname_s5i);
         goto slow5idxl;
     }
 
     res = fclose(fp);
     fp = NULL;
     if (res < 0) {
-        ERROR("Failed on closing %s index %s : %s", file_type, fnslow5idx, strerror(errno));
+        ERROR("Failed on closing %s index %s : %s", file_type, fname_s5i, strerror(errno));
         goto slow5idxl;
     }
 
-    slow5idx->slow5 = slow5_open(fn, "rb");
+    slow5idx->slow5 = slow5_open(fname_s5, "rb");
     if (slow5idx->slow5 == 0) {
-        ERROR("Failed to open %s file %s", file_type, fn);
+        ERROR("Failed to open %s file %s", file_type, fname_s5);
         goto slow5idxl;
     }
 
+    /*
     if ( slow5idx->slow5->is_compressed==1 ) {
-        if ( slow5_index_load(slow5idx->slow5, fngzi, NULL) < 0 ) {
-            ERROR("Failed to load .gzi index: %s", fngzi);
+        if ( slow5_index_load(slow5idx->slow5, fname_gzi, NULL) < 0 ) {
+            ERROR("Failed to load .gzi index: %s", fname_gzi);
             goto slow5idxl;
         }
     }
+    */
     free(slow5idx_kstr.s);
     free(gzi_kstr.s);
     return slow5idx;
@@ -755,15 +780,15 @@ static slow5idx_t *slow5idx_load3_core(const char *fn, const char *fnslow5idx, c
 }
 
 
-slow5idx_t *slow5idx_load3(const char *fn, const char *fnslow5idx, const char *fngzi,
+slow5idx_t *slow5idx_load3(const char *fname_s5, const char *fname_s5i, const char *fname_gzi,
                    int flags) {
-    return slow5idx_load3_core(fn, fnslow5idx, fngzi, flags, SLOW5IDX_ASCII); // TODO change format option
+    return slow5idx_load3_core(fname_s5, fname_s5i, fname_gzi, flags);
 }
 
 
-slow5idx_t *slow5idx_load(const char *fn)
+slow5idx_t *slow5idx_load(const char *fname_s5)
 {
-    return slow5idx_load3(fn, NULL, NULL, SLOW5IDX_CREATE);
+    return slow5idx_load3(fname_s5, NULL, NULL, SLOW5IDX_CREATE);
 }
 
 
@@ -793,7 +818,7 @@ static char *slow5idx_retrieve(const slow5idx_t *slow5idx, const slow5idx1_t *va
 
     kstring_t linebuffer = { 0, 0, NULL };
     //ret=slow5_getline(slow5idx->slow5, '\n', &linebuffer);
-    
+
     // testing
     /*printf("%ld\n", offset);
     ret = slow5_useek(slow5idx->slow5,
@@ -819,10 +844,18 @@ static char *slow5idx_retrieve(const slow5idx_t *slow5idx, const slow5idx1_t *va
         return NULL;
     }
 
+    // If the entry is compressed, decompress it to be returned
+    if (slow5idx->slow5->format == SLOW5_COMP) {
+        s = (char *) z_inflate_buf(linebuffer.s, &linebuffer.l);
+        free(linebuffer.s);
+    } else {
+        s=linebuffer.s;
+    }
+
     l=linebuffer.l;
-    s=linebuffer.s;
     //s[l] = '\0';
     *len = l < INT_MAX ? l : INT_MAX;
+
     return s;
 }
 
@@ -914,12 +947,12 @@ static int slow5idx_get_val(const slow5idx_t *slow5idx, const char *str, int *le
 }
 
 
-char *slow5idx_fetch(const slow5idx_t *slow5idx, const char *str, int *len)
+char *slow5idx_fetch(const slow5idx_t *slow5idx, const char *readid, int *len)
 {
     slow5idx1_t val;
     long beg, end;
 
-    if (slow5idx_get_val(slow5idx, str, len, &val, &beg, &end)) {
+    if (slow5idx_get_val(slow5idx, readid, len, &val, &beg, &end)) {
         return NULL;
     }
 

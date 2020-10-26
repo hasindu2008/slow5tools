@@ -72,6 +72,24 @@
 
 #include "slow5idx.h" // TODO move?
 
+/// File formats to be dealing with
+enum slow5_format {
+    SLOW5_ASCII,
+    SLOW5_BINARY,
+    SLOW5_COMP,
+};
+
+struct format_map {
+    const char *name;
+    enum slow5_format format;
+};
+
+static const struct format_map formats[] = {
+    { SLOW5_NAME, SLOW5_ASCII },
+    { BLOW5_NAME, SLOW5_BINARY},
+};
+
+
 struct program_meta {
     bool debug;
     bool verbose;

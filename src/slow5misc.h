@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include <math.h>
 
+#define NUM_MAGIC_BYTES (2)
+const int GZIP_MAGIC_NUM[] = { 0x1f, 0x8b };
+
 // taken from minimap2/misc
 static inline double realtime(void) {
     struct timeval tp;

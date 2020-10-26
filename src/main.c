@@ -16,27 +16,19 @@
     USAGE_MSG \
     "Tools for using slow5 files.\n" \
     "\n" \
-    "COMMANDS:\n" \
-    "    f2s - convert fast5 file(s) to slow5\n" \
-    "    s2f - convert slow5 file(s) to fast5\n" \
-    "    index - create a slow5 or blow5 index file.\n" \
-    "    extract - display the read entry for each specified read id.\n" \
-    "\n" \
-    "ARGS:\n" \
-    "    Try '%s [COMMAND] --help' for more information.\n" \
-    "\n" \
     "OPTIONS:\n" \
-    "    -d, --debug\n" \
-    "        Output debug information.\n" \
+    "    -d, --debug      Output debug information.\n" \
+    "    -h, --help       Display this message and exit.\n" \
+    "    -v, --verbose    Explain what is being done.\n" \
+    "    -V, --version    Output version information and exit.\n" \
     "\n" \
-    "    -h, --help\n" \
-    "        Display this message and exit.\n" \
+    "COMMANDS:\n" \
+    "    f2s        convert fast5 file(s) to slow5\n" \
+    "    s2f        convert slow5 file(s) to fast5\n" \
+    "    index      create a slow5 or blow5 index file.\n" \
+    "    extract    display the read entry for each specified read id.\n" \
     "\n" \
-    "    -v, --verbose\n" \
-    "        Explain what is being done.\n" \
-    "\n" \
-    "    -V, --version\n" \
-    "        Output version information and exit.\n"
+    "ARGS:    Try '%s [COMMAND] --help' for more information.\n"
 
 // Backtrace buffer threshold of functions
 #define BT_BUF_SIZE (100)
