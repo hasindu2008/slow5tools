@@ -956,6 +956,8 @@ char *slow5idx_fetch(const slow5idx_t *slow5idx, const char *readid, int *len)
         return NULL;
     }
 
+    printf("hello!\n"); // TESTING
+
     // now retrieve the slow5 record
     return slow5idx_retrieve(slow5idx, &val, val.slow5_record_offset, beg, end, len);
 }

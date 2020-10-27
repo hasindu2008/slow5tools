@@ -15,6 +15,7 @@ OBJ = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/slow5idx.o \
 	  $(BUILD_DIR)/kstring.o \
 	  $(BUILD_DIR)/misc.o \
+	  $(BUILD_DIR)/thread.o \
 
 
 PREFIX = /usr/local
@@ -47,6 +48,9 @@ $(BUILD_DIR)/kstring.o: src/kstring.c src/kstring.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/misc.o: src/misc.c
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/thread.o: src/thread.c src/slow5idx.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 

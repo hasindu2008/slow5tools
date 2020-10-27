@@ -57,7 +57,7 @@
     "raw_signal\t" \
     "num_bases\t" \
     "sequence\t" \
-    "fast5_path\n" 
+    "fast5_path\n"
 
 #define BLOW5_NAME "blow5"
 #define BLOW5_EXTENSION "." BLOW5_NAME

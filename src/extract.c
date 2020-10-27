@@ -1,4 +1,5 @@
 #include "slow5.h"
+#include "thread.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... SLOW5|BLOW5_FILE [READ_ID]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -11,7 +12,25 @@
     "    -h, --help\n" \
     "        Display this message and exit.\n" \
 
-bool fetch_record(slow5idx_t *index_f, const char *read_id, 
+void work_per_single_read(core_t *core, db_t *db, int32_t i) {
+
+    char *id = db->read_id[i];
+    fprintf(stderr, "Fetching %s\n", id); // TODO print here or during ordered loop later?
+
+    int len = 0;
+    char *record = slow5idx_fetch(core->index_f, id, &len);
+
+    if (record == NULL || len < 0) {
+        fprintf(stderr, "Error locating %s\n", id);
+    }
+
+    db->read_record[i].buf = record;
+    db->read_record[i].len = len;
+
+    free(id);
+}
+
+bool fetch_record(slow5idx_t *index_f, const char *read_id,
         char **argv, struct program_meta *meta) {
 
     bool success = true;
@@ -85,7 +104,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
-            default: // case '?' 
+            default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
@@ -96,7 +115,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     if (optind >= argc) {
         MESSAGE(stderr, "missing slow5 or blow5 file%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        
+
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
 
@@ -119,41 +138,70 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     bool ret = EXIT_SUCCESS;
 
     if (read_stdin) {
-        size_t cap_ids = 10;
-        size_t num_ids = 0;
-        char **ids = (char **) malloc(cap_ids * sizeof *ids);
 
-        char *buf = NULL;
-        size_t cap_buf = 0;
-        while (getline(&buf, &cap_buf, stdin) != -1) {
+        // Multithreading structures
 
-            size_t len_buf = strlen(buf);
-            char *curr_id = strndup(buf, len_buf);
-            curr_id[len_buf - 1] = '\0'; // Removing '\n'
+        core_t core;
+        core.num_thread = NUM_THREADS;
 
-            if (num_ids >= cap_ids) { 
-                // Double read id list capacity
-                cap_ids *= 2;
-                ids = (char **) realloc(ids, cap_ids * sizeof *ids);
+        db_t db;
+        size_t cap_ids = READ_ID_INIT_CAPACITY;
+        db.read_id = (char **) malloc(cap_ids * sizeof *db.read_id);
+        db.read_record = (struct Record *) malloc(cap_ids * sizeof *db.read_record);
+
+        bool end_of_file = false;
+        while (!end_of_file) {
+
+            size_t num_ids = 0;
+
+            while (num_ids < READ_ID_BATCH_CAPACITY) {
+
+                char *buf = NULL;
+                size_t cap_buf = 0;
+                ssize_t nread;
+                if ((nread = getline(&buf, &cap_buf, stdin)) == -1) {
+                    end_of_file = true;
+                    free(buf);
+                    break;
+                }
+
+                size_t len_buf = nread - 1; // Ignore '\n'
+                char *curr_id = strndup(buf, len_buf);
+                curr_id[len_buf - 1] = '\0'; // Add string terminator '\0'
+                free(buf); // Free buffer
+
+                if (num_ids >= cap_ids) {
+                    // Double read id list capacity
+                    cap_ids *= 2;
+                    db.read_id = (char **) realloc(db.read_id, cap_ids * sizeof *db.read_id);
+                    db.read_record = (struct Record *) realloc(db.read_record, cap_ids * sizeof *db.read_record);
+                }
+                db.read_id[num_ids] = curr_id;
+                ++ num_ids;
             }
-            ids[num_ids] = curr_id;
-            ++ num_ids;
 
-            // Reset for next line
-            free(buf);
-            buf = NULL;
-            cap_buf = 0;
-        }
-        // Free even after failure
-        free(buf);
-        buf = NULL;
+            db.n_batch = num_ids;
+            // Fetch records for read ids in the batch
+            work_db(&core, &db);
 
-        for (size_t i = 0; i < num_ids; ++ i) {
-            bool success = fetch_record(index_f, ids[i], argv, meta);
-            if (!success) {
-                ret = EXIT_FAILURE;
+            // Print records
+            for (size_t i = 0; i < num_ids; ++ i) {
+                char *record = db.read_record[i].buf;
+                int len = db.read_record[i].len;
+
+                if (record == NULL || len < 0) {
+                    ret = EXIT_FAILURE;
+                } else {
+                    fwrite(record, len, 1, stdout);
+                    free(record);
+                }
             }
+
         }
+
+        // Free everything
+        free(db.read_id);
+        free(db.read_record);
 
     } else {
 

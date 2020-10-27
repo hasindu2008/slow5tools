@@ -19,16 +19,16 @@
 
 #define NEG_CHK(ret) neg_chk(ret, __func__, __FILE__, __LINE__ - 1)
 
-/* core data structure  taht has information pthat are global to all the threads */
+/* core data structure that has information that are global to all the threads */
 typedef struct {
     int32_t num_thread;
 } core_t;
 
 /* data structure for a batch of reads*/
 typedef struct {
-    int64_t n_batch;    //number of records in this batch
-    char** read_id;     //the list of read ids (input)
-    char** read_record; //the list of read records (output) //change to whatever the data type
+    int64_t n_batch;    // number of records in this batch
+    char **read_id;     // the list of read ids (input)
+    char **read_record; // the list of read records (output) //change to whatever the data type
 } db_t;
 
 
@@ -93,7 +93,7 @@ void* pthread_single(void* voidargs) {
 #else
     pthread_arg_t* all_args = (pthread_arg_t*)(args->all_pthread_args);
     //adapted from kthread.c in minimap2
-	for (;;) {
+    for (;;) {
 		i = __sync_fetch_and_add(&args->starti, 1);
 		if (i >= args->endi) {
             break;
@@ -159,9 +159,16 @@ void work_per_single_read(core_t* core,db_t* db, int32_t i) {
 
     char *read_id = db->read_id[i];
 
-    //read the the read_id frm the disk, decompress and save the record. Dummy NULL in this example.
-    db->read_record[i] = NULL;
-
+    //read the the read_id frm the disk, decompress and save the record.
+    for (int j = 0; j < 10000; ++ j) {
+        char *str = malloc(100);
+        sprintf(str, "out=%s", db->read_id[i]);
+        db->read_record[i] = str; // TESTING
+        free(str);
+    }
+    char *str = malloc(100);
+    sprintf(str, "out=%s", db->read_id[i]);
+    db->read_record[i] = str; // TESTING
 }
 
 /* process all reads in the given batch db */
@@ -182,15 +189,29 @@ void work_db(core_t* core, db_t* db){
 }
 
 
-int main(){
+int main(void) {
 
     core_t core;
     db_t db;
 
     core.num_thread = 4;
-    db.n_batch=1000;
+    db.n_batch = 1000;
 
-    work_db(&core,&db);
+    db.read_id = malloc(db.n_batch * sizeof *db.read_id);
+    db.read_record = malloc(db.n_batch * sizeof *db.read_record);
+    for (int i = 0; i < db.n_batch; ++ i) {
+        db.read_id[i] = malloc(100 * sizeof **db.read_id);
+        sprintf(db.read_id[i], "id%d", i);
+    }
+
+    work_db(&core, &db);
+
+    for (int i = 0; i < db.n_batch; ++ i) {
+        free(db.read_id[i]);
+        free(db.read_record[i]);
+    }
+    free(db.read_id);
+    free(db.read_record);
 
     return 0;
 }
