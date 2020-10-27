@@ -15,9 +15,9 @@
 void work_per_single_read(core_t *core, db_t *db, int32_t i) {
 
     char *id = db->read_id[i];
-    fprintf(stderr, "Fetching %s\n", id); // TODO print here or during ordered loop later?
 
     int len = 0;
+    fprintf(stderr, "Fetching %s\n", id); // TODO print here or during ordered loop later?
     char *record = slow5idx_fetch(core->index_f, id, &len);
 
     if (record == NULL || len < 0) {
@@ -139,10 +139,11 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
 
     if (read_stdin) {
 
-        // Multithreading structures
+        // Setup multithreading structures
 
         core_t core;
         core.num_thread = NUM_THREADS;
+        core.index_f = index_f;
 
         db_t db;
         size_t cap_ids = READ_ID_INIT_CAPACITY;
@@ -167,7 +168,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
 
                 size_t len_buf = nread - 1; // Ignore '\n'
                 char *curr_id = strndup(buf, len_buf);
-                curr_id[len_buf - 1] = '\0'; // Add string terminator '\0'
+                curr_id[len_buf] = '\0'; // Add string terminator '\0'
                 free(buf); // Free buffer
 
                 if (num_ids >= cap_ids) {

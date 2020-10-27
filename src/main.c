@@ -177,6 +177,7 @@ int main(const int argc, char **argv){
             if (optind_copy < argc) {
                 bool cmd_found = false;
                 char *combined_name = NULL;
+                char **cmd_argv;
 
                 for (size_t i = 0; i < num_cmds; ++ i) {
                     if (strcmp(argv[optind_copy], cmds[i].name) == 0) {
@@ -196,7 +197,7 @@ int main(const int argc, char **argv){
                         combined_name[combined_len - 1] = '\0';
 
                         // Creating new argv array for the command program
-                        char **cmd_argv = (char **) malloc(argc * sizeof *cmd_argv);
+                        cmd_argv = (char **) malloc(argc * sizeof *cmd_argv);
                         memcpy(cmd_argv, argv, argc * sizeof *cmd_argv);
                         cmd_argv[optind_copy] = combined_name;
 
@@ -219,6 +220,8 @@ int main(const int argc, char **argv){
                 } else {
                     free(combined_name);
                     combined_name = NULL;
+                    free(cmd_argv);
+                    cmd_argv = NULL;
                 }
 
             // No remaining non-option arguments

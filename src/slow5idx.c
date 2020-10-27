@@ -67,6 +67,19 @@ static inline size_t f5read(SLOW5_FILE *fp, kstring_t *str, size_t num_elements)
     return ret;
 }
 
+static inline size_t f5pread(SLOW5_FILE *fp, off_t offset, kstring_t *str, size_t num_elements){
+    str->m = num_elements;
+    // TODO need to free?
+    str->s = (char *)malloc(sizeof(char)*str->m);
+    size_t ret=pread(fp->fd, str->s,sizeof *str->s * num_elements, offset);
+    str->l = ret;
+    if(ret!=num_elements){
+        fprintf(stderr,"Reading error has occurred :%s\n",strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    return ret;
+}
+
 /**
  *  Position in uncompressed SLOW5_FILE
  *
@@ -801,6 +814,8 @@ static char *slow5idx_retrieve(const slow5idx_t *slow5idx, const slow5idx1_t *va
     //                      offset
     //                      + beg / val->line_blen * val->slow5_record_size
     //                      + beg % val->line_blen, SEEK_SET);
+
+    /*
     int ret = slow5_useek(slow5idx->slow5,
                          offset, SEEK_SET);
     if (ret < 0) {
@@ -808,6 +823,7 @@ static char *slow5idx_retrieve(const slow5idx_t *slow5idx, const slow5idx1_t *va
         ERROR("%s","Failed to retrieve block. (Seeking in a compressed, .gzi unindexed, file?)");
         return NULL;
     }
+    */
 
     // l = 0;
     // s = (char*)malloc((size_t) end - beg + 2);
@@ -829,7 +845,7 @@ static char *slow5idx_retrieve(const slow5idx_t *slow5idx, const slow5idx1_t *va
     return line;
     */
 
-    ret = f5read(slow5idx->slow5, &linebuffer, end);
+    int ret = f5pread(slow5idx->slow5, offset, &linebuffer, end);
 
     // while ( l < end - beg && (c=slow5_getc(slow5idx->slow5))>=0 )
     //     if (isgraph(c)) s[l++] = c;
@@ -955,8 +971,6 @@ char *slow5idx_fetch(const slow5idx_t *slow5idx, const char *readid, int *len)
     if (slow5idx_get_val(slow5idx, readid, len, &val, &beg, &end)) {
         return NULL;
     }
-
-    printf("hello!\n"); // TESTING
 
     // now retrieve the slow5 record
     return slow5idx_retrieve(slow5idx, &val, val.slow5_record_offset, beg, end, len);
