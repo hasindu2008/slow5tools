@@ -12,6 +12,7 @@ READID_FILE=reads.list
 
 i=1
 while [ "$i" -le "32" ]; do
+    clean_fscache
     echo "Extracting with $i threads"
     time -v "$SLOW5TOOLS_PATH" extract "-@$i" bench.blow5.gz < "$READID_FILE" > "bench.out$i" 2> "bench.stderr$i"
     i=$((i*2))
