@@ -5,12 +5,12 @@
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
-    "Display the read entry for each specified read id from a slow5 or blow5 file.\n" \
-    "With no READ_ID, read standard input for newline separated read ids.\n" \
+    "Display the read entry for each specified read id from a slow5 file.\n" \
+    "With no READ_ID, read from standard input newline separated read ids.\n" \
     "\n" \
     "OPTIONS:\n" \
-    "    -h, --help\n" \
-    "        Display this message and exit.\n" \
+    "    -@, --threads=[INT]    number of threads -- 4\n" \
+    "    -h, --help             display this message and exit.\n" \
 
 void work_per_single_read(core_t *core, db_t *db, int32_t i) {
 
@@ -80,15 +80,22 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
+        {"threads", required_argument, NULL, '@' },
         {"help", no_argument, NULL, 'h' },
         {NULL, 0, NULL, 0 }
     };
 
     bool read_stdin = false;
 
+    // Default options
+    int32_t num_threads = DEFAULT_NUM_THREADS;
+
+    // Input arguments
+    char *arg_num_threads = NULL;
+
     char opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "h", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "@:h", long_opts, NULL)) != -1) {
 
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
@@ -96,6 +103,9 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         switch (opt) {
+            case '@':
+                arg_num_threads = optarg;
+                break;
             case 'h':
                 if (meta->verbose) {
                     VERBOSE("displaying large help message%s","");
@@ -108,6 +118,22 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
+        }
+    }
+
+    // Parse num threads argument
+    if (arg_num_threads != NULL) {
+        char *endptr;
+        long ret = strtol(arg_num_threads, &endptr, 10);
+
+        if (*endptr == '\0') {
+            num_threads = ret;
+        } else {
+            MESSAGE(stderr, "invalid number of threads -- '%s'", arg_num_threads);
+            fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
         }
     }
 
@@ -142,7 +168,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
         // Setup multithreading structures
 
         core_t core;
-        core.num_thread = NUM_THREADS;
+        core.num_thread = num_threads;
         core.index_f = index_f;
 
         db_t db;

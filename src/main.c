@@ -28,7 +28,7 @@
     "    index      create a slow5 or blow5 index file.\n" \
     "    extract    display the read entry for each specified read id.\n" \
     "\n" \
-    "ARGS:    Try '%s [COMMAND] --help' for more information.\n"
+    "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
 
 // Backtrace buffer threshold of functions
 #define BT_BUF_SIZE (100)

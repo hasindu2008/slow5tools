@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define NUM_THREADS (4)
+#define DEFAULT_NUM_THREADS (4)
 
 #define READ_ID_INIT_CAPACITY (128)
 #define READ_ID_BATCH_CAPACITY (1000)
