@@ -29,23 +29,29 @@ cd "$OUT_DIR" || exit
 
 # Create slow5 files if not already there
 if [ ! -e "$SLOW5_FILE" ]; then
+    echo 'Creating slow5'
     "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -i "$SLOW5_IDX" -o "$SLOW5_FILE" 2> f2s.slow5.stderr
 fi
 if [ ! -e "$BLOW5_FILE" ]; then
+    echo 'Creating blow5'
     "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -i "$BLOW5_IDX" -o "$BLOW5_FILE" -b 2> f2s.blow5.stderr
 fi
 if [ ! -e "$CLOW5_FILE" ]; then
+    echo 'Creating clow5'
     "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -i "$CLOW5_IDX" -o "$CLOW5_FILE" -c 2> f2s.clow5.stderr
 fi
 
 # Create index files if not already there
 if [ ! -e "$SLOW5_IDX" ]; then
+    echo 'Creating slow5 index'
     "$SLOW5TOOLS_PATH" index "$FAST5_DIR" "$SLOW5_FILE" 2> index.slow5.stderr
 fi
 if [ ! -e "$BLOW5_IDX" ]; then
+    echo 'Creating blow5 index'
     "$SLOW5TOOLS_PATH" index "$FAST5_DIR" "$BLOW5_FILE" 2> index.blow5.stderr
 fi
 if [ ! -e "$CLOW5_IDX" ]; then
+    echo 'Creating clow5 index'
     "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -i "$CLOW5_IDX" -o "$CLOW5_FILE" -c 2> f2s.clow5.stderr
 fi
 
