@@ -22,6 +22,7 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
 
     if (record == NULL || len < 0) {
         fprintf(stderr, "Error locating %s\n", id);
+        ++ db->n_err;
     }
 
     db->read_record[i].buf = record;
@@ -165,13 +166,16 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
 
     if (read_stdin) {
 
+        // Time spend reading slow5
+        double read_time = 0;
+
         // Setup multithreading structures
 
         core_t core;
         core.num_thread = num_threads;
         core.index_f = index_f;
 
-        db_t db;
+        db_t db = { 0 };
         size_t cap_ids = READ_ID_INIT_CAPACITY;
         db.read_id = (char **) malloc(cap_ids * sizeof *db.read_id);
         db.read_record = (struct Record *) malloc(cap_ids * sizeof *db.read_record);
@@ -216,7 +220,10 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
             work_db(&core, &db);
 
             double end = realtime();
-            tot += end - start;
+            read_time += end - start;
+
+            MESSAGE(stderr, "Fetched %ld reads - %ld failed",
+                    num_ids - db.n_err, db.n_err);
 
             // Print records
             for (size_t i = 0; i < num_ids; ++ i) {
@@ -232,6 +239,9 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
             }
 
         }
+
+        // Print total time to read slow5
+        MESSAGE(stderr, "read time = %.3f sec", read_time);
 
         // Free everything
         free(db.read_id);
