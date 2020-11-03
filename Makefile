@@ -4,7 +4,7 @@
 CC       = gcc
 CXX      = g++
 CFLAGS   += -g -rdynamic -Wall -O2 -std=c++11
-LDFLAGS  += $(LIBS) -lpthread -lz -lrt -fsanitize=address -fsanitize=leak
+LDFLAGS  += $(LIBS) -lpthread -lz -lrt
 BUILD_DIR = build
 
 BINARY = slow5tools
