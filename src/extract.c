@@ -17,7 +17,7 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
     char *id = db->read_id[i];
 
     int len = 0;
-    fprintf(stderr, "Fetching %s\n", id); // TODO print here or during ordered loop later?
+    //fprintf(stderr, "Fetching %s\n", id); // TODO print here or during ordered loop later?
     char *record = slow5idx_fetch(core->index_f, id, &len);
 
     if (record == NULL || len < 0) {
@@ -208,8 +208,15 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
             }
 
             db.n_batch = num_ids;
+
+            // Measure reading time
+            double start = realtime();
+
             // Fetch records for read ids in the batch
             work_db(&core, &db);
+
+            double end = realtime();
+            tot += end - start;
 
             // Print records
             for (size_t i = 0; i < num_ids; ++ i) {
