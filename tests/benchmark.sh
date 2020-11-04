@@ -58,14 +58,14 @@ fi
 # Do the test
 
 # slow5
-echo 'Starting slow5 test'
-i=1
-while [ "$i" -le "32" ]; do
-    clean_fscache
-    echo "Extracting with $i threads"
-    command time -v "$SLOW5TOOLS_PATH" extract "-@$i" "$SLOW5_FILE" < "$READID_FILE" > "slow5.bench.out$i" 2> "slow5.bench.stderr$i"
-    i=$((i*2))
-done
+#echo 'Starting slow5 test'
+#i=1
+#while [ "$i" -le "32" ]; do
+#    clean_fscache
+#    echo "Extracting with $i threads"
+#    command time -v "$SLOW5TOOLS_PATH" extract "-@$i" "$SLOW5_FILE" < "$READID_FILE" > "slow5.bench.out$i" 2> "slow5.bench.stderr$i"
+#    i=$((i*2))
+#done
 
 # blow5
 echo 'Starting blow5 test'
@@ -77,14 +77,14 @@ while [ "$i" -le "32" ]; do
     i=$((i*2))
 done
 
-# blow5.gz
-echo 'Starting clow5 test'
-i=1
-while [ "$i" -le "32" ]; do
-    clean_fscache
-    echo "Extracting with $i threads"
-    command time -v "$SLOW5TOOLS_PATH" extract "-@$i" "$CLOW5_FILE" < "$READID_FILE" > "clow5.bench.out$i" 2> "clow5.bench.stderr$i"
-    i=$((i*2))
-done
+## blow5.gz
+#echo 'Starting clow5 test'
+#i=1
+#while [ "$i" -le "32" ]; do
+#    clean_fscache
+#    echo "Extracting with $i threads"
+#    command time -v "$SLOW5TOOLS_PATH" extract "-@$i" "$CLOW5_FILE" < "$READID_FILE" > "clow5.bench.out$i" 2> "clow5.bench.stderr$i"
+#    i=$((i*2))
+#done
 
 cd - || exit
