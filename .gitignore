@@ -75,3 +75,6 @@ src/config.h
 
 # testing output
 *actual*
+
+# R output
+*Rplots.pdf
