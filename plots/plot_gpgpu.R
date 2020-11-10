@@ -19,6 +19,8 @@ fast5_th <- read_tsv("../tests/data/bench/GZFN211103/gpgpu/fast5_iot.tsv", skip 
                      col_names=c("n", "bam", "fasta", "fast5_t", "processing"))
 fast5_pr <- read_tsv("../tests/data/bench/GZFN211103/gpgpu/fast5_iop.tsv", skip = 1,
                      col_names=c("n", "bam", "fasta", "fast5_p", "processing"))
+sizes <- read_tsv("../tests/data/bench/GZFN211103/gpgpu/sizes.tsv",
+                     col_names=c("size", "filetype"))
 
 read_len <- parse_number(system("wc -l ../tests/data/bench/GZFN211103/reads.list", intern=TRUE))
 
@@ -62,6 +64,7 @@ p1 <- ggplot(data_gather) +
          title = "Reads Accessed Per Second on Average Against Number of Threads/Processes") +
     ylim(0, NA)
 
+ggsave("gpgpu_read_time.pdf", p1)
 p2 <- ggplotly(p1, tooltip="text")
 saveWidget(p2, "gpgpu_read_time.html")
 
@@ -75,6 +78,7 @@ p3 <- ggplot(data_gather_1) +
          y = "Average Reads Accessed per Second (avg reads/sec)",
          title = "Reads Accessed Per Second on Average Using 1 Thread/Process")
 
+ggsave("gpgpu_read_time_1.pdf", p3)
 p4 <- ggplotly(p3)
 saveWidget(p4, "gpgpu_read_time_1.html")
 
@@ -106,6 +110,23 @@ p1_th <- ggplot(data_gather_th) +
          title = "Reads Accessed Per Second on Average Against Number of Threads") +
     ylim(0, NA)
 
+ggsave("gpgpu_read_time_thread.pdf", p1_th)
 p2_th <- ggplotly(p1_th, tooltip="text")
-
 saveWidget(p2_th, "gpgpu_read_time_thread.html")
+
+
+
+# File size plot
+
+sizes$size <- sizes$size / read_len / (2^(20))
+
+p1_sz <- ggplot(sizes) +
+    aes(x=fct_reorder(filetype, size), y=size, fill=filetype) +
+    geom_bar(stat="identity", position="dodge") +
+    labs(x = "File Type",
+         y = "Megabytes per Read on Average",
+         title = "File Size Per Read on Average")
+
+ggsave("gpgpu_size.pdf", p1_sz)
+p2_sz <- ggplotly(p1_sz)
+saveWidget(p2_sz, "gpgpu_size.html")
