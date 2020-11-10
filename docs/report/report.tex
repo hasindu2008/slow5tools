@@ -19,13 +19,15 @@ Contemporary data storage of raw nanopore signals in the FAST5 file format doesn
 
 \subsection{Methods}
 
-Binary and compressed binary equivalents to the existing SLOW5 format were created. The binary SLOW5 format was created by transforming the human-readable data of the SLOW5 format to its binary equivalent. In-file gzip compression of the binary SLOW5 format was performed per nanopore read entry. The resulting file is gzip-compatible.
-
-Benchmarking of the access time and file size was performed for each SLOW5 format and their corresponding FAST5 files.
+Binary and compressed binary equivalents to the existing SLOW5 format were created. The binary SLOW5 format was created by transforming the human-readable data of the SLOW5 format to binary. In-file gzip compression of the binary SLOW5 format was performed per nanopore read entry. Benchmarking of the access time and file size was performed for each SLOW5 format and their corresponding FAST5 files.
 
 \subsection{Results}
 
+The binary SLOW5 format was found to have the fastest access time with on average roughly 5000 reads accessed per second using 32 threads. In comparison, the FAST5 format accessed on average 100 reads per second using the same computer architecture.
+
 \subsection{Conclusion}
+
+Exploiting modern CPU architectures using multi-threading whilst employing space efficient compression techniques can remarkably improve the runtime and space requirements of nanopore sequencing pipelines.
 
 \section{Introduction}
 
@@ -53,6 +55,8 @@ Index file for each step
 \section{Discussion}
 
 \section{Conclusion}
+
+\section{Appendix}
 
 \section{References}
 
