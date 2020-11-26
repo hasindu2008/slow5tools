@@ -1,0 +1,101 @@
+% \section{Diagrammatic view of Multisketch operations}\label{app:mainflow}  
+
+% A user registers with a user id $\u$ and a vector of biometric templates
+% $\mvec=\mvecss{\mlen}$. Multisketch uses two databases $\dbid$ and $\dbmsg$\@,
+% where $\dbid$ contains user id $\u$ and the corresponding helper data
+% $\sketchval$, and $\dbmsg$ contains the random permutation of the templates
+% registered so far. Highlighted are the entries corresponding to a user $\u_4$
+% with templates $\mvec_4=\mvec_{41}\ldots\mvec_{4\mlen}$.% and helper
+%     % data $\sketchval_4$.
+\begin{figure}[t]
+  \centering
+  \begin{tikzpicture}[
+    >=stealth,
+    node distance=2cm,
+    database/.style={
+      cylinder,
+      cylinder uses custom fill,
+      cylinder body fill=black!25!white,
+      cylinder end fill=black!25!white,
+      shape border rotate=90,
+      aspect=0.25,
+      minimum width=2em,
+      minimum height=2em,
+      draw
+    },
+    func/.style={
+      rectangle,
+      fill=red!25!white,
+      minimum width=1cm,
+      minimum height=1em,
+      draw
+    },
+    cell/.style={
+      rectangle,
+      draw=black!50!white
+    }
+    ]
+    \node (user) at (0, 0) {User};
+    \node[func, right of=user, right=-1.1em, above=3em] (msketch) {$\MS$}; 
+    \draw[below of=msketch, dashed, anchor=west] (.85,0.55) rectangle (5.9,-1.2); 
+    \node[func, below of=msketch, anchor=east, below=1.95cm,fill=red!10!white,dashed] (mrecover) {$\MRec$};
+    % \node[database, right of=user, anchor=south, above=1em, right=2cm] (db1) {$\dbid$};
+    \matrix (db1) [right of=user, anchor=south, below=2pt, right=-0.1cm, 
+    matrix of math nodes,
+    column sep = -\pgflinewidth,
+    row sep=-\pgflinewidth,
+    column 1/.style={nodes={cell}}, 
+    column 2/.style={nodes={cell}}, 
+    anchor=west] {
+      \u_1 & \sketchval_1\\
+      \u_2 & \sketchval_2\\
+      \u_3 & \sketchval_3\\
+      |[draw,fill=blue!20]|\u_4 & |[draw,fill=blue!20]|\sketchval_4\\
+    };
+    \node[left of=db1, anchor=east,right=1.1cm] {$\dbid$};
+    \matrix (db2) [right of=db1, left=25pt, matrix of math nodes,
+    column sep = 2\pgflinewidth,
+    row sep=-\pgflinewidth,
+    column 1/.style={nodes={cell}},
+    column 2/.style={nodes={cell}}, 
+    column 3/.style={nodes={cell}}, 
+    column 4/.style={nodes={cell}}, 
+    column 5/.style={nodes={cell}}, 
+    anchor=west] {
+      \mvec_{21} &\mvec_{12} & |[draw,fill=blue!20]|\mvec_{43} &  & \mvec_{3\mlen} \\
+      |[draw,fill=blue!20]|\mvec_{41} &\mvec_{32} & \mvec_{33} & |[draw=white]|\ldots & \mvec_{2\mlen} \\
+      \mvec_{11} &|[draw,fill=blue!20]|\mvec_{42} & \mvec_{23} &  & \mvec_{1\mlen} \\
+      \mvec_{31} &\mvec_{22} & \mvec_{13} & & |[draw,fill=blue!20]|\mvec_{4\mlen} \\
+    };
+    \node[left of=db2, left=-4pt] {$\dbmsg$};
+
+    % \node[database,right of=db1] (db2) {$\dbmsg$};
+    \node[func,below of=db1,anchor=north,above=8pt,left=8pt] (gu) {GetUser};
+    \node[func,right of=gu,anchor=east,right=-5pt] (fm) {FindMatches};
+    \node[func,below of=db1,anchor=east,below=2em,right=-3pt] (recover) {Recover};
+
+    \draw[->,blue!50,thick] (user.north) |- node[black,near end,above]{$u, \mvec$} node[black,near end,below,font=\small]{register} 
+    (msketch.west);
+    \draw[->,blue!50,thick] (msketch) -| node[black,near end, left,right]{$u, \sketchval$} (db1);
+    \draw[->,blue!50,thick] (msketch) -| node[black,near end, left,right]{$\mvec$} (db2);
+
+    \draw[->,blue!50,thick] (user.south) |- ++(1,-0.9) node[black,near end,above]{$u, \mvectilde$} node[black,near end,below,font=\small]{login}   -| node[black,left,near end]{$u$}
+    (gu.north);
+    \draw[->,blue!50,thick] (user.south) |- ++(0,-0.9)  -- ++(3.1,0) |- node[black,near end, above]{$\mvectilde$}
+    (fm.west);
+    \draw[->,blue!50,thick] (db1.south) |- node[black,near end,above]{} (gu.east);
+    \draw[->,blue!50,thick] (db2.south) |- node[black,near end,above]{} (fm.east);
+    \draw[->,blue!50,thick] (gu.south) |- node[black,near end,above]{$\sketchval$} (recover.west);
+    \draw[->,blue!50,thick] (fm.south) |- node[black,near end,above]{$\mvec'$} (recover.east);    
+    \draw[->,blue!50,line width=2pt] (recover.south) -- node[black,near end,right]{$\mvec$ or $\bot$} ++(0, -0.65);
+  \end{tikzpicture}
+  % \rcnote{Rough sketch of the flow of the \biosketch.} 
+  \caption{Diagram of multisketch as a part of an authentication service. 
+  }
+  \label{fig:mainflow}
+\end{figure}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../main"
+%%% End:

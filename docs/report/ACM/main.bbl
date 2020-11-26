@@ -1,0 +1,144 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{00}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[\protect\citeauthoryear{Bellare, Ristenpart, Rogaway, and
+  Stegers}{Bellare et~al\mbox{.}}{2009}]%
+        {bellare2009format}
+\bibfield{author}{\bibinfo{person}{M. Bellare}, \bibinfo{person}{T.
+  Ristenpart}, \bibinfo{person}{P. Rogaway}, {and} \bibinfo{person}{T.
+  Stegers}.} \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{Format-preserving encryption}.
+\newblock In \bibinfo{booktitle}{{\em Selected Areas in Cryptography}}.
+  \bibinfo{publisher}{Springer Berlin Heidelberg}, \bibinfo{pages}{295--312}.
+\newblock
+
+
+\bibitem[\protect\citeauthoryear{Bojinov, Bursztein, Boyen, and Boneh}{Bojinov
+  et~al\mbox{.}}{2010}]%
+        {Bojinov:2010:KLP}
+\bibfield{author}{\bibinfo{person}{H. Bojinov}, \bibinfo{person}{E. Bursztein},
+  \bibinfo{person}{X. Boyen}, {and} \bibinfo{person}{D. Boneh}.}
+  \bibinfo{year}{2010}\natexlab{}.
+\newblock \showarticletitle{Kamouflage: {L}oss-resistant password management}.
+  In \bibinfo{booktitle}{{\em ESORICS}}. \bibinfo{pages}{286--302}.
+\newblock
+\showISBNx{3-642-15496-4, 978-3-642-15496-6}
+\showURL{%
+\url{http://dl.acm.org/citation.cfm?id=1888881.1888904}}
+
+
+\bibitem[\protect\citeauthoryear{Chatterjee, Athalye, Akhawe, Juels, and
+  Ristenpart}{Chatterjee et~al\mbox{.}}{2016}]%
+        {rahul2016pwtypos}
+\bibfield{author}{\bibinfo{person}{Rahul Chatterjee}, \bibinfo{person}{Anish
+  Athalye}, \bibinfo{person}{Devdatta Akhawe}, \bibinfo{person}{Ari Juels},
+  {and} \bibinfo{person}{Thomas Ristenpart}.} \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{pASSWORD tYPOS and How to Correct Them Securely}.
+\newblock \bibinfo{journal}{{\em IEEE Symposium on Security and Privacy\/}}
+  (\bibinfo{date}{may} \bibinfo{year}{2016}).
+\newblock
+\newblock
+\shownote{Full version of the paper can be found at the authors' website.}
+
+
+\bibitem[\protect\citeauthoryear{Chatterjee, Riazi, Chowdhury, Marasco,
+  Koushanfar, and Juels}{Chatterjee et~al\mbox{.}}{2019}]%
+        {chatterjee2019multisketches}
+\bibfield{author}{\bibinfo{person}{Rahul Chatterjee}, \bibinfo{person}{M~Sadegh
+  Riazi}, \bibinfo{person}{Tanmoy Chowdhury}, \bibinfo{person}{Emanuela
+  Marasco}, \bibinfo{person}{Farinaz Koushanfar}, {and} \bibinfo{person}{Ari
+  Juels}.} \bibinfo{year}{2019}\natexlab{}.
+\newblock \showarticletitle{Multisketches: Practical Secure Sketches Using
+  Off-the-Shelf Biometric Matching Algorithms}. In \bibinfo{booktitle}{{\em
+  Proceedings of the 2019 ACM SIGSAC Conference on Computer and Communications
+  Security}}. \bibinfo{pages}{1171--1186}.
+\newblock
+
+
+\bibitem[\protect\citeauthoryear{Dodis, Reyzin, and Smith}{Dodis
+  et~al\mbox{.}}{2004}]%
+        {dodisetal:2004}
+\bibfield{author}{\bibinfo{person}{Y. Dodis}, \bibinfo{person}{L. Reyzin},
+  {and} \bibinfo{person}{A. Smith}.} \bibinfo{year}{2004}\natexlab{}.
+\newblock \showarticletitle{Fuzzy Extractors: How to Generate Strong Keys from
+  Biometrics and Other Noisy Data}. In \bibinfo{booktitle}{{\em Eurocrypt
+  2004}}, \bibfield{editor}{\bibinfo{person}{C.~Cachin} {and}
+  \bibinfo{person}{J.~Camenisch}} (Eds.). \bibinfo{publisher}{Springer-Verlag},
+  \bibinfo{pages}{523--540}.
+\newblock
+\newblock
+\shownote{LNCS no. 3027.}
+
+
+\bibitem[\protect\citeauthoryear{Everspaugh, Chatterjee, Scott, Juels,
+  Ristenpart, and Tech}{Everspaugh et~al\mbox{.}}{2015}]%
+        {everspaugh2015pythia}
+\bibfield{author}{\bibinfo{person}{Adam Everspaugh}, \bibinfo{person}{Rahul
+  Chatterjee}, \bibinfo{person}{Samuel Scott}, \bibinfo{person}{Ari Juels},
+  \bibinfo{person}{Thomas Ristenpart}, {and} \bibinfo{person}{Cornell Tech}.}
+  \bibinfo{year}{2015}\natexlab{}.
+\newblock \showarticletitle{The {P}ythia {PRF} service}. In
+  \bibinfo{booktitle}{{\em Proceedings of the 24th USENIX Conference on
+  Security Symposium}}. USENIX Association, \bibinfo{pages}{547--562}.
+\newblock
+
+
+\bibitem[\protect\citeauthoryear{Juels}{Juels}{2014}]%
+        {Juels:2014}
+\bibfield{author}{\bibinfo{person}{A. Juels}.} \bibinfo{year}{2014}\natexlab{}.
+\newblock \showarticletitle{A bodyguard of lies: the use of honey objects in
+  information security}. In \bibinfo{booktitle}{{\em SACMAT}}.
+  \bibinfo{pages}{1--4}.
+\newblock
+
+
+\bibitem[\protect\citeauthoryear{Schechter, Herley, and Mitzenmacher}{Schechter
+  et~al\mbox{.}}{2010}]%
+        {schechter:2010:pen}
+\bibfield{author}{\bibinfo{person}{S. Schechter}, \bibinfo{person}{C. Herley},
+  {and} \bibinfo{person}{M. Mitzenmacher}.} \bibinfo{year}{2010}\natexlab{}.
+\newblock \showarticletitle{{Popularity is everything: a new approach to
+  protecting passwords from statistical-guessing attacks}}. In
+  \bibinfo{booktitle}{{\em {USENIX HotSec}}}. \bibinfo{pages}{1--8}.
+\newblock
+\showURL{%
+\url{http://dl.acm.org/citation.cfm?id=1924931.1924935}}
+
+
+\end{thebibliography}
