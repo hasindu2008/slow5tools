@@ -118,13 +118,15 @@ saveWidget(p2_th, "gpgpu_read_time_thread.html")
 
 # File size plot
 
-sizes$size <- sizes$size / read_len / (2^(20))
+sizes$size <- sizes$size / read_len / (2^(10))
+
+sizes <- sizes[!grepl("index", sizes$filetype),]
 
 p1_sz <- ggplot(sizes) +
     aes(x=fct_reorder(filetype, size), y=size, fill=filetype) +
     geom_bar(stat="identity", position="dodge") +
     labs(x = "File Type",
-         y = "Megabytes per Read on Average",
+         y = "Kilobytes per Read on Average",
          title = "File Size Per Read on Average")
 
 ggsave("gpgpu_size.pdf", p1_sz)
