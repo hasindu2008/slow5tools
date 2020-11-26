@@ -22,7 +22,11 @@ fast5_pr <- read_tsv("../tests/data/bench/GZFN211103/gpgpu/fast5_iop.tsv", skip 
 sizes <- read_tsv("../tests/data/bench/GZFN211103/gpgpu/sizes.tsv",
                      col_names=c("size", "filetype"))
 
-read_len <- parse_number(system("wc -l ../tests/data/bench/GZFN211103/reads.list", intern=TRUE))
+list_nreads <- parse_number(system("wc -l ../tests/data/bench/GZFN211103/reads.list", intern=TRUE))
+
+list_nbases <- parse_number(system("wc -l ../tests/data/bench/GZFN211103/reads.list", intern=TRUE))
+
+nbases <- parse_number(system("cat ../tests/data/bench/GZFN211103/nbases", intern=TRUE))
 
 blow5_th <- blow5_th %>% mutate(blow5 = blow5 / 3600)
 clow5_th <- clow5_th %>% mutate(clow5 = clow5 / 3600)
@@ -49,7 +53,7 @@ names(data) <- c("n",
                  "FAST5 (MP)")
 
 data_gather <- data %>% gather(key="File Type (Method)", value="time", -n)
-data_gather <- data_gather %>% mutate(reads_per_time = read_len / (time * 3600))
+data_gather <- data_gather %>% mutate(reads_per_time = list_nreads / (time * 3600))
 
 p1 <- ggplot(data_gather) +
     geom_line(aes(x=n, y=reads_per_time, color=`File Type (Method)`)) +
@@ -90,27 +94,30 @@ data_th <- blow5_th %>%
     merge(slow5_th) %>%
     merge(fast5_th)
 names(data_th) <- c("n",
-                 "SLOW5 Binary",
-                 "SLOW5 Compressed",
-                 "SLOW5 ASCII",
+                 "SLOW5 (Binary)",
+                 "SLOW5 (Compressed Binary)",
+                 "SLOW5",
                  "FAST5")
 
 
-data_gather_th <- data_th %>% gather(key="File Type", value="time", -n)
-data_gather_th <- data_gather_th %>% mutate(reads_per_time = read_len / (time * 3600))
+data_gather_th <- data_th %>% gather(key="File Type (Encoding)", value="time", -n)
+data_gather_th <- data_gather_th %>% mutate(reads_per_time = list_nreads / (time * 3600))
 
 p1_th <- ggplot(data_gather_th) +
-    geom_line(aes(x=n, y=reads_per_time, color=`File Type`)) +
-    geom_point(aes(x=n, y=reads_per_time, color=`File Type`,
-                   text=paste0(`File Type`, "<br>",
+    geom_line(aes(x=n, y=reads_per_time, color=`File Type (Encoding)`)) +
+    geom_point(aes(x=n, y=reads_per_time, color=`File Type (Encoding)`,
+                   text=paste0(`File Type (Encoding)`, "<br>",
                                n, " threads<br>",
                                "Avg ", round(reads_per_time, 0), " reads/sec"))) +
     labs(x = "Number of Threads",
-         y = "Average Number of Reads Accessed per Second (avg reads/sec)",
-         title = "Reads Accessed Per Second on Average Against Number of Threads") +
-    ylim(0, NA)
+         y = "Average Reads Accessed per Second") +
+    ylim(0, NA) +
+    theme_bw(base_family="Helvetica", base_size=14) +
+    theme(legend.position="top", legend.direction="vertical") +
+    scale_color_brewer(palette="Dark2")
 
 ggsave("gpgpu_read_time_thread.pdf", p1_th)
+ggsave("gpgpu_read_time_thread.png", p1_th)
 p2_th <- ggplotly(p1_th, tooltip="text")
 saveWidget(p2_th, "gpgpu_read_time_thread.html")
 
@@ -118,17 +125,21 @@ saveWidget(p2_th, "gpgpu_read_time_thread.html")
 
 # File size plot
 
-sizes$size <- sizes$size / read_len / (2^(10))
-
 sizes <- sizes[!grepl("index", sizes$filetype),]
+sizes$filetype <- c("SLOW5 (Binary)", "SLOW5 (Compressed Binary)", "SLOW5", "FAST5")
+sizes$size <- sizes$size / nbases
 
 p1_sz <- ggplot(sizes) +
     aes(x=fct_reorder(filetype, size), y=size, fill=filetype) +
     geom_bar(stat="identity", position="dodge") +
-    labs(x = "File Type",
-         y = "Kilobytes per Read on Average",
-         title = "File Size Per Read on Average")
+    labs(x = "File Type (Encoding)",
+         y = "Bytes per Base Pair on Average") +
+    theme_bw(base_family="Helvetica", base_size=14) +
+    guides(fill=FALSE) +
+    scale_fill_brewer(palette="Dark2")
+
 
 ggsave("gpgpu_size.pdf", p1_sz)
+ggsave("gpgpu_size.png", p1_sz)
 p2_sz <- ggplotly(p1_sz)
 saveWidget(p2_sz, "gpgpu_size.html")

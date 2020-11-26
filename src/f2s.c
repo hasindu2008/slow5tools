@@ -26,7 +26,7 @@ enum FormatOut {
     OUT_COMP,
 };
 
-// adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file 
+// adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 /*
 bool is_dir(const char *path) {
     struct stat path_stat;
@@ -85,7 +85,7 @@ bool has_fast5_ext(const char *f_path) {
         size_t f_path_len = strlen(f_path);
         size_t fast5_ext_len = strlen(FAST5_EXTENSION);
 
-        if (f_path_len >= fast5_ext_len && 
+        if (f_path_len >= fast5_ext_len &&
                 strcmp(f_path + (f_path_len - fast5_ext_len), FAST5_EXTENSION) == 0) {
             ret = true;
         }
@@ -124,7 +124,7 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
         case OUT_BINARY: {
             // write length of string
             size_t read_id_len = read_id.length();
-            fwrite(&read_id_len, sizeof read_id_len, 1, f_out); 
+            fwrite(&read_id_len, sizeof read_id_len, 1, f_out);
 
             // write string
             const char *read_id_c_str = read_id.c_str();
@@ -140,17 +140,17 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
             fwrite(f5.rawptr, sizeof *f5.rawptr, f5.nsample, f_out);
 
             //todo change to variable
-            
+
             uint64_t num_bases = 0;
             fwrite(&num_bases, sizeof num_bases, 1, f_out);
 
             const char *sequences = ".";
             size_t sequences_len = strlen(sequences);
-            fwrite(&sequences_len, sizeof sequences_len, 1, f_out); 
+            fwrite(&sequences_len, sizeof sequences_len, 1, f_out);
             fwrite(sequences, sizeof *sequences, sequences_len, f_out);
 
             size_t fast5_path_len = strlen(fast5_path);
-            fwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out); 
+            fwrite(&fast5_path_len, sizeof fast5_path_len, 1, f_out);
             fwrite(fast5_path, sizeof *fast5_path, fast5_path_len, f_out);
          } break;
 
@@ -173,7 +173,7 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
             z_deflate_write(strmp, f5.rawptr, sizeof *f5.rawptr * f5.nsample, f_out, Z_NO_FLUSH);
 
             //todo change to variable
-            
+
             uint64_t num_bases = 0;
             z_deflate_write(strmp, &num_bases, sizeof num_bases, f_out, Z_NO_FLUSH);
 
@@ -202,7 +202,7 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
     free(f5.rawptr);
 }
 
-int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_out, 
+int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_out,
         z_streamp strmp, FILE *f_idx) {
 
     total_reads++;
@@ -267,7 +267,7 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_ou
 
 }
 
-void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out, 
+void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out,
         z_streamp strmp, FILE *f_idx) {
 
     DIR *dir;
@@ -284,17 +284,17 @@ void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out,
             }
 
         } else {
-            WARNING("File '%s' failed to open - %s.", 
+            WARNING("File '%s' failed to open - %s.",
                     f_path, strerror(errno));
         }
 
     } else {
-        fprintf(stderr, "[%s::%.3f*%.2f] Extracting fast5 from %s\n", __func__, 
+        fprintf(stderr, "[%s::%.3f*%.2f] Extracting fast5 from %s\n", __func__,
                 realtime() - init_realtime, cputime() / (realtime() - init_realtime), f_path);
 
         // Iterate through sub files
         while ((ent = readdir(dir)) != NULL) {
-            if (strcmp(ent->d_name, ".") != 0 && 
+            if (strcmp(ent->d_name, ".") != 0 &&
                     strcmp(ent->d_name, "..") != 0) {
 
                 // Make sub path string
@@ -392,12 +392,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
             case 'i':
-                arg_fname_idx = optarg; 
-                break; 
+                arg_fname_idx = optarg;
+                break;
             case 'o':
-                arg_fname_out = optarg; 
-                break; 
-            default: // case '?' 
+                arg_fname_out = optarg;
+                break;
+            default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
@@ -405,7 +405,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     // Parse output argument
-    if (arg_fname_out != NULL) { 
+    if (arg_fname_out != NULL) {
 
         if (meta != NULL && meta->verbose) {
             VERBOSE("parsing output filename%s","");
@@ -418,19 +418,19 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
         // An error occured
         if (new_file == NULL) {
-            ERROR("File '%s' could not be opened - %s.", 
+            ERROR("File '%s' could not be opened - %s.",
                   arg_fname_out, strerror(errno));
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
-            
+
         } else {
             f_out = new_file;
         }
     }
 
     // Parse index argument
-    if (arg_fname_idx != NULL) { 
+    if (arg_fname_idx != NULL) {
 
         if (meta != NULL && meta->verbose) {
             VERBOSE("parsing index filename%s","");
@@ -443,12 +443,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
         // An error occured
         if (new_file == NULL) {
-            ERROR("File '%s' could not be opened - %s.", 
+            ERROR("File '%s' could not be opened - %s.",
                   arg_fname_idx, strerror(errno));
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
-            
+
         } else {
             f_idx = new_file;
         }
@@ -459,7 +459,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     if (optind >= argc) {
         MESSAGE(stderr, "missing fast5 files or directories%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        
+
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
@@ -482,9 +482,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             strm.zalloc = Z_NULL;
             strm.zfree = Z_NULL;
             strm.opaque = Z_NULL;
-            
-            ret = deflateInit2(&strm, 
-                    Z_DEFAULT_COMPRESSION, 
+
+            ret = deflateInit2(&strm,
+                    Z_DEFAULT_COMPRESSION,
                     Z_DEFLATED,
                     MAX_WBITS | GZIP_WBITS, // Gzip compatible compression
                     Z_MEM_DEFAULT,
@@ -527,14 +527,14 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
-    // Close output file 
+    // Close output file
     if (arg_fname_out != NULL && fclose(f_out) == EOF) {
         ERROR("File '%s' failed on closing - %s.",
               arg_fname_out, strerror(errno));
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
-    } 
+    }
 
     if (arg_fname_idx != NULL && fclose(f_idx) == EOF) {
         ERROR("File '%s' failed on closing - %s.",
