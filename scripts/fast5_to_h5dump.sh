@@ -9,7 +9,7 @@ if [ -n "$1" ] && [ -n "$2" ]; then
     for file in "$1"/*; do
         file_base=$(basename "$file")
         if [ -f "$file" ]; then
-            h5dump "$file" > "$2/$file_base.h5dump"
+            h5dump -A "$file" > "$2/$file_base.h5dump"
         fi
         echo "$i"
         i=$((i + 1))
