@@ -36,10 +36,6 @@ for prop in attrs:
     else:
         var.append(prop)
 
-    if len(attrs[prop]) == 0:
-        print("OPOHO!!!!")
-        exit(1)
-
 # Print properties which are constant and variable
 print("Constant:")
 for prop in const:
