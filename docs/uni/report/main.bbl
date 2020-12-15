@@ -1,0 +1,203 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{00}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[\protect\citeauthoryear{Jain, Olsen, Paten, and Akeson}{Jain
+  et~al\mbox{.}}{2016}]%
+        {fast5}
+\bibfield{author}{Jain et~al\mbox{.}} \bibinfo{year}{2016}\natexlab{}.
+\newblock \showarticletitle{Erratum to: The Oxford Nanopore MinION: delivery of
+  nanopore sequencing to the genomics community}.
+\newblock \bibinfo{journal}{{\em Genome Biology\/}}  \bibinfo{volume}{17}
+  (\bibinfo{year}{2016}), \bibinfo{pages}{256}.
+\newblock
+\showDOI{%
+\url{https://doi.org/10.1186/s13059-016-1103-0}}
+
+
+\bibitem[\protect\citeauthoryear{{The HDF Group}}{{The HDF Group}}{2016}]%
+        {hdf5:specs}
+\bibfield{author}{{The HDF Group}.} \bibinfo{year}{2016}\natexlab{}.
+\newblock \bibinfo{title}{HDF5 File Format Specification Version 3.0}.
+\newblock
+  \bibinfo{howpublished}{\url{https://support.hdfgroup.org/HDF5/doc/H5.format.html}}.
+    (\bibinfo{date}{April} \bibinfo{year}{2016}).
+\newblock
+\newblock
+\shownote{Accessed: 25-11-2020.}
+
+
+\bibitem[\protect\citeauthoryear{{The HDF Group}}{{The HDF Group}}{2020}]%
+        {hdf5:nomulti}
+\bibfield{author}{{The HDF Group}.} \bibinfo{year}{2020}\natexlab{}.
+\newblock \bibinfo{title}{Questions about thread-safety and concurrent access}.
+\newblock
+  \bibinfo{howpublished}{\url{https://portal.hdfgroup.org/display/knowledge/Questions+about+thread-safety+and+concurrent+access}}.
+    (\bibinfo{year}{2020}).
+\newblock
+\newblock
+\shownote{Accessed: 24-11-2020.}
+
+
+\bibitem[\protect\citeauthoryear{Simpson, Workman, Zuzarte, David, Dursi, and
+  Timp}{Simpson et~al\mbox{.}}{2017}]%
+        {nanopolish}
+\bibfield{author}{Simpson et~al\mbox{.}} \bibinfo{year}{2017}\natexlab{}.
+\newblock \showarticletitle{Detecting DNA cytosine methylation using nanopore
+  sequencing}.
+\newblock \bibinfo{journal}{{\em Nature Methods\/}}  \bibinfo{volume}{14}
+  (\bibinfo{date}{Feb.} \bibinfo{year}{2017}), \bibinfo{pages}{407--410}.
+\newblock
+\showDOI{%
+\url{https://doi.org/10.1038/nmeth.4184}}
+
+
+\bibitem[\protect\citeauthoryear{Gamaarachchi, Lam, Jayatilaka, Samarakoon,
+  Simpson, Smith, and Parameswaran}{Gamaarachchi et~al\mbox{.}}{2020}]%
+        {f5c}
+\bibfield{author}{Gamaarachchi et~al\mbox{.}} \bibinfo{year}{2020}\natexlab{}.
+\newblock \showarticletitle{GPU accelerated adaptive banded event alignment for
+  rapid comparative nanopore signal analysis}.
+\newblock \bibinfo{journal}{{\em BMC Bioinformatics\/}}  \bibinfo{volume}{21}
+  (\bibinfo{date}{Aug.} \bibinfo{year}{2020}), \bibinfo{pages}{343}.
+\newblock
+\showDOI{%
+\url{https://doi.org/10.1186/s12859-020-03697-x}}
+
+
+\bibitem[\protect\citeauthoryear{Gamaarachchi}{Gamaarachchi}{2020}]%
+        {slow5}
+\bibfield{author}{Gamaarachchi.} \bibinfo{year}{2020}\natexlab{}.
+\newblock {\em \bibinfo{title}{Computer Architecture-Aware Optimisation of DNA
+  Analysis Systems}}.
+\newblock \bibinfo{thesistype}{Ph.D. Dissertation}. \bibinfo{school}{Faculty of
+  Engineering, UNSW}, \bibinfo{address}{High St, Kensington, NSW 2052,
+  Australia}.
+\newblock
+\newblock
+\shownote{Chapter 7.4.1.}
+
+
+\bibitem[\protect\citeauthoryear{Li, Handsaker, Wysoker, Fennell, Ruan, Homer,
+  Marth, Abecasis, Durbin, and {1000 Genome Project Data Processing
+  Subgroup}}{Li et~al\mbox{.}}{2009}]%
+        {sam:file}
+\bibfield{author}{Li et~al\mbox{.}} \bibinfo{year}{2009}\natexlab{}.
+\newblock \showarticletitle{The Sequence Alignment/Map format and SAMtools}.
+\newblock \bibinfo{journal}{{\em Bioinformatics\/}} \bibinfo{volume}{25},
+  \bibinfo{number}{16} (\bibinfo{date}{Aug.} \bibinfo{year}{2009}),
+  \bibinfo{pages}{2078--2079}.
+\newblock
+\showDOI{%
+\url{https://doi.org/10.1093/bioinformatics/btp352}}
+
+
+\bibitem[\protect\citeauthoryear{Li}{Li}{2011}]%
+        {sam:stats}
+\bibfield{author}{Li.} \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{A statistical framework for SNP calling, mutation
+  discovery, association mapping and population genetical parameter estimation
+  from sequencing data}.
+\newblock \bibinfo{journal}{{\em Bioinformatics\/}} \bibinfo{volume}{27},
+  \bibinfo{number}{21} (\bibinfo{date}{Nov.} \bibinfo{year}{2011}),
+  \bibinfo{pages}{2987--2993}.
+\newblock
+\showDOI{%
+\url{https://doi.org/10.1093/bioinformatics/btr509}}
+
+
+\bibitem[\protect\citeauthoryear{Danecek, Auton, Abecasis, Albers, Banks,
+  DePristo, Handsaker, Lunter, Marth, Sherry, McVean, Durbin, and {1000 Genomes
+  Project Analysis Group}}{Danecek et~al\mbox{.}}{2011}]%
+        {vcf:file}
+\bibfield{author}{Danecek et~al\mbox{.}} \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{The variant call format and VCFtools}.
+\newblock \bibinfo{journal}{{\em Bioinformatics\/}} \bibinfo{volume}{27},
+  \bibinfo{number}{15} (\bibinfo{date}{Aug.} \bibinfo{year}{2011}),
+  \bibinfo{pages}{2156–2158}.
+\newblock
+\showDOI{%
+\url{https://doi.org/10.1093/bioinformatics/btr330}}
+
+
+\bibitem[\protect\citeauthoryear{Deutsch and Randers-Pehrson}{Deutsch and
+  Randers-Pehrson}{1996}]%
+        {gzip}
+\bibfield{author}{Deutsch and Randers-Pehrson.}
+  \bibinfo{year}{1996}\natexlab{}.
+\newblock \bibinfo{booktitle}{{\em GZIP file format specification version
+  4.3}}.
+\newblock
+\newblock
+\shownote{\url{https://tools.ietf.org/html/rfc1952}.}
+
+
+\bibitem[\protect\citeauthoryear{Gailly and Adler}{Gailly and Adler}{2017}]%
+        {zlib}
+\bibfield{author}{Gailly and Adler.} \bibinfo{year}{2017}\natexlab{}.
+\newblock \bibinfo{booktitle}{{\em zlib 1.2.11 Manual}}.
+\newblock
+\newblock
+\shownote{\url{https://zlib.net/manual.html}.}
+
+
+\bibitem[\protect\citeauthoryear{{The Open Group}}{{The Open Group}}{2018}]%
+        {wc}
+{The Open Group} \bibinfo{year}{2018}\natexlab{}.
+\newblock \bibinfo{booktitle}{{\em The Open Group Base Specifications\/}
+  (\bibinfo{edition}{7} ed.)}.
+\newblock {The Open Group}.
+\newblock
+\newblock
+\shownote{\url{https://pubs.opengroup.org/onlinepubs/9699919799/utilities/wc.html}.}
+
+
+\bibitem[\protect\citeauthoryear{{Oxford Nanopore Technologies}}{{Oxford
+  Nanopore Technologies}}{2020}]%
+        {bonito}
+\bibfield{author}{{Oxford Nanopore Technologies}.}
+  \bibinfo{year}{2020}\natexlab{}.
+\newblock \bibinfo{title}{Bonito}.
+\newblock \bibinfo{howpublished}{\url{https://github.com/nanoporetech/bonito}}.
+    (\bibinfo{year}{2020}).
+\newblock
+\newblock
+\shownote{Accessed: 27-11-2020.}
+
+
+\end{thebibliography}

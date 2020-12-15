@@ -1,0 +1,12 @@
+\begin{abstract}
+\label{sec:abstract}
+
+    Contemporary data storage of raw nanopore signals in the FAST5 file format doesn't benefit from parallel file access. An ASCII\nomenclature{ASCII}{American Standard Code for Information Interchange: An encoding for representing text on computers}-based file format called SLOW5 has already been built at the prototypical level and using efficient parallel access has been shown to be significantly faster than the FAST5 format. However, the problem is that the SLOW5 file format uses much more storage space, rendering it impractical for use.
+
+    To address this issue, binary and compressed binary encodings of the existing ASCII-based SLOW5 format were designed and implemented. An algorithm that achieves read access in parallel was also developed using SLOW5 index files and multithreading.
+
+    Experiments to determine the speed of access and file size of each encoding of the SLOW5 format and the corresponding FAST5 files were performed on a rack-mounted server using a dataset obtained from sequencing a human genome sample. The binary encoding was found to be roughly 44 times faster than the FAST5 format at accessing reads, but required a 37\% increase in file size. The compressed binary encoding, on the other hand, was found to be 31 times faster with a 20\% reduction in file size.
+
+    By exploiting modern CPU\nomenclature{CPU}{Central processing unit} architectures with multithreading and employing space efficient compression techniques, this paper demonstrates how the runtime and space requirements of nanopore sequencing pipelines can be significantly reduced.
+
+\end{abstract}

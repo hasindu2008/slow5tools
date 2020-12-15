@@ -1,0 +1,52 @@
+This is BibTeX, Version 0.99d (TeX Live 2019/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: ACM-Reference-Format.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Database file #1: bib.bib
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Warning--empty organization in gzip
+Warning--empty organization in zlib
+You've used 13 entries,
+            5706 wiz_defined-function locations,
+            1382 strings with 17717 characters,
+and the built_in function-call counts, 12247 in all, are:
+= -- 1667
+> -- 523
+< -- 0
++ -- 161
+- -- 192
+* -- 814
+:= -- 1267
+add.period$ -- 70
+call.type$ -- 13
+change.case$ -- 77
+chr.to.int$ -- 13
+cite$ -- 15
+duplicate$ -- 881
+empty$ -- 663
+format.name$ -- 227
+if$ -- 2999
+int.to.chr$ -- 1
+int.to.str$ -- 0
+missing$ -- 24
+newline$ -- 168
+num.names$ -- 96
+pop$ -- 372
+preamble$ -- 1
+purify$ -- 141
+quote$ -- 0
+skip$ -- 365
+stack$ -- 0
+substring$ -- 722
+swap$ -- 104
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 306
+warning$ -- 2
+while$ -- 80
+width$ -- 0
+write$ -- 283
+(There were 2 warnings)

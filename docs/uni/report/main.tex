@@ -1,0 +1,48 @@
+\documentclass[sigconf]{acmart}
+
+\usepackage{hyperref}
+\usepackage{siunitx}
+\usepackage[intoc]{nomencl}
+\makenomenclature
+
+\settopmatter{printacmref=false}
+\setcopyright{none}
+\acmConference[SCDL3991 Report]{}{Nov 2020}{}
+
+\makeatletter
+\newcommand\footnoteref[1]{\protected@xdef\@thefnmark{\ref{#1}}\@footnotemark}
+\makeatother
+
+\begin{document}
+
+\title{Efficient Encoding and Compression Techniques for the SLOW5 File Format}
+\author{Sasha Jenner}
+\affiliation{\small{Genomic Technologies Group}}
+
+\input{abstract}
+
+\maketitle
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\input{back}
+\input{intro}
+\input{methods}
+\input{experi}
+\input{disc}
+\input{conc}
+\input{future}
+
+\bibliography{bib}
+\bibliographystyle{ACM-Reference-Format}
+
+\newpage
+\printnomenclature
+
+\clearpage
+\appendix
+\input{appendix}
+
+\end{document}
