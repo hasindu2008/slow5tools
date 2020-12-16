@@ -2,12 +2,9 @@ Constant:
 file_type
 file_version
 pore_type
-run_id
 digitisation
-range
 sampling_rate
 barcoding_enabled
-experiment_duration_set
 experiment_type
 local_basecalling
 package
@@ -16,7 +13,6 @@ sample_frequency
 sequencing_kit
 asic_id
 asic_id_eeprom
-asic_temp
 asic_version
 auto_update
 auto_update_source
@@ -28,23 +24,19 @@ distribution_status
 distribution_version
 exp_script_name
 exp_script_purpose
-exp_start_time
 flow_cell_id
 flow_cell_product_code
 guppy_version
-heatsink_temp
 hostname
 installation_type
 local_firmware_file
 operating_system
-protocol_group_id
-protocol_run_id
 protocols_version
-sample_id
 usb_config
 version
 
 Variable:
+run_id
 duration
 end_reason
 median_before
@@ -55,3 +47,11 @@ start_time
 Signal
 channel_number
 offset
+range
+experiment_duration_set
+asic_temp
+exp_start_time
+heatsink_temp
+protocol_group_id
+protocol_run_id
+sample_id

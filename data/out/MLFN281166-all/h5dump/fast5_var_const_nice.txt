@@ -1,17 +1,14 @@
 CONSTANT
 file_type
 file_version
-read_001943c1-ebad-4865-8ed7-9deb984b1f9e:
+read_005189fc-3a5e-4dfa-9124-0320794267e7:
     pore_type
-    run_id
     Raw:
     channel_id:
         digitisation
-        range
         sampling_rate
     context_tags:
         barcoding_enabled
-        experiment_duration_set
         experiment_type
         local_basecalling
         package
@@ -21,7 +18,6 @@ read_001943c1-ebad-4865-8ed7-9deb984b1f9e:
     tracking_id:
         asic_id
         asic_id_eeprom
-        asic_temp
         asic_version
         auto_update
         auto_update_source
@@ -33,25 +29,20 @@ read_001943c1-ebad-4865-8ed7-9deb984b1f9e:
         distribution_version
         exp_script_name
         exp_script_purpose
-        exp_start_time
         flow_cell_id
         flow_cell_product_code
         guppy_version
-        heatsink_temp
         hostname
         installation_type
         local_firmware_file
         operating_system
-        protocol_group_id
-        protocol_run_id
         protocols_version
-        run_id
-        sample_id
         usb_config
         version
 
 VARIABLE
-read_001943c1-ebad-4865-8ed7-9deb984b1f9e:
+read_005189fc-3a5e-4dfa-9124-0320794267e7:
+    run_id
     Raw:
         duration
         end_reason
@@ -64,5 +55,14 @@ read_001943c1-ebad-4865-8ed7-9deb984b1f9e:
     channel_id:
         channel_number
         offset
+        range
     context_tags:
+        experiment_duration_set
     tracking_id:
+        asic_temp
+        exp_start_time
+        heatsink_temp
+        protocol_group_id
+        protocol_run_id
+        run_id
+        sample_id

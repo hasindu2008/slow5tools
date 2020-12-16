@@ -1,7 +1,7 @@
 CONSTANT
 file_type
 file_version
-read_001943c1-ebad-4865-8ed7-9deb984b1f9e:
+read_00196369-f7c8-4f82-9d1a-b31eaf62b169:
     pore_type
     run_id
     Raw:
@@ -51,7 +51,7 @@ read_001943c1-ebad-4865-8ed7-9deb984b1f9e:
         version
 
 VARIABLE
-read_001943c1-ebad-4865-8ed7-9deb984b1f9e:
+read_00196369-f7c8-4f82-9d1a-b31eaf62b169:
     Raw:
         duration
         end_reason
