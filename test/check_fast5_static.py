@@ -39,7 +39,7 @@ for prop in attrs:
 # Print properties which are constant and variable
 print("Constant:")
 for prop in const:
-    print(prop)
+    print(f"{prop}: {list(attrs[prop])[0]}")
 
 print("\nVariable:")
 for prop in var:

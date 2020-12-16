@@ -28,13 +28,18 @@ class Group:
                 print(f"{prefix}{attr}")
 
     def print_hier_if_in(self, arr, prefix=''):
+        arr_dict = type(arr) is dict
+
         for attr in self.attrs:
             if isinstance(attr, Group):
                 print(f"{prefix}{attr.name}:")
                 attr.print_hier_if_in(arr, prefix + '    ')
             else:
                 if attr in arr:
-                    print(f"{prefix}{attr}")
+                    if arr_dict:
+                        print(f"{prefix}{attr}: {arr[attr]}")
+                    else:
+                        print(f"{prefix}{attr}")
 
     def __str__(self):
         return str(self.attrs)
@@ -45,7 +50,7 @@ attrs = {}
 root_group = Group("/")
 
 var = []
-const = []
+const = {}
 
 bracket_pos = 0
 group_pos = []
@@ -114,7 +119,7 @@ for fname in argv[1:]:
 # Decide what's constant and variable
 for prop in attrs:
     if len(attrs[prop]) == 1:
-        const.append(prop)
+        const[prop] = list(attrs[prop])[0]
     else:
         var.append(prop)
 
