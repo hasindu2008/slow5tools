@@ -3,8 +3,8 @@
 
 CC       = gcc
 CXX      = g++
-CFLAGS   += -g -rdynamic -Wall -O2 -std=c++11
-LDFLAGS  += $(LIBS) -lpthread -lz -lrt
+CFLAGS   += -g -rdynamic -Wall -O2
+LDFLAGS  += $(LIBS) -lpthread -lz
 BUILD_DIR = build
 
 BINARY = slow5tools
@@ -86,7 +86,7 @@ dist: distclean
 	cp -r README.md LICENSE Dockerfile Makefile configure.ac config.mk.in \
 		installdeps.mk src docs build .dockerignore configure slow5tools-$(VERSION)
 	mkdir -p slow5tools-$(VERSION)/scripts
-	cp scripts/install-hdf5.sh scripts/install-hts.sh scripts/test.sh scripts/common.sh scripts/test.awk slow5tools-$(VERSION)/scripts
+	cp scripts/install-hdf5.sh scripts/test.sh slow5tools-$(VERSION)/scripts
 	tar -zcf slow5tools-$(VERSION)-release.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
@@ -96,7 +96,7 @@ binary:
 	make && mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux
 	cp -r README.md LICENSE docs slow5tools-$(VERSION)/
 	mkdir -p slow5tools-$(VERSION)/scripts
-	cp scripts/test.sh scripts/common.sh scripts/test.awk slow5tools-$(VERSION)/scripts
+	cp scripts/test.sh slow5tools-$(VERSION)/scripts
 	tar -zcf slow5tools-$(VERSION)-binaries.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
