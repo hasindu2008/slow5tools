@@ -72,6 +72,7 @@ src/config.h
 
 # testing output
 *actual*
+*.h5dump
 
 # R output
 *Rplots.pdf
