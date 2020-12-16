@@ -10,11 +10,10 @@
 TMP_FOLDER='/tmp/run_check_fast5_static_copy'
 
 dirname="$(dirname "$0")"
-echo "$dirname"
 
 if [ -n "$1" ] && [ -n "$2" ]; then
     # Copies them to tmp
-    mkdir -p "$TMP_FOLDER"
+    mkdir "$TMP_FOLDER" || rm "$TMP_FOLDER"/*
     cp "$1"/* "$TMP_FOLDER"
 
     # Creates files with the output of h5dump on each fast5 file
