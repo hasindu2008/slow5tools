@@ -9,13 +9,16 @@
 
 TMP_FOLDER='/tmp/run_check_fast5_static_copy'
 
+dirname="$(dirname "$0")"
+echo "$dirname"
+
 if [ -n "$1" ] && [ -n "$2" ]; then
     # Copies them to tmp
     mkdir -p "$TMP_FOLDER"
     cp "$1"/* "$TMP_FOLDER"
 
     # Creates files with the output of h5dump on each fast5 file
-    ../scripts/fast5_to_h5dump.sh "$TMP_FOLDER" "$2"
+    "$dirname../scripts/fast5_to_h5dump.sh" "$TMP_FOLDER" "$2"
 
     # Runs check to see which attributes change and are static over the experiment
     python3 check_fast5_static.py "$2"/*.h5dump > "$2/fast5_var_const.txt"
