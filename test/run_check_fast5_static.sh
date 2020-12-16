@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Given a folder of fast5 files
 # Copies them to tmp
 # Creates files with the output of h5dump on each fast5 file
