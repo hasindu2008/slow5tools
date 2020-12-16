@@ -17,12 +17,6 @@ endif
 EOF
    AC_MSG_ERROR([$1], [$2])])
 
-
-AC_ARG_ENABLE([systemhts],
-  [AS_HELP_STRING([--enable-systemhts=yes|no],
-                  [Use system wide HTS. Default is disabled.])],
-  [enable_systemhts=$enableval], [enable_systemhts=no])
-
 AC_ARG_ENABLE([localhdf5],
   [AS_HELP_STRING([--enable-localhdf5],
                   [Use local HDF5. Default is disabled.])],
@@ -32,7 +26,6 @@ AC_ARG_ENABLE([localhdf5],
 # Checks for programs.
 AC_PROG_CC([gcc])
 AC_PROG_CXX([g++])
-
 
 AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO
@@ -53,9 +46,6 @@ AC_TYPE_UINT8_T
 # Checks for library functions.
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([gettimeofday memset sqrt strerror])
-
-
-
 
 # Checks for libraries.
 
