@@ -366,7 +366,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     FILE *f_out = stdout;
-    fprintf(f_out,"here2");
     enum FormatOut format_out = OUT_ASCII;
     FILE *f_idx = NULL;
 
@@ -473,7 +472,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     if (format_out == OUT_COMP) {
     }
-    fprintf(f_out, SLOW5_HEADER);
     // Output slow5 header
     switch (format_out) {
         case OUT_ASCII:
@@ -558,29 +556,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *operator_data){
     hid_t attribute, attribute_type, native_type;
     herr_t return_val = 0;
-
-
     int ret = 0;
-    /* Type conversion */
-//    unsigned spaces = 2 * (od->group_level);
-    /* Number of whitespaces to prepend
-       to output */
-
     // Ensure attribute exists
     ret = H5Aexists(loc_id, name);
     if(ret <= 0) {
         fprintf(stdout,"attribute %s not found\n",name);
     }
     attribute = H5Aopen(loc_id, name, H5P_DEFAULT);
-//    printf("%*s", spaces, "");     /* Format output */
-//    fprintf(stdout,"@ attribute name = %s\n",name);
-//    printf("%*s", spaces, "");     /* Format output */
-//    fprintf(stdout,"@ group address %lu\n",od->addr);
-//    status = H5Oget_info_by_name(loc_id, name, &infobuf, H5P_DEFAULT);
-
-//    goto skip_switch_cases;
-//    int value = 0;
-//    hid_t attr_id = H5Aopen_name (loc_id, name);
     attribute_type = H5Aget_type(attribute);
     native_type = H5Tget_native_type(attribute_type, H5T_DIR_ASCEND);
     H5T_class_t H5Tclass = H5Tget_class(attribute_type);
