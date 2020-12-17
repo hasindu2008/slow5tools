@@ -11,7 +11,14 @@ attrs = {}
 var = []
 const = []
 
-for fname in argv[1:]:
+args = argv[1:]
+if "-c" in args:
+    args.remove("-c")
+    show_const = True
+else:
+    show_const = False
+
+for fname in args:
     f = open(fname)
 
     for line in f:
@@ -39,7 +46,10 @@ for prop in attrs:
 # Print properties which are constant and variable
 print("Constant:")
 for prop in const:
-    print(f"{prop}: {list(attrs[prop])[0]}")
+    if show_const:
+        print(f"{prop}: {list(attrs[prop])[0]}")
+    else:
+        print(f"{prop}")
 
 print("\nVariable:")
 for prop in var:

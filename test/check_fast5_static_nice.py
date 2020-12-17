@@ -27,16 +27,16 @@ class Group:
             else:
                 print(f"{prefix}{attr}")
 
-    def print_hier_if_in(self, arr, prefix=''):
-        arr_dict = type(arr) is dict
+    def print_hier_if_in(self, arr, show_val=False, prefix=''):
+        is_dict = type(arr) is dict
 
         for attr in self.attrs:
             if isinstance(attr, Group):
                 print(f"{prefix}{attr.name}:")
-                attr.print_hier_if_in(arr, prefix + '    ')
+                attr.print_hier_if_in(arr, show_val, prefix + '    ')
             else:
                 if attr in arr:
-                    if arr_dict:
+                    if show_val and is_dict:
                         print(f"{prefix}{attr}: {arr[attr]}")
                     else:
                         print(f"{prefix}{attr}")
@@ -45,6 +45,13 @@ class Group:
         return str(self.attrs)
     def __repr__(self):
         return str(self.attrs)
+
+args = argv[1:]
+if "-c" in args:
+    args.remove("-c")
+    show_const = True
+else:
+    show_const = False
 
 attrs = {}
 root_group = Group("/")
@@ -59,7 +66,7 @@ struct_made = False
 curr_group = root_group
 first_read = True
 
-for fname in argv[1:]:
+for fname in args:
     f = open(fname)
 
     for line in f:
@@ -125,6 +132,6 @@ for prop in attrs:
 
 # Print properties which are constant and variable
 print("CONSTANT")
-root_group.print_hier_if_in(const)
+root_group.print_hier_if_in(const, show_const)
 print("\nVARIABLE")
-root_group.print_hier_if_in(var)
+root_group.print_hier_if_in(var, show_const)
