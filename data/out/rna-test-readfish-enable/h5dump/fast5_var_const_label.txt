@@ -1,0 +1,57 @@
+Constant:
+file_type: "multi-read"
+file_version: "2.2"
+pore_type: "not_set"
+run_id: "0285e2441433d64d901414228ec40c3633c0532a"
+digitisation: 8192
+range: 1101.14
+sampling_rate: 3012
+barcoding_enabled: "0"
+experiment_duration_set: "180"
+experiment_type: "rna"
+local_basecalling: "0"
+package: "bream4"
+package_version: "6.1.4"
+sample_frequency: "3012"
+sequencing_kit: "sqk-rna002"
+asic_id: "281856435"
+asic_id_eeprom: "5718056"
+asic_temp: "45.277714"
+asic_version: "IA02D"
+auto_update: "0"
+auto_update_source: "https://mirror.oxfordnanoportal.com/software/MinKNOW/"
+bream_is_standard: "0"
+configuration_version: "4.1.15"
+device_id: "MN20801"
+device_type: "minion"
+distribution_status: "stable"
+distribution_version: "20.10.3"
+exp_script_name: "sequencing/sequencing_MIN106_RNA_readfish_simulation:FLO-MIN106:SQK-RNA002"
+exp_script_purpose: "sequencing_run"
+exp_start_time: "2020-11-26T23:54:52Z"
+flow_cell_id: "FAO36516"
+flow_cell_product_code: "FLO-MIN106"
+guppy_version: "4.2.2+effbaf8"
+heatsink_temp: "34.804688"
+hostname: "TheFridge"
+installation_type: "nc"
+local_firmware_file: "1"
+operating_system: "ubuntu 18.04"
+protocol_group_id: "rna-test-readfish-enable"
+protocol_run_id: "62314a84-2f7a-493c-8672-a8d2788388ce"
+protocols_version: "6.1.4"
+sample_id: "no_sample"
+usb_config: "MinION_fx3_1.1.1_ONT#MinION_fpga_1.1.0#bulk#Auto"
+version: "4.1.2"
+
+Variable:
+duration
+end_reason
+median_before
+read_id
+read_number
+start_mux
+start_time
+Signal
+channel_number
+offset
