@@ -60,7 +60,7 @@ jobs:
         skip_cleanup: true
         on:
           branch: master
-          repo: hasindu2008/slow5tools
+          repo: hasindu2008/slow5
           tags: true
       before_deploy:
         - make clean
