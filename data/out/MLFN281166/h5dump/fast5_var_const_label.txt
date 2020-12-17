@@ -1,0 +1,57 @@
+Constant:
+file_type: "multi-read"
+file_version: "2.2"
+pore_type: "not_set"
+run_id: "d03b7bee4d1ee83dd1ff868f952b5370330c18ea"
+digitisation: 8192
+range: 1395.17
+sampling_rate: 4000
+barcoding_enabled: "0"
+experiment_duration_set: "4320"
+experiment_type: "genomic_dna"
+local_basecalling: "0"
+package: "bream4"
+package_version: "6.1.4"
+sample_frequency: "4000"
+sequencing_kit: "sqk-lsk109"
+asic_id: "683543726"
+asic_id_eeprom: "5529950"
+asic_temp: "25.510849"
+asic_version: "IA02D"
+auto_update: "0"
+auto_update_source: "https://mirror.oxfordnanoportal.com/software/MinKNOW/"
+bream_is_standard: "0"
+configuration_version: "4.1.15"
+device_id: "MN20801"
+device_type: "minion"
+distribution_status: "stable"
+distribution_version: "20.10.3"
+exp_script_name: "sequencing/sequencing_MIN106_DNA_readfish_real:FLO-MIN106:SQK-LSK109"
+exp_script_purpose: "sequencing_run"
+exp_start_time: "2020-12-01T05:53:26Z"
+flow_cell_id: "FAO93620"
+flow_cell_product_code: "FLO-MIN106"
+guppy_version: "4.2.2+effbaf8"
+heatsink_temp: "34.007812"
+hostname: "TheFridge"
+installation_type: "nc"
+local_firmware_file: "1"
+operating_system: "ubuntu 18.04"
+protocol_group_id: "MLFN281166"
+protocol_run_id: "d1254c23-4fc9-4de1-965f-3e259e863916"
+protocols_version: "6.1.4"
+sample_id: "NA12878_readfishreal"
+usb_config: "MinION_fx3_1.1.1_ONT#MinION_fpga_1.1.0#bulk#Auto"
+version: "4.1.2"
+
+Variable:
+duration
+end_reason
+median_before
+read_id
+read_number
+start_mux
+start_time
+Signal
+channel_number
+offset
