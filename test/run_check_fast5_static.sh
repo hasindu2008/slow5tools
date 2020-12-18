@@ -22,6 +22,8 @@ if [ -n "$1" ] && [ -n "$2" ]; then
     # Runs check to see which attributes change and are static over the experiment
     python3 "$dirname/check_fast5_static.py" "$2"/*.h5dump > "$2/fast5_var_const.txt"
     python3 "$dirname/check_fast5_static_nice.py" "$2"/*.h5dump > "$2/fast5_var_const_nice.txt"
+    python3 "$dirname/check_fast5_static.py" -c "$2"/*.h5dump > "$2/fast5_var_const_label.txt"
+    python3 "$dirname/check_fast5_static_nice.py" -c "$2"/*.h5dump > "$2/fast5_var_const_nice_label.txt"
 
 else
     echo "Usage $0 fast5_folder out_folder"
