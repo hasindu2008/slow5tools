@@ -3,7 +3,7 @@
 A toolset for converting to and from SLOW5 files.
 <todo>
 
-[![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?branch=master)](https://travis-ci.com/hasindu2008/slow5)
+[![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?token=pN7xnsxgLrRxbAn8WLVQ&branch=master)](https://travis-ci.com/hasindu2008/slow5)
 
 ## Quick start
 
