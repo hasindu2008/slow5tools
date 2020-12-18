@@ -255,8 +255,8 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_ou
 
             //now iterate over read groups. loading records and writing them are done inside op_func_group
             H5Literate(fast5_file.hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
-            free_attributes(CONTEXT_TAGS, &tracker);
             free_attributes(ROOT, &tracker);
+            free_attributes(CONTEXT_TAGS, &tracker);
             free_attributes(TRACKING_ID, &tracker);
 
 
@@ -591,10 +591,8 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
 
     union attribute_data value;
     int flag_value_string = 0;
-    fprintf(stderr,"%s 101\n",name);
     switch(H5Tclass){
         case H5T_STRING:
-            fprintf(stderr,"104\n");
             flag_value_string = 1;
             if(H5Tis_variable_str(attribute_type) > 0) {
                 // variable length string
@@ -629,29 +627,26 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
             }
             break;
         case H5T_FLOAT:
-            fprintf(stderr,"103\n");
             H5Aread(attribute, native_type, &(value.attr_double));
             break;
         case H5T_INTEGER:
-            fprintf(stderr,"102\n");
             H5Aread(attribute,native_type,&(value.attr_int));
             break;
         case H5T_ENUM:
-            fprintf(stderr,"105\n");
             H5Aread(attribute, native_type, &(value.attr_uint8_t));
             break;
         default:
             fprintf (stderr,"Unknown: %s\n", name);
     }
     H5Aclose(attribute);
-    if(strcmp("file_type",name)==0){
+    if(strcmp("file_type",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->file_type = strdup(value.attr_string);
     }
-    else if(strcmp("file_version",name)==0){
+    else if(strcmp("file_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->file_version = strdup(value.attr_string);
     }
 //            READ
-    else if(strcmp("run_id",name)==0){
+    else if(strcmp("run_id",name)==0 && H5Tclass==H5T_STRING){
         if(*(operator_data->flag_tracking_id) == 0 and *(operator_data->flag_tracking_id_run_id) == 0){
             operator_data->slow5_header->tracking_id_run_id = strdup(value.attr_string);
             *(operator_data->flag_tracking_id_run_id) = 1;
@@ -660,186 +655,186 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
             operator_data->slow5_header->run_id = strdup(value.attr_string);
         }
     }
-    else if(strcmp("pore_type",name)==0){
+    else if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->pore_type = strdup(value.attr_string);
     }
 //            RAW
-    else if(strcmp("start_time",name)==0){
+    else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER){
         operator_data->slow5_record->start_time = value.attr_int;
     }
-    else if(strcmp("duration",name)==0){
+    else if(strcmp("duration",name)==0 && H5Tclass==H5T_INTEGER){
         operator_data->slow5_record->duration = value.attr_int;
     }
-    else if(strcmp("read_number",name)==0){
+    else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER){
         operator_data->slow5_record->read_number = value.attr_int;
     }
-    else if(strcmp("start_mux",name)==0){
+    else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER){
         operator_data->slow5_record->start_mux = value.attr_int;
     }
-    else if(strcmp("read_id",name)==0){
+    else if(strcmp("read_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_record->read_id = strdup(value.attr_string);
     }
-    else if(strcmp("median_before",name)==0){
+    else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT){
         operator_data->slow5_record->median_before = value.attr_double;
     }
-    else if(strcmp("end_reason",name)==0){
+    else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
         operator_data->slow5_record->end_reason = value.attr_uint8_t;
     }
 //            CHANNEL_ID
-    else if(strcmp("channel_number",name)==0){
+    else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_record->channel_number = strdup(value.attr_string);
     }
-    else if(strcmp("digitisation",name)==0){
+    else if(strcmp("digitisation",name)==0 && H5Tclass==H5T_FLOAT){
         operator_data->slow5_record->digitisation = value.attr_double;
     }
-    else if(strcmp("offset",name)==0){
+    else if(strcmp("offset",name)==0 && H5Tclass==H5T_FLOAT){
         operator_data->slow5_record->offset = value.attr_double;
     }
-    else if(strcmp("range",name)==0){
+    else if(strcmp("range",name)==0 && H5Tclass==H5T_FLOAT){
         operator_data->slow5_record->range = value.attr_double;
     }
-    else if(strcmp("sampling_rate",name)==0){
+    else if(strcmp("sampling_rate",name)==0 && H5Tclass==H5T_FLOAT){
         operator_data->slow5_record->sampling_rate = value.attr_double;
     }
 //            CONTEXT_TAGS
-    else if(strcmp("sample_frequency",name)==0){
+    else if(strcmp("sample_frequency",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->sample_frequency = strdup(value.attr_string);
     }
         //additional attributes in 2.2
-    else if(strcmp("barcoding_enabled",name)==0){
+    else if(strcmp("barcoding_enabled",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->barcoding_enabled = strdup(value.attr_string);
     }
-    else if(strcmp("experiment_duration_set",name)==0){
+    else if(strcmp("experiment_duration_set",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->experiment_duration_set = strdup(value.attr_string);
     }
-    else if(strcmp("experiment_type",name)==0){
+    else if(strcmp("experiment_type",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->experiment_type = strdup(value.attr_string);
     }
-    else if(strcmp("local_basecalling",name)==0){
+    else if(strcmp("local_basecalling",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->local_basecalling = strdup(value.attr_string);
     }
-    else if(strcmp("package",name)==0){
+    else if(strcmp("package",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->package = strdup(value.attr_string);
     }
-    else if(strcmp("package_version",name)==0){
+    else if(strcmp("package_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->package_version = strdup(value.attr_string);
     }
-    else if(strcmp("sequencing_kit",name)==0){
+    else if(strcmp("sequencing_kit",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->sequencing_kit = strdup(value.attr_string);
     }
         //additional attributes in 2.0
-    else if(strcmp("filename",name)==0){
+    else if(strcmp("filename",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->filename = strdup(value.attr_string);
     }
-    else if(strcmp("experiment_kit",name)==0){
+    else if(strcmp("experiment_kit",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->experiment_kit = strdup(value.attr_string);
     }
-    else if(strcmp("user_filename_input",name)==0){
+    else if(strcmp("user_filename_input",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->user_filename_input = strdup(value.attr_string);
     }
 //            TRACKING_ID
-    else if(strcmp("asic_id",name)==0){
+    else if(strcmp("asic_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->asic_id = strdup(value.attr_string);
     }
-    else if(strcmp("asic_id_eeprom",name)==0){
+    else if(strcmp("asic_id_eeprom",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->asic_id_eeprom = strdup(value.attr_string);
     }
-    else if(strcmp("asic_temp",name)==0){
+    else if(strcmp("asic_temp",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->asic_temp = strdup(value.attr_string);
     }
-    else if(strcmp("auto_update",name)==0){
+    else if(strcmp("auto_update",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->auto_update = strdup(value.attr_string);
     }
-    else if(strcmp("auto_update_source",name)==0){
+    else if(strcmp("auto_update_source",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->auto_update_source = strdup(value.attr_string);
     }
-    else if(strcmp("bream_is_standard",name)==0){
+    else if(strcmp("bream_is_standard",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->bream_is_standard = strdup(value.attr_string);
     }
-    else if(strcmp("device_id",name)==0){
+    else if(strcmp("device_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->device_id = strdup(value.attr_string);
     }
-    else if(strcmp("exp_script_name",name)==0){
+    else if(strcmp("exp_script_name",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->exp_script_name = strdup(value.attr_string);
     }
-    else if(strcmp("exp_script_purpose",name)==0){
+    else if(strcmp("exp_script_purpose",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->exp_script_purpose = strdup(value.attr_string);
     }
-    else if(strcmp("exp_start_time",name)==0){
+    else if(strcmp("exp_start_time",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->exp_start_time = strdup(value.attr_string);
     }
-    else if(strcmp("flow_cell_id",name)==0){
+    else if(strcmp("flow_cell_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->flow_cell_id = strdup(value.attr_string);
     }
-    else if(strcmp("heatsink_temp",name)==0){
+    else if(strcmp("heatsink_temp",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->heatsink_temp = strdup(value.attr_string);
     }
-    else if(strcmp("hostname",name)==0){
+    else if(strcmp("hostname",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->hostname = strdup(value.attr_string);
     }
-    else if(strcmp("installation_type",name)==0){
+    else if(strcmp("installation_type",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->installation_type = strdup(value.attr_string);
     }
-    else if(strcmp("local_firmware_file",name)==0){
+    else if(strcmp("local_firmware_file",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->local_firmware_file = strdup(value.attr_string);
     }
-    else if(strcmp("operating_system",name)==0){
+    else if(strcmp("operating_system",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->operating_system = strdup(value.attr_string);
     }
-    else if(strcmp("protocol_run_id",name)==0){
+    else if(strcmp("protocol_run_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->protocol_run_id = strdup(value.attr_string);
     }
-    else if(strcmp("protocols_version",name)==0){
+    else if(strcmp("protocols_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->protocols_version = strdup(value.attr_string);
     }
-//        else if(strcmp("tracking_id_run_id",name)==0){
+//        else if(strcmp("tracking_id_run_id",name)==0 && H5Tclass==H5T_STRING){
 //            operator_data->slow5_header->tracking_id_run_id = strdup(value.attr_string);
 //            }
-    else if(strcmp("usb_config",name)==0){
+    else if(strcmp("usb_config",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->usb_config = strdup(value.attr_string);
     }
-    else if(strcmp("version",name)==0){
+    else if(strcmp("version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->version = strdup(value.attr_string);
     }
         //additional attributes in 2.0
-    else if(strcmp("bream_core_version",name)==0){
+    else if(strcmp("bream_core_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->bream_core_version = strdup(value.attr_string);
     }
-    else if(strcmp("bream_ont_version",name)==0){
+    else if(strcmp("bream_ont_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->bream_ont_version = strdup(value.attr_string);
     }
-    else if(strcmp("bream_prod_version",name)==0){
+    else if(strcmp("bream_prod_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->bream_prod_version = strdup(value.attr_string);
     }
-    else if(strcmp("bream_rnd_version",name)==0){
+    else if(strcmp("bream_rnd_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->bream_rnd_version = strdup(value.attr_string);
     }
         //additional attributes in 2.2
-    else if(strcmp("asic_version",name)==0){
+    else if(strcmp("asic_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->asic_version = strdup(value.attr_string);
     }
-    else if(strcmp("configuration_version",name)==0){
+    else if(strcmp("configuration_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->configuration_version = strdup(value.attr_string);
     }
-    else if(strcmp("device_type",name)==0){
+    else if(strcmp("device_type",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->device_type = strdup(value.attr_string);
     }
-    else if(strcmp("distribution_status",name)==0){
+    else if(strcmp("distribution_status",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->distribution_status = strdup(value.attr_string);
     }
-    else if(strcmp("distribution_version",name)==0){
+    else if(strcmp("distribution_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->distribution_version = strdup(value.attr_string);
     }
-    else if(strcmp("flow_cell_product_code",name)==0){
+    else if(strcmp("flow_cell_product_code",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->flow_cell_product_code = strdup(value.attr_string);
     }
-    else if(strcmp("guppy_version",name)==0){
+    else if(strcmp("guppy_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->guppy_version = strdup(value.attr_string);
     }
-    else if(strcmp("protocol_group_id",name)==0){
+    else if(strcmp("protocol_group_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->protocol_group_id = strdup(value.attr_string);
     }
-    else if(strcmp("sample_id",name)==0){
+    else if(strcmp("sample_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->sample_id = strdup(value.attr_string);
     }else{
         fprintf(stderr,"[%s] no attribute %s\n",__func__ , name);
@@ -987,7 +982,7 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
 //                        print_header();
 
                     }
-                    *(operator_data->nreads)++;
+                    *(operator_data->nreads) = *(operator_data->nreads)+1;
 
                     //todo: we can pass slow5_record directly to write_data()
                     fast5_t f5;
@@ -1066,46 +1061,57 @@ void free_attributes(group_flags group_flag, operator_obj* operator_data) {
             if(operator_data->slow5_record->channel_number)free(operator_data->slow5_record->channel_number);operator_data->slow5_record->channel_number = NULL;
             break;
         case CONTEXT_TAGS:
+            if(operator_data->slow5_header->sample_frequency)free(operator_data->slow5_header->sample_frequency);operator_data->slow5_header->sample_frequency = NULL;
+            //additional attributes in 2.2
             if(operator_data->slow5_header->barcoding_enabled)free(operator_data->slow5_header->barcoding_enabled);operator_data->slow5_header->barcoding_enabled = NULL;
             if(operator_data->slow5_header->experiment_duration_set)free(operator_data->slow5_header->experiment_duration_set);operator_data->slow5_header->experiment_duration_set = NULL;
             if(operator_data->slow5_header->experiment_type)free(operator_data->slow5_header->experiment_type);operator_data->slow5_header->experiment_type = NULL;
             if(operator_data->slow5_header->local_basecalling)free(operator_data->slow5_header->local_basecalling);operator_data->slow5_header->local_basecalling = NULL;
             if(operator_data->slow5_header->package)free(operator_data->slow5_header->package);operator_data->slow5_header->package = NULL;
             if(operator_data->slow5_header->package_version)free(operator_data->slow5_header->package_version);operator_data->slow5_header->package_version = NULL;
-            if(operator_data->slow5_header->sample_frequency)free(operator_data->slow5_header->sample_frequency);operator_data->slow5_header->sample_frequency = NULL;
             if(operator_data->slow5_header->sequencing_kit)free(operator_data->slow5_header->sequencing_kit);operator_data->slow5_header->sequencing_kit = NULL;
+            //additional attributes in 2.0
+            if(operator_data->slow5_header->filename)free(operator_data->slow5_header->filename);operator_data->slow5_header->filename = NULL;
+            if(operator_data->slow5_header->experiment_kit)free(operator_data->slow5_header->experiment_kit);operator_data->slow5_header->experiment_kit = NULL;
+            if(operator_data->slow5_header->user_filename_input)free(operator_data->slow5_header->user_filename_input);operator_data->slow5_header->user_filename_input = NULL;
             break;
         case TRACKING_ID:
             if(operator_data->slow5_header->asic_id)free(operator_data->slow5_header->asic_id);operator_data->slow5_header->asic_id = NULL;
             if(operator_data->slow5_header->asic_id_eeprom)free(operator_data->slow5_header->asic_id_eeprom);operator_data->slow5_header->asic_id_eeprom = NULL;
             if(operator_data->slow5_header->asic_temp)free(operator_data->slow5_header->asic_temp);operator_data->slow5_header->asic_temp = NULL;
-            if(operator_data->slow5_header->asic_version)free(operator_data->slow5_header->asic_version);operator_data->slow5_header->asic_version = NULL;
             if(operator_data->slow5_header->auto_update)free(operator_data->slow5_header->auto_update);operator_data->slow5_header->auto_update = NULL;
             if(operator_data->slow5_header->auto_update_source)free(operator_data->slow5_header->auto_update_source);operator_data->slow5_header->auto_update_source = NULL;
             if(operator_data->slow5_header->bream_is_standard)free(operator_data->slow5_header->bream_is_standard);operator_data->slow5_header->bream_is_standard = NULL;
-            if(operator_data->slow5_header->configuration_version)free(operator_data->slow5_header->configuration_version);operator_data->slow5_header->configuration_version = NULL;
             if(operator_data->slow5_header->device_id)free(operator_data->slow5_header->device_id);operator_data->slow5_header->device_id = NULL;
-            if(operator_data->slow5_header->device_type)free(operator_data->slow5_header->device_type);operator_data->slow5_header->device_type = NULL;
-            if(operator_data->slow5_header->distribution_status)free(operator_data->slow5_header->distribution_status);operator_data->slow5_header->distribution_status = NULL;
-            if(operator_data->slow5_header->distribution_version)free(operator_data->slow5_header->distribution_version);operator_data->slow5_header->distribution_version = NULL;
             if(operator_data->slow5_header->exp_script_name)free(operator_data->slow5_header->exp_script_name);operator_data->slow5_header->exp_script_name = NULL;
             if(operator_data->slow5_header->exp_script_purpose)free(operator_data->slow5_header->exp_script_purpose);operator_data->slow5_header->exp_script_purpose = NULL;
             if(operator_data->slow5_header->exp_start_time)free(operator_data->slow5_header->exp_start_time);operator_data->slow5_header->exp_start_time = NULL;
             if(operator_data->slow5_header->flow_cell_id)free(operator_data->slow5_header->flow_cell_id);operator_data->slow5_header->flow_cell_id = NULL;
-            if(operator_data->slow5_header->flow_cell_product_code)free(operator_data->slow5_header->flow_cell_product_code);operator_data->slow5_header->flow_cell_product_code = NULL;
-            if(operator_data->slow5_header->guppy_version)free(operator_data->slow5_header->guppy_version);operator_data->slow5_header->guppy_version = NULL;
             if(operator_data->slow5_header->heatsink_temp)free(operator_data->slow5_header->heatsink_temp);operator_data->slow5_header->heatsink_temp = NULL;
             if(operator_data->slow5_header->hostname)free(operator_data->slow5_header->hostname);operator_data->slow5_header->hostname = NULL;
             if(operator_data->slow5_header->installation_type)free(operator_data->slow5_header->installation_type);operator_data->slow5_header->installation_type = NULL;
             if(operator_data->slow5_header->local_firmware_file)free(operator_data->slow5_header->local_firmware_file);operator_data->slow5_header->local_firmware_file = NULL;
             if(operator_data->slow5_header->operating_system)free(operator_data->slow5_header->operating_system);operator_data->slow5_header->operating_system = NULL;
-            if(operator_data->slow5_header->protocol_group_id)free(operator_data->slow5_header->protocol_group_id);operator_data->slow5_header->protocol_group_id = NULL;
             if(operator_data->slow5_header->protocol_run_id)free(operator_data->slow5_header->protocol_run_id);operator_data->slow5_header->protocol_run_id = NULL;
             if(operator_data->slow5_header->protocols_version)free(operator_data->slow5_header->protocols_version);operator_data->slow5_header->protocols_version = NULL;
             if(operator_data->slow5_header->tracking_id_run_id)free(operator_data->slow5_header->tracking_id_run_id);operator_data->slow5_header->tracking_id_run_id = NULL;
-            if(operator_data->slow5_header->sample_id)free(operator_data->slow5_header->sample_id);operator_data->slow5_header->sample_id = NULL;
             if(operator_data->slow5_header->usb_config)free(operator_data->slow5_header->usb_config);operator_data->slow5_header->usb_config = NULL;
             if(operator_data->slow5_header->version)free(operator_data->slow5_header->version);operator_data->slow5_header->version = NULL;
+            //additional attributes in 2.0
+            if(operator_data->slow5_header->bream_core_version)free(operator_data->slow5_header->bream_core_version);operator_data->slow5_header->bream_core_version = NULL;
+            if(operator_data->slow5_header->bream_ont_version)free(operator_data->slow5_header->bream_ont_version);operator_data->slow5_header->bream_ont_version = NULL;
+            if(operator_data->slow5_header->bream_prod_version)free(operator_data->slow5_header->bream_prod_version);operator_data->slow5_header->bream_prod_version = NULL;
+            if(operator_data->slow5_header->bream_rnd_version)free(operator_data->slow5_header->bream_rnd_version);operator_data->slow5_header->bream_rnd_version = NULL;
+            //additional attributes in 2.2
+            if(operator_data->slow5_header->asic_version)free(operator_data->slow5_header->asic_version);operator_data->slow5_header->asic_version = NULL;
+            if(operator_data->slow5_header->configuration_version)free(operator_data->slow5_header->configuration_version);operator_data->slow5_header->configuration_version = NULL;
+            if(operator_data->slow5_header->device_type)free(operator_data->slow5_header->device_type);operator_data->slow5_header->device_type = NULL;
+            if(operator_data->slow5_header->distribution_status)free(operator_data->slow5_header->distribution_status);operator_data->slow5_header->distribution_status = NULL;
+            if(operator_data->slow5_header->distribution_version)free(operator_data->slow5_header->distribution_version);operator_data->slow5_header->distribution_version = NULL;
+            if(operator_data->slow5_header->flow_cell_product_code)free(operator_data->slow5_header->flow_cell_product_code);operator_data->slow5_header->flow_cell_product_code = NULL;
+            if(operator_data->slow5_header->guppy_version)free(operator_data->slow5_header->guppy_version);operator_data->slow5_header->guppy_version = NULL;
+            if(operator_data->slow5_header->protocol_group_id)free(operator_data->slow5_header->protocol_group_id);operator_data->slow5_header->protocol_group_id = NULL;
+            if(operator_data->slow5_header->sample_id)free(operator_data->slow5_header->sample_id);operator_data->slow5_header->sample_id = NULL;
             break;
         default:
             fprintf(stderr,"unexpected behaviour\n");
@@ -1139,46 +1145,58 @@ void reset_attributes(group_flags group_flag, operator_obj* operator_data) {
             operator_data->slow5_record->channel_number = NULL;
             break;
         case CONTEXT_TAGS:
+            operator_data->slow5_header->sample_frequency = NULL;
+            //additional attributes in 2.2
             operator_data->slow5_header->barcoding_enabled = NULL;
             operator_data->slow5_header->experiment_duration_set = NULL;
+            operator_data->slow5_header->sequencing_kit = NULL;
             operator_data->slow5_header->experiment_type = NULL;
             operator_data->slow5_header->local_basecalling = NULL;
             operator_data->slow5_header->package = NULL;
             operator_data->slow5_header->package_version = NULL;
-            operator_data->slow5_header->sample_frequency = NULL;
-            operator_data->slow5_header->sequencing_kit = NULL;
+            //additional attributes in 2.0
+            operator_data->slow5_header->filename = NULL;
+            operator_data->slow5_header->experiment_kit = NULL;
+            operator_data->slow5_header->user_filename_input = NULL;
             break;
         case TRACKING_ID:
             operator_data->slow5_header->asic_id = NULL;
             operator_data->slow5_header->asic_id_eeprom = NULL;
             operator_data->slow5_header->asic_temp = NULL;
-            operator_data->slow5_header->asic_version = NULL;
             operator_data->slow5_header->auto_update = NULL;
             operator_data->slow5_header->auto_update_source = NULL;
             operator_data->slow5_header->bream_is_standard = NULL;
-            operator_data->slow5_header->configuration_version = NULL;
             operator_data->slow5_header->device_id = NULL;
-            operator_data->slow5_header->device_type = NULL;
-            operator_data->slow5_header->distribution_status = NULL;
-            operator_data->slow5_header->distribution_version = NULL;
             operator_data->slow5_header->exp_script_name = NULL;
             operator_data->slow5_header->exp_script_purpose = NULL;
             operator_data->slow5_header->exp_start_time = NULL;
             operator_data->slow5_header->flow_cell_id = NULL;
-            operator_data->slow5_header->flow_cell_product_code = NULL;
-            operator_data->slow5_header->guppy_version = NULL;
             operator_data->slow5_header->heatsink_temp = NULL;
             operator_data->slow5_header->hostname = NULL;
             operator_data->slow5_header->installation_type = NULL;
             operator_data->slow5_header->local_firmware_file = NULL;
             operator_data->slow5_header->operating_system = NULL;
-            operator_data->slow5_header->protocol_group_id = NULL;
             operator_data->slow5_header->protocol_run_id = NULL;
             operator_data->slow5_header->protocols_version = NULL;
             operator_data->slow5_header->tracking_id_run_id = NULL;
-            operator_data->slow5_header->sample_id = NULL;
             operator_data->slow5_header->usb_config = NULL;
             operator_data->slow5_header->version = NULL;
+            //additional attributes in 2.0
+            operator_data->slow5_header->bream_core_version = NULL;
+            operator_data->slow5_header->bream_ont_version = NULL;
+            operator_data->slow5_header->bream_prod_version = NULL;
+            operator_data->slow5_header->bream_rnd_version = NULL;
+            //additional attributes in 2.2
+            operator_data->slow5_header->asic_version = NULL;
+            operator_data->slow5_header->configuration_version = NULL;
+            operator_data->slow5_header->device_type = NULL;
+            operator_data->slow5_header->distribution_status = NULL;
+            operator_data->slow5_header->distribution_version = NULL;
+            operator_data->slow5_header->flow_cell_product_code = NULL;
+            operator_data->slow5_header->guppy_version = NULL;
+            operator_data->slow5_header->protocol_group_id = NULL;
+            operator_data->slow5_header->sample_id = NULL;
+
             break;
         default:
             fprintf(stderr,"unexpected behaviour\n");
