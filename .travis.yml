@@ -8,14 +8,14 @@ jobs:
       packages:
         - zlib1g-dev
   include:
-    - name: "Ubuntu 14 local hts"
+    - name: "Ubuntu 14"
       dist: trusty
       addons:
         apt:
           packages:
             - libhdf5-dev
       script: autoreconf && ./configure && make && make test
-    - name: "Ubuntu 16 install scripts"
+    - name: "Ubuntu 16 hdf5 install script"
       dist: xenial
       addons:
         apt:
@@ -28,7 +28,7 @@ jobs:
       os: linux
       dist: xenial
       script: make && make test
-    - name: "OSX local hts"
+    - name: "OSX"
       os: osx
       addons:
         homebrew:
