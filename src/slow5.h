@@ -209,18 +209,23 @@ enum FormatOut {
 };
 
 struct operator_obj {
+    //attributes to track hdf5 hierarchy
     unsigned        group_level;         /* Recursion level.  0=root */
     struct operator_obj   *prev;          /* Pointer to previous opdata */
     haddr_t         addr;           /* Group address */
-};
-
-struct write_obj{
-    // these attributes are useful when writing. They are also passed to the op_func_group function along with the struct
+    //attributes are useful when writing. They are also passed to the op_func_group function along with the struct
     FILE *f_out;
     enum FormatOut format_out;
     z_streamp strmp;
     FILE *f_idx;
     const char *fast5_path;
+    //attributes store infomation
+    slow5_header_t *slow5_header;
+    slow5_record_t *slow5_record;
+    int *flag_context_tags;
+    int *flag_tracking_id;
+    int *flag_tracking_id_run_id;
+    size_t* nreads;
 };
 
 union attribute_data {
