@@ -111,4 +111,4 @@ uninstall:
 		$(DESTDIR)$(PREFIX)/share/man/man1/slow5tools.1.gz
 
 test: $(BINARY)
-	./scripts/test.sh
+	./test/test.sh
