@@ -14,7 +14,7 @@ h5dump_file() {
     elif [ -d "$1" ]; then
         dir="$1"
         for file in "$dir"/*; do
-            h5dump_file "$file" "$2" "$dir"
+            h5dump_file "$file" "$2" "$3_$dir"
         done
     fi
 }
