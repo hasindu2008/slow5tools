@@ -23,7 +23,7 @@ jobs:
             - valgrind
       script:
         - autoreconf && ./scripts/install-hdf5.sh 2> /dev/null && ./configure --enable-localhdf5 && make && make test
-        - valgrind --leak-check=full --error-exitcode=1 ./slow5tools call-methylation -b test/ecoli_2kb_region/reads.sorted.bam -g test/ecoli_2kb_region/draft.fa -r test/ecoli_2kb_region/reads.fasta -t 8 -K 256 -B 2M > /dev/null
+        - valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
     - name: "Ubuntu 16 pure make"
       os: linux
       dist: xenial
