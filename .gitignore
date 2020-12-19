@@ -63,12 +63,13 @@ autom4te.cache
 /*.tsv
 *.swp
 /tmp/
-/htslib
-/src/htslib
 /hdf5
 /.vscode
 src/config.h
 /profile.nvprof
+/*.slow5
+/*.txt
+/*.blow5
 
 # testing output
 *actual*
