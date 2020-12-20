@@ -39,6 +39,14 @@ jobs:
     - name: "OSX pure make"
       os: osx
       script: make && make test
+    - name: "arm64 build"
+      arch: arm64
+      os: linux
+      addons:
+        apt:
+          packages:
+            - zlib1g-dev
+      script: autoreconf && ./scripts/install-hdf5.sh 2> /dev/null && ./configure --enable-localhdf5 && make && make test
     - stage: deploy
       name: "GitHub Release"
       dist: trusty
@@ -47,8 +55,6 @@ jobs:
         - mkdir -p slow5tools-${TRAVIS_TAG}
         - make && mv slow5tools slow5tools-${TRAVIS_TAG}/slow5tools_x86_64_linux
         - cp -r README.md LICENSE docs slow5tools-${TRAVIS_TAG}/
-        - mkdir -p slow5tools-${TRAVIS_TAG}/scripts
-        - cp scripts/test.sh slow5tools-${TRAVIS_TAG}/scripts
         - tar -zcf slow5tools-${TRAVIS_TAG}-binaries.tar.gz slow5tools-${TRAVIS_TAG}
         - rm -rf slow5tools-${TRAVIS_TAG}
       deploy:
