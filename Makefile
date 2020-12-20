@@ -83,10 +83,10 @@ distclean: clean
 dist: distclean
 	mkdir -p slow5tools-$(VERSION)
 	autoreconf
-	cp -r README.md LICENSE Dockerfile Makefile configure.ac config.mk.in \
-		installdeps.mk src docs build .dockerignore configure slow5tools-$(VERSION)
+	cp -r README.md LICENSE Makefile configure.ac config.mk.in \
+		installdeps.mk src docs build configure slow5tools-$(VERSION)
 	mkdir -p slow5tools-$(VERSION)/scripts
-	cp scripts/install-hdf5.sh scripts/test.sh slow5tools-$(VERSION)/scripts
+	cp scripts/install-hdf5.sh slow5tools-$(VERSION)/scripts
 	tar -zcf slow5tools-$(VERSION)-release.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
@@ -95,8 +95,8 @@ binary:
 	make clean
 	make && mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux
 	cp -r README.md LICENSE docs slow5tools-$(VERSION)/
-	mkdir -p slow5tools-$(VERSION)/scripts
-	cp scripts/test.sh slow5tools-$(VERSION)/scripts
+	#mkdir -p slow5tools-$(VERSION)/scripts
+	#cp scripts/test.sh slow5tools-$(VERSION)/scripts
 	tar -zcf slow5tools-$(VERSION)-binaries.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
