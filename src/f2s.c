@@ -205,7 +205,6 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
         fprintf(f_idx, "%ld\n", end_pos - start_pos);
     }
 
-    free(f5.rawptr);
 }
 
 int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_out,
@@ -965,7 +964,7 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                 } else if(strcmp(name,"tracking_id")!=0 && strcmp(name,"context_tags")!=0){
                     H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &next_op);
                 }
-
+                H5Gclose(group);
                 //the recursive call
                 return_val = H5Literate_by_name(loc_id, name, H5_INDEX_NAME,H5_ITER_INC, 0, op_func_group, (void *) &next_op, H5P_DEFAULT);
                 //check if we are at a root-level group
@@ -1045,6 +1044,7 @@ void free_attributes(group_flags group_flag, operator_obj* operator_data) {
             if(operator_data->slow5_header->pore_type)free(operator_data->slow5_header->pore_type);operator_data->slow5_header->pore_type = NULL;
             break;
         case RAW:
+            if(operator_data->slow5_record->raw_signal)free(operator_data->slow5_record->raw_signal);operator_data->slow5_record->raw_signal = NULL;
             operator_data->slow5_record->start_time = ULONG_MAX;
             operator_data->slow5_record->duration = UINT_MAX;
             operator_data->slow5_record->read_number = -1;
