@@ -16,6 +16,7 @@ set_source_files_properties(src/extract.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/slow5idx.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/thread.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/misc.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/read_fast5.c PROPERTIES LANGUAGE CXX)
 
 set(main src/main.c)
 set(f2s src/f2s.c)
@@ -25,9 +26,10 @@ set(slow5idx src/slow5idx.c)
 set(kstring src/kstring.c)
 set(misc src/misc.c)
 set(thread src/thread.c)
+set(read_fast5 src/read_fast5.c)
 
 set (hdf5-static "${PROJECT_SOURCE_DIR}/hdf5/lib/libhdf5.a")
 
-add_executable(slow5tools ${main} ${f2s} ${index} ${extract} ${misc} ${slow5idx} ${kstring} ${thread})
+add_executable(slow5tools ${main} ${f2s} ${index} ${extract} ${misc} ${slow5idx} ${kstring} ${thread} ${read_fast5})
 
 target_link_libraries(slow5tools ${hdf5-static} -lz -ldl -lm -lpthread -lrt)

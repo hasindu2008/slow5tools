@@ -235,4 +235,10 @@ union attribute_data {
     char* attr_string;
 };
 
+//implemented in f2s.c
+void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, const std::string read_id, const fast5_t f5, const char *fast5_path);
+
+//implemented in read_fast5.c
+void read_multi_fast5(fast5_file_t fast5_file ,const char *fast5_path, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx);
+
 #endif
