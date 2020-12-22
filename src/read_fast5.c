@@ -352,7 +352,6 @@ int read_dataset(hid_t loc_id, const char *name, slow5_record_t* slow5_record) {
 
 void read_multi_fast5(fast5_file_t fast5_file ,const char *fast5_path, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx){
 
-
     struct operator_obj tracker;
     tracker.group_level = ROOT;
     tracker.prev = NULL;
@@ -488,7 +487,6 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                             exit(EXIT_FAILURE);
                         }
                         print_header(operator_data);//remove this later; added for the sake of slow5 format completeness
-
                     }
                     *(operator_data->nreads) = *(operator_data->nreads)+1;
 
@@ -507,9 +505,6 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                     free_attributes(READ, operator_data);
                     free_attributes(RAW, operator_data);
                     free_attributes(CHANNEL_ID, operator_data);
-
-//                    print_record();
-//                    fprintf(stdout,"%s\n",name);
                 }
             }
             break;
@@ -927,102 +922,95 @@ void print_header(operator_obj* operator_data) {
     check_attributes(CONTEXT_TAGS, operator_data);
     check_attributes(TRACKING_ID, operator_data);
     //  main stuff
-    fprintf(stdout,"#file_format=%s\n", operator_data->slow5_header->file_format);
-    fprintf(stdout,"#file_version=%s\n", operator_data->slow5_header->file_version);
-    fprintf(stdout,"#file_type=%s\n", operator_data->slow5_header->file_type);
-    fprintf(stdout,"#number_of_reads=%llu\n",operator_data->slow5_header->number_of_reads);
+    fprintf(operator_data->f_out,"#file_format=%s\n", operator_data->slow5_header->file_format);
+    fprintf(operator_data->f_out,"#file_version=%s\n", operator_data->slow5_header->file_version);
+    fprintf(operator_data->f_out,"#file_type=%s\n", operator_data->slow5_header->file_type);
+    fprintf(operator_data->f_out,"#number_of_reads=%llu\n",operator_data->slow5_header->number_of_reads);
 
     //    READ
-    fprintf(stdout,"#pore_type=%s\n", operator_data->slow5_header->pore_type);
-    fprintf(stdout,"#run_id=%s\n", operator_data->slow5_header->run_id);
+    fprintf(operator_data->f_out,"#pore_type=%s\n", operator_data->slow5_header->pore_type);
+    fprintf(operator_data->f_out,"#run_id=%s\n", operator_data->slow5_header->run_id);
     //    CONTEXT_TAGS
-    fprintf(stdout,"#sample_frequency=%s\n", operator_data->slow5_header->sample_frequency);
+    fprintf(operator_data->f_out,"#sample_frequency=%s\n", operator_data->slow5_header->sample_frequency);
     //additional attributes in 2.0
-    fprintf(stdout,"#filename=%s\n", operator_data->slow5_header->filename);
-    fprintf(stdout,"#experiment_kit=%s\n", operator_data->slow5_header->experiment_kit);
-    fprintf(stdout,"#user_filename_input=%s\n", operator_data->slow5_header->user_filename_input);
+    fprintf(operator_data->f_out,"#filename=%s\n", operator_data->slow5_header->filename);
+    fprintf(operator_data->f_out,"#experiment_kit=%s\n", operator_data->slow5_header->experiment_kit);
+    fprintf(operator_data->f_out,"#user_filename_input=%s\n", operator_data->slow5_header->user_filename_input);
     //additional attributes in 2.2
-    fprintf(stdout,"#barcoding_enabled=%s\n", operator_data->slow5_header->barcoding_enabled);
-    fprintf(stdout,"#experiment_duration_set=%s\n", operator_data->slow5_header->experiment_duration_set);
-    fprintf(stdout,"#experiment_type=%s\n", operator_data->slow5_header->experiment_type);
-    fprintf(stdout,"#local_basecalling=%s\n", operator_data->slow5_header->local_basecalling);
-    fprintf(stdout,"#package=%s\n", operator_data->slow5_header->package);
-    fprintf(stdout,"#package_version=%s\n", operator_data->slow5_header->package_version);
-    fprintf(stdout,"#sequencing_kit=%s\n", operator_data->slow5_header->sequencing_kit);
+    fprintf(operator_data->f_out,"#barcoding_enabled=%s\n", operator_data->slow5_header->barcoding_enabled);
+    fprintf(operator_data->f_out,"#experiment_duration_set=%s\n", operator_data->slow5_header->experiment_duration_set);
+    fprintf(operator_data->f_out,"#experiment_type=%s\n", operator_data->slow5_header->experiment_type);
+    fprintf(operator_data->f_out,"#local_basecalling=%s\n", operator_data->slow5_header->local_basecalling);
+    fprintf(operator_data->f_out,"#package=%s\n", operator_data->slow5_header->package);
+    fprintf(operator_data->f_out,"#package_version=%s\n", operator_data->slow5_header->package_version);
+    fprintf(operator_data->f_out,"#sequencing_kit=%s\n", operator_data->slow5_header->sequencing_kit);
     //    TRACKING_ID
-    fprintf(stdout,"#asic_id=%s\n", operator_data->slow5_header->asic_id);
-    fprintf(stdout,"#asic_id_eeprom=%s\n", operator_data->slow5_header->asic_id_eeprom);
-    fprintf(stdout,"#asic_temp=%s\n", operator_data->slow5_header->asic_temp);
-    fprintf(stdout,"#auto_update=%s\n", operator_data->slow5_header->auto_update);
-    fprintf(stdout,"#auto_update_source=%s\n", operator_data->slow5_header->auto_update_source);
-    fprintf(stdout,"#bream_is_standard=%s\n", operator_data->slow5_header->bream_is_standard);
-    fprintf(stdout,"#device_id=%s\n", operator_data->slow5_header->device_id);
-    fprintf(stdout,"#distribution_version=%s\n", operator_data->slow5_header->distribution_version);
-    fprintf(stdout,"#exp_script_name=%s\n", operator_data->slow5_header->exp_script_name);
-    fprintf(stdout,"#exp_script_purpose=%s\n", operator_data->slow5_header->exp_script_purpose);
-    fprintf(stdout,"#exp_start_time=%s\n", operator_data->slow5_header->exp_start_time);
-    fprintf(stdout,"#flow_cell_id=%s\n", operator_data->slow5_header->flow_cell_id);
-    fprintf(stdout,"#heatsink_temp=%s\n", operator_data->slow5_header->heatsink_temp);
-    fprintf(stdout,"#hostname=%s\n", operator_data->slow5_header->hostname);
-    fprintf(stdout,"#installation_type=%s\n", operator_data->slow5_header->installation_type);
-    fprintf(stdout,"#local_firmware_file=%s\n", operator_data->slow5_header->local_firmware_file);
-    fprintf(stdout,"#operating_system=%s\n", operator_data->slow5_header->operating_system);
-    fprintf(stdout,"#protocol_run_id=%s\n", operator_data->slow5_header->protocol_run_id);
-    fprintf(stdout,"#protocols_version=%s\n", operator_data->slow5_header->protocols_version);
-    fprintf(stdout,"#tracking_id_run_id=%s\n", operator_data->slow5_header->tracking_id_run_id);
-    fprintf(stdout,"#usb_config=%s\n", operator_data->slow5_header->usb_config);
-    fprintf(stdout,"#version=%s\n", operator_data->slow5_header->version);
+    fprintf(operator_data->f_out,"#asic_id=%s\n", operator_data->slow5_header->asic_id);
+    fprintf(operator_data->f_out,"#asic_id_eeprom=%s\n", operator_data->slow5_header->asic_id_eeprom);
+    fprintf(operator_data->f_out,"#asic_temp=%s\n", operator_data->slow5_header->asic_temp);
+    fprintf(operator_data->f_out,"#auto_update=%s\n", operator_data->slow5_header->auto_update);
+    fprintf(operator_data->f_out,"#auto_update_source=%s\n", operator_data->slow5_header->auto_update_source);
+    fprintf(operator_data->f_out,"#bream_is_standard=%s\n", operator_data->slow5_header->bream_is_standard);
+    fprintf(operator_data->f_out,"#device_id=%s\n", operator_data->slow5_header->device_id);
+    fprintf(operator_data->f_out,"#distribution_version=%s\n", operator_data->slow5_header->distribution_version);
+    fprintf(operator_data->f_out,"#exp_script_name=%s\n", operator_data->slow5_header->exp_script_name);
+    fprintf(operator_data->f_out,"#exp_script_purpose=%s\n", operator_data->slow5_header->exp_script_purpose);
+    fprintf(operator_data->f_out,"#exp_start_time=%s\n", operator_data->slow5_header->exp_start_time);
+    fprintf(operator_data->f_out,"#flow_cell_id=%s\n", operator_data->slow5_header->flow_cell_id);
+    fprintf(operator_data->f_out,"#heatsink_temp=%s\n", operator_data->slow5_header->heatsink_temp);
+    fprintf(operator_data->f_out,"#hostname=%s\n", operator_data->slow5_header->hostname);
+    fprintf(operator_data->f_out,"#installation_type=%s\n", operator_data->slow5_header->installation_type);
+    fprintf(operator_data->f_out,"#local_firmware_file=%s\n", operator_data->slow5_header->local_firmware_file);
+    fprintf(operator_data->f_out,"#operating_system=%s\n", operator_data->slow5_header->operating_system);
+    fprintf(operator_data->f_out,"#protocol_run_id=%s\n", operator_data->slow5_header->protocol_run_id);
+    fprintf(operator_data->f_out,"#protocols_version=%s\n", operator_data->slow5_header->protocols_version);
+    fprintf(operator_data->f_out,"#tracking_id_run_id=%s\n", operator_data->slow5_header->tracking_id_run_id);
+    fprintf(operator_data->f_out,"#usb_config=%s\n", operator_data->slow5_header->usb_config);
+    fprintf(operator_data->f_out,"#version=%s\n", operator_data->slow5_header->version);
     //additional attributes in 2.0
-    fprintf(stdout,"#bream_core_version=%s\n", operator_data->slow5_header->bream_core_version);
-    fprintf(stdout,"#bream_ont_version=%s\n", operator_data->slow5_header->bream_ont_version);
-    fprintf(stdout,"#bream_prod_version=%s\n", operator_data->slow5_header->bream_prod_version);
-    fprintf(stdout,"#bream_rnd_version=%s\n", operator_data->slow5_header->bream_rnd_version);
+    fprintf(operator_data->f_out,"#bream_core_version=%s\n", operator_data->slow5_header->bream_core_version);
+    fprintf(operator_data->f_out,"#bream_ont_version=%s\n", operator_data->slow5_header->bream_ont_version);
+    fprintf(operator_data->f_out,"#bream_prod_version=%s\n", operator_data->slow5_header->bream_prod_version);
+    fprintf(operator_data->f_out,"#bream_rnd_version=%s\n", operator_data->slow5_header->bream_rnd_version);
     //additional attributes in 2.2
-    fprintf(stdout,"#asic_version=%s\n", operator_data->slow5_header->asic_version);
-    fprintf(stdout,"#configuration_version=%s\n", operator_data->slow5_header->configuration_version);
-    fprintf(stdout,"#device_type=%s\n", operator_data->slow5_header->device_type);
-    fprintf(stdout,"#distribution_status=%s\n", operator_data->slow5_header->distribution_status);
-    fprintf(stdout,"#flow_cell_product_code=%s\n", operator_data->slow5_header->flow_cell_product_code);
-    fprintf(stdout,"#guppy_version=%s\n", operator_data->slow5_header->guppy_version);
-    fprintf(stdout,"#protocol_group_id=%s\n", operator_data->slow5_header->protocol_group_id);
-    fprintf(stdout,"#sample_id=%s\n", operator_data->slow5_header->sample_id);
-    reset_attributes(READ, operator_data);
-    reset_attributes(CONTEXT_TAGS, operator_data);
-    reset_attributes(TRACKING_ID, operator_data);
+    fprintf(operator_data->f_out,"#asic_version=%s\n", operator_data->slow5_header->asic_version);
+    fprintf(operator_data->f_out,"#configuration_version=%s\n", operator_data->slow5_header->configuration_version);
+    fprintf(operator_data->f_out,"#device_type=%s\n", operator_data->slow5_header->device_type);
+    fprintf(operator_data->f_out,"#distribution_status=%s\n", operator_data->slow5_header->distribution_status);
+    fprintf(operator_data->f_out,"#flow_cell_product_code=%s\n", operator_data->slow5_header->flow_cell_product_code);
+    fprintf(operator_data->f_out,"#guppy_version=%s\n", operator_data->slow5_header->guppy_version);
+    fprintf(operator_data->f_out,"#protocol_group_id=%s\n", operator_data->slow5_header->protocol_group_id);
+    fprintf(operator_data->f_out,"#sample_id=%s\n", operator_data->slow5_header->sample_id);
+
     // write the column headers
-    fprintf(stdout,"%s\n", COLUMN_HEADERS);
+    fprintf(operator_data->f_out,"%s\n", COLUMN_HEADERS);
 }
 
 void print_record(operator_obj* operator_data) {
     check_attributes(RAW, operator_data);
     check_attributes(CHANNEL_ID, operator_data);
-    fprintf(stdout,"%s\t",operator_data->slow5_record->read_id);
-    fprintf(stdout,"%s\t",operator_data->slow5_record->channel_number);
-    fprintf(stdout,"%f\t",operator_data->slow5_record->digitisation);
-    fprintf(stdout,"%f\t",operator_data->slow5_record->offset);
-    fprintf(stdout,"%f\t",operator_data->slow5_record->range);
-    fprintf(stdout,"%f\t",operator_data->slow5_record->sampling_rate);
-    fprintf(stdout,"%d\t",operator_data->slow5_record->duration);
+    fprintf(operator_data->f_out,"%s\t",operator_data->slow5_record->read_id);
+    fprintf(operator_data->f_out,"%s\t",operator_data->slow5_record->channel_number);
+    fprintf(operator_data->f_out,"%f\t",operator_data->slow5_record->digitisation);
+    fprintf(operator_data->f_out,"%f\t",operator_data->slow5_record->offset);
+    fprintf(operator_data->f_out,"%f\t",operator_data->slow5_record->range);
+    fprintf(operator_data->f_out,"%f\t",operator_data->slow5_record->sampling_rate);
+    fprintf(operator_data->f_out,"%d\t",operator_data->slow5_record->duration);
 
     //print_signal
     size_t i;
     for(i=0;i<operator_data->slow5_record->duration-1;i++){
-        fprintf(stdout,"%hu,", operator_data->slow5_record->raw_signal[i]);
+        fprintf(operator_data->f_out,"%hu,", operator_data->slow5_record->raw_signal[i]);
     }
-    fprintf(stdout,"%hu\t", operator_data->slow5_record->raw_signal[i]);
+    fprintf(operator_data->f_out,"%hu\t", operator_data->slow5_record->raw_signal[i]);
 
-    fprintf(stdout,"%d\t",operator_data->slow5_record->read_number);
-    fprintf(stdout,"%lu\t",operator_data->slow5_record->start_time);
-    fprintf(stdout,"%u\t",operator_data->slow5_record->start_mux);
+    fprintf(operator_data->f_out,"%d\t",operator_data->slow5_record->read_number);
+    fprintf(operator_data->f_out,"%lu\t",operator_data->slow5_record->start_time);
+    fprintf(operator_data->f_out,"%u\t",operator_data->slow5_record->start_mux);
 
-    fprintf(stdout,"%f",operator_data->slow5_record->median_before);
+    fprintf(operator_data->f_out,"%f",operator_data->slow5_record->median_before);
 //    if(strcmp(slow5_header.file_version,"2.2")){
-    fprintf(stdout,"\t%u",operator_data->slow5_record->end_reason);
+    fprintf(operator_data->f_out,"\t%u",operator_data->slow5_record->end_reason);
     //  }
-    fprintf(stdout,"\n");
-
-    //reset
-    reset_attributes(READ, operator_data);
-    reset_attributes(RAW, operator_data);
-    reset_attributes(CHANNEL_ID, operator_data);
+    fprintf(operator_data->f_out,"\n");
 }

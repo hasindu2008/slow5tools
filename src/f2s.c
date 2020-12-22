@@ -210,8 +210,6 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_ou
         if (fast5_file.is_multi_fast5) {
             read_multi_fast5(fast5_file ,fast5_path ,f_out, format_out, strmp, f_idx);
 
-
-
         } else {
             fast5_t f5;
             int32_t ret=fast5_read_single_fast5(fast5_file, &f5);
