@@ -16,6 +16,7 @@ OBJ = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/kstring.o \
 	  $(BUILD_DIR)/misc.o \
 	  $(BUILD_DIR)/thread.o \
+	  $(BUILD_DIR)/read_fast5.o \
 
 
 PREFIX = /usr/local
@@ -51,6 +52,9 @@ $(BUILD_DIR)/misc.o: src/misc.c
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/thread.o: src/thread.c src/slow5idx.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/read_fast5.o: src/read_fast5.c src/slow5idx.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 
