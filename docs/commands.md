@@ -9,13 +9,19 @@
 * `index`:           
          Indexes a SLOW5/BLOW5 file.
 * `view`:          
-         SLOW5<->BLOW5 conversion and subsetting.   
+         SLOW5<->BLOW5 conversion.   
 * `cat`:          
          Concatenate SLOW5/BLOW5 files.
 * `split`:          
          Splits a SLOW5/BLOW5 file.
+* `subset`:          
+         Extract records for specified read IDs.         
 * `stats`:
-         Generates Statistics from a SAM/BAM file.
+         Generates Statistics from a SLOW5/BLOW5 file.
+* `sort`:
+         Sort a SLOW5/BLOW5 file based on read ID.
+* `merge`:
+         Merge sorted SLOW5/BLOW5 files.
 
 
 ## OPTIONS
@@ -49,4 +55,21 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
 *  `--verbose INT`:
     Verbosity level for the log messages [default value: 0].
 *  `--version`:
+    Print the version number to the standard out. 
+
+
+### s2f
+
+`slow5tools s2f [OPTIONS] file.slow5/blow5 -o fast5_dir`
+
+*  `-h`, `--help`:                           
+   Prints the help to the standard out.
+   
+*  `K`, `--batchsize`: 
+         Number of reads in one FAST5 file
+*  `-p, --iop INT`:
+    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.  
+*  `--verbose INT`:
+    Verbosity level for the log messages [default value: 0].
+*  `--version`:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
     Print the version number to the standard out. 
