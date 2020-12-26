@@ -2,6 +2,7 @@
 // Created by shan on 2020-12-22.
 //
 #include "slow5.h"
+#include <float.h>
 
 #define COLUMN_HEADERS "#read_id,channel_number,digitisation,offset,range,sampling_rate,duration,raw_signal,read_number,start_time,median_before,end_reason"
 #define SLOW5_VERSION      "slow5v1.0"
@@ -556,14 +557,14 @@ void free_attributes(group_flags group_flag, operator_obj* operator_data) {
             operator_data->slow5_record->read_number = -1;
             operator_data->slow5_record->start_mux = -1;
             if(operator_data->slow5_record->read_id)free(operator_data->slow5_record->read_id);operator_data->slow5_record->read_id = NULL;
-            operator_data->slow5_record->median_before = -1;
+            operator_data->slow5_record->median_before = FLT_MIN;
             operator_data->slow5_record->end_reason = '6' - '0';
             break;
         case CHANNEL_ID:
-            operator_data->slow5_record->digitisation = -1;
-            operator_data->slow5_record->offset = -1;
-            operator_data->slow5_record->range = -1;
-            operator_data->slow5_record->sampling_rate = -1;
+            operator_data->slow5_record->digitisation = FLT_MIN;
+            operator_data->slow5_record->offset = FLT_MIN;
+            operator_data->slow5_record->range = FLT_MIN;
+            operator_data->slow5_record->sampling_rate = FLT_MIN;
             if(operator_data->slow5_record->channel_number)free(operator_data->slow5_record->channel_number);operator_data->slow5_record->channel_number = NULL;
             break;
         case CONTEXT_TAGS:
@@ -640,14 +641,14 @@ void reset_attributes(group_flags group_flag, operator_obj* operator_data) {
             operator_data->slow5_record->read_number = -1;
             operator_data->slow5_record->start_mux = -1;
             operator_data->slow5_record->read_id = NULL;
-            operator_data->slow5_record->median_before = -1;
+            operator_data->slow5_record->median_before = FLT_MIN;
             operator_data->slow5_record->end_reason = '6' - '0';
             break;
         case CHANNEL_ID:
-            operator_data->slow5_record->digitisation = -1;
-            operator_data->slow5_record->offset = -1;
-            operator_data->slow5_record->range = -1;
-            operator_data->slow5_record->sampling_rate = -1;
+            operator_data->slow5_record->digitisation = FLT_MIN;
+            operator_data->slow5_record->offset = FLT_MIN;
+            operator_data->slow5_record->range = FLT_MIN;
+            operator_data->slow5_record->sampling_rate = FLT_MIN;
             operator_data->slow5_record->channel_number = NULL;
             break;
         case CONTEXT_TAGS:
@@ -744,7 +745,7 @@ void check_attributes(group_flags group_flag, operator_obj* operator_data) {
             if(operator_data->slow5_record->read_id == NULL){
                 fprintf(stderr,"warning: attribute in /read/Raw read_id is not set\n");
             }
-            if(operator_data->slow5_record->median_before == -1){
+            if(operator_data->slow5_record->median_before == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/Raw median_before is not set\n");
             }
             if(operator_data->slow5_record->end_reason == '6' - '0'){
@@ -752,16 +753,16 @@ void check_attributes(group_flags group_flag, operator_obj* operator_data) {
             };
             break;
         case CHANNEL_ID:
-            if(operator_data->slow5_record->digitisation == -1){
+            if(operator_data->slow5_record->digitisation == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/channel_id digitisation is not set\n");
             }
-            if(operator_data->slow5_record->offset == -1){
-                fprintf(stderr,"warning: attribute in /read/channel_id offset is not set\n");
+            if(operator_data->slow5_record->offset == FLT_MIN){
+                fprintf(stderr,"warning: attribute in /read/channel_id offset is not set. read_id=%s\n",operator_data->slow5_record->read_id);
             }
-            if(operator_data->slow5_record->range == -1){
+            if(operator_data->slow5_record->range == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/channel_id range is not set\n");
             }
-            if(operator_data->slow5_record->sampling_rate == -1){
+            if(operator_data->slow5_record->sampling_rate == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/channel_id sampling_rate is not set\n");
             }
             if(operator_data->slow5_record->channel_number == NULL){
