@@ -4,8 +4,7 @@
 #include "slow5.h"
 #include <float.h>
 
-#define COLUMN_HEADERS "#read_id,channel_number,digitisation,offset,range,sampling_rate,duration,raw_signal,read_number,start_time,median_before,end_reason"
-#define SLOW5_VERSION      "slow5v1.0"
+#define COLUMN_HEADERS "#read_id    channel_number  digitisation    offset  range   sampling_rate   duration    raw_signal  read_number start_time  median_before   end_reason"
 
 // Operator function to be called by H5Aiterate.
 herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *operator_data);
@@ -27,10 +26,10 @@ void print_header(operator_obj* operator_data);
 
 
 herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data){
-
     hid_t attribute, attribute_type, native_type;
     herr_t return_val = 0;
     int ret = 0;
+
 
     struct operator_obj *operator_data = (struct operator_obj *) op_data;
     // Ensure attribute exists
@@ -92,7 +91,10 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
         default:
             fprintf (stderr,"Unknown: %s\n", name);
     }
+    H5Tclose(native_type);
+    H5Tclose(attribute_type);
     H5Aclose(attribute);
+
     if(strcmp("file_type",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->file_type = strdup(value.attr_string);
     }
@@ -393,7 +395,7 @@ void read_multi_fast5(fast5_file_t fast5_file ,const char *fast5_path, FILE *f_o
 
     //obtain the root group attributes
     H5Aiterate2(fast5_file.hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
-    tracker.slow5_header->file_format = SLOW5_VERSION;
+    tracker.slow5_header->file_format = SLOW5_FILE_FORMAT;
     tracker.slow5_header->file_version = slow5_header.file_version;
     tracker.slow5_header->file_type = slow5_header.file_type;
 
@@ -464,6 +466,7 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
 
                 //traverse the attributes belonging to the group
                 //tracking_id and context_tags groups should be traversed only for the first read
+
                 if(strcmp(name,"tracking_id")==0 && *(operator_data->flag_tracking_id)==0){
                     H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &next_op);
                     *(operator_data->flag_tracking_id) = 1;
@@ -473,9 +476,11 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                 } else if(strcmp(name,"tracking_id")!=0 && strcmp(name,"context_tags")!=0){
                     H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &next_op);
                 }
+
                 H5Gclose(group);
                 //the recursive call
                 return_val = H5Literate_by_name(loc_id, name, H5_INDEX_NAME,H5_ITER_INC, 0, op_func_group, (void *) &next_op, H5P_DEFAULT);
+
                 //check if we are at a root-level group
                 if(operator_data->group_level == ROOT){
                     if(*(operator_data->nreads) ==0){
@@ -493,6 +498,7 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
 
                     print_record(operator_data);//remove this later; added for the sake of slow5 format completeness
 
+                    /*
                     //todo: we can pass slow5_record directly to write_data()
                     fast5_t f5;
                     f5.rawptr = operator_data->slow5_record->raw_signal;
@@ -501,6 +507,7 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                     f5.offset = operator_data->slow5_record->offset;
                     f5.range = operator_data->slow5_record->range;
                     f5.sample_rate = operator_data->slow5_record->sampling_rate;
+                    */
 
 //                    write_data(operator_data->f_out, operator_data->format_out, operator_data->strmp, operator_data->f_idx, operator_data->slow5_record->read_id, f5, operator_data->fast5_path);
                     free_attributes(READ, operator_data);
@@ -925,8 +932,8 @@ void print_header(operator_obj* operator_data) {
     //  main stuff
     fprintf(operator_data->f_out,"#file_format=%s\n", operator_data->slow5_header->file_format);
     fprintf(operator_data->f_out,"#file_version=%s\n", operator_data->slow5_header->file_version);
+    fprintf(operator_data->f_out,"#num_read_groups=%llu\n",operator_data->slow5_header->number_of_reads);
     fprintf(operator_data->f_out,"#file_type=%s\n", operator_data->slow5_header->file_type);
-    fprintf(operator_data->f_out,"#number_of_reads=%llu\n",operator_data->slow5_header->number_of_reads);
 
     //    READ
     fprintf(operator_data->f_out,"#pore_type=%s\n", operator_data->slow5_header->pore_type);

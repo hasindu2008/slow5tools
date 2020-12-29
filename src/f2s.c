@@ -2,6 +2,7 @@
 
 #include "fast5lite.h"
 #include "slow5.h"
+#include "error.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -201,7 +202,6 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_ou
         z_streamp strmp, FILE *f_idx) {
     total_reads++;
 
-
     fast5_file_t fast5_file = fast5_open(fast5_path);
 
     if (fast5_file.hdf5_file >= 0) {
@@ -238,6 +238,9 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_ou
     }
 
     fast5_close(fast5_file);
+
+    //to check if peak RAM increase over time
+//    fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
 
     return 1;
 
@@ -444,8 +447,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     // Output slow5 header
     switch (format_out) {
         case OUT_ASCII:
-            fprintf(f_out, SLOW5_FILE_FORMAT);
-            fprintf(f_out, SLOW5_HEADER);
+//            fprintf(f_out, SLOW5_FILE_FORMAT);
+//            fprintf(f_out, SLOW5_HEADER);
             break;
         case OUT_BINARY:
             fprintf(f_out, BLOW5_FILE_FORMAT);
