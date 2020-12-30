@@ -10,6 +10,7 @@ BUILD_DIR = build
 BINARY = slow5tools
 OBJ = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/f2s.o \
+      $(BUILD_DIR)/s2f.o \
       $(BUILD_DIR)/index.o \
       $(BUILD_DIR)/extract.o \
 	  $(BUILD_DIR)/slow5idx.o \
@@ -31,6 +32,9 @@ $(BUILD_DIR)/main.o: src/main.c src/slow5misc.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/f2s.o: src/f2s.c src/slow5.h src/error.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/s2f.o: src/s2f.c src/slow5.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/index.o: src/index.c src/slow5.h src/error.h

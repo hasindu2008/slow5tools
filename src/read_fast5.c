@@ -391,7 +391,7 @@ void read_multi_fast5(fast5_file_t fast5_file ,const char *fast5_path, FILE *f_o
 
     hsize_t number_of_groups = 0;
     H5Gget_num_objs(fast5_file.hdf5_file,&number_of_groups);
-    tracker.slow5_header->number_of_reads = number_of_groups;
+    tracker.slow5_header->num_read_groups = number_of_groups;
 
     //obtain the root group attributes
     H5Aiterate2(fast5_file.hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
@@ -930,9 +930,9 @@ void print_header(operator_obj* operator_data) {
     check_attributes(CONTEXT_TAGS, operator_data);
     check_attributes(TRACKING_ID, operator_data);
     //  main stuff
-    fprintf(operator_data->f_out,"#file_format=%s\n", operator_data->slow5_header->file_format);
+    fprintf(operator_data->f_out,"%s", operator_data->slow5_header->file_format);
     fprintf(operator_data->f_out,"#file_version=%s\n", operator_data->slow5_header->file_version);
-    fprintf(operator_data->f_out,"#num_read_groups=%llu\n",operator_data->slow5_header->number_of_reads);
+    fprintf(operator_data->f_out,"#num_read_groups=%llu\n",operator_data->slow5_header->num_read_groups);
     fprintf(operator_data->f_out,"#file_type=%s\n", operator_data->slow5_header->file_type);
 
     //    READ
