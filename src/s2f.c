@@ -6,9 +6,6 @@
 #include "slow5.h"
 #include "error.h"
 
-#define HEADER_LINES 51 // delete this later and implement a better method
-
-
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
@@ -32,6 +29,10 @@ void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value
 void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype);
 
+void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_header_t* slow5_header, slow5_record_t* slow5_record, hid_t* end_reason_enum_id);
+
+void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FILE);
+
 int read_line(FILE* slow5, char ** buffer){
     if(*buffer){
         free(*buffer);
@@ -48,16 +49,17 @@ int read_line(FILE* slow5, char ** buffer){
 }
 
 void read_header(slow5_header_t* slow5_header, FILE* slow5, char** buffer) {
-    for(size_t i=0; i<HEADER_LINES; i++){
+
+    while(1){
         if(read_line(slow5, buffer)==-1){
             fprintf(stderr, "cannot read line");
             break;
         }; // check return value
         char key_name[32];
-        char value[100];
+        char value[500];
 //        fprintf(stderr,"%s",buffer);
-        sscanf(*buffer, "#%32[^=]=%s\n", key_name,value);
-//        fprintf(stderr,"%s=%s\n",key_name,value);
+        sscanf(*buffer, "#%[^\t]\t%[^\n]\n", key_name,value);
+        if(strcmp("read_id",key_name)==0)break;  //column headers
 
         if(strcmp("file_format",key_name)==0){
             slow5_header->file_format = strdup(value);
@@ -375,6 +377,27 @@ int slow5_to_fast5(const char *SLOW5_FILE) {
 
     char* attribute_value;
     slow5_header_t slow5_header;
+
+    FILE* slow5;
+    slow5 = fopen(SLOW5_FILE, "r"); // read mode
+    if (slow5 == NULL){
+        fprintf(stdout,"%s\n",SLOW5_FILE);
+        perror("Error while opening input file.\n");
+        exit(EXIT_FAILURE);
+    }
+    char * buffer = NULL;
+    read_header(&slow5_header, slow5, &buffer); // fill slow5_header values
+    if(buffer)free(buffer);
+
+    write_fast5(&slow5_header, slow5, SLOW5_FILE);
+    //  Close the slow5 file.
+    fclose(slow5);
+    return 0;
+
+}
+
+void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FILE) {
+
     slow5_record_t slow5_record;
 
     hid_t   file_id;
@@ -389,22 +412,13 @@ int slow5_to_fast5(const char *SLOW5_FILE) {
     FAST5_FILE[file_length - 5] = 'f';FAST5_FILE[file_length - 4] = 'a';FAST5_FILE[file_length - 3] = 's';FAST5_FILE[file_length - 2] = 't';FAST5_FILE[file_length - 1] = '5';FAST5_FILE[file_length] = '\0';
     fprintf(stderr, "%s\n", FAST5_FILE);
 
-    FILE* slow5;
-    slow5 = fopen(SLOW5_FILE, "r"); // read mode
-    if (slow5 == NULL){
-        fprintf(stdout,"%s\n",SLOW5_FILE);
-        perror("Error while opening input file.\n");
-        exit(EXIT_FAILURE);
-    }
-    char * buffer = NULL;
-    read_header(&slow5_header, slow5, &buffer); // fill slow5_header values
-
     /* Create a new file using default properties. */
     file_id = H5Fcreate(FAST5_FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    set_hdf5_attributes(file_id, ROOT, &slow5_header, &slow5_record, &end_reason_enum_id);
+    set_hdf5_attributes(file_id, ROOT, slow5_header, &slow5_record, &end_reason_enum_id);
 
+    char * buffer = NULL;
+    char* attribute_value;
 
-    read_line(slow5, &buffer); //read column headers
     read_line(slow5, &buffer);    //read first read
     attribute_value = strtok(buffer, "\t");
     slow5_record.read_id = strdup(attribute_value);
@@ -418,15 +432,16 @@ int slow5_to_fast5(const char *SLOW5_FILE) {
 
     // create context_tags group
     group_context_tags = H5Gcreate (group_read, "context_tags", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    set_hdf5_attributes(group_context_tags, CONTEXT_TAGS, &slow5_header, &slow5_record, &end_reason_enum_id);
+    set_hdf5_attributes(group_context_tags, CONTEXT_TAGS, slow5_header, &slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_context_tags);
 
     // creat tracking_id group
     group_tracking_id = H5Gcreate (group_read, "tracking_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    set_hdf5_attributes(group_tracking_id, TRACKING_ID, &slow5_header, &slow5_record, &end_reason_enum_id);
+    set_hdf5_attributes(group_tracking_id, TRACKING_ID, slow5_header, &slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_tracking_id);
 
-    for(size_t i = 0; i < slow5_header.num_read_groups; i++){
+    for(size_t i = 0; i < slow5_header->num_read_groups; i++){
+//    for(size_t i = 0; i < 1; i++){
         if(i){
             read_line(slow5, &buffer);
             attribute_value = strtok(buffer, "\t");
@@ -449,7 +464,7 @@ int slow5_to_fast5(const char *SLOW5_FILE) {
         attribute_value = strtok(NULL, ",\t");
         slow5_record.duration = atoi(attribute_value);
 
-        set_hdf5_attributes(group_read, READ, &slow5_header, &slow5_record, &end_reason_enum_id);
+        set_hdf5_attributes(group_read, READ, slow5_header, &slow5_record, &end_reason_enum_id);
         // creat Raw group
         group_raw = H5Gcreate (group_read, "Raw", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
@@ -507,12 +522,12 @@ int slow5_to_fast5(const char *SLOW5_FILE) {
         attribute_value = strtok(NULL, "\n");
         slow5_record.end_reason = attribute_value[0] - '0';
 
-        set_hdf5_attributes(group_raw, RAW, &slow5_header, &slow5_record, &end_reason_enum_id);
+        set_hdf5_attributes(group_raw, RAW, slow5_header, &slow5_record, &end_reason_enum_id);
         status = H5Gclose (group_raw);
 
         // creat channel_id group
         group_channel_id = H5Gcreate (group_read, "channel_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        set_hdf5_attributes(group_channel_id, CHANNEL_ID, &slow5_header, &slow5_record, &end_reason_enum_id);
+        set_hdf5_attributes(group_channel_id, CHANNEL_ID, slow5_header, &slow5_record, &end_reason_enum_id);
         status = H5Gclose (group_channel_id);
 
         if(i>0){
@@ -522,26 +537,22 @@ int slow5_to_fast5(const char *SLOW5_FILE) {
         free(slow5_record.read_id);
 
 
-        if(i == slow5_header.num_read_groups-1)break;
+        if(i == slow5_header->num_read_groups-1)break;
 
         //to check if peak RAM increase over time
 //    fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
 
     }
+    if(buffer)free(buffer);
 
     H5Tclose(end_reason_enum_id);
-    if(buffer)free(buffer);
     status = H5Gclose (group_read_first);
-    free((char*)slow5_header.file_format);
-    free(slow5_header.file_version);
-    free(slow5_header.file_type);
-    free(slow5_header.pore_type);
-    free(slow5_header.run_id);
-    //  Close the files.
-    fclose(slow5);
+    free((char*)slow5_header->file_format);
+    free(slow5_header->file_version);
+    free(slow5_header->file_type);
+    free(slow5_header->pore_type);
+    free(slow5_header->run_id);
     status = H5Fclose(file_id);
-    return 0;
-
 }
 
 bool has_slow5_ext(const char *f_path) {
