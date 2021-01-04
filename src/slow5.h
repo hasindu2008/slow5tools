@@ -39,13 +39,13 @@
 #define FAST5_EXTENSION "." FAST5_NAME
 
 #define VERSION "0.1"
-#define GLOBAL_HEADER_PREFIX "##"
+#define GLOBAL_HEADER_PREFIX "#" //check
 #define COLUMN_HEADER_PREFIX "#"
 
 #define SLOW5_NAME "slow5"
 #define SLOW5_EXTENSION "." SLOW5_NAME
 #define FILE_FORMAT_HEADER "file_format"
-#define SLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "=" SLOW5_NAME "v" VERSION "\n"
+#define SLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "\t" SLOW5_NAME "v" VERSION "\n"
 #define SLOW5_HEADER \
     COLUMN_HEADER_PREFIX \
     "read_id\t" \
@@ -125,7 +125,7 @@ typedef struct{
     char const *file_format;
     char *file_version;
     char *file_type;
-    hsize_t number_of_reads;
+    hsize_t num_read_groups;
     //    READ
     char* pore_type;
     char* run_id;
