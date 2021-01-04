@@ -78,6 +78,15 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
 
 `slow5tools cat [OPTIONS]` file1.slow5 file2.slow5 ....`
 
+Concatenate multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples are detected, the header and the read_group field will be modified accordingly.
+
+
+### Split
+
+Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelising accross array jobs / distributed systems.
+- based on the read group
+- based on list containing readID and filename pairs
+- max number of reads per file basis
 
     
     
