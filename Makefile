@@ -10,12 +10,14 @@ BUILD_DIR = build
 BINARY = slow5tools
 OBJ = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/f2s.o \
+      $(BUILD_DIR)/s2f.o \
       $(BUILD_DIR)/index.o \
       $(BUILD_DIR)/extract.o \
 	  $(BUILD_DIR)/slow5idx.o \
 	  $(BUILD_DIR)/kstring.o \
 	  $(BUILD_DIR)/misc.o \
 	  $(BUILD_DIR)/thread.o \
+	  $(BUILD_DIR)/read_fast5.o \
 
 
 PREFIX = /usr/local
@@ -30,6 +32,9 @@ $(BUILD_DIR)/main.o: src/main.c src/slow5misc.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/f2s.o: src/f2s.c src/slow5.h src/error.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/s2f.o: src/s2f.c src/slow5.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/index.o: src/index.c src/slow5.h src/error.h
@@ -51,6 +56,9 @@ $(BUILD_DIR)/misc.o: src/misc.c
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/thread.o: src/thread.c src/slow5idx.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/read_fast5.o: src/read_fast5.c src/slow5idx.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 
@@ -83,10 +91,10 @@ distclean: clean
 dist: distclean
 	mkdir -p slow5tools-$(VERSION)
 	autoreconf
-	cp -r README.md LICENSE Dockerfile Makefile configure.ac config.mk.in \
-		installdeps.mk src docs build .dockerignore configure slow5tools-$(VERSION)
+	cp -r README.md LICENSE Makefile configure.ac config.mk.in \
+		installdeps.mk src docs build configure slow5tools-$(VERSION)
 	mkdir -p slow5tools-$(VERSION)/scripts
-	cp scripts/install-hdf5.sh scripts/test.sh slow5tools-$(VERSION)/scripts
+	cp scripts/install-hdf5.sh slow5tools-$(VERSION)/scripts
 	tar -zcf slow5tools-$(VERSION)-release.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
@@ -95,8 +103,8 @@ binary:
 	make clean
 	make && mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux
 	cp -r README.md LICENSE docs slow5tools-$(VERSION)/
-	mkdir -p slow5tools-$(VERSION)/scripts
-	cp scripts/test.sh slow5tools-$(VERSION)/scripts
+	#mkdir -p slow5tools-$(VERSION)/scripts
+	#cp scripts/test.sh slow5tools-$(VERSION)/scripts
 	tar -zcf slow5tools-$(VERSION)-binaries.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
@@ -111,4 +119,4 @@ uninstall:
 		$(DESTDIR)$(PREFIX)/share/man/man1/slow5tools.1.gz
 
 test: $(BINARY)
-	./scripts/test.sh
+	./test/test.sh
