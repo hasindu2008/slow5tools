@@ -1,6 +1,6 @@
 // Sasha Jenner
 
-#include "fast5lite.h"
+//#include "fast5lite.h"
 #include "slow5.h"
 #include "error.h"
 
@@ -202,45 +202,13 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_ou
         z_streamp strmp, FILE *f_idx) {
     total_reads++;
 
-    fast5_file_t fast5_file = fast5_open(fast5_path);
-
-    if (fast5_file.hdf5_file >= 0) {
-
-        //TODO: can optimise for performance
-        if (fast5_file.is_multi_fast5) {
-            read_multi_fast5(fast5_file ,fast5_path ,f_out, format_out, strmp, f_idx);
-
-        } else {
-            fast5_t f5;
-            int32_t ret=fast5_read_single_fast5(fast5_file, &f5);
-            if (ret < 0) {
-                WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
-                bad_fast5_file++;
-                fast5_close(fast5_file);
-                return 0;
-            }
-
-            std::string read_id = fast5_get_read_id_single_fast5(fast5_file);
-            if (read_id == "") {
-                WARNING("Fast5 file [%s] does not have a read ID and will be skipped", fast5_path);
-                bad_fast5_file++;
-                fast5_close(fast5_file);
-                return 0;
-            }
-
-            write_data(f_out, format_out, strmp, f_idx, read_id, f5, fast5_path);
-        }
-    }
-    else{
-        WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
+    //TODO: can optimise for performance
+    if(read_fast5(fast5_path, f_out, format_out, strmp, f_idx)<0){
         bad_fast5_file++;
-        return 0;
     }
-
-    fast5_close(fast5_file);
 
     //to check if peak RAM increase over time
-//    fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
+    //fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
 
     return 1;
 
