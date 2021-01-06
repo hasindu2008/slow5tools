@@ -39,13 +39,13 @@
 #define FAST5_EXTENSION "." FAST5_NAME
 
 #define VERSION "0.1"
-#define GLOBAL_HEADER_PREFIX "##"
+#define GLOBAL_HEADER_PREFIX "#" //check
 #define COLUMN_HEADER_PREFIX "#"
 
 #define SLOW5_NAME "slow5"
 #define SLOW5_EXTENSION "." SLOW5_NAME
 #define FILE_FORMAT_HEADER "file_format"
-#define SLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "=" SLOW5_NAME "v" VERSION "\n"
+#define SLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "\t" SLOW5_NAME "v" VERSION "\n"
 #define SLOW5_HEADER \
     COLUMN_HEADER_PREFIX \
     "read_id\t" \
@@ -118,5 +118,127 @@ static inline void exit_msg(const int exit_code, char **argv, struct program_met
         }
     }
 }
+
+enum group_flags{ROOT, READ, RAW, CHANNEL_ID, CONTEXT_TAGS, TRACKING_ID};
+
+typedef struct{
+    char const *file_format;
+    char *file_version;
+    char *file_type;
+    hsize_t num_read_groups;
+    //    READ
+    char* pore_type;
+    char* run_id;
+    //    CONTEXT_TAGS
+    char* sample_frequency;
+    //additional attributes in 2.2
+    char* barcoding_enabled;
+    char* sequencing_kit;
+    char* experiment_duration_set;
+    char* experiment_type;
+    char* local_basecalling;
+    char* package;
+    char* package_version;
+    //additional attributes in 2.0
+    char* filename;
+    char* experiment_kit;
+    char* user_filename_input;
+    //    TRACKING_ID
+    char* asic_id;
+    char* asic_id_eeprom;
+    char* asic_temp;
+    char* auto_update;
+    char* auto_update_source;
+    char* bream_is_standard;
+    char* device_id;
+    char* exp_script_name;
+    char* exp_script_purpose;
+    char* exp_start_time;
+    char* flow_cell_id;
+    char* heatsink_temp;
+    char* hostname;
+    char* installation_type;
+    char* local_firmware_file;
+    char* operating_system;
+    char* protocol_run_id;
+    char* protocols_version;
+    char* tracking_id_run_id;
+    char* usb_config;
+    char* version;
+    //additional attributes in 2.0
+    char* bream_core_version;
+    char* bream_ont_version;
+    char* bream_prod_version;
+    char* bream_rnd_version;
+    //additional attributes in 2.2
+    char* asic_version;
+    char* configuration_version;
+    char* device_type;
+    char* distribution_status;
+    char* distribution_version;
+    char* flow_cell_product_code;
+    char* guppy_version;
+    char* protocol_group_id;
+    char* sample_id;
+}slow5_header_t;
+
+typedef struct{
+    //    RAW
+    unsigned long start_time;
+    unsigned int duration;
+    int read_number;
+    uint8_t start_mux;
+    char* read_id;
+    float median_before;
+    uint8_t end_reason;
+    //    CHANNEL_ID
+    float digitisation;
+    float offset;
+    float range;
+    float sampling_rate;
+    char* channel_number;
+
+    int16_t *raw_signal;
+
+}slow5_record_t;
+
+enum FormatOut {
+    OUT_ASCII,
+    OUT_BINARY,
+    OUT_COMP,
+};
+
+struct operator_obj {
+    //attributes to track hdf5 hierarchy
+    unsigned        group_level;         /* Recursion level.  0=root */
+    struct operator_obj   *prev;          /* Pointer to previous opdata */
+    haddr_t         addr;           /* Group address */
+    //attributes are useful when writing. They are also passed to the op_func_group function along with the struct
+    FILE *f_out;
+    enum FormatOut format_out;
+    z_streamp strmp;
+    FILE *f_idx;
+    const char *fast5_path;
+    //attributes store infomation
+    slow5_header_t *slow5_header;
+    slow5_record_t *slow5_record;
+    int *flag_context_tags;
+    int *flag_tracking_id;
+    int *flag_tracking_id_run_id;
+    size_t* nreads;
+};
+
+union attribute_data {
+    int attr_int;
+    double attr_double;
+    uint8_t attr_uint8_t;
+    char* attr_string;
+};
+
+//implemented in f2s.c
+void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, const std::string read_id, const fast5_t f5, const char *fast5_path);
+
+//implemented in read_fast5.c
+void read_multi_fast5(fast5_file_t fast5_file ,const char *fast5_path, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx);
 
 #endif

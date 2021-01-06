@@ -2,6 +2,7 @@
 
 #include "fast5lite.h"
 #include "slow5.h"
+#include "error.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -20,11 +21,6 @@ static double init_realtime = 0;
 static uint64_t bad_fast5_file = 0;
 static uint64_t total_reads = 0;
 
-enum FormatOut {
-    OUT_ASCII,
-    OUT_BINARY,
-    OUT_COMP,
-};
 
 // adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 /*
@@ -38,6 +34,7 @@ bool is_dir(const char *path) {
     return S_ISDIR(path_stat.st_mode);
 }
 */
+
 
 int z_deflate_write(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, int flush) {
     int ret = Z_OK;
@@ -199,12 +196,10 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
         fprintf(f_idx, "%ld\n", end_pos - start_pos);
     }
 
-    free(f5.rawptr);
 }
 
 int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_out,
         z_streamp strmp, FILE *f_idx) {
-
     total_reads++;
 
     fast5_file_t fast5_file = fast5_open(fast5_path);
@@ -213,26 +208,7 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_ou
 
         //TODO: can optimise for performance
         if (fast5_file.is_multi_fast5) {
-            std::vector<std::string> read_groups = fast5_get_multi_read_groups(fast5_file);
-            std::string prefix = "read_";
-            for (size_t group_idx = 0; group_idx < read_groups.size(); ++group_idx) {
-                std::string group_name = read_groups[group_idx];
-
-                if (group_name.find(prefix) == 0) {
-                    std::string read_id = group_name.substr(prefix.size());
-                    fast5_t f5;
-                    int32_t ret = fast5_read_multi_fast5(fast5_file, &f5, read_id);
-
-                    if (ret < 0) {
-                        WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
-                        bad_fast5_file++;
-                        fast5_close(fast5_file);
-                        return 0;
-                    }
-
-                    write_data(f_out, format_out, strmp, f_idx, read_id, f5, fast5_path);
-                }
-            }
+            read_multi_fast5(fast5_file ,fast5_path ,f_out, format_out, strmp, f_idx);
 
         } else {
             fast5_t f5;
@@ -262,6 +238,9 @@ int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_ou
     }
 
     fast5_close(fast5_file);
+
+    //to check if peak RAM increase over time
+//    fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
 
     return 1;
 
@@ -317,7 +296,6 @@ void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out,
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
-
     init_realtime = realtime();
 
     int ret; // For checking return values of functions
@@ -466,12 +444,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     if (format_out == OUT_COMP) {
     }
-
     // Output slow5 header
     switch (format_out) {
         case OUT_ASCII:
-            fprintf(f_out, SLOW5_FILE_FORMAT);
-            fprintf(f_out, SLOW5_HEADER);
+//            fprintf(f_out, SLOW5_FILE_FORMAT);
+//            fprintf(f_out, SLOW5_HEADER);
             break;
         case OUT_BINARY:
             fprintf(f_out, BLOW5_FILE_FORMAT);
@@ -547,3 +524,4 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
 }
+

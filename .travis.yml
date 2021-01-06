@@ -8,14 +8,14 @@ jobs:
       packages:
         - zlib1g-dev
   include:
-    - name: "Ubuntu 14 local hts"
+    - name: "Ubuntu 14"
       dist: trusty
       addons:
         apt:
           packages:
             - libhdf5-dev
       script: autoreconf && ./configure && make && make test
-    - name: "Ubuntu 16 install scripts"
+    - name: "Ubuntu 16 hdf5 install script"
       dist: xenial
       addons:
         apt:
@@ -23,22 +23,30 @@ jobs:
             - valgrind
       script:
         - autoreconf && ./scripts/install-hdf5.sh 2> /dev/null && ./configure --enable-localhdf5 && make && make test
-        - valgrind --leak-check=full --error-exitcode=1 ./slow5tools call-methylation -b test/ecoli_2kb_region/reads.sorted.bam -g test/ecoli_2kb_region/draft.fa -r test/ecoli_2kb_region/reads.fasta -t 8 -K 256 -B 2M > /dev/null
+        - valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
     - name: "Ubuntu 16 pure make"
       os: linux
       dist: xenial
       script: make && make test
-    - name: "OSX local hts"
+    - name: "OSX"
       os: osx
       addons:
         homebrew:
           packages:
             - hdf5
-          update: true
+          update: false
       script: autoreconf && ./configure && make && make test
     - name: "OSX pure make"
       os: osx
       script: make && make test
+    - name: "arm64 build"
+      arch: arm64
+      os: linux
+      addons:
+        apt:
+          packages:
+            - zlib1g-dev
+      script: autoreconf && ./scripts/install-hdf5.sh 2> /dev/null && ./configure --enable-localhdf5 && make && make test
     - stage: deploy
       name: "GitHub Release"
       dist: trusty
@@ -47,8 +55,6 @@ jobs:
         - mkdir -p slow5tools-${TRAVIS_TAG}
         - make && mv slow5tools slow5tools-${TRAVIS_TAG}/slow5tools_x86_64_linux
         - cp -r README.md LICENSE docs slow5tools-${TRAVIS_TAG}/
-        - mkdir -p slow5tools-${TRAVIS_TAG}/scripts
-        - cp scripts/test.sh slow5tools-${TRAVIS_TAG}/scripts
         - tar -zcf slow5tools-${TRAVIS_TAG}-binaries.tar.gz slow5tools-${TRAVIS_TAG}
         - rm -rf slow5tools-${TRAVIS_TAG}
       deploy:

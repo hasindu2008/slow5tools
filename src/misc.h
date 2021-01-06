@@ -1,3 +1,7 @@
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef MISC_H
 #define MISC_H
 
@@ -15,4 +19,8 @@
 
 unsigned char *z_inflate_buf(const char *comp_str, size_t *n);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

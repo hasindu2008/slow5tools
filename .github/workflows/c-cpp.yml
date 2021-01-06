@@ -1,0 +1,27 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install zlib1g-dev libhdf5-dev valgrind
+    - name: configure 
+      run: autoreconf && ./configure
+    - name: make
+      run: make
+    - name: make test
+      run: make test
+    - name: valgrind
+      run: valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
+      
+
