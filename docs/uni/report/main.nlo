@@ -16,3 +16,5 @@
 \nomenclatureentry{aOS@[{OS}]\begingroup Operating system\nomeqref {0}|nompageref}{3}
 \nomenclatureentry{aB@[{B}]\begingroup Bytes\nomeqref {0}|nompageref}{3}
 \nomenclatureentry{akbases@[{kbases}]\begingroup Kilobases\nomeqref {0}|nompageref}{3}
+\nomenclatureentry{aCLI@[{CLI}]\begingroup Command-line interface\nomeqref {0}|nompageref}{4}
+\nomenclatureentry{aRAID@[{RAID}]\begingroup Redundant Array of Inexpensive Disks\nomeqref {0}|nompageref}{4}

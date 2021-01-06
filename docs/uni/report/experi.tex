@@ -57,7 +57,7 @@ However, the file sizes and total read access times recorded by both experiments
 The results from the first experiment are shown in Figure \ref{fig:size}. The vertical bar plot visualises the bytes stored per base on average for each file type and encoding. It shows that the compressed binary encoding of the SLOW5 file format (in pink) is more space efficient than the FAST5 format (in green) with a 20\% reduction in size, or on average 12.73 bytes stored per base versus 15.87 for FAST5. However, the binary encoding (in blue) is less space efficient, taking up 21.75 bytes per base on average, with a 37\% increase in size from the FAST5 format.
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{../../plots/gpgpu_size.pdf}
+    \includegraphics[width=\linewidth]{../../../plot/gpgpu_size.pdf}
     \caption[Bar plot of the bytes stored per base on average for each file type and encoding technique.]{Bar plot of the bytes stored per base on average (avg. B/base) for each file type and encoding technique.}
     \label{fig:size}
 \end{figure}
@@ -67,7 +67,7 @@ The second experiment's results are displayed in Figure \ref{fig:time}. The line
 In particular, the binary encoding of the SLOW5 format (in blue) was found to be the fastest to access for all number of threads, with an access speed of 106.25 kbases/s on average using 32 threads (roughly 44 times faster than using FAST5). The compressed binary and ASCII encodings of the SLOW5 format (in pink and orange) performed in between the binary encoding and FAST5 file format (in blue and green). From 1 to 8 threads, the ASCII encoding (in orange) performed better than the compressed binary encoding (in pink), whilst the relationship reversed between 16 to 32 threads. Using 32 threads, 73.90 kbases/s could be accessed with the compressed binary encoding (in pink), in comparison to 52.63 kbases/s for the ASCII encoding (in orange). In other words, the compressed binary and ASCII encodings of the SLOW5 file format performed 31 and 22 times faster respectively than the FAST5 file format.
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{../../plots/gpgpu_read_time_thread.pdf}
+    \includegraphics[width=\linewidth]{../../../plot/gpgpu_read_time_thread.pdf}
     \caption[Line chart of the number of kilobases accessed and decoded per second on average for each file format and encoding technique against the number of threads used.]{Line chart of the number of kilobases accessed and decoded per second on average (avg. kbases/s) for each file format and encoding technique against the number of threads used.}
     \label{fig:time}
 \end{figure}

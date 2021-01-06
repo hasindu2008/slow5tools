@@ -1,0 +1,20 @@
+\contentsline {section}{Abstract}{1}{section*.1}%
+\contentsline {section}{Contents}{1}{section*.3}%
+\contentsline {section}{List of Figures}{1}{section*.4}%
+\contentsline {section}{List of Tables}{1}{section*.5}%
+\contentsline {section}{\numberline {1}Background}{1}{section.1}%
+\contentsline {section}{\numberline {2}Introduction}{2}{section.2}%
+\contentsline {section}{\numberline {3}Methods}{2}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Encodings}{2}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Multithreading}{2}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Experiments}{2}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Design}{2}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Results}{3}{subsection.4.2}%
+\contentsline {section}{\numberline {5}Discussion}{4}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Evaluation}{4}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Limitations}{4}{subsection.5.2}%
+\contentsline {section}{\numberline {6}Conclusion}{4}{section.6}%
+\contentsline {section}{\numberline {7}Future Work}{4}{section.7}%
+\contentsline {section}{References}{5}{section*.12}%
+\contentsline {section}{\nonumberline Nomenclature}{5}{section*.13}%
+\contentsline {section}{\numberline {A}Appendix}{6}{appendix.A}%
