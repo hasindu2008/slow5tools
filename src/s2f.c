@@ -59,7 +59,9 @@ void read_header(slow5_header_t* slow5_header, FILE* slow5, char** buffer) {
         char value[500];
 //        fprintf(stderr,"%s",buffer);
         sscanf(*buffer, "#%[^\t]\t%[^\n]\n", key_name,value);
-        if(strcmp("read_id",key_name)==0)break;  //column headers
+        if(strcmp("read_id",key_name)==0){
+            break;  //column headers
+        }
 
         if(strcmp("file_format",key_name)==0){
             slow5_header->file_format = strdup(value);
@@ -375,7 +377,6 @@ void initialize_end_reason(hid_t* end_reason_enum_id) {
 
 int slow5_to_fast5(const char *SLOW5_FILE) {
 
-    char* attribute_value;
     slow5_header_t slow5_header;
 
     FILE* slow5;
@@ -440,7 +441,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     set_hdf5_attributes(group_tracking_id, TRACKING_ID, slow5_header, &slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_tracking_id);
 
-    for(size_t i = 0; i < slow5_header->num_read_groups; i++){
+    for(size_t i = 0; i < slow5_header->num_read_groups; i++){ // num_read_groups will be replaced when creating multiple fast5s.
 //    for(size_t i = 0; i < 1; i++){
         if(i){
             read_line(slow5, &buffer);
@@ -478,7 +479,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         // signal
         int16_t* rawptr = (int16_t*)calloc(slow5_record.duration, sizeof(int16_t));
         int16_t* temp_rawptr = rawptr;
-        for(size_t i=0; i<slow5_record.duration-1; i++){
+        for(size_t j=0; i<slow5_record.duration-1; j++){
             attribute_value = strtok(NULL, ",");
             int16_t temp_value = atoi(attribute_value);
             *temp_rawptr = temp_value;
@@ -619,7 +620,6 @@ void recurse_slow5_dir(const char *f_path) {
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
     init_realtime = realtime();
-    int ret; // For checking return values of functions
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
