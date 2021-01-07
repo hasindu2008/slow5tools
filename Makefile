@@ -3,7 +3,7 @@
 
 CC       = gcc
 CXX      = g++
-CFLAGS   += -g -rdynamic -Wall -O2
+CFLAGS   += -g -rdynamic -Wall -O2 -std=c++11
 LDFLAGS  += $(LIBS) -lpthread -lz
 BUILD_DIR = build
 

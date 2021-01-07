@@ -3,6 +3,7 @@
 //#include "fast5lite.h"
 #include "slow5.h"
 #include "error.h"
+#include <sys/wait.h>
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -11,16 +12,29 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -b, --binary           convert to blow5\n" \
-    "    -c, --compress         convert to compressed blow5\n" \
-    "    -h, --help             display this message and exit\n" \
-    "    -i, --index=[FILE]     index converted file to FILE -- not default\n" \
-    "    -o, --output=[FILE]    output converted contents to FILE -- stdout\n" \
+    "    -b, --binary               convert to blow5\n" \
+    "    -c, --compress             convert to compressed blow5\n" \
+    "    -h, --help                 display this message and exit\n" \
+    "    -i, --index=[FILE]         index converted file to FILE -- not default\n" \
+    "    -o, --output=[FILE]        output converted contents to FILE -- stdout\n" \
+    "    --iop INT                  number of I/O processes to read fast5 files\n" \
+    "    -d, --output_dir=[dir]     output directory where slow5files are written to when iop>1\n" \
 
 static double init_realtime = 0;
-static uint64_t bad_fast5_file = 0;
-static uint64_t total_reads = 0;
 
+
+// args for processes
+typedef struct {
+    int32_t starti;
+    int32_t endi;
+    int32_t proc_index;
+    std::string slow5_file;
+}proc_arg_t;
+
+typedef struct {
+    uint64_t bad_fast5_file = 0;
+    uint64_t total_reads = 0;
+}reads_count;
 
 // adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
 /*
@@ -195,72 +209,233 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
         off_t end_pos = ftello(f_out);
         fprintf(f_idx, "%ld\n", end_pos - start_pos);
     }
-
 }
 
-int fast5_to_slow5(const char *fast5_path, FILE *f_out, enum FormatOut format_out,
-        z_streamp strmp, FILE *f_idx) {
-    total_reads++;
-
-    //TODO: can optimise for performance
-    if(read_fast5(fast5_path, f_out, format_out, strmp, f_idx)<0){
-        bad_fast5_file++;
+// from nanopolish
+// ref: http://stackoverflow.com/a/612176/717706
+// return true if the given name is a directory
+bool is_directory(const std::string& file_name){
+    DIR * dir = opendir(file_name.c_str());
+    if(!dir) {
+        return false;
     }
-
-    //to check if peak RAM increase over time
-    //fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
-
-    return 1;
-
+    closedir(dir);
+    return true;
 }
 
-void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out,
-        z_streamp strmp, FILE *f_idx) {
-
-    DIR *dir;
+// from nanopolish
+std::vector< std::string > list_directory(const std::string& file_name)
+{
+    std::vector< std::string > res;
+    DIR* dir;
     struct dirent *ent;
 
-    dir = opendir(f_path);
-
-    if (dir == NULL) {
-        if (errno == ENOTDIR) {
-            // If it has the fast5 extension
-            if (has_fast5_ext(f_path)) {
-                // Open FAST5 and convert to SLOW5 into f_out
-                fast5_to_slow5(f_path, f_out, format_out, strmp, f_idx);
-            }
-
-        } else {
-            WARNING("File '%s' failed to open - %s.",
-                    f_path, strerror(errno));
-        }
-
-    } else {
-        fprintf(stderr, "[%s::%.3f*%.2f] Extracting fast5 from %s\n", __func__,
-                realtime() - init_realtime, cputime() / (realtime() - init_realtime), f_path);
-
-        // Iterate through sub files
-        while ((ent = readdir(dir)) != NULL) {
-            if (strcmp(ent->d_name, ".") != 0 &&
-                    strcmp(ent->d_name, "..") != 0) {
-
-                // Make sub path string
-                // f_path + '/' + ent->d_name + '\0'
-                size_t sub_f_path_len = strlen(f_path) + 1 + strlen(ent->d_name) + 1;
-                char *sub_f_path = (char *) malloc(sizeof *sub_f_path * sub_f_path_len);
-                MALLOC_CHK(sub_f_path);
-                snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
-
-                // Recurse
-                recurse_dir(sub_f_path, f_out, format_out, strmp, f_idx);
-
-                free(sub_f_path);
-                sub_f_path = NULL;
-            }
-        }
-
-        closedir(dir);
+    dir = opendir(file_name.c_str());
+    if(not dir) {
+        return res;
     }
+    while((ent = readdir(dir))) {
+        res.push_back(ent->d_name);
+    }
+    closedir(dir);
+    return res;
+}
+
+// given a directory path, recursively find all fast5 files
+void find_all_fast5(const std::string& path, std::vector<std::string>& fast5_files)
+{
+    STDERR("Looking for fast5 in %s", path.c_str());
+    if (is_directory(path)) {
+        std::vector< std::string > dir_list = list_directory(path);
+        for (const auto& fn : dir_list) {
+            if(fn == "." or fn == "..") {
+                continue;
+            }
+
+            std::string full_fn = path + "/" + fn;
+            bool is_fast5 = full_fn.find(".fast5") != std::string::npos;
+            // JTS 04/19: is_directory is painfully slow
+            if(is_directory(full_fn)) {
+                // recurse
+                find_all_fast5(full_fn,fast5_files);
+            } else if (is_fast5) {
+                fast5_files.push_back(full_fn);
+                //add to the list
+            }
+        }
+    }else{
+        bool is_fast5 = path.find(".fast5") != std::string::npos;
+        fast5_files.push_back(path);
+    }
+}
+
+// what a child process should do, i.e. open a tmp file, go through the fast5 files
+void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir){
+
+    FILE *slow5_file_pointer = NULL;
+    std::string slow5_path;
+    if(output_dir){
+        slow5_path = std::string(output_dir);
+    }
+    fast5_file_t fast5_file;
+
+    uint64_t bad_fast5_file = 0;
+    uint64_t total_reads = 0;
+
+//    fprintf(stderr,"starti %d\n",args.starti);
+    for (size_t i = args.starti; i < args.endi; i++) {
+        total_reads++;
+        fast5_file = fast5_open(fast5_files[i].c_str());
+        fast5_file.fast5_path = fast5_files[i].c_str();
+
+        if (fast5_file.hdf5_file < 0){
+            WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_files[i].c_str());
+            H5Fclose(fast5_file.hdf5_file);
+            bad_fast5_file++;
+            continue;
+        }
+
+        if(output_dir){
+            if (fast5_file.is_multi_fast5) {
+                fprintf(stderr,"101\n");
+
+                std::string slow5file = fast5_files[i].substr(fast5_files[i].find_last_of('/'),
+                                                              fast5_files[i].length() -
+                                                              fast5_files[i].find_last_of('/') - 6) + ".slow5";
+                slow5_path += slow5file;
+                //fprintf(stderr,"slow5path = %s\n fast5_path = %s\nslow5file = %s\n",slow5_path.c_str(), fast5_files[i].c_str(),slow5file.c_str());
+
+                slow5_file_pointer = fopen(slow5_path.c_str(), "w");
+
+                // An error occured
+                if (!slow5_file_pointer) {
+                    ERROR("File '%s' could not be opened - %s.",
+                          slow5_path.c_str(), strerror(errno));
+                    continue;
+                } else {
+                    f_out = slow5_file_pointer;
+                }
+            }else{
+                if(!slow5_file_pointer){
+
+                    slow5_path += "/"+std::to_string(args.starti)+".slow5";
+                    fprintf(stderr,"%s\n",slow5_path.c_str());
+
+                    slow5_file_pointer = fopen(slow5_path.c_str(), "w");
+                    // An error occured
+                    if (!slow5_file_pointer) {
+                        ERROR("File '%s' could not be opened - %s.",
+                              slow5_path.c_str(), strerror(errno));
+                        continue;
+                    } else {
+                        f_out = slow5_file_pointer;
+                    }
+                }
+            }
+        }
+        read_fast5(&fast5_file, f_out, format_out, strmp, f_idx);
+
+        H5Fclose(fast5_file.hdf5_file);
+        if(output_dir && fast5_file.is_multi_fast5){
+            if(fclose(slow5_file_pointer) == EOF) {
+                WARNING("File '%s' failed on closing - %s.", slow5_path.c_str());
+            }
+            slow5_path = std::string(output_dir);
+        }
+    }
+    if(output_dir && !fast5_file.is_multi_fast5 && fclose(slow5_file_pointer) == EOF) {
+        WARNING("File '%s' failed on closing - %s.", slow5_path.c_str());
+    }
+
+    fprintf(stderr, "total reads: %lu, bad fast5: %lu\n", total_reads, bad_fast5_file);
+
+}
+
+void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int iop, std::vector<std::string>& fast5_files, char* output_dir){
+    double realtime0 = realtime();
+    int64_t num_fast5_files = fast5_files.size();
+
+    //create processes
+    pid_t pids[iop];
+    proc_arg_t proc_args[iop];
+    int32_t t;
+    int32_t i = 0;
+    int32_t step = (num_fast5_files + iop - 1) / iop;
+    //todo : check for higher num of procs than the data
+    //current works but many procs are created despite
+
+    //set the data structures
+    for (t = 0; t < iop; t++) {
+        proc_args[t].starti = i;
+        i += step;
+        if (i > num_fast5_files) {
+            proc_args[t].endi = num_fast5_files;
+        } else {
+            proc_args[t].endi = i;
+        }
+        proc_args[t].proc_index = t;
+    }
+
+    if(iop==1){
+        f2s_child_worker(f_out, format_out, strmp, f_idx, proc_args[0],fast5_files, output_dir);
+        goto skip_forking;
+    }
+
+    //create processes
+    STDERR("Spawning %d I/O processes to circumvent HDF hell", iop);
+    for(t = 0; t < iop; t++){
+        pids[t] = fork();
+
+        if(pids[t]==-1){
+            ERROR("%s","Fork failed");
+            perror("");
+            exit(EXIT_FAILURE);
+        }
+        if(pids[t]==0){ //child
+            f2s_child_worker(f_out, format_out, strmp, f_idx, proc_args[t],fast5_files,output_dir);
+            exit(EXIT_SUCCESS);
+        }
+        if(pids[t]>0){ //parent
+            continue;
+        }
+    }
+
+    //wait for processes
+    int status,w;
+    for (t = 0; t < iop; t++) {
+//        if(opt::verbose>1){
+//            STDERR("parent : Waiting for child with pid %d",pids[t]);
+//        }
+        w = waitpid(pids[t], &status, 0);
+        if (w == -1) {
+            ERROR("%s","waitpid failed");
+            perror("");
+            exit(EXIT_FAILURE);
+        }
+        else if (WIFEXITED(status)){
+//            if(opt::verbose>1){
+//                STDERR("child process %d exited, status=%d", pids[t], WEXITSTATUS(status));
+//            }
+            if(WEXITSTATUS(status)!=0){
+                ERROR("child process %d exited with status=%d",pids[t], WEXITSTATUS(status));
+                exit(EXIT_FAILURE);
+            }
+        }
+        else {
+            if (WIFSIGNALED(status)) {
+                ERROR("child process %d killed by signal %d", pids[t], WTERMSIG(status));
+            } else if (WIFSTOPPED(status)) {
+                ERROR("child process %d stopped by signal %d", pids[t], WSTOPSIG(status));
+            } else {
+                ERROR("child process %d did not exit propoerly: status %d", pids[t], status);
+            }
+            exit(EXIT_FAILURE);
+        }
+    }
+    skip_forking:
+
+    fprintf(stderr, "[%s] Parallel converting to slow5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
+
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
@@ -268,6 +443,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     int ret; // For checking return values of functions
     z_stream strm; // Declare stream for compression output if specified
+
+    int iop = 1;
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
@@ -296,11 +473,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
-        {"binary", no_argument, NULL, 'b' },
-        {"compress", no_argument, NULL, 'c' },
-        {"help", no_argument, NULL, 'h' },
-        {"index", required_argument, NULL, 'i' },
-        {"output", required_argument, NULL, 'o' },
+        {"binary", no_argument, NULL, 'b'},    //0
+        {"compress", no_argument, NULL, 'c'},  //1
+        {"help", no_argument, NULL, 'h'},  //2
+        {"index", required_argument, NULL, 'i'},    //3
+        {"output", required_argument, NULL, 'o'},   //4
+        { "iop", required_argument, NULL, 0}, //5
+        { "output_dir", required_argument, NULL, 'd'}, //6
         {NULL, 0, NULL, 0 }
     };
 
@@ -311,17 +490,18 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Input arguments
     char *arg_fname_out = NULL;
+    char *arg_dir_out = NULL;
     char *arg_fname_idx = NULL;
 
     char opt;
-    // Parse options
-    while ((opt = getopt_long(argc, argv, "bchi:o:", long_opts, NULL)) != -1) {
+    int longindex = 0;
 
+    // Parse options
+    while ((opt = getopt_long(argc, argv, "bchi:o:d:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
-
         switch (opt) {
             case 'b':
                 format_out = OUT_BINARY;
@@ -334,7 +514,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                     VERBOSE("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
-
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
             case 'i':
@@ -343,6 +522,18 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             case 'o':
                 arg_fname_out = optarg;
                 break;
+            case 'd':
+                arg_dir_out = optarg;
+                break;
+            case  0 :
+                if (longindex == 5) {
+                    iop = atoi(optarg);
+                    if (iop < 1) {
+                        ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -350,13 +541,16 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    if(iop>1 && !arg_dir_out){
+        ERROR("output directory should be specified when using multiprocessing iop=%d",iop);
+        return EXIT_FAILURE;
+    }
+
     // Parse output argument
     if (arg_fname_out != NULL) {
-
         if (meta != NULL && meta->verbose) {
             VERBOSE("parsing output filename%s","");
         }
-
         // Create new file or
         // Truncate existing file
         FILE *new_file;
@@ -369,7 +563,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
-
         } else {
             f_out = new_file;
         }
@@ -377,11 +570,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Parse index argument
     if (arg_fname_idx != NULL) {
-
         if (meta != NULL && meta->verbose) {
             VERBOSE("parsing index filename%s","");
         }
-
         // Create new file or
         // Truncate existing file
         FILE *new_file;
@@ -391,21 +582,17 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         if (new_file == NULL) {
             ERROR("File '%s' could not be opened - %s.",
                   arg_fname_idx, strerror(errno));
-
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
-
         } else {
             f_idx = new_file;
         }
     }
 
-
     // Check for remaining files to parse
     if (optind >= argc) {
         MESSAGE(stderr, "missing fast5 files or directories%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
@@ -453,15 +640,19 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             break;
     }
 
+
+    double realtime0 = realtime();
+    std::vector<std::string> fast5_files;
+
     for (int i = optind; i < argc; ++ i) {
-        // Recursive way
-        recurse_dir(argv[i], f_out, format_out, &strm, f_idx);
-
-        // TODO iterative way
+        find_all_fast5(argv[i], fast5_files);
+//        recurse_dir(argv[i], f_out, format_out, &strm, f_idx);
     }
+    fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), realtime() - realtime0);
 
-    MESSAGE(stderr, "total reads: %lu, bad fast5: %lu",
-            total_reads, bad_fast5_file);
+    f2s_iop(f_out, format_out, &strm, f_idx, iop, fast5_files, arg_dir_out);
+
+//    MESSAGE(stderr, "total reads: %lu, bad fast5: %lu", total_reads, bad_fast5_file);
 
     if (format_out == OUT_COMP) {
         ret = deflateEnd(&strm);

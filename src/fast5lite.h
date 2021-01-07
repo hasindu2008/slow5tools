@@ -66,6 +66,7 @@ typedef struct {
 typedef struct{
     hid_t hdf5_file;
     bool is_multi_fast5;
+    const char* fast5_path;
 }  fast5_file_t;
 
 

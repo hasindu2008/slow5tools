@@ -25,7 +25,7 @@ void print_record(operator_obj* operator_data);
 void print_header(operator_obj* operator_data);
 
 // from nanopolish_fast5_io.cpp
-static inline fast5_file_t fast5_open(const char* filename) {
+fast5_file_t fast5_open(const char* filename) {
     fast5_file_t fh;
     fh.hdf5_file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -128,6 +128,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
             } else if (H5Tclass == H5T_FLOAT) {
                 char buf[50];
                 sprintf(buf,"%f", value.attr_double);
+                WARNING("Converting the attribute %s/%s from H5T_FLOAT to string ",operator_data->group_name,name);
                 operator_data->slow5_header->file_version = strdup(buf);
             }
         }
@@ -379,30 +380,21 @@ int read_dataset(hid_t loc_id, const char *name, slow5_record_t* slow5_record) {
     return 0;
 }
 
-int read_fast5(const char *fast5_path, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx){
-
-    fast5_file_t fast5_file = fast5_open(fast5_path);
-
-    if (fast5_file.hdf5_file < 0){
-        WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_path);
-        H5Fclose(fast5_file.hdf5_file);
-        return -1;
-    }
-
+int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx){
 
     struct operator_obj tracker;
     tracker.group_level = ROOT;
     tracker.prev = NULL;
     H5O_info_t infobuf;
-    H5Oget_info(fast5_file.hdf5_file, &infobuf);
+    H5Oget_info(fast5_file->hdf5_file, &infobuf);
     tracker.addr = infobuf.addr;
 
-    tracker.fast5_file = &fast5_file;
+    tracker.fast5_file = fast5_file;
     tracker.f_out = f_out;
     tracker.format_out = format_out;
     tracker.strmp = strmp;
     tracker.f_idx = f_idx;
-    tracker.fast5_path = fast5_path;
+    tracker.fast5_path = fast5_file->fast5_path;
 
     slow5_header_t slow5_header;
     slow5_record_t slow5_record;
@@ -426,26 +418,28 @@ int read_fast5(const char *fast5_path, FILE *f_out, enum FormatOut format_out, z
     reset_attributes(TRACKING_ID, &tracker);
 
     hsize_t number_of_groups = 0;
-    H5Gget_num_objs(fast5_file.hdf5_file,&number_of_groups);
+    H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
     tracker.slow5_header->num_read_groups = number_of_groups;
 
-    if (fast5_file.is_multi_fast5) {
+    if (fast5_file->is_multi_fast5) {
         //obtain the root group attributes
-        H5Aiterate2(fast5_file.hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
+        H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
         tracker.slow5_header->file_format = SLOW5_FILE_FORMAT;
         tracker.slow5_header->file_version = slow5_header.file_version;
         tracker.slow5_header->file_type = slow5_header.file_type;
 
         //now iterate over read groups. loading records and writing them are done inside op_func_group
-        H5Literate(fast5_file.hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
+        H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
     }else{ // single-fast5
         //obtain the root group attributes
-        H5Aiterate2(fast5_file.hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
+        tracker.group_name = "/";
+        H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
         tracker.slow5_header->file_format = SLOW5_FILE_FORMAT;
 //        tracker.slow5_header->file_version = slow5_header.file_version;
 
         //now iterate over read groups. loading records and writing them are done inside op_func_group
-        H5Literate(fast5_file.hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
+        H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
+//        todo: compare header values with the previous singlefast5
         print_header(&tracker);//remove this later; added for the sake of slow5 format completeness
         print_record(&tracker);//remove this later; added for the sake of slow5 format completeness
         free_attributes(READ, &tracker);
@@ -456,7 +450,6 @@ int read_fast5(const char *fast5_path, FILE *f_out, enum FormatOut format_out, z
     free_attributes(CONTEXT_TAGS, &tracker);
     free_attributes(TRACKING_ID, &tracker);
 
-    H5Fclose(fast5_file.hdf5_file);
     return 1;
 
 }
