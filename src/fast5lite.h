@@ -66,6 +66,7 @@ typedef struct {
 typedef struct{
     hid_t hdf5_file;
     bool is_multi_fast5;
+    const char* fast5_path;
 }  fast5_file_t;
 
 
@@ -256,31 +257,7 @@ static inline std::string fast5_get_raw_read_group(fast5_file_t fh, const std::s
 
 
 
-// from nanopolish_fast5_io.cpp
-static inline fast5_file_t fast5_open(const char* filename) {
-    fast5_file_t fh;
-    fh.hdf5_file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
 
-    // read and parse the file version to determine if this is a multi-fast5 structured file
-    std::string version_str = fast5_get_string_attribute(fh, "/", "file_version");
-    if(version_str != "") {
-        int major;
-        int minor;
-        int ret = sscanf(version_str.c_str(), "%d.%d", &major, &minor);
-        if(ret != 2) {
-            fprintf(stderr, "Could not parse version string %s\n", version_str.c_str());
-            exit(EXIT_FAILURE);
-        }
-
-        fh.is_multi_fast5 = major >= 1;
-    } else {
-        fh.is_multi_fast5 = false;
-    }
-
-
-
-    return fh;
-}
 
 //from nanopolish_fast5_io.cpp
 static inline void fast5_close(fast5_file_t fh) {
