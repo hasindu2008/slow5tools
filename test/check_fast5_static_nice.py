@@ -3,7 +3,7 @@ Print out which fields of FAST5 files are static or variable for the same experi
 In a nice hierarchical format
 Given h5dump output of any number of FAST5 files
 
-Usage: python3 $0 [h5dump_FAST5_output...]
+Usage: python3 $0 [h5dump_FAST5_output...] [-c]
 """
 
 from sys import argv

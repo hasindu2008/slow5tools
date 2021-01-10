@@ -1,0 +1,95 @@
+CONSTANT
+file_version: "2.0"
+read_00164e3b-f49d-4241-836c-550cfd4bc61f:
+    Analyses:
+        Segment_Linear_000:
+            name: "ONT Sequencing Workflow"
+            Summary:
+                return_status: "Workflow successful"
+                split_hairpin:
+                    abasic_dur: 0
+                    abasic_index: -1
+                    abasic_peak: 0
+                    duration_comp: 0
+                    end_index_comp: 0
+                    hairpin_abasics: 0
+                    hairpin_dur: 0
+                    hairpin_events: 0
+                    hairpin_peak: 0
+                    median_level_comp: 0
+                    median_sd_comp: 0
+                    num_comp: 0
+                    pt_level: 0
+                    range_comp: 0
+                    split_index: -1
+                    start_index_comp: 0
+                    start_index_temp: 5
+    Raw:
+    channel_id:
+        digitisation: 8192
+        sampling_rate: 4000
+    context_tags:
+        experiment_kit: "genomic_dna"
+        sample_frequency: "4000"
+    tracking_id:
+        auto_update: "1"
+        auto_update_source: "https://mirror.oxfordnanoportal.com/software/MinKNOW/"
+        bream_rnd_version: "0.1.1"
+        installation_type: "map"
+        local_firmware_file: "0"
+        usb_config: "1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto"
+
+VARIABLE
+read_00164e3b-f49d-4241-836c-550cfd4bc61f:
+    run_id
+    Analyses:
+        Segment_Linear_000:
+            chimaer
+            dragone
+            event_detection
+            time_stamp
+            Summary:
+                split_hairpin:
+                    duration_temp
+                    end_index_temp
+                    median_level_temp
+                    median_sd_temp
+                    num_events
+                    num_temp
+                    range_temp
+    Raw:
+        duration
+        median_before
+        read_id
+        read_number
+        start_mux
+        start_time
+        Signal
+    channel_id:
+        channel_number
+        offset
+        range
+    context_tags:
+        filename
+        user_filename_input
+    tracking_id:
+        asic_id
+        asic_id_eeprom
+        asic_temp
+        bream_core_version
+        bream_is_standard
+        bream_map_version
+        bream_ont_version
+        bream_prod_version
+        device_id
+        exp_script_name
+        exp_script_purpose
+        exp_start_time
+        flow_cell_id
+        heatsink_temp
+        hostname
+        operating_system
+        protocol_run_id
+        protocols_version
+        run_id
+        version
