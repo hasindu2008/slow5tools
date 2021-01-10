@@ -33,7 +33,7 @@ typedef struct {
 
 typedef struct {
     uint64_t bad_fast5_file = 0;
-    uint64_t total_reads = 0;
+    uint64_t total_fast5 = 0;
 }reads_count;
 
 // adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
@@ -265,12 +265,17 @@ void find_all_fast5(const std::string& path, std::vector<std::string>& fast5_fil
         }
     }else{
         bool is_fast5 = path.find(".fast5") != std::string::npos;
-        fast5_files.push_back(path);
+        if(is_fast5){
+            fast5_files.push_back(path);
+        }
     }
 }
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
-void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir){
+void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
+
+
+    static size_t call_count = 0;
 
     FILE *slow5_file_pointer = NULL;
     std::string slow5_path;
@@ -279,26 +284,21 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
     }
     fast5_file_t fast5_file;
 
-    uint64_t bad_fast5_file = 0;
-    uint64_t total_reads = 0;
-
 //    fprintf(stderr,"starti %d\n",args.starti);
-    for (size_t i = args.starti; i < args.endi; i++) {
-        total_reads++;
+    for (int i = args.starti; i < args.endi; i++) {
+        readsCount->total_fast5++;
         fast5_file = fast5_open(fast5_files[i].c_str());
         fast5_file.fast5_path = fast5_files[i].c_str();
 
         if (fast5_file.hdf5_file < 0){
             WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_files[i].c_str());
             H5Fclose(fast5_file.hdf5_file);
-            bad_fast5_file++;
+            readsCount->bad_fast5_file++;
             continue;
         }
 
         if(output_dir){
             if (fast5_file.is_multi_fast5) {
-                fprintf(stderr,"101\n");
-
                 std::string slow5file = fast5_files[i].substr(fast5_files[i].find_last_of('/'),
                                                               fast5_files[i].length() -
                                                               fast5_files[i].find_last_of('/') - 6) + ".slow5";
@@ -315,13 +315,17 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
                 } else {
                     f_out = slow5_file_pointer;
                 }
-            }else{
+                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count, meta);
+
+            }else{ // single-fast5
+
                 if(!slow5_file_pointer){
-
                     slow5_path += "/"+std::to_string(args.starti)+".slow5";
-                    fprintf(stderr,"%s\n",slow5_path.c_str());
-
-                    slow5_file_pointer = fopen(slow5_path.c_str(), "w");
+                    if(call_count==0){
+                        slow5_file_pointer = fopen(slow5_path.c_str(), "w");
+                    }else{
+                        slow5_file_pointer = fopen(slow5_path.c_str(), "a");
+                    }
                     // An error occured
                     if (!slow5_file_pointer) {
                         ERROR("File '%s' could not be opened - %s.",
@@ -331,9 +335,16 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
                         f_out = slow5_file_pointer;
                     }
                 }
+                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count++, meta);
+            }
+        } else{
+            if (fast5_file.is_multi_fast5) {
+                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count, meta);
+            }else{
+                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count++, meta);
             }
         }
-        read_fast5(&fast5_file, f_out, format_out, strmp, f_idx);
+
 
         H5Fclose(fast5_file.hdf5_file);
         if(output_dir && fast5_file.is_multi_fast5){
@@ -341,17 +352,23 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
                 WARNING("File '%s' failed on closing - %s.", slow5_path.c_str());
             }
             slow5_path = std::string(output_dir);
+            slow5_file_pointer = NULL;
         }
     }
-    if(output_dir && !fast5_file.is_multi_fast5 && fclose(slow5_file_pointer) == EOF) {
-        WARNING("File '%s' failed on closing - %s.", slow5_path.c_str());
+    if(output_dir && !fast5_file.is_multi_fast5) {
+        if(fclose(slow5_file_pointer) == EOF) {
+            WARNING("File '%s' failed on closing - %s.", slow5_path.c_str());
+        }
+        slow5_file_pointer = NULL;
     }
 
-    fprintf(stderr, "total reads: %lu, bad fast5: %lu\n", total_reads, bad_fast5_file);
+    if(meta->verbose){
+        fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_fast5, readsCount->bad_fast5_file);
+    }
 
 }
 
-void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int iop, std::vector<std::string>& fast5_files, char* output_dir){
+void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
     double realtime0 = realtime();
     int64_t num_fast5_files = fast5_files.size();
 
@@ -377,8 +394,9 @@ void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_id
     }
 
     if(iop==1){
-        f2s_child_worker(f_out, format_out, strmp, f_idx, proc_args[0],fast5_files, output_dir);
-        goto skip_forking;
+        f2s_child_worker(f_out, format_out, strmp, f_idx, proc_args[0],fast5_files, output_dir, meta, readsCount);
+//        goto skip_forking;
+        return;
     }
 
     //create processes
@@ -392,7 +410,7 @@ void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_id
             exit(EXIT_FAILURE);
         }
         if(pids[t]==0){ //child
-            f2s_child_worker(f_out, format_out, strmp, f_idx, proc_args[t],fast5_files,output_dir);
+            f2s_child_worker(f_out, format_out, strmp, f_idx, proc_args[t],fast5_files,output_dir, meta, readsCount);
             exit(EXIT_SUCCESS);
         }
         if(pids[t]>0){ //parent
@@ -432,10 +450,60 @@ void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_id
             exit(EXIT_FAILURE);
         }
     }
-    skip_forking:
+//    skip_forking:
 
     fprintf(stderr, "[%s] Parallel converting to slow5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
 
+}
+
+void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out,
+                 z_streamp strmp, FILE *f_idx, reads_count* readsCount, char* output_dir, struct program_meta *meta) {
+
+    DIR *dir;
+    struct dirent *ent;
+
+    dir = opendir(f_path);
+
+    if (dir == NULL) {
+        if (errno == ENOTDIR) {
+            // If it has the fast5 extension
+            if (has_fast5_ext(f_path)) {
+                std::vector<std::string> fast5_files;
+                fast5_files.push_back(f_path);
+                f2s_iop(f_out, format_out, strmp, f_idx, 1, fast5_files, output_dir, meta, readsCount);
+            }
+
+        } else {
+            WARNING("File '%s' failed to open - %s.",
+                    f_path, strerror(errno));
+        }
+
+    } else {
+        fprintf(stderr, "[%s::%.3f*%.2f] Extracting fast5 from %s\n", __func__,
+                realtime() - init_realtime, cputime() / (realtime() - init_realtime), f_path);
+
+        // Iterate through sub files
+        while ((ent = readdir(dir)) != NULL) {
+            if (strcmp(ent->d_name, ".") != 0 &&
+                strcmp(ent->d_name, "..") != 0) {
+
+                // Make sub path string
+                // f_path + '/' + ent->d_name + '\0'
+                size_t sub_f_path_len = strlen(f_path) + 1 + strlen(ent->d_name) + 1;
+                char *sub_f_path = (char *) malloc(sizeof *sub_f_path * sub_f_path_len);
+                MALLOC_CHK(sub_f_path);
+                snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
+
+                // Recurse
+                recurse_dir(sub_f_path, f_out, format_out, strmp, f_idx, readsCount, output_dir, meta);
+
+                free(sub_f_path);
+                sub_f_path = NULL;
+            }
+        }
+
+        closedir(dir);
+    }
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
@@ -640,19 +708,25 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             break;
     }
 
-
     double realtime0 = realtime();
+    reads_count readsCount;
     std::vector<std::string> fast5_files;
 
     for (int i = optind; i < argc; ++ i) {
-        find_all_fast5(argv[i], fast5_files);
-//        recurse_dir(argv[i], f_out, format_out, &strm, f_idx);
+        if(iop==1){
+            // Recursive way
+            recurse_dir(argv[i], f_out, format_out, &strm, f_idx, &readsCount, arg_dir_out, meta);
+        }else{
+            find_all_fast5(argv[i], fast5_files);
+        }
     }
-    fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), realtime() - realtime0);
 
-    f2s_iop(f_out, format_out, &strm, f_idx, iop, fast5_files, arg_dir_out);
-
-//    MESSAGE(stderr, "total reads: %lu, bad fast5: %lu", total_reads, bad_fast5_file);
+    if(iop==1){
+        MESSAGE(stderr, "total fast5: %lu, bad fast5: %lu", readsCount.total_fast5, readsCount.bad_fast5_file);
+    }else{
+        fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), realtime() - realtime0);
+        f2s_iop(f_out, format_out, &strm, f_idx, iop, fast5_files, arg_dir_out, meta, &readsCount);
+    }
 
     if (format_out == OUT_COMP) {
         ret = deflateEnd(&strm);

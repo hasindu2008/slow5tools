@@ -3,6 +3,7 @@
 //
 #include "slow5.h"
 #include <float.h>
+#include "error.h"
 
 #define COLUMN_HEADERS "#read_id	channel_number	digitisation	offset	range	sampling_rate	duration	raw_signal	read_number	start_time	median_before	end_reason"
 
@@ -51,7 +52,6 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
     hid_t attribute, attribute_type, native_type;
     herr_t return_val = 0;
     int ret = 0;
-
 
     struct operator_obj *operator_data = (struct operator_obj *) op_data;
     // Ensure attribute exists
@@ -380,7 +380,7 @@ int read_dataset(hid_t loc_id, const char *name, slow5_record_t* slow5_record) {
     return 0;
 }
 
-int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx){
+int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int call_count, struct program_meta *meta){
 
     struct operator_obj tracker;
     tracker.group_level = ROOT;
@@ -389,6 +389,7 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
     H5Oget_info(fast5_file->hdf5_file, &infobuf);
     tracker.addr = infobuf.addr;
 
+    tracker.meta = meta;
     tracker.fast5_file = fast5_file;
     tracker.f_out = f_out;
     tracker.format_out = format_out;
@@ -432,7 +433,7 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
         H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
     }else{ // single-fast5
         //obtain the root group attributes
-        tracker.group_name = "/";
+        tracker.group_name = "";
         H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
         tracker.slow5_header->file_format = SLOW5_FILE_FORMAT;
 //        tracker.slow5_header->file_version = slow5_header.file_version;
@@ -440,7 +441,9 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
         //now iterate over read groups. loading records and writing them are done inside op_func_group
         H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
 //        todo: compare header values with the previous singlefast5
-        print_header(&tracker);//remove this later; added for the sake of slow5 format completeness
+        if(call_count==0){
+            print_header(&tracker);//remove this later; added for the sake of slow5 format completeness
+        }
         print_record(&tracker);//remove this later; added for the sake of slow5 format completeness
         free_attributes(READ, &tracker);
         free_attributes(RAW, &tracker);
@@ -775,202 +778,202 @@ void reset_attributes(group_flags group_flag, operator_obj* operator_data) {
 void check_attributes(group_flags group_flag, operator_obj* operator_data) {
     switch (group_flag){
         case ROOT:
-            if(operator_data->slow5_header->file_type == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->file_type == NULL){
                 fprintf(stderr,"warning: attribute in / file_type is not set\n");
             }
-            if(operator_data->slow5_header->file_version == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->file_version == NULL){
                 fprintf(stderr,"warning: attribute in / file_version is not set\n");
             }
             break;
         case READ:
-            if(operator_data->slow5_header->run_id == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->run_id == NULL){
                 fprintf(stderr,"warning: attribute in /read run_id is not set\n");
             }
-            if(operator_data->slow5_header->pore_type == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read pore_type is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->pore_type == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read pore_type is not set\n");
             }
             break;
         case RAW:
-            if(operator_data->slow5_record->start_time == ULONG_MAX){
+            if(operator_data->meta->verbose && operator_data->slow5_record->start_time == ULONG_MAX){
                 fprintf(stderr,"warning: attribute in /read/Raw start_time is not set\n");
             }
-            if(operator_data->slow5_record->duration == UINT_MAX){
+            if(operator_data->meta->verbose && operator_data->slow5_record->duration == UINT_MAX){
                 fprintf(stderr,"warning: attribute in /read/Raw duration is not set\n");
             }
-            if(operator_data->slow5_record->read_number == -1){
+            if(operator_data->meta->verbose && operator_data->slow5_record->read_number == -1){
                 fprintf(stderr,"warning: attribute in /read/Raw read_number is not set\n");
             }
-            if(operator_data->slow5_record->start_mux == -1){
+            if(operator_data->meta->verbose && operator_data->slow5_record->start_mux == -1){
                 fprintf(stderr,"warning: attribute in /read/Raw start_mux is not set\n");
             }
-            if(operator_data->slow5_record->read_id == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_record->read_id == NULL){
                 fprintf(stderr,"warning: attribute in /read/Raw read_id is not set\n");
             }
-            if(operator_data->slow5_record->median_before == FLT_MIN){
+            if(operator_data->meta->verbose && operator_data->slow5_record->median_before == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/Raw median_before is not set\n");
             }
-            if(operator_data->slow5_record->end_reason == '6' - '0'){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/Raw end_reason is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_record->end_reason == '6' - '0' && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/Raw end_reason is not set\n");
             };
             break;
         case CHANNEL_ID:
-            if(operator_data->slow5_record->digitisation == FLT_MIN){
+            if(operator_data->meta->verbose && operator_data->slow5_record->digitisation == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/channel_id digitisation is not set\n");
             }
-            if(operator_data->slow5_record->offset == FLT_MIN){
+            if(operator_data->meta->verbose && operator_data->slow5_record->offset == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/channel_id offset is not set. read_id=%s\n",operator_data->slow5_record->read_id);
             }
-            if(operator_data->slow5_record->range == FLT_MIN){
+            if(operator_data->meta->verbose && operator_data->slow5_record->range == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/channel_id range is not set\n");
             }
-            if(operator_data->slow5_record->sampling_rate == FLT_MIN){
+            if(operator_data->meta->verbose && operator_data->slow5_record->sampling_rate == FLT_MIN){
                 fprintf(stderr,"warning: attribute in /read/channel_id sampling_rate is not set\n");
             }
-            if(operator_data->slow5_record->channel_number == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_record->channel_number == NULL){
                 fprintf(stderr,"warning: attribute in /read/channel_id channel_number is not set\n");
             }
             break;
         case CONTEXT_TAGS:
-            if(operator_data->slow5_header->sample_frequency == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->sample_frequency == NULL){
                 fprintf(stderr,"warning: attribute in /read/context_tags sample_frequency is not set\n");
             }
             //additional attributes in 2.2
-            if(operator_data->slow5_header->barcoding_enabled == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/context_tags barcoding_enabled is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->barcoding_enabled == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/context_tags barcoding_enabled is not set\n");
             }
-            if(operator_data->slow5_header->experiment_duration_set == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/context_tags experiment_duration_set is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->experiment_duration_set == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/context_tags experiment_duration_set is not set\n");
             }
-            if(operator_data->slow5_header->experiment_type == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/context_tags experiment_type is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->experiment_type == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/context_tags experiment_type is not set\n");
             }
-            if(operator_data->slow5_header->local_basecalling == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/context_tags local_basecalling is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->local_basecalling == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/context_tags local_basecalling is not set\n");
             }
-            if(operator_data->slow5_header->package == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/context_tags package is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->package == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/context_tags package is not set\n");
             }
-            if(operator_data->slow5_header->package_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/context_tags package_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->package_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/context_tags package_version is not set\n");
             }
-            if(operator_data->slow5_header->sequencing_kit == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/context_tags sequencing_kit is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->sequencing_kit == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/context_tags sequencing_kit is not set\n");
             }
             //additional attributes in 2.0
-            if(operator_data->slow5_header->filename == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.2"))fprintf(stderr,"warning: attribute in /read/context_tags filename is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->filename == NULL && strcmp(operator_data->slow5_header->file_version,"2.2")){
+                fprintf(stderr,"warning: attribute in /read/context_tags filename is not set\n");
             }
-            if(operator_data->slow5_header->experiment_kit == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.2"))fprintf(stderr,"warning: attribute in /read/context_tags experiment_kit is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->experiment_kit == NULL && strcmp(operator_data->slow5_header->file_version,"2.2")){
+                fprintf(stderr,"warning: attribute in /read/context_tags experiment_kit is not set\n");
             }
-            if(operator_data->slow5_header->user_filename_input == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.2"))fprintf(stderr,"warning: attribute in /read/context_tags user_filename_input is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->user_filename_input == NULL && strcmp(operator_data->slow5_header->file_version,"2.2")){
+                fprintf(stderr,"warning: attribute in /read/context_tags user_filename_input is not set\n");
             }
             break;
         case TRACKING_ID:
-            if(operator_data->slow5_header->asic_id == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->asic_id == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id asic_id is not set\n");
             }
-            if(operator_data->slow5_header->asic_id_eeprom == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->asic_id_eeprom == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id asic_id_eeprom is not set\n");
             }
-            if(operator_data->slow5_header->asic_temp == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->asic_temp == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id asic_temp is not set\n");
             }
-            if(operator_data->slow5_header->auto_update == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->auto_update == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id auto_update is not set\n");
             }
-            if(operator_data->slow5_header->auto_update_source == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->auto_update_source == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id auto_update_source is not set\n");
             }
-            if(operator_data->slow5_header->bream_is_standard == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->bream_is_standard == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id bream_is_standard is not set\n");
             }
-            if(operator_data->slow5_header->device_id == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->device_id == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id device_id is not set\n");
             }
-            if(operator_data->slow5_header->exp_script_name == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->exp_script_name == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id exp_script_name is not set\n");
             }
-            if(operator_data->slow5_header->exp_script_purpose == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->exp_script_purpose == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id exp_script_purpose is not set\n");
             }
-            if(operator_data->slow5_header->exp_start_time == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->exp_start_time == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id exp_start_time is not set\n");
             }
-            if(operator_data->slow5_header->flow_cell_id == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->flow_cell_id == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id flow_cell_id is not set\n");
             }
-            if(operator_data->slow5_header->heatsink_temp == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->heatsink_temp == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id heatsink_temp is not set\n");
             }
-            if(operator_data->slow5_header->hostname == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->hostname == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id hostname is not set\n");
             }
-            if(operator_data->slow5_header->installation_type == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->installation_type == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id installation_type is not set\n");
             }
-            if(operator_data->slow5_header->local_firmware_file == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->local_firmware_file == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id local_firmware_file is not set\n");
             }
-            if(operator_data->slow5_header->operating_system == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->operating_system == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id operating_system is not set\n");
             }
-            if(operator_data->slow5_header->protocol_run_id == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->protocol_run_id == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id protocol_run_id is not set\n");
             }
-            if(operator_data->slow5_header->protocols_version == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->protocols_version == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id protocols_version is not set\n");
             }
-            if(operator_data->slow5_header->tracking_id_run_id == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->tracking_id_run_id == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id tracking_id_run_id is not set\n");
             }
-            if(operator_data->slow5_header->usb_config == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->usb_config == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id usb_config is not set\n");
             }
-            if(operator_data->slow5_header->version == NULL){
+            if(operator_data->meta->verbose && operator_data->slow5_header->version == NULL){
                 fprintf(stderr,"warning: attribute in /read/tracking_id version is not set\n");
             }
             //additional attributes in 2.0
-            if(operator_data->slow5_header->bream_core_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.2"))fprintf(stderr,"warning: attribute in /read/context_tags bream_core_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->bream_core_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.2")){
+                fprintf(stderr,"warning: attribute in /read/context_tags bream_core_version is not set\n");
             }
-            if(operator_data->slow5_header->bream_ont_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.2"))fprintf(stderr,"warning: attribute in /read/context_tags bream_ont_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->bream_ont_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.2")){
+                fprintf(stderr,"warning: attribute in /read/context_tags bream_ont_version is not set\n");
             }
-            if(operator_data->slow5_header->bream_prod_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.2"))fprintf(stderr,"warning: attribute in /read/context_tags bream_prod_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->bream_prod_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.2")){
+                fprintf(stderr,"warning: attribute in /read/context_tags bream_prod_version is not set\n");
             }
-            if(operator_data->slow5_header->bream_rnd_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.2"))fprintf(stderr,"warning: attribute in /read/context_tags bream_rnd_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->bream_rnd_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.2")){
+                fprintf(stderr,"warning: attribute in /read/context_tags bream_rnd_version is not set\n");
             }
             //additional attributes in 2.2
-            if(operator_data->slow5_header->asic_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id asic_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->asic_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id asic_version is not set\n");
             }
-            if(operator_data->slow5_header->configuration_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id configuration_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->configuration_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id configuration_version is not set\n");
             }
-            if(operator_data->slow5_header->device_type == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id device_type is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->device_type == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id device_type is not set\n");
             }
-            if(operator_data->slow5_header->distribution_status == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id distribution_status is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->distribution_status == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id distribution_status is not set\n");
             }
-            if(operator_data->slow5_header->distribution_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id distribution_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->distribution_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id distribution_version is not set\n");
             }
-            if(operator_data->slow5_header->flow_cell_product_code == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id flow_cell_product_code is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->flow_cell_product_code == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id flow_cell_product_code is not set\n");
             }
-            if(operator_data->slow5_header->guppy_version == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id guppy_version is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->guppy_version == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id guppy_version is not set\n");
             }
-            if(operator_data->slow5_header->protocol_group_id == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id protocol_group_id is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->protocol_group_id == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id protocol_group_id is not set\n");
             }
-            if(operator_data->slow5_header->sample_id == NULL){
-                if(strcmp(operator_data->slow5_header->file_version,"2.0"))fprintf(stderr,"warning: attribute in /read/tracking_id sample_id is not set\n");
+            if(operator_data->meta->verbose && operator_data->slow5_header->sample_id == NULL && strcmp(operator_data->slow5_header->file_version,"2.0")){
+                fprintf(stderr,"warning: attribute in /read/tracking_id sample_id is not set\n");
             }
             break;
         default:
