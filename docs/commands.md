@@ -67,6 +67,8 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
    Number of reads to write into one FAST5 file [default value: 4000]
 *  `-p, --iop INT`:
    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.  
+*   `-o DIR`
+   Output directory where the FAST5 files will be written.      
 *  `--verbose INT`:
     Verbosity level for the log messages [default value: 0].
 
@@ -82,11 +84,23 @@ Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples
    Outputs in BLOW5 format. `compression_type` can be `bin` for uncompressed binary, `gzip` or gzip-based compression.
 *  `-c INT`, `--compress INT`:
    Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
-
+*  `-o FILE`, `--output FILE`:
+   Outputs converted contents to FILE [default value: stdout]
 
 ### Split
 
 Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelising accross array jobs / distributed systems.
+*  `-s, --slow5`:
+   Outputs in text-based SLOW5 format.
+*  `-b, --blow5 compression_type`:
+   Outputs in BLOW5 format. `compression_type` can be `bin` for uncompressed binary, `gzip` or gzip-based compression.
+*  `-c INT`, `--compress INT`:
+   Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
+*  `-o DIR`, `--output DIR`:
+   Output directory where the split files will be written.  
+*  `K`, `--batchsize`: 
+         
+
 - based on the read group
 - based on list containing readID and filename pairs
 - max number of reads per file basis
