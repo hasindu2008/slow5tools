@@ -63,7 +63,7 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
 
 *  `-h`, `--help`:                           
    Prints the help to the standard out.
-*  `K`, `--batchsize`: 
+*  `n`, `--num-reads`: 
    Number of reads to write into one FAST5 file [default value: 4000]
 *  `-p, --iop INT`:
    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.  
@@ -87,9 +87,12 @@ Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples
 *  `-o FILE`, `--output FILE`:
    Outputs converted contents to FILE [default value: stdout]
 
-### Split
+### split
+
+`slow5tools split [OPTIONS] file1.slow5/file1.blow5 -o out_dir`
 
 Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelising accross array jobs / distributed systems.
+
 *  `-s, --slow5`:
    Outputs in text-based SLOW5 format.
 *  `-b, --blow5 compression_type`:
@@ -98,12 +101,45 @@ Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelisi
    Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
 *  `-o DIR`, `--output DIR`:
    Output directory where the split files will be written.  
-*  `K`, `--batchsize`: 
-         
-
-- based on the read group
-- based on list containing readID and filename pairs
-- max number of reads per file basis
-
+*  `n, --num-reads INT`: 
+   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file)   
+*  `r, --read-groups`: 
+   Split such that each read group goes into a different file    
+*  `l, --list FILE`:
+   Split as per the mappings given in file containing a list of readID and filename pairs.
+*  `-p, --iop INT`:
+   Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) 
+   
     
-    
+ 
+### index
+
+`slow5tools index [OPTIONS] file1.slow5/file1.blow5`
+
+Generates an index for a SLOW5/BLOW5 file.
+* `-t, --threads INT`:
+   Number of threads
+
+### get
+
+`slow5tools get [OPTIONS] file1.slow5/file1.blow5 < readids.txt`
+`slow5tools get [OPTIONS] file1.slow5/file1.blow5 readid1 ....`
+
+* `-t, --threads INT`:
+   Number of threads
+* `-K, --batchsize`
+   The batch size      
+   
+Get records for specified read IDs. 
+
+
+### stats
+
+Get statistics of a SLOW5/BLOW5 file
+Should print if SLOW5 or BLOW5
+The compression technique and compression level if applicable
+Number of read groups
+Total number of reads
+Number of reads from each group
+
+
