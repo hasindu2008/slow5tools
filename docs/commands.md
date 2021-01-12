@@ -1,26 +1,26 @@
 # Commands and Options
 
-## COMMANDS 
+## COMMANDS
 
-* `fast2slow`:               
+* `fast2slow`:
          Converts from FAST5 to SLOW5/BLOW5.
-* `slow2fast`:    
+* `slow2fast`:
          Converts from SLOW5/BLOW5 to FAST5.
-* `index`:           
+* `index`:
          Indexes a SLOW5/BLOW5 file.
-* `view`:          
-         SLOW5<->BLOW5 conversion.   
-* `merge`:          
+* `view`:
+         SLOW5<->BLOW5 conversion.
+* `merge`:
          Merge multiple SLOW5/BLOW5 files to a single file.
-* `split`:          
+* `split`:
          Splits a SLOW5/BLOW5 file.
-* `get`:          
-         Get records for specified read IDs.         
+* `get`:
+         Get records for specified read IDs.
 * `stats`:
          Generates Statistics from a SLOW5/BLOW5 file.
 
 *  `--version`:
-    Print the version number to the standard out. 
+    Print the version number to the standard out.
 
 ## OPTIONS
 
@@ -36,20 +36,20 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
    Outputs in BLOW5 format. `compression_type` can be `bin` for uncompressed binary, `gzip` or gzip-based compression.
 *  `-c INT`, `--compress INT`:
    Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
-*  `-h, --help`:                           
+*  `-h, --help`:
    Prints the help to the standard out.
 *  `-i FILE`, `--index FILE`
    Generates SLOW5/BLOW5 index.
 *  `-o FILE`, `--output FILE`:
    Outputs converted contents to FILE [default value: stdout]
 *  `-p, --iop INT`:
-    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64. 
+    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
 *   `--lossy`:
     Discard useless information in FAST5.
 *  `--no-merge DIR`:
     Convert each FAST5 file to a separate SLOW5/BLOW5 and write to the directory specified by DIR. `-o` is ineffective with this option.
 *  `--no-recursion`:
-    Do not recursively search for FAST5 files in specified directories.   
+    Do not recursively search for FAST5 files in specified directories.
 *  `--tmp-prefix` STR:
     Write temporary files to STR.nnnn.blow5 [default value: ./tmp]
 *  `--verbose INT`:
@@ -61,18 +61,18 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
 
 `slow5tools slow2fast [OPTIONS] file1.slow5/file1.blow5/dir1 ... -o fast5_dir`
 
-*  `-h`, `--help`:                           
+*  `-h`, `--help`:
    Prints the help to the standard out.
-*  `n`, `--num-reads`: 
+*  `n`, `--num-reads`:
    Number of reads to write into one FAST5 file [default value: 4000]
 *  `-p, --iop INT`:
-   Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.  
+   Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
 *   `-o DIR`
-   Output directory where the FAST5 files will be written.      
+   Output directory where the FAST5 files will be written.
 *  `--verbose INT`:
     Verbosity level for the log messages [default value: 0].
 
-    
+
 ### merge
 
 `slow5tools merge [OPTIONS] file1.slow5 ...`
@@ -100,18 +100,18 @@ Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelisi
 *  `-c INT`, `--compress INT`:
    Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
 *  `-o DIR`, `--output DIR`:
-   Output directory where the split files will be written.  
-*  `n, --num-reads INT`: 
-   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file)   
-*  `r, --read-groups`: 
-   Split such that each read group goes into a different file    
+   Output directory where the split files will be written.
+*  `n, --num-reads INT`:
+   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file)
+*  `r, --read-groups`:
+   Split such that each read group goes into a different file
 *  `l, --list FILE`:
    Split as per the mappings given in file containing a list of readID and filename pairs.
 *  `-p, --iop INT`:
-   Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) 
-   
-    
- 
+   Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks)
+
+
+
 ### index
 
 `slow5tools index [OPTIONS] file1.slow5/file1.blow5`
@@ -128,9 +128,9 @@ Generates an index for a SLOW5/BLOW5 file.
 * `-t, --threads INT`:
    Number of threads
 * `-K, --batchsize`
-   The batch size      
-   
-Get records for specified read IDs. 
+   The batch size
+
+Get records for specified read IDs.
 
 
 ### stats
@@ -141,5 +141,3 @@ The compression technique and compression level if applicable
 Number of read groups
 Total number of reads
 Number of reads from each group
-
-
