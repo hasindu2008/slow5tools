@@ -3,7 +3,6 @@
 //#include "fast5lite.h"
 #include "slow5.h"
 #include "error.h"
-#include <sys/wait.h>
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -21,34 +20,6 @@
     "    -d, --output_dir=[dir]     output directory where slow5files are written to when iop>1\n" \
 
 static double init_realtime = 0;
-
-
-// args for processes
-typedef struct {
-    int32_t starti;
-    int32_t endi;
-    int32_t proc_index;
-    std::string slow5_file;
-}proc_arg_t;
-
-typedef struct {
-    uint64_t bad_fast5_file = 0;
-    uint64_t total_fast5 = 0;
-}reads_count;
-
-// adapted from https://stackoverflow.com/questions/4553012/checking-if-a-file-is-a-directory-or-just-a-file
-/*
-bool is_dir(const char *path) {
-    struct stat path_stat;
-    if (stat(path, &path_stat) == -1) {
-        ERROR("Stat failed to retrive file information%s", "");
-        return false;
-    }
-
-    return S_ISDIR(path_stat.st_mode);
-}
-*/
-
 
 int z_deflate_write(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, int flush) {
     int ret = Z_OK;
@@ -89,24 +60,7 @@ int z_deflate_write(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, i
     return ret;
 }
 
-bool has_fast5_ext(const char *f_path) {
-    bool ret = false;
-
-    if (f_path != NULL) {
-        size_t f_path_len = strlen(f_path);
-        size_t fast5_ext_len = strlen(FAST5_EXTENSION);
-
-        if (f_path_len >= fast5_ext_len &&
-                strcmp(f_path + (f_path_len - fast5_ext_len), FAST5_EXTENSION) == 0) {
-            ret = true;
-        }
-    }
-
-    return ret;
-}
-
-void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx,
-        const std::string read_id, const fast5_t f5, const char *fast5_path) {
+void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, const std::string read_id, const fast5_t f5, const char *fast5_path) {
 
     off_t start_pos = -1;
     if (f_idx != NULL) {
@@ -211,69 +165,8 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
     }
 }
 
-// from nanopolish
-// ref: http://stackoverflow.com/a/612176/717706
-// return true if the given name is a directory
-bool is_directory(const std::string& file_name){
-    DIR * dir = opendir(file_name.c_str());
-    if(!dir) {
-        return false;
-    }
-    closedir(dir);
-    return true;
-}
-
-// from nanopolish
-std::vector< std::string > list_directory(const std::string& file_name)
-{
-    std::vector< std::string > res;
-    DIR* dir;
-    struct dirent *ent;
-
-    dir = opendir(file_name.c_str());
-    if(not dir) {
-        return res;
-    }
-    while((ent = readdir(dir))) {
-        res.push_back(ent->d_name);
-    }
-    closedir(dir);
-    return res;
-}
-
-// given a directory path, recursively find all fast5 files
-void find_all_fast5(const std::string& path, std::vector<std::string>& fast5_files)
-{
-    STDERR("Looking for fast5 in %s", path.c_str());
-    if (is_directory(path)) {
-        std::vector< std::string > dir_list = list_directory(path);
-        for (const auto& fn : dir_list) {
-            if(fn == "." or fn == "..") {
-                continue;
-            }
-
-            std::string full_fn = path + "/" + fn;
-            bool is_fast5 = full_fn.find(".fast5") != std::string::npos;
-            // JTS 04/19: is_directory is painfully slow
-            if(is_directory(full_fn)) {
-                // recurse
-                find_all_fast5(full_fn,fast5_files);
-            } else if (is_fast5) {
-                fast5_files.push_back(full_fn);
-                //add to the list
-            }
-        }
-    }else{
-        bool is_fast5 = path.find(".fast5") != std::string::npos;
-        if(is_fast5){
-            fast5_files.push_back(path);
-        }
-    }
-}
-
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
 void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
-
 
     static size_t call_count = 0;
 
@@ -286,14 +179,14 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
 
 //    fprintf(stderr,"starti %d\n",args.starti);
     for (int i = args.starti; i < args.endi; i++) {
-        readsCount->total_fast5++;
+        readsCount->total_5++;
         fast5_file = fast5_open(fast5_files[i].c_str());
         fast5_file.fast5_path = fast5_files[i].c_str();
 
         if (fast5_file.hdf5_file < 0){
             WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_files[i].c_str());
             H5Fclose(fast5_file.hdf5_file);
-            readsCount->bad_fast5_file++;
+            readsCount->bad_5_file++;
             continue;
         }
 
@@ -363,7 +256,7 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
     }
 
     if(meta->verbose){
-        fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_fast5, readsCount->bad_fast5_file);
+        fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
 
 }
@@ -456,8 +349,7 @@ void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_id
 
 }
 
-void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out,
-                 z_streamp strmp, FILE *f_idx, reads_count* readsCount, char* output_dir, struct program_meta *meta) {
+void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, reads_count* readsCount, char* output_dir, struct program_meta *meta) {
 
     DIR *dir;
     struct dirent *ent;
@@ -467,7 +359,7 @@ void recurse_dir(const char *f_path, FILE *f_out, enum FormatOut format_out,
     if (dir == NULL) {
         if (errno == ENOTDIR) {
             // If it has the fast5 extension
-            if (has_fast5_ext(f_path)) {
+            if (std::string(f_path).find(FAST5_EXTENSION)!= std::string::npos){
                 std::vector<std::string> fast5_files;
                 fast5_files.push_back(f_path);
                 f2s_iop(f_out, format_out, strmp, f_idx, 1, fast5_files, output_dir, meta, readsCount);
@@ -717,12 +609,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             // Recursive way
             recurse_dir(argv[i], f_out, format_out, &strm, f_idx, &readsCount, arg_dir_out, meta);
         }else{
-            find_all_fast5(argv[i], fast5_files);
+            find_all_5(argv[i], fast5_files, FAST5_EXTENSION);
         }
     }
 
     if(iop==1){
-        MESSAGE(stderr, "total fast5: %lu, bad fast5: %lu", readsCount.total_fast5, readsCount.bad_fast5_file);
+        MESSAGE(stderr, "total fast5: %lu, bad fast5: %lu", readsCount.total_5, readsCount.bad_5_file);
     }else{
         fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), realtime() - realtime0);
         f2s_iop(f_out, format_out, &strm, f_idx, iop, fast5_files, arg_dir_out, meta, &readsCount);

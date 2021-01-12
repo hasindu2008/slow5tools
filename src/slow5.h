@@ -12,6 +12,8 @@
 #include "fast5lite.h"
 #include "slow5misc.h"
 #include "error.h"
+#include <sys/wait.h>
+
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -89,6 +91,10 @@ static const struct format_map formats[] = {
     { BLOW5_NAME, SLOW5_BINARY},
 };
 
+typedef struct {
+    uint64_t bad_5_file = 0;
+    uint64_t total_5 = 0;
+}reads_count;
 
 struct program_meta {
     bool debug;
@@ -123,7 +129,7 @@ static inline void exit_msg(const int exit_code, char **argv, struct program_met
 enum group_flags{ROOT, READ, RAW, CHANNEL_ID, CONTEXT_TAGS, TRACKING_ID};
 
 typedef struct{
-    char const *file_format;
+    char *file_format;
     char *file_version;
     char *file_type;
     hsize_t num_read_groups;
@@ -239,6 +245,14 @@ union attribute_data {
     char* attr_string;
 };
 
+// args for processes
+typedef struct {
+    int32_t starti;
+    int32_t endi;
+    int32_t proc_index;
+    std::string slow5_file;
+}proc_arg_t;
+
 //implemented in f2s.c
 void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, const std::string read_id, const fast5_t f5, const char *fast5_path);
 
@@ -246,5 +260,8 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
 int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int write_header_flag, struct program_meta *meta);
 
 fast5_file_t fast5_open(const char* filename);
+
+void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension);
+
 
 #endif

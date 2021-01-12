@@ -14,7 +14,7 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help             display this message and exit\n" \
-    "    -o, --output=[DIR]    output converted contents to DIR\n"           \
+    "    -o, --output=[DIR]     output directory where fast5 files are stored\n"           \
 
 
 static double init_realtime = 0;
@@ -441,10 +441,12 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     set_hdf5_attributes(group_tracking_id, TRACKING_ID, slow5_header, &slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_tracking_id);
 
-    for(size_t i = 0; i < slow5_header->num_read_groups; i++){ // num_read_groups will be replaced when creating multiple fast5s.
-//    for(size_t i = 0; i < 1; i++){
+    size_t i = 0;
+    while(1){
         if(i){
-            read_line(slow5, &buffer);
+            if(read_line(slow5, &buffer)==-1){
+                break;
+            };
             attribute_value = strtok(buffer, "\t");
             slow5_record.read_id = strdup(attribute_value);
             // create read group
@@ -479,7 +481,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         // signal
         int16_t* rawptr = (int16_t*)calloc(slow5_record.duration, sizeof(int16_t));
         int16_t* temp_rawptr = rawptr;
-        for(size_t j=0; i<slow5_record.duration-1; j++){
+        for(size_t j=0; j<slow5_record.duration-1; j++){
             attribute_value = strtok(NULL, ",");
             int16_t temp_value = atoi(attribute_value);
             *temp_rawptr = temp_value;
@@ -537,14 +539,12 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         free(rawptr);
         free(slow5_record.read_id);
 
-
-        if(i == slow5_header->num_read_groups-1)break;
+        i++;
 
         //to check if peak RAM increase over time
-//    fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
+        //fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
 
     }
-    if(buffer)free(buffer);
 
     H5Tclose(end_reason_enum_id);
     status = H5Gclose (group_read_first);
@@ -556,20 +556,117 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     status = H5Fclose(file_id);
 }
 
-bool has_slow5_ext(const char *f_path) {
-    bool ret = false;
-    if (f_path != NULL) {
-        size_t f_path_len = strlen(f_path);
-        size_t slow5_ext_len = strlen(SLOW5_EXTENSION);
-        if (f_path_len >= slow5_ext_len &&
-            strcmp(f_path + (f_path_len - slow5_ext_len), SLOW5_EXTENSION) == 0) {
-            ret = true;
+void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
+
+    for (int i = args.starti; i < args.endi; i++) {
+        readsCount->total_5++;
+        slow5_header_t slow5_header;
+
+        FILE *slow5;
+        slow5 = fopen(slow5_files[i].c_str(), "r"); // read mode
+        if (slow5 == NULL) {
+            WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
+            readsCount->bad_5_file++;
+            continue;
         }
+        char *buffer = NULL;
+        read_header(&slow5_header, slow5, &buffer); // fill slow5_header values
+        if (buffer)free(buffer);
+
+        write_fast5(&slow5_header, slow5, slow5_files[i].c_str());
+        //  Close the slow5 file.
+        fclose(slow5);
     }
-    return ret;
 }
 
-void recurse_slow5_dir(const char *f_path) {
+void s2f_iop(int iop, std::vector<std::string>& slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
+    double realtime0 = realtime();
+    int64_t num_slow5_files = slow5_files.size();
+
+    //create processes
+    pid_t pids[iop];
+    proc_arg_t proc_args[iop];
+    int32_t t;
+    int32_t i = 0;
+    int32_t step = (num_slow5_files + iop - 1) / iop;
+    //todo : check for higher num of procs than the data
+    //current works but many procs are created despite
+
+    //set the data structures
+    for (t = 0; t < iop; t++) {
+        proc_args[t].starti = i;
+        i += step;
+        if (i > num_slow5_files) {
+            proc_args[t].endi = num_slow5_files;
+        } else {
+            proc_args[t].endi = i;
+        }
+        proc_args[t].proc_index = t;
+    }
+
+    if(iop==1){
+        s2f_child_worker(proc_args[0], slow5_files, output_dir, meta, readsCount);
+//        goto skip_forking;
+        return;
+    }
+
+    //create processes
+    STDERR("Spawning %d I/O processes to circumvent HDF hell", iop);
+    for(t = 0; t < iop; t++){
+        pids[t] = fork();
+
+        if(pids[t]==-1){
+            ERROR("%s","Fork failed");
+            perror("");
+            exit(EXIT_FAILURE);
+        }
+        if(pids[t]==0){ //child
+            s2f_child_worker(proc_args[t],slow5_files,output_dir, meta, readsCount);
+            exit(EXIT_SUCCESS);
+        }
+        if(pids[t]>0){ //parent
+            continue;
+        }
+    }
+
+    //wait for processes
+    int status,w;
+    for (t = 0; t < iop; t++) {
+//        if(opt::verbose>1){
+//            STDERR("parent : Waiting for child with pid %d",pids[t]);
+//        }
+        w = waitpid(pids[t], &status, 0);
+        if (w == -1) {
+            ERROR("%s","waitpid failed");
+            perror("");
+            exit(EXIT_FAILURE);
+        }
+        else if (WIFEXITED(status)){
+//            if(opt::verbose>1){
+//                STDERR("child process %d exited, status=%d", pids[t], WEXITSTATUS(status));
+//            }
+            if(WEXITSTATUS(status)!=0){
+                ERROR("child process %d exited with status=%d",pids[t], WEXITSTATUS(status));
+                exit(EXIT_FAILURE);
+            }
+        }
+        else {
+            if (WIFSIGNALED(status)) {
+                ERROR("child process %d killed by signal %d", pids[t], WTERMSIG(status));
+            } else if (WIFSTOPPED(status)) {
+                ERROR("child process %d stopped by signal %d", pids[t], WSTOPSIG(status));
+            } else {
+                ERROR("child process %d did not exit propoerly: status %d", pids[t], status);
+            }
+            exit(EXIT_FAILURE);
+        }
+    }
+//    skip_forking:
+
+    fprintf(stderr, "[%s] Parallel converting to fast5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
+}
+
+void recurse_slow5_dir(const char *f_path, reads_count* readsCount, char* output_dir, struct program_meta *meta) {
 
     DIR *dir;
     struct dirent *ent;
@@ -579,9 +676,11 @@ void recurse_slow5_dir(const char *f_path) {
     if (dir == NULL) {
         if (errno == ENOTDIR) {
             // If it has the fast5 extension
-            if (has_slow5_ext(f_path)) {
+            if (std::string(f_path).find(SLOW5_EXTENSION)!= std::string::npos) {
                 // Open FAST5 and convert to SLOW5 into f_out
-                slow5_to_fast5(f_path);
+                std::vector<std::string> slow5_files;
+                slow5_files.push_back(f_path);
+                s2f_iop(1, slow5_files, output_dir, meta, readsCount);
             }
 
         } else {
@@ -606,7 +705,7 @@ void recurse_slow5_dir(const char *f_path) {
                 snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
 
                 // Recurse
-                recurse_slow5_dir(sub_f_path);
+                recurse_slow5_dir(sub_f_path, readsCount, output_dir, meta);
 
                 free(sub_f_path);
                 sub_f_path = NULL;
@@ -648,23 +747,24 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
-            {"help", no_argument, NULL, 'h' },
-            {"output", required_argument, NULL, 'o' },
+            {"help", no_argument, NULL, 'h' }, //0
+            {"output", required_argument, NULL, 'o' },  //1
+            { "iop", required_argument, NULL, 0},   //2
             {NULL, 0, NULL, 0 }
     };
 
     // Input arguments
     char *arg_dir_out = NULL;
-
+    int longindex = 0;
     char opt;
-    // Parse options
-    while ((opt = getopt_long(argc, argv, "h:o:", long_opts, NULL)) != -1) {
+    int iop = 1;
 
+    // Parse options
+    while ((opt = getopt_long(argc, argv, "h:o:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
-
         switch (opt) {
             case 'h':
                 if (meta->verbose) {
@@ -677,6 +777,15 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
             case 'o':
                 arg_dir_out = optarg;
                 break;
+            case  0 :
+                if (longindex == 2) {
+                    iop = atoi(optarg);
+                    if (iop < 1) {
+                        ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -684,17 +793,34 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    if(!arg_dir_out){
+        ERROR("The output directory must be specified %s","");
+        return EXIT_FAILURE;
+    }
+
+    double realtime0 = realtime();
+    reads_count readsCount;
+    std::vector<std::string> slow5_files;
+
     for (int i = optind; i < argc; ++ i) {
 //        fprintf(stderr,"%s",argv[i]);
-        // Recursive way
-        recurse_slow5_dir(argv[i]);
+        if(iop==1) {
+            // Recursive way
+            recurse_slow5_dir(argv[i], &readsCount, arg_dir_out, meta);
+        }else{
+            find_all_5(argv[i], slow5_files, SLOW5_EXTENSION);
+        }
+    }
 
-        // TODO iterative way
+    if(iop==1){
+        MESSAGE(stderr, "total fast5: %lu, bad fast5: %lu", readsCount.total_5, readsCount.bad_5_file);
+    }else{
+        fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, slow5_files.size(), realtime() - realtime0);
+        s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
     }
 
     return EXIT_SUCCESS;
 }
-
 
 void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
