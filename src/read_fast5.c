@@ -25,6 +25,7 @@ void free_attributes(group_flags group_flag, operator_obj* operator_data);
 void print_record(operator_obj* operator_data);
 void print_header(operator_obj* operator_data);
 
+
 // from nanopolish_fast5_io.cpp
 fast5_file_t fast5_open(const char* filename) {
     fast5_file_t fh;
@@ -127,7 +128,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
                 operator_data->slow5_header->file_version = strdup(value.attr_string);
             } else if (H5Tclass == H5T_FLOAT) {
                 char buf[50];
-                sprintf(buf,"%f", value.attr_double);
+                sprintf(buf,"%.1f", value.attr_double);
                 WARNING("Converting the attribute %s/%s from H5T_FLOAT to string ",operator_data->group_name,name);
                 operator_data->slow5_header->file_version = strdup(buf);
             }
@@ -418,16 +419,14 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
     reset_attributes(CONTEXT_TAGS, &tracker);
     reset_attributes(TRACKING_ID, &tracker);
 
-    hsize_t number_of_groups = 0;
-    H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
-    tracker.slow5_header->num_read_groups = number_of_groups;
+    tracker.slow5_header->file_format = SLOW5_FILE_FORMAT;
 
     if (fast5_file->is_multi_fast5) {
+        hsize_t number_of_groups = 0;
+        H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
+        tracker.slow5_header->num_read_groups = number_of_groups;
         //obtain the root group attributes
         H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
-        tracker.slow5_header->file_format = SLOW5_FILE_FORMAT;
-        tracker.slow5_header->file_version = slow5_header.file_version;
-        tracker.slow5_header->file_type = slow5_header.file_type;
 
         //now iterate over read groups. loading records and writing them are done inside op_func_group
         H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
@@ -435,12 +434,11 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
         //obtain the root group attributes
         tracker.group_name = "";
         H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
-        tracker.slow5_header->file_format = SLOW5_FILE_FORMAT;
-//        tracker.slow5_header->file_version = slow5_header.file_version;
+        tracker.slow5_header->num_read_groups = 1;
 
         //now iterate over read groups. loading records and writing them are done inside op_func_group
         H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
-//        todo: compare header values with the previous singlefast5
+        //        todo: compare header values with the previous singlefast5
         if(call_count==0){
             print_header(&tracker);//remove this later; added for the sake of slow5 format completeness
         }
@@ -1078,4 +1076,64 @@ void print_record(operator_obj* operator_data) {
     fprintf(operator_data->f_out,"\t%u",operator_data->slow5_record->end_reason);
     //  }
     fprintf(operator_data->f_out,"\n");
+}
+
+// from nanopolish
+// ref: http://stackoverflow.com/a/612176/717706
+// return true if the given name is a directory
+bool is_directory(const std::string& file_name){
+    DIR * dir = opendir(file_name.c_str());
+    if(!dir) {
+        return false;
+    }
+    closedir(dir);
+    return true;
+}
+
+// from nanopolish
+std::vector< std::string > list_directory(const std::string& file_name)
+{
+    std::vector< std::string > res;
+    DIR* dir;
+    struct dirent *ent;
+
+    dir = opendir(file_name.c_str());
+    if(not dir) {
+        return res;
+    }
+    while((ent = readdir(dir))) {
+        res.push_back(ent->d_name);
+    }
+    closedir(dir);
+    return res;
+}
+
+// given a directory path, recursively find all fast5 files
+void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension)
+{
+    STDERR("Looking for fast5 in %s", path.c_str());
+    if (is_directory(path)) {
+        std::vector< std::string > dir_list = list_directory(path);
+        for (const auto& fn : dir_list) {
+            if(fn == "." or fn == "..") {
+                continue;
+            }
+
+            std::string full_fn = path + "/" + fn;
+            bool is_fast5 = full_fn.find(extension) != std::string::npos;
+            // JTS 04/19: is_directory is painfully slow
+            if(is_directory(full_fn)) {
+                // recurse
+                find_all_5(full_fn, fast5_files, extension);
+            } else if (is_fast5) {
+                fast5_files.push_back(full_fn);
+                //add to the list
+            }
+        }
+    }else{
+        bool is_fast5 = path.find(extension) != std::string::npos;
+        if(is_fast5){
+            fast5_files.push_back(path);
+        }
+    }
 }
