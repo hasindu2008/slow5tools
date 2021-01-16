@@ -65,6 +65,22 @@
 #define BLOW5_EXTENSION "." BLOW5_NAME
 #define BLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "=" BLOW5_NAME "v" VERSION "\n"
 
+#define COLUMN_HEADERS \
+    "#read_id\t"\
+    "read_group\t"\
+    "channel_number\t"\
+    "digitisation\t"\
+    "offset\t"\
+    "range\t"\
+    "sampling_rate\t"\
+    "duration\t"\
+    "raw_signal\t"\
+    "read_number\t"\
+    "start_time\t"\
+    "median_before\t"\
+    "end_reason\n"
+
+
 /* Set windowBits=MAX_WBITS|GZIP_WBITS to obtain gzip deflation and inflation
  * Used in deflateInit2 and inflateInit2 from zlib
  **/
@@ -94,6 +110,7 @@ static const struct format_map formats[] = {
 typedef struct {
     uint64_t bad_5_file = 0;
     uint64_t total_5 = 0;
+    uint64_t multi_group_slow5 = 0;
 }reads_count;
 
 struct program_meta {
@@ -234,7 +251,6 @@ struct operator_obj {
     slow5_record_t *slow5_record;
     int *flag_context_tags;
     int *flag_tracking_id;
-    int *flag_tracking_id_run_id;
     size_t* nreads;
 };
 
@@ -258,10 +274,15 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
 
 //implemented in read_fast5.c
 int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int write_header_flag, struct program_meta *meta);
-
 fast5_file_t fast5_open(const char* filename);
 
 void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension);
 
+//implemented in read_slow5.c
+int read_single_group_slow5_header(FILE *slow5, slow5_header_t& slow5Header);
+int read_line(FILE* slow5, char ** buffer);
+int read_header(slow5_header_t* slow5_header, FILE* slow5, char** buffer);
+void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_headers, std::vector<std::vector<size_t>> &list, size_t read_group_count);
+void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow5_file_pointers, std::vector<std::vector<size_t>> &list, size_t read_group_count);
 
 #endif
