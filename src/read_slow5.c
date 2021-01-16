@@ -286,7 +286,6 @@ void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow_files_point
             if(sscanf(buffer, "%[^\t]", read_id)!=1){
                 ERROR("Slow5 format error in line: %s",*buffer);
             }
-            fprintf(stderr,"%d %d\n",snprintf(0,0,"%lu",i), strlen("\t"));
             fprintf(f_out,"%s\t%lu\t%s", read_id, i, buffer+strlen(read_id)+strlen("\t")+snprintf(0,0,"%lu",i)+strlen("\t"));
         }
     }
