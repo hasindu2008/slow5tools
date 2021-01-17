@@ -218,76 +218,78 @@ int read_single_group_slow5_header(FILE *slow5, slow5_header_t& slow5Header) {
     return 1;
 }
 
-void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_headers, std::vector<std::vector<size_t>> &list, size_t read_group_count) {
+void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_headers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count) {
     fprintf(f_out, "#file_format\t%s\n", slow5_headers[0].file_format);
     fprintf(f_out, "#file_version\t%s\n", slow5_headers[0].file_version);
     fprintf(f_out, "#num_read_groups\t%llu\n", read_group_count);
 
+    //fprintf(f_out, "#run_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].run_id);}fprintf(f_out, "\n");
+
     //the big part
-    fprintf(f_out, "#file_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].file_type);}fprintf(f_out, "\n");
-    fprintf(f_out, "#pore_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].pore_type);}fprintf(f_out, "\n");
-    fprintf(f_out, "#run_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].run_id);}fprintf(f_out, "\n");
-    fprintf(f_out, "#sample_frequency");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].sample_frequency);}fprintf(f_out, "\n");
-    fprintf(f_out, "#filename");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].filename);}fprintf(f_out, "\n");
-    fprintf(f_out, "#experiment_kit");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].experiment_kit);}fprintf(f_out, "\n");
-    fprintf(f_out, "#user_filename_input");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].user_filename_input);}fprintf(f_out, "\n");
-    fprintf(f_out, "#barcoding_enabled");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].barcoding_enabled);}fprintf(f_out, "\n");
-    fprintf(f_out, "#experiment_duration_set");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].experiment_duration_set);}fprintf(f_out, "\n");
-    fprintf(f_out, "#experiment_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].experiment_type);}fprintf(f_out, "\n");
-    fprintf(f_out, "#local_basecalling");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].local_basecalling);}fprintf(f_out, "\n");
-    fprintf(f_out, "#package");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].package);}fprintf(f_out, "\n");
-    fprintf(f_out, "#package_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].package_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#sequencing_kit");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].sequencing_kit);}fprintf(f_out, "\n");
-    fprintf(f_out, "#asic_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].asic_id);}fprintf(f_out, "\n");
-    fprintf(f_out, "#asic_id_eeprom");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].asic_id_eeprom);}fprintf(f_out, "\n");
-    fprintf(f_out, "#asic_temp");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].asic_temp);}fprintf(f_out, "\n");
-    fprintf(f_out, "#auto_update");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].auto_update);}fprintf(f_out, "\n");
-    fprintf(f_out, "#auto_update_source");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].auto_update_source);}fprintf(f_out, "\n");
-    fprintf(f_out, "#bream_is_standard");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].bream_is_standard);}fprintf(f_out, "\n");
-    fprintf(f_out, "#device_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].device_id);}fprintf(f_out, "\n");
-    fprintf(f_out, "#distribution_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].distribution_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#exp_script_name");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].exp_script_name);}fprintf(f_out, "\n");
-    fprintf(f_out, "#exp_script_purpose");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].exp_script_purpose);}fprintf(f_out, "\n");
-    fprintf(f_out, "#exp_start_time");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].exp_start_time);}fprintf(f_out, "\n");
-    fprintf(f_out, "#flow_cell_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].flow_cell_id);}fprintf(f_out, "\n");
-    fprintf(f_out, "#heatsink_temp");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].heatsink_temp);}fprintf(f_out, "\n");
-    fprintf(f_out, "#hostname");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].hostname);}fprintf(f_out, "\n");
-    fprintf(f_out, "#installation_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].installation_type);}fprintf(f_out, "\n");
-    fprintf(f_out, "#local_firmware_file");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].local_firmware_file);}fprintf(f_out, "\n");
-    fprintf(f_out, "#operating_system");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].operating_system);}fprintf(f_out, "\n");
-    fprintf(f_out, "#protocol_run_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].protocol_run_id);}fprintf(f_out, "\n");
-    fprintf(f_out, "#protocols_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].protocols_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#tracking_id_run_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].tracking_id_run_id);}fprintf(f_out, "\n");
-    fprintf(f_out, "#usb_config");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].usb_config);}fprintf(f_out, "\n");
-    fprintf(f_out, "#version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#bream_core_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].bream_core_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#bream_ont_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].bream_ont_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#bream_prod_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].bream_prod_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#bream_rnd_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].bream_rnd_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#asic_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].asic_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#configuration_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].configuration_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#device_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].device_type);}fprintf(f_out, "\n");
-    fprintf(f_out, "#distribution_status");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].distribution_status);}fprintf(f_out, "\n");
-    fprintf(f_out, "#flow_cell_product_code");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].flow_cell_product_code);}fprintf(f_out, "\n");
-    fprintf(f_out, "#guppy_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].guppy_version);}fprintf(f_out, "\n");
-    fprintf(f_out, "#protocol_group_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].protocol_group_id);}fprintf(f_out, "\n");
-    fprintf(f_out, "#sample_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[i][0]].sample_id);}fprintf(f_out, "\n");
+    fprintf(f_out, "#file_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].file_type);}fprintf(f_out, "\n");
+    fprintf(f_out, "#pore_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].pore_type);}fprintf(f_out, "\n");
+    fprintf(f_out, "#run_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].run_id);}fprintf(f_out, "\n");
+    fprintf(f_out, "#sample_frequency");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].sample_frequency);}fprintf(f_out, "\n");
+    fprintf(f_out, "#filename");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].filename);}fprintf(f_out, "\n");
+    fprintf(f_out, "#experiment_kit");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].experiment_kit);}fprintf(f_out, "\n");
+    fprintf(f_out, "#user_filename_input");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].user_filename_input);}fprintf(f_out, "\n");
+    fprintf(f_out, "#barcoding_enabled");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].barcoding_enabled);}fprintf(f_out, "\n");
+    fprintf(f_out, "#experiment_duration_set");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].experiment_duration_set);}fprintf(f_out, "\n");
+    fprintf(f_out, "#experiment_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].experiment_type);}fprintf(f_out, "\n");
+    fprintf(f_out, "#local_basecalling");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].local_basecalling);}fprintf(f_out, "\n");
+    fprintf(f_out, "#package");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].package);}fprintf(f_out, "\n");
+    fprintf(f_out, "#package_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].package_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#sequencing_kit");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].sequencing_kit);}fprintf(f_out, "\n");
+    fprintf(f_out, "#asic_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].asic_id);}fprintf(f_out, "\n");
+    fprintf(f_out, "#asic_id_eeprom");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].asic_id_eeprom);}fprintf(f_out, "\n");
+    fprintf(f_out, "#asic_temp");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].asic_temp);}fprintf(f_out, "\n");
+    fprintf(f_out, "#auto_update");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].auto_update);}fprintf(f_out, "\n");
+    fprintf(f_out, "#auto_update_source");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].auto_update_source);}fprintf(f_out, "\n");
+    fprintf(f_out, "#bream_is_standard");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].bream_is_standard);}fprintf(f_out, "\n");
+    fprintf(f_out, "#device_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].device_id);}fprintf(f_out, "\n");
+    fprintf(f_out, "#distribution_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].distribution_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#exp_script_name");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].exp_script_name);}fprintf(f_out, "\n");
+    fprintf(f_out, "#exp_script_purpose");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].exp_script_purpose);}fprintf(f_out, "\n");
+    fprintf(f_out, "#exp_start_time");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].exp_start_time);}fprintf(f_out, "\n");
+    fprintf(f_out, "#flow_cell_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].flow_cell_id);}fprintf(f_out, "\n");
+    fprintf(f_out, "#heatsink_temp");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].heatsink_temp);}fprintf(f_out, "\n");
+    fprintf(f_out, "#hostname");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].hostname);}fprintf(f_out, "\n");
+    fprintf(f_out, "#installation_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].installation_type);}fprintf(f_out, "\n");
+    fprintf(f_out, "#local_firmware_file");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].local_firmware_file);}fprintf(f_out, "\n");
+    fprintf(f_out, "#operating_system");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].operating_system);}fprintf(f_out, "\n");
+    fprintf(f_out, "#protocol_run_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].protocol_run_id);}fprintf(f_out, "\n");
+    fprintf(f_out, "#protocols_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].protocols_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#tracking_id_run_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].tracking_id_run_id);}fprintf(f_out, "\n");
+    fprintf(f_out, "#usb_config");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].usb_config);}fprintf(f_out, "\n");
+    fprintf(f_out, "#version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#bream_core_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].bream_core_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#bream_ont_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].bream_ont_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#bream_prod_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].bream_prod_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#bream_rnd_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].bream_rnd_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#asic_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].asic_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#configuration_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].configuration_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#device_type");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].device_type);}fprintf(f_out, "\n");
+    fprintf(f_out, "#distribution_status");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].distribution_status);}fprintf(f_out, "\n");
+    fprintf(f_out, "#flow_cell_product_code");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].flow_cell_product_code);}fprintf(f_out, "\n");
+    fprintf(f_out, "#guppy_version");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].guppy_version);}fprintf(f_out, "\n");
+    fprintf(f_out, "#protocol_group_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].protocol_group_id);}fprintf(f_out, "\n");
+    fprintf(f_out, "#sample_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].sample_id);}fprintf(f_out, "\n");
 
     fprintf(f_out,"%s", COLUMN_HEADERS);
 }
 
-void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow_files_pointers, std::vector<std::vector<size_t>> &list, size_t read_group_count) {
+void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow_files_pointers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count) {
     char* buffer = NULL;
-    for(size_t i=0; i<list.size(); i++){
-        for(size_t j=0; j<list[i].size(); j++){
-            read_line(slow_files_pointers[list[i][j]],&buffer);
+    for(size_t i=0; i<read_group_count; i++){
+        for(size_t j=0; j<list[run_id_indices[i]].size(); j++){
+            read_line(slow_files_pointers[list[run_id_indices[i]][j]],&buffer);
             char read_id[50];
-//            fprintf(f_out,"%s",buffer);
             if(sscanf(buffer, "%[^\t]", read_id)!=1){
                 ERROR("Slow5 format error in line: %s",*buffer);
             }
             fprintf(f_out,"%s\t%lu\t%s", read_id, i, buffer+strlen(read_id)+strlen("\t")+snprintf(0,0,"%lu",i)+strlen("\t"));
         }
     }
+
     free(buffer);
 }

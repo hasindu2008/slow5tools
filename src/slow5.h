@@ -282,7 +282,7 @@ void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, 
 int read_single_group_slow5_header(FILE *slow5, slow5_header_t& slow5Header);
 int read_line(FILE* slow5, char ** buffer);
 int read_header(slow5_header_t* slow5_header, FILE* slow5, char** buffer);
-void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_headers, std::vector<std::vector<size_t>> &list, size_t read_group_count);
-void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow5_file_pointers, std::vector<std::vector<size_t>> &list, size_t read_group_count);
+void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_headers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count);
+void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow5_file_pointers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count);
 
 #endif

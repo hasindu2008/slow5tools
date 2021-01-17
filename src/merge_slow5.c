@@ -155,6 +155,8 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
     std::vector<FILE*>slow_files_pointers(slow5_files_count);
     std::vector<slow5_header_t> slow5_headers(slow5_files_count);
     std::vector<std::vector<size_t>> list; //always use list to access slow5_headers. slow5_headers has invalid files' headers too.
+    std::vector<std::string> run_ids;
+    std::vector<size_t> run_id_indices;
 
     for(size_t i =0; i<slow5_files_count; i++) {
         slow_files_pointers[i] = fopen(slow5_files[i].c_str(), "r"); // read mode
@@ -188,6 +190,8 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
         //if run_id is new, add it
         if (flag_run_id_exist == 0) {
             list.push_back(std::vector<size_t>{i});
+            run_ids.push_back(slow5_headers[i].run_id);
+            run_id_indices.push_back(read_group_count);
             read_group_count++;
         }
     }
@@ -205,8 +209,25 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
         }
     }
 
-    print_multi_group_header(f_out, slow5_headers, list, read_group_count);
-    print_multi_group_records(f_out, slow_files_pointers, list, read_group_count);
+    //    sort run_ids lexicographically
+    // Use Bubble Sort to arrange run_ids todo: use an efficient sort
+    for (size_t i = 0; i < read_group_count-1; ++i) {
+        for (size_t j = 0; j < read_group_count-1 - i; ++j) {
+            if (run_ids[j] > run_ids[j + 1]) {
+
+                std::string temp = run_ids[j];
+                run_ids[j] = run_ids[j + 1];
+                run_ids[j + 1] = temp;
+
+                size_t temp_index = run_id_indices[j];
+                run_id_indices[j] = run_id_indices[j+1];
+                run_id_indices[j+1] = temp_index;
+            }
+        }
+    }
+
+    print_multi_group_header(f_out, slow5_headers, run_id_indices, list, read_group_count);
+    print_multi_group_records(f_out, slow_files_pointers, run_id_indices, list, read_group_count);
 
     //free slow5 headers
     for(size_t i =0; i<slow5_files_count; i++){
