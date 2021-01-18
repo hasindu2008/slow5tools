@@ -5,7 +5,6 @@
 #include <float.h>
 #include "error.h"
 
-#define COLUMN_HEADERS "#read_id	channel_number	digitisation	offset	range	sampling_rate	duration	raw_signal	read_number	start_time	median_before	end_reason"
 
 // Operator function to be called by H5Aiterate.
 herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *operator_data);
@@ -24,7 +23,6 @@ void free_attributes(group_flags group_flag, operator_obj* operator_data);
 //remove this later; added for the sake of slow5 format completeness
 void print_record(operator_obj* operator_data);
 void print_header(operator_obj* operator_data);
-
 
 // from nanopolish_fast5_io.cpp
 fast5_file_t fast5_open(const char* filename) {
@@ -136,13 +134,8 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
     }
 //            READ
     else if(strcmp("run_id",name)==0 && H5Tclass==H5T_STRING){
-        if(*(operator_data->flag_tracking_id) == 0 and *(operator_data->flag_tracking_id_run_id) == 0){
-            operator_data->slow5_header->tracking_id_run_id = strdup(value.attr_string);
-            *(operator_data->flag_tracking_id_run_id) = 1;
-        }
-        else{
-            operator_data->slow5_header->run_id = strdup(value.attr_string);
-        }
+        operator_data->slow5_header->run_id = strdup(value.attr_string);
+        operator_data->slow5_header->tracking_id_run_id = strdup(value.attr_string); //check the assumption : read/run_id and read/tracking_id/run_id are equal
     }
     else if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->pore_type = strdup(value.attr_string);
@@ -276,9 +269,6 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
     else if(strcmp("protocols_version",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->protocols_version = strdup(value.attr_string);
     }
-//        else if(strcmp("tracking_id_run_id",name)==0 && H5Tclass==H5T_STRING){
-//            operator_data->slow5_header->tracking_id_run_id = strdup(value.attr_string);
-//            }
     else if(strcmp("usb_config",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->usb_config = strdup(value.attr_string);
     }
@@ -402,14 +392,12 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
     slow5_record_t slow5_record;
     int flag_context_tags = 0;
     int flag_tracking_id = 0;
-    int flag_tracking_id_run_id = 0;
     size_t number_reads = 0;
 
     tracker.slow5_header = &slow5_header;
     tracker.slow5_record = &slow5_record;
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
-    tracker.flag_tracking_id_run_id = &flag_tracking_id_run_id;
     tracker.nreads = &number_reads;
 
     reset_attributes(ROOT, &tracker);
@@ -424,7 +412,7 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
     if (fast5_file->is_multi_fast5) {
         hsize_t number_of_groups = 0;
         H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
-        tracker.slow5_header->num_read_groups = number_of_groups;
+        tracker.slow5_header->num_read_groups = 1; //todo:check if the assumption is valid
         //obtain the root group attributes
         H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
 
@@ -440,6 +428,10 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
         H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
         //        todo: compare header values with the previous singlefast5
         if(call_count==0){
+            if(!tracker.slow5_header->run_id){
+                fprintf(stderr, "run_id is not set%s\n", "");
+                exit(EXIT_FAILURE);
+            }
             print_header(&tracker);//remove this later; added for the sake of slow5 format completeness
         }
         print_record(&tracker);//remove this later; added for the sake of slow5 format completeness
@@ -546,6 +538,10 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                                 fprintf(stderr, "The first read does not have tracking_id information\n");
                                 exit(EXIT_FAILURE);
                             }
+                            if(!operator_data->slow5_header->run_id){
+                                fprintf(stderr, "run_id is not set%s\n", "");
+                                exit(EXIT_FAILURE);
+                            }
                             print_header(operator_data);//remove this later; added for the sake of slow5 format completeness
                         }
                         *(operator_data->nreads) = *(operator_data->nreads) + 1;
@@ -583,6 +579,7 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
     }
     return return_val;
 }
+
 
 /************************************************************
 
@@ -1046,13 +1043,14 @@ void print_header(operator_obj* operator_data) {
     fprintf(operator_data->f_out,"#sample_id\t%s\n", operator_data->slow5_header->sample_id);
 
     // write the column headers
-    fprintf(operator_data->f_out,"%s\n", COLUMN_HEADERS);
+    fprintf(operator_data->f_out,"%s", COLUMN_HEADERS);
 }
 
 void print_record(operator_obj* operator_data) {
     check_attributes(RAW, operator_data);
     check_attributes(CHANNEL_ID, operator_data);
     fprintf(operator_data->f_out,"%s\t",operator_data->slow5_record->read_id);
+    fprintf(operator_data->f_out,"%s\t","0");//read_group
     fprintf(operator_data->f_out,"%s\t",operator_data->slow5_record->channel_number);
     fprintf(operator_data->f_out,"%f\t",operator_data->slow5_record->digitisation);
     fprintf(operator_data->f_out,"%f\t",operator_data->slow5_record->offset);

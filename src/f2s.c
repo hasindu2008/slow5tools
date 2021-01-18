@@ -1,6 +1,5 @@
 // Sasha Jenner
 
-//#include "fast5lite.h"
 #include "slow5.h"
 #include "error.h"
 

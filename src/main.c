@@ -25,6 +25,7 @@
     "COMMANDS:\n" \
     "    f2s        convert fast5 file(s) to slow5\n" \
     "    s2f        convert slow5 file(s) to fast5\n" \
+    "    merge      merge slow5 files\n" \
     "    index      create a slow5 or blow5 index file.\n" \
     "    extract    display the read entry for each specified read id.\n" \
     "\n" \
@@ -39,6 +40,7 @@
 
 int (f2s_main)(int, char **, struct program_meta *);
 int (s2f_main)(int, char **, struct program_meta *);
+int (merge_main)(int, char **, struct program_meta *);
 int (index_main)(int, char **, struct program_meta *);
 int (extract_main)(int, char **, struct program_meta *);
 
@@ -90,6 +92,7 @@ int main(const int argc, char **argv){
         const struct command cmds[] = {
                 {"f2s", f2s_main},
                 {"s2f", s2f_main},
+                {"merge", merge_main},
             {"index", index_main},
             {"extract", extract_main},
         };
