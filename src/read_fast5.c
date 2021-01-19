@@ -1,7 +1,7 @@
 //
 // Created by shan on 2020-12-22.
 //
-#include "slow5.h"
+#include "slow5_old.h"
 #include <float.h>
 #include "error.h"
 

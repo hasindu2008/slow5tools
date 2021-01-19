@@ -2,7 +2,7 @@
 // Created by Hiruna on 2021-01-16.
 //
 
-#include "slow5.h"
+#include "slow5_old.h"
 #include "error.h"
 
 size_t number_of_digits(size_t i);

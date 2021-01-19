@@ -19,8 +19,8 @@
  *   - len: the size of the line in bytes (including \\n)
  */
 
-#include "slow5.h"
-#include "misc.h"
+#include "slow5_old.h"
+#include "misc_old.h"
 
 struct __slow5idx_t;
 /// Opaque structure representing SLOW5 index

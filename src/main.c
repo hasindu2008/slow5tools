@@ -5,7 +5,7 @@
 ** @@
 ******************************************************************************/
 
-#include "slow5.h"
+#include "slow5_old.h"
 
 // TODO put all in header file
 
