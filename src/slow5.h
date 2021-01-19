@@ -7,29 +7,87 @@
 #include <stdint.h>
 #include "klib/khash.h"
 
+// SLOW5 format specs
+#define SLOW5_HEADER_PREFIX         "#"
+#define SLOW5_HEADER_DATA_PREFIX    "@"
+#define COLUMN_HEADER_PREFIX        "#"
+#define SEPARATOR                   "\t"
+#define HEADER_FILE_FORMAT          "file_format"
+#define HEADER_FILE_VERSION         "file_version"
+#define HEADER_NUM_GROUPS           "num_read_groups"
+#define HEADER_NUM_GROUPS_INIT      (1)
+
 // Order and type of main SLOW5 columns
-#define FOREACH_(FN, END) \
-    FN(const char *,    read_id) \
-    FN(uint32_t,        read_group) \
-    FN(float,           digitisation) \
-    FN(double,          offset) \
-    FN(double,          range) \
-    FN(double,          sampling_rate) \
-    FN(uint64_t,        len_raw_signal) \
-    END(int16_t *,      raw_signal) // Use END for last column
+#define SLOW5_COLS(col, end) \
+    col(const char *,   read_id) \
+    col(uint32_t,       read_group) \
+    col(float,          digitisation) \
+    col(double,         offset) \
+    col(double,         range) \
+    col(double,         sampling_rate) \
+    col(uint64_t,       len_raw_signal) \
+    end(int16_t *,      raw_signal) // Use end() for last column
 
-#define FOREACH(FN) FOREACH_(FN, FN)
+// Apply the same function to each column including the last one
+#define SLOW5_COLS_FOREACH(foo) SLOW5_COLS(foo, foo)
 
-#define STRUCTIFY(TYPE, NAME) TYPE NAME;
-#define ENUMIFY(TYPE, NAME) COL_ ## NAME,
-#define STRINGIFY(TYPE, NAME) #NAME
-#define STRINGIFY_TAB(TYPE, NAME) STRINGIFY(,NAME) "\t"
+#define GENERATE_STRUCT(type, name)     type name;
+#define GENERATE_ENUM(type, name)       COL_ ## name,
+#define GENERATE_STRING(type, name)     #name
+#define GENERATE_STRING_SEP(type, name) GENERATE_STRING(type, name) SEPARATOR
+
+// More SLOW5 specs
+#define SLOW5_HEADER_ID(header_name)    SLOW5_HEADER_PREFIX header_name
+#define HEADER_FILE_FORMAT_ID           SLOW5_HEADER_ID(HEADER_FILE_FORMAT)
+#define HEADER_FILE_VERSION_ID          SLOW5_HEADER_ID(HEADER_FILE_VERSION)
+#define HEADER_NUM_GROUPS_ID            SLOW5_HEADER_ID(HEADER_NUM_GROUPS)
+
+#define SLOW5_HEADER_ENTRY(header_name, data) SLOW5_HEADER_ID(header_name) SEPARATOR data "\n"
+
+// ASCII SLOW5 specs
+#define ASCII_VERSION           "0.1.0"
+#define ASCII_NAME              "slow5"
+#define ASCII_EXTENSION         "." ASCII_NAME
+#define ASCII_FILE_FORMAT       SLOW5_HEADER_ENTRY(HEADER_FILE_FORMAT, ASCII_NAME)
+#define ASCII_FILE_VERSION      SLOW5_HEADER_ENTRY(HEADER_FILE_VERSION, ASCII_VERSION)
+#define ASCII_NUM_GROUPS        SLOW5_HEADER_ENTRY(NUM_GROUPS_HEADER, "%d")
+#define ASCII_SLOW5_HEADER      ASCII_FILE_FORMAT ASCII_FILE_VERSION ASCII_NUM_GROUPS
+#define ASCII_COLUMN_HEADER_MIN COLUMN_HEADER_PREFIX SLOW5_COLS(GENERATE_STRING_SEP, GENERATE_STRING)
+#define ASCII_COLUMN_HEADER_FULL \
+    ASCII_COLUMN_HEADER_MIN SEPARATOR \
+    "channel_number" SEPARATOR \
+    "median_before" SEPARATOR \
+    "read_number" SEPARATOR \
+    "start_mux" SEPARATOR \
+    "start_time\n"
+
+#define BINARY_VERSION "0.1.0"
+#define BINARY_NAME "blow5"
+#define BINARY_EXTENSION "." BINARY_NAME
+#define BINARY_FILE_FORMAT FILE_FORMAT_HEADER_ID SEPARATOR BINARY_NAME "\n"
+#define BINARY_FILE_VERSION FILE_VERSION_HEADER_ID SEPARATOR BINARY_VERSION "\n"
+#define BINARY_SLOW5_HEADER BINARY_FILE_FORMAT BINARY_FILE_VERSION ASCII_NUM_GROUPS
+
+// SLOW5 main record columns
+enum SLOW5Cols {
+    SLOW5_COLS_FOREACH(GENERATE_ENUM)
+};
 
 // File formats to be dealing with
 enum SLOW5Format {
     FORMAT_NONE,
     FORMAT_ASCII,
     FORMAT_BINARY
+};
+
+struct SLOW5FormatMap {
+    const char *name;
+    enum SLOW5Format format;
+};
+
+static const struct SLOW5FormatMap SLOW5_FORMAT_MAP[] = {
+    { ASCII_NAME,   FORMAT_ASCII    },
+    { BINARY_NAME,  FORMAT_BINARY   }
 };
 
 // Header data map: attribute string -> data string
@@ -48,9 +106,9 @@ struct SLOW5Version {
 struct SLOW5Header {
     enum SLOW5Format format;
     char *version_str;
-	struct SLOW5Version version; // TODO ptr or not
+	struct SLOW5Version version;
     uint32_t num_read_groups;
-    khash_t(s2s) **data; // length = num_read_groups TODO kvec_t/linked list of this?
+    khash_t(s2s) **data; // length = num_read_groups
 };
 
 // SLOW5 auxillary record data
@@ -66,14 +124,9 @@ struct SLOW5ReadAux {
 
 // SLOW5 record data
 struct SLOW5Read {
-    FOREACH(GENERATE_STRUCT)
+    SLOW5_COLS_FOREACH(GENERATE_STRUCT)
     struct SLOW5ReadAux *read_aux;
 };
-
-// SLOW5 main record columns
-enum SLOW5Cols = {
-    FOREACH_SAME(GENERATE_ENUM)
-}
 
 // SLOW5 object
 struct SLOW5 {
@@ -94,64 +147,6 @@ struct SLOW5File {
 struct SLOW5WriteConf {
     enum SLOW5Format format;
     struct Press *compress;
-};
-
-
-#define SLOW5_HEADER_PREFIX "#"
-#define SLOW5_HEADER_DATA_PREFIX "@"
-#define COLUMN_HEADER_PREFIX "#"
-#define FILE_FORMAT_HEADER "file_format"
-#define FILE_VERSION_HEADER "file_version"
-#define NUM_GROUPS_HEADER "num_read_groups"
-#define NUM_GROUPS_INIT (1)
-
-#define SLOW5_HEADER_ID(header_name) SLOW5_HEADER_PREFIX header_name
-#define FILE_FORMAT_HEADER_ID SLOW5_HEADER_ID(FILE_FORMAT_HEADER)
-#define FILE_VERSION_HEADER_ID SLOW5_HEADER_ID(FILE_VERSION_HEADER)
-#define NUM_GROUPS_HEADER_ID SLOW5_HEADER_ID(NUM_GROUPS_HEADER)
-
-#define ASCII_VERSION "0.1.0"
-#define ASCII_NAME "slow5"
-#define ASCII_EXTENSION "." ASCII_NAME
-#define ASCII_FILE_FORMAT FILE_FORMAT_HEADER_ID "\t" ASCII_NAME "\n"
-#define ASCII_FILE_VERSION FILE_VERSION_HEADER_ID "\t" ASCII_VERSION "\n"
-#define ASCII_NUM_GROUPS NUM_GROUPS_HEADER_ID "\t" "%d\n"
-#define ASCII_SLOW5_HEADER ASCII_FILE_FORMAT ASCII_FILE_VERSION ASCII_NUM_GROUPS
-#define ASCII_COLUMN_HEADER_MIN \
-    COLUMN_HEADER_PREFIX \
-    FOREACH(GENERATE_STRING_TAB)
-    "read_id\t" \
-    "read_group\t" \
-    "digitisation\t" \
-    "offset\t" \
-    "range\t" \
-    "sampling_rate\t" \
-    "len_raw_signal\t" \
-    "raw_signal"
-#define ASCII_COLUMN_HEADER_FULL \
-    ASCII_COLUMN_HEADER_MIN "\t" \
-    "channel_number\t" \
-    "median_before\t" \
-    "read_number\t" \
-    "start_mux\t" \
-    "start_time\n"
-
-#define BINARY_VERSION "0.1.0"
-#define BINARY_NAME "blow5"
-#define BINARY_EXTENSION "." BINARY_NAME
-#define BINARY_FILE_FORMAT FILE_FORMAT_HEADER_ID "\t" BINARY_NAME "\n"
-#define BINARY_FILE_VERSION FILE_VERSION_HEADER_ID "\t" BINARY_VERSION "\n"
-#define BINARY_SLOW5_HEADER BINARY_FILE_FORMAT BINARY_FILE_VERSION ASCII_NUM_GROUPS
-
-
-struct SLOW5FormatMap {
-    const char *name;
-    enum SLOW5Format format;
-};
-
-static const struct SLOW5FormatMap SLOW5_FORMAT_MAP[] = {
-    { ASCII_NAME,   FORMAT_ASCII    },
-    { BINARY_NAME,  FORMAT_BINARY   }
 };
 
 /*
