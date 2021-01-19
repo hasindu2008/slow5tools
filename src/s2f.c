@@ -193,7 +193,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     char FAST5_FILE[file_length];
     memcpy(FAST5_FILE, &SLOW5_FILE[0], file_length - 5);
     FAST5_FILE[file_length - 5] = 'f';FAST5_FILE[file_length - 4] = 'a';FAST5_FILE[file_length - 3] = 's';FAST5_FILE[file_length - 2] = 't';FAST5_FILE[file_length - 1] = '5';FAST5_FILE[file_length] = '\0';
-    fprintf(stderr, "%s\n", FAST5_FILE);
+//    fprintf(stderr, "%s\n", FAST5_FILE);
 
     /* Create a new file using default properties. */
     file_id = H5Fcreate(FAST5_FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -205,6 +205,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     read_line(slow5, &buffer);    //read first read
     attribute_value = strtok(buffer, "\t");
     slow5_record.read_id = strdup(attribute_value);
+
 
     // create first read group
     const char* read_tag = "read_";
@@ -226,16 +227,24 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     size_t i = 0;
     while(1){
         if(i){
+
             if(read_line(slow5, &buffer)==-1){
                 break;
             };
             attribute_value = strtok(buffer, "\t");
             slow5_record.read_id = strdup(attribute_value);
+
             // create read group
             char read_name[strlen(read_tag)+strlen(slow5_record.read_id)];
             strcpy(read_name,read_tag);
+
             group_read = H5Gcreate (file_id, strcat(read_name,slow5_record.read_id), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            if(group_read<1){
+                WARNING("A read group with read_id %s already exists, hence skipping.. \n",slow5_record.read_id);
+                continue;
+            }
         }
+        attribute_value = strtok(NULL, ",\t"); //read group
         attribute_value = strtok(NULL, ",\t");
         slow5_record.channel_number = strdup(attribute_value);
         attribute_value = strtok(NULL, ",\t");
@@ -250,12 +259,14 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         slow5_record.duration = atoi(attribute_value);
 
         set_hdf5_attributes(group_read, READ, slow5_header, &slow5_record, &end_reason_enum_id);
+
         // creat Raw group
         group_raw = H5Gcreate (group_read, "Raw", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
         if(i>0){
             // creat context_tags group link
             status = H5Lcreate_hard(group_read_first, "context_tags", group_read, "context_tags", H5P_DEFAULT, H5P_DEFAULT);
+
             // creat tracking_id group link
             status = H5Lcreate_hard(group_read_first, "tracking_id", group_read, "tracking_id", H5P_DEFAULT, H5P_DEFAULT);
         }
@@ -272,6 +283,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         attribute_value = strtok(NULL, "\t");
         int16_t temp_value = atoi(attribute_value);
         *temp_rawptr = temp_value;
+
 
         // Create the data space for the dataset
         hsize_t nsample = slow5_record.duration;
@@ -312,6 +324,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
 
         // creat channel_id group
         group_channel_id = H5Gcreate (group_read, "channel_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
         set_hdf5_attributes(group_channel_id, CHANNEL_ID, slow5_header, &slow5_record, &end_reason_enum_id);
         status = H5Gclose (group_channel_id);
 
@@ -343,19 +356,31 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
     for (int i = args.starti; i < args.endi; i++) {
         readsCount->total_5++;
         slow5_header_t slow5_header;
-
+        std::vector<slow5_header_t> slow5headers;
+        slow5headers.push_back(slow5_header);
         FILE *slow5;
         slow5 = fopen(slow5_files[i].c_str(), "r"); // read mode
+//        fprintf(stderr,"%s\n",slow5_files[i].c_str());
         if (slow5 == NULL) {
             WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
             readsCount->bad_5_file++;
             continue;
         }
-        char *buffer = NULL;
-        read_header(&slow5_header, slow5, &buffer); // fill slow5_header values
-        if (buffer)free(buffer);
 
-        write_fast5(&slow5_header, slow5, slow5_files[i].c_str());
+        hsize_t num_read_group;
+        if(find_num_read_group(slow5, &num_read_group)==-1){
+            WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
+            continue;
+        }
+        if(num_read_group>1){
+            ERROR("The file %s has %lu read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), num_read_group);
+            continue;
+        }
+
+        char *buffer = NULL;
+        read_header(slow5headers, slow5, &buffer, 1); // fill slow5_header values
+        if (buffer)free(buffer);
+        write_fast5(&slow5headers[0], slow5, slow5_files[i].c_str());
         //  Close the slow5 file.
         fclose(slow5);
     }
