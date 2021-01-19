@@ -227,7 +227,6 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     size_t i = 0;
     while(1){
         if(i){
-
             if(read_line(slow5, &buffer)==-1){
                 break;
             };
@@ -237,7 +236,6 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
             // create read group
             char read_name[strlen(read_tag)+strlen(slow5_record.read_id)];
             strcpy(read_name,read_tag);
-
             group_read = H5Gcreate (file_id, strcat(read_name,slow5_record.read_id), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             if(group_read<1){
                 WARNING("A read group with read_id %s already exists, hence skipping.. \n",slow5_record.read_id);
@@ -266,7 +264,6 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         if(i>0){
             // creat context_tags group link
             status = H5Lcreate_hard(group_read_first, "context_tags", group_read, "context_tags", H5P_DEFAULT, H5P_DEFAULT);
-
             // creat tracking_id group link
             status = H5Lcreate_hard(group_read_first, "tracking_id", group_read, "tracking_id", H5P_DEFAULT, H5P_DEFAULT);
         }
@@ -284,7 +281,6 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         int16_t temp_value = atoi(attribute_value);
         *temp_rawptr = temp_value;
 
-
         // Create the data space for the dataset
         hsize_t nsample = slow5_record.duration;
         hsize_t dims[]      = {nsample};
@@ -299,10 +295,8 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
 
         // Create the dataset.
         hid_t dataset_id = H5Dcreate2(group_raw, "Signal", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, dcpl, H5P_DEFAULT);
-
         // Write the data to the dataset.
         status = H5Dwrite (dataset_id, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, rawptr);
-
         // Close and release resources.
         status = H5Pclose (dcpl);
         status = H5Dclose(dataset_id);
@@ -324,7 +318,6 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
 
         // creat channel_id group
         group_channel_id = H5Gcreate (group_read, "channel_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
         set_hdf5_attributes(group_channel_id, CHANNEL_ID, slow5_header, &slow5_record, &end_reason_enum_id);
         status = H5Gclose (group_channel_id);
 

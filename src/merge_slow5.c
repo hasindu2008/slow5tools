@@ -205,7 +205,7 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
 
         //if run_id is new, add it
         for(size_t j=0; j<num_read_group; j++){
-            if (flags_run_id_exist[j] == 0) {
+            if (flags_run_id_exist[j] == 0){
                 list.push_back(std::vector<size_t>{start_idx+j});
                 run_ids.push_back(slow5_headers[start_idx+j].run_id);
                 run_id_indices.push_back(read_group_count);
@@ -235,9 +235,9 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
 
     // sort run_ids lexicographically
     // Use Bubble Sort to arrange run_ids todo: use an efficient sort
-    for (size_t i = 0; i < read_group_count-1; ++i) {
-        for (size_t j = 0; j < read_group_count-1 - i; ++j) {
-            if (run_ids[j] > run_ids[j + 1]) {
+    for (size_t i = 0; i < read_group_count-1; ++i){
+        for (size_t j = 0; j < read_group_count-1 - i; ++j){
+            if (run_ids[j] > run_ids[j + 1]){
 
                 std::string temp = run_ids[j];
                 run_ids[j] = run_ids[j + 1];
