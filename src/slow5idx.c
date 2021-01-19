@@ -19,7 +19,7 @@
 
 #include "khash.h"
 #include "kstring.h"
-#include "misc.h"
+#include "misc_old.h"
 
 
 static inline int isspace_c(char c) { return isspace((unsigned char) c); }

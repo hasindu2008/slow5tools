@@ -1,62 +1,83 @@
+// Miscellaneous helper functions
+
+#include <zlib.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdarg.h>
 #include "misc.h"
+#include "error.h"
+#include "fast5.h"
 
-/* Decompress a zlib-compressed string
+
+// FAST5
+
+/* Check if path has the fast5 extension
  *
- * @param       compressed string
- * @param       ptr to size of compressed string, updated to size of returned malloced string
- * @return      malloced string
+ * @param       file path
+ * @return      whether path has the fast5 extension
  */
-unsigned char *z_inflate_buf(const char *comp_str, size_t *n) {
+bool has_fast5_ext(const char *f_path) {
+    bool ret = false;
 
-    z_stream strm;
-    strm.zalloc = Z_NULL;
-    strm.zfree = Z_NULL;
-    strm.opaque = Z_NULL;
-    strm.avail_in = *n;
-    strm.next_in = (Bytef *) comp_str;
+    if (f_path != NULL) {
+        size_t f_path_len = strlen(f_path);
+        size_t fast5_ext_len = strlen(FAST5_EXTENSION);
 
-    *n = 0;
-
-    uLong prev_sz = 0;
-    uLong out_sz = 16328;
-    unsigned char *out = (unsigned char *) malloc(sizeof *out * out_sz);
-
-    int ret = inflateInit2(&strm, GZIP_WBITS);
-
-    if (ret != Z_OK) {
-        free(out);
-        return NULL;
+        if (f_path_len >= fast5_ext_len &&
+                strcmp(f_path + (f_path_len - fast5_ext_len), FAST5_EXTENSION) == 0) {
+            ret = true;
+        }
     }
 
-    do {
-        strm.avail_out = out_sz;
-        strm.next_out = out + prev_sz;
+    return ret;
+}
 
-        ret = inflate(&strm, Z_NO_FLUSH);
-        assert(ret != Z_STREAM_ERROR);
+// From https://stackoverflow.com/questions/26522583/c-strtok-skips-second-token-or-consecutive-delimiter
+char *strtok_solo(char *str, char *seps) {
+    static char *tpos, *tkn, *pos = NULL;
+    static char savech;
 
-        switch (ret) {
-            case Z_NEED_DICT:
-                ret = Z_DATA_ERROR;
-            case Z_DATA_ERROR:
-            case Z_MEM_ERROR:
-                free(out);
-                (void) inflateEnd(&strm);
-                return NULL;
-        }
+    // Specific actions for first and subsequent calls.
 
+    if (str != NULL) {
+        // First call, set pointer.
 
-        unsigned have = out_sz - strm.avail_out;
-        prev_sz += have;
+        pos = str;
+        savech = 'x';
+    } else {
+        // Subsequent calls, check we've done first.
 
-        if (strm.avail_out == 0) {
-            out = (unsigned char *) realloc(out, sizeof *out * (prev_sz + out_sz));
-        }
+        if (pos == NULL)
+            return NULL;
 
-    } while (strm.avail_out == 0);
+        // Then put character back and advance.
 
-    *n = prev_sz;
-    (void) inflateEnd(&strm);
+        while (*pos != '\0')
+            pos++;
+        *pos++ = savech;
+    }
 
-    return out;
+    // Detect previous end of string.
+
+    if (savech == '\0')
+        return NULL;
+
+    // Now we have pos pointing to first character.
+    // Find first separator or nul.
+
+    tpos = pos;
+    while (*tpos != '\0') {
+        tkn = strchr (seps, *tpos);
+        if (tkn != NULL)
+            break;
+        tpos++;
+    }
+
+    savech = *tpos;
+    *tpos = '\0';
+
+    return pos;
 }

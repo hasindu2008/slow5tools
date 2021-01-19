@@ -1,6 +1,6 @@
 // Sasha Jenner
 
-#include "slow5.h"
+#include "slow5_old.h"
 #include "error.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"

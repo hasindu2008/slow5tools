@@ -1,7 +1,7 @@
 //
 // Created by Hiruna on 2021-01-16.
 //
-#include "slow5.h"
+#include "slow5_old.h"
 #include "error.h"
 
 static double init_realtime = 0;

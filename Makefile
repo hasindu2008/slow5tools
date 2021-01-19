@@ -15,7 +15,7 @@ OBJ = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/extract.o \
 	  $(BUILD_DIR)/slow5idx.o \
 	  $(BUILD_DIR)/kstring.o \
-	  $(BUILD_DIR)/misc.o \
+	  $(BUILD_DIR)/misc_old.o \
 	  $(BUILD_DIR)/thread.o \
 	  $(BUILD_DIR)/read_fast5.o \
 	  $(BUILD_DIR)/merge_slow5.o \
@@ -33,19 +33,19 @@ $(BINARY): src/config.h $(HDF5_LIB) $(OBJ)
 $(BUILD_DIR)/main.o: src/main.c src/slow5misc.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/f2s.o: src/f2s.c src/slow5.h src/error.h
+$(BUILD_DIR)/f2s.o: src/f2s.c src/slow5_old.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/s2f.o: src/s2f.c src/slow5.h src/error.h
+$(BUILD_DIR)/s2f.o: src/s2f.c src/slow5_old.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/index.o: src/index.c src/slow5.h src/error.h
+$(BUILD_DIR)/index.o: src/index.c src/slow5_old.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/extract.o: src/extract.c src/slow5.h src/error.h
+$(BUILD_DIR)/extract.o: src/extract.c src/slow5_old.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-#$(BUILD_DIR)/fastt_main.o: src/fastt_main.c src/slow5.h src/fast5lite.h src/slow5misc.h src/error.h
+#$(BUILD_DIR)/fastt_main.o: src/fastt_main.c src/slow5_old.h src/fast5lite.h src/slow5misc.h src/error.h
 #	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/slow5idx.o: src/slow5idx.c src/slow5idx.h
@@ -54,7 +54,7 @@ $(BUILD_DIR)/slow5idx.o: src/slow5idx.c src/slow5idx.h
 $(BUILD_DIR)/kstring.o: src/kstring.c src/kstring.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/misc.o: src/misc.c
+$(BUILD_DIR)/misc_old.o: src/misc_old.c
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/thread.o: src/thread.c src/slow5idx.h
@@ -63,10 +63,10 @@ $(BUILD_DIR)/thread.o: src/thread.c src/slow5idx.h
 $(BUILD_DIR)/read_fast5.o: src/read_fast5.c src/slow5idx.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/merge_slow5.o: src/merge_slow5.c src/slow5.h src/error.h
+$(BUILD_DIR)/merge_slow5.o: src/merge_slow5.c src/slow5_old.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/read_slow5.o: src/read_slow5.c src/slow5.h src/error.h
+$(BUILD_DIR)/read_slow5.o: src/read_slow5.c src/slow5_old.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 

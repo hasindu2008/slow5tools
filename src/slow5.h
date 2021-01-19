@@ -1,290 +1,227 @@
-/* @slow5
-**
-** slow5 interface
-** @author: Hasindu Gamaarachchi (hasindu@garvan.org.au)
-** @author: Sasha Jenner (jenner.sasha@gmail.com)
-** @@
-******************************************************************************/
+// Header with slow5 file definitions
 
 #ifndef SLOW5_H
 #define SLOW5_H
 
-#include "fast5lite.h"
-#include "slow5misc.h"
-#include "error.h"
-#include <sys/wait.h>
-
-
-#include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <string.h>
-#include <signal.h>
-#include <getopt.h>
-#include <stdbool.h>
-#include <ctype.h>
-#include <fcntl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <zlib.h>
+#include <stdint.h>
+#include "klib/khash.h"
 
-#ifdef HAVE_EXECINFO_H
-    #include <execinfo.h>
-#endif
+// SLOW5 format specs
+#define SLOW5_HEADER_PREFIX         "#"
+#define SLOW5_HEADER_DATA_PREFIX    "@"
+#define COLUMN_HEADER_PREFIX        "#"
+#define SEP                         "\t"
+#define HEADER_FILE_FORMAT          "file_format"
+#define HEADER_FILE_VERSION         "file_version"
+#define HEADER_NUM_GROUPS           "num_read_groups"
+#define HEADER_NUM_GROUPS_INIT      (1)
 
+// Order and type of main SLOW5 columns
+#define SLOW5_COLS(col, end) \
+    col(const char *,   read_id) \
+    col(uint32_t,       read_group) \
+    col(float,          digitisation) \
+    col(double,         offset) \
+    col(double,         range) \
+    col(double,         sampling_rate) \
+    col(uint64_t,       len_raw_signal) \
+    end(int16_t *,      raw_signal) // Use end() for last column
 
-//required for eventalign
-//#include <vector>
+// Apply the same function to each column including the last one
+#define SLOW5_COLS_FOREACH(foo) SLOW5_COLS(foo, foo)
 
-#define FAST5_NAME "fast5"
-#define FAST5_EXTENSION "." FAST5_NAME
+#define GENERATE_STRUCT(type, name)     type name;
+#define GENERATE_ENUM(type, name)       COL_ ## name,
+#define GENERATE_STRING(type, name)     #name
+#define GENERATE_STRING_SEP(type, name) GENERATE_STRING(type, name) SEP
 
-#define VERSION "0.1"
-#define GLOBAL_HEADER_PREFIX "#" //check
-#define COLUMN_HEADER_PREFIX "#"
+// More SLOW5 specs
+#define SLOW5_HEADER_ID(header_name)    SLOW5_HEADER_PREFIX header_name
+#define HEADER_FILE_FORMAT_ID           SLOW5_HEADER_ID(HEADER_FILE_FORMAT)
+#define HEADER_FILE_VERSION_ID          SLOW5_HEADER_ID(HEADER_FILE_VERSION)
+#define HEADER_NUM_GROUPS_ID            SLOW5_HEADER_ID(HEADER_NUM_GROUPS)
 
-#define SLOW5_NAME "slow5"
-#define SLOW5_EXTENSION "." SLOW5_NAME
-#define FILE_FORMAT_HEADER "file_format"
-#define SLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "\t" SLOW5_NAME "v" VERSION "\n"
-#define SLOW5_HEADER \
-    COLUMN_HEADER_PREFIX \
-    "read_id\t" \
-    "n_samples\t" \
-    "digitisation\t" \
-    "offset\t" \
-    "range\t" \
-    "sample_rate\t" \
-    "raw_signal\t" \
-    "num_bases\t" \
-    "sequence\t" \
-    "fast5_path\n"
+#define SLOW5_HEADER_ENTRY(header_name, data) SLOW5_HEADER_ID(header_name) SEP data "\n"
 
-#define BLOW5_NAME "blow5"
-#define BLOW5_EXTENSION "." BLOW5_NAME
-#define BLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "=" BLOW5_NAME "v" VERSION "\n"
+// ASCII SLOW5 specs
+#define ASCII_VERSION           "0.1.0"
+#define ASCII_NAME              "slow5"
+#define ASCII_EXTENSION         "." ASCII_NAME
+#define ASCII_FILE_FORMAT       SLOW5_HEADER_ENTRY(HEADER_FILE_FORMAT, ASCII_NAME)
+#define ASCII_FILE_VERSION      SLOW5_HEADER_ENTRY(HEADER_FILE_VERSION, ASCII_VERSION)
+#define ASCII_NUM_GROUPS        SLOW5_HEADER_ENTRY(NUM_GROUPS_HEADER, "%d")
+#define ASCII_SLOW5_HEADER      ASCII_FILE_FORMAT ASCII_FILE_VERSION ASCII_NUM_GROUPS
+#define ASCII_COLUMN_HEADER_MIN COLUMN_HEADER_PREFIX SLOW5_COLS(GENERATE_STRING_SEP, GENERATE_STRING)
 
-#define COLUMN_HEADERS \
-    "#read_id\t"\
-    "read_group\t"\
-    "channel_number\t"\
-    "digitisation\t"\
-    "offset\t"\
-    "range\t"\
-    "sampling_rate\t"\
-    "duration\t"\
-    "raw_signal\t"\
-    "read_number\t"\
-    "start_time\t"\
-    "median_before\t"\
-    "end_reason\n"
+// Binary SLOW5 specs
+#define BINARY_VERSION          "0.1.0"
+#define BINARY_NAME             "blow5"
+#define BINARY_EXTENSION        "." BINARY_NAME
+#define BINARY_FILE_FORMAT      SLOW5_HEADER_ENTRY(HEADER_FILE_FORMAT, BINARY_NAME)
+#define BINARY_FILE_VERSION     SLOW5_HEADER_ENTRY(HEADER_FILE_VERSION, BINARY_VERSION)
+#define BINARY_SLOW5_HEADER     BINARY_FILE_FORMAT BINARY_FILE_VERSION ASCII_NUM_GROUPS
 
+/* Formats */
 
-/* Set windowBits=MAX_WBITS|GZIP_WBITS to obtain gzip deflation and inflation
- * Used in deflateInit2 and inflateInit2 from zlib
- **/
-#define GZIP_WBITS (16)
-#define Z_MEM_DEFAULT (8)
-#define Z_OUT_CHUNK (16384) // 2^14
-
-#include "slow5idx.h" // TODO move?
-
-/// File formats to be dealing with
-enum slow5_format {
-    SLOW5_ASCII,
-    SLOW5_BINARY,
-    SLOW5_COMP,
+// File formats to be dealing with
+enum SLOW5Format {
+    FORMAT_NONE,
+    FORMAT_ASCII,
+    FORMAT_BINARY
 };
 
-struct format_map {
+// SLOW5 file name with corresponding format
+struct SLOW5FormatMap {
     const char *name;
-    enum slow5_format format;
+    enum SLOW5Format format;
+};
+static const struct SLOW5FormatMap SLOW5_FORMAT_MAP[] = {
+    { ASCII_NAME,   FORMAT_ASCII    },
+    { BINARY_NAME,  FORMAT_BINARY   }
 };
 
-static const struct format_map formats[] = {
-    { SLOW5_NAME, SLOW5_ASCII },
-    { BLOW5_NAME, SLOW5_BINARY},
+/* Header */
+
+// SLOW5 versioning
+struct SLOW5Version {
+    uint8_t major;
+    uint8_t minor;
+    uint8_t patch;
 };
 
-typedef struct {
-    uint64_t bad_5_file = 0;
-    uint64_t total_5 = 0;
-    uint64_t multi_group_slow5 = 0;
-}reads_count;
+// Header data map: attribute string -> data string
+KHASH_MAP_INIT_STR(s2s, const char *)
 
-struct program_meta {
-    bool debug;
-    bool verbose;
+// SLOW5 header
+struct SLOW5Header {
+    enum SLOW5Format format;
+    char *version_str;
+	struct SLOW5Version version;
+    uint32_t num_read_groups;
+    khash_t(s2s) **data; // length = num_read_groups
 };
 
-struct command {
-    const char *name;
-    int (*main)(int, char **, struct program_meta *);
+/* Read Record */
+
+// SLOW5 main record columns
+enum SLOW5Cols {
+    SLOW5_COLS_FOREACH(GENERATE_ENUM)
 };
 
-
-// TODO in misc or here?
-#define EXIT_MSG(exit_code, argv, meta) exit_msg(exit_code, argv, meta, __FILE__, __func__, __LINE__);
-
-static inline void exit_msg(const int exit_code, char **argv, struct program_meta *meta,
-                            const char *file, const char *func, const int line) {
-    if (meta != NULL) {
-        if (meta->verbose) {
-            VERBOSE("exiting with %s",
-                    exit_code == EXIT_SUCCESS ? "SUCCESS" :
-                    exit_code == EXIT_FAILURE ? "FAILURE" :
-                    "UNKNOWN OUTCOME");
-        }
-        if (meta->debug) {
-            fprintf(stderr, DEBUG_PREFIX "exit code %d" NO_COLOUR,
-                    file, func, line, exit_code);
-        }
-    }
-}
-
-enum group_flags{ROOT, READ, RAW, CHANNEL_ID, CONTEXT_TAGS, TRACKING_ID};
-
-typedef struct{
-    char *file_format;
-    char *file_version;
-    char *file_type;
-    hsize_t num_read_groups;
-    //    READ
-    char* pore_type;
-    char* run_id;
-    //    CONTEXT_TAGS
-    char* sample_frequency;
-    //additional attributes in 2.2
-    char* barcoding_enabled;
-    char* sequencing_kit;
-    char* experiment_duration_set;
-    char* experiment_type;
-    char* local_basecalling;
-    char* package;
-    char* package_version;
-    //additional attributes in 2.0
-    char* filename;
-    char* experiment_kit;
-    char* user_filename_input;
-    //    TRACKING_ID
-    char* asic_id;
-    char* asic_id_eeprom;
-    char* asic_temp;
-    char* auto_update;
-    char* auto_update_source;
-    char* bream_is_standard;
-    char* device_id;
-    char* exp_script_name;
-    char* exp_script_purpose;
-    char* exp_start_time;
-    char* flow_cell_id;
-    char* heatsink_temp;
-    char* hostname;
-    char* installation_type;
-    char* local_firmware_file;
-    char* operating_system;
-    char* protocol_run_id;
-    char* protocols_version;
-    char* tracking_id_run_id;
-    char* usb_config;
-    char* version;
-    //additional attributes in 2.0
-    char* bream_core_version;
-    char* bream_ont_version;
-    char* bream_prod_version;
-    char* bream_rnd_version;
-    //additional attributes in 2.2
-    char* asic_version;
-    char* configuration_version;
-    char* device_type;
-    char* distribution_status;
-    char* distribution_version;
-    char* flow_cell_product_code;
-    char* guppy_version;
-    char* protocol_group_id;
-    char* sample_id;
-}slow5_header_t;
-
-typedef struct{
-    //    RAW
-    unsigned long start_time;
-    unsigned int duration;
-    int read_number;
+// SLOW5 auxillary record data
+// TODO make dynamic
+struct SLOW5ReadAux {
+	char *channel_number;
+    char *end_reason;
+    double median_before;
+	int32_t read_number;
+	uint64_t start_time;
     uint8_t start_mux;
-    char* read_id;
-    float median_before;
-    uint8_t end_reason;
-    //    CHANNEL_ID
-    float digitisation;
-    float offset;
-    float range;
-    float sampling_rate;
-    char* channel_number;
-
-    int16_t *raw_signal;
-
-}slow5_record_t;
-
-enum FormatOut {
-    OUT_ASCII,
-    OUT_BINARY,
-    OUT_COMP,
 };
 
-struct operator_obj {
-    //attributes to track hdf5 hierarchy
-    unsigned        group_level;         /* Recursion level.  0=root */
-    struct operator_obj   *prev;          /* Pointer to previous opdata */
-    haddr_t         addr;           /* Group address */
-    //attributes are useful when writing. They are also passed to the op_func_group function along with the struct
-    struct program_meta *meta;
-    FILE *f_out;
-    enum FormatOut format_out;
-    z_streamp strmp;
-    FILE *f_idx;
-    const char *fast5_path;
-    fast5_file_t* fast5_file;
-    const char * group_name;
-    //attributes store infomation
-    slow5_header_t *slow5_header;
-    slow5_record_t *slow5_record;
-    int *flag_context_tags;
-    int *flag_tracking_id;
-    size_t* nreads;
+// SLOW5 record data
+struct SLOW5Read {
+    SLOW5_COLS_FOREACH(GENERATE_STRUCT)
+    struct SLOW5ReadAux *read_aux;
 };
 
-union attribute_data {
-    int attr_int;
-    double attr_double;
-    uint8_t attr_uint8_t;
-    char* attr_string;
+/* SLOW5 object */
+
+// SLOW5 index
+struct SLOW5Index {
+    uint64_t size;
+    uint64_t offset;
 };
 
-// args for processes
-typedef struct {
-    int32_t starti;
-    int32_t endi;
-    int32_t proc_index;
-    std::string slow5_file;
-}proc_arg_t;
+// Read id map: read id -> index data
+KHASH_MAP_INIT_STR(s2i, struct SLOW5Index *)
 
-//implemented in f2s.c
-void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, const std::string read_id, const fast5_t f5, const char *fast5_path);
+// SLOW5 object
+struct SLOW5 {
+    struct SLOW5Header *header;
+    khash_t(s2i) *index;
+};
 
-//implemented in read_fast5.c
-int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int write_header_flag, struct program_meta *meta);
-fast5_file_t fast5_open(const char* filename);
+/* SLOW5 file */
 
-void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension);
+// SLOW5 file object
+struct SLOW5File {
+    FILE *stream;
+    enum SLOW5Format format;
+    struct Press *compress;
+};
 
-//implemented in read_slow5.c
-int read_slow5_header(FILE *slow5, std::vector<slow5_header_t>& slow5Header, hsize_t num_read_group);
-int read_line(FILE* slow5, char ** buffer);
-int read_header(std::vector<slow5_header_t>& slow5_headers, FILE* slow5, char** buffer, hsize_t num_read_group);
-int find_num_read_group(FILE* slow5, hsize_t* num_read_group);
+// SLOW5 writing configuration
+struct SLOW5WriteConf {
+    enum SLOW5Format format;
+    struct Press *compress;
+};
 
-void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_headers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count);
-void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow5_file_pointers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count, std::vector<size_t> &file_id_tracker);
+/*
+struct SLOW5VersionMap {
+    const char *version_str;
+    const uint8_t version[3];
+};
+
+static const struct SLOW5VersionMap SLOW5_VERSION_MAP[] = {
+    { "0.1.0",  {0, 1, 0}   }
+};
+*/
+
+
+/* API */
+
+// Initiate an empty slow5 object
+struct SLOW5 *slow5_init_empty(void);
+// Initiate a slow5 object from a slow5 file
+struct SLOW5 *slow5_init(struct SLOW5File *fp);
+// Destroy a slow5 object
+void slow5_destroy(struct SLOW5 **slow5);
+
+// Read from a file into a slow5 object
+void slow5_read(struct SLOW5 *slow5, enum SLOW5Format format, FILE *stream);
+
+// Write to a file from a slow5 object
+void slow5_write(struct SLOW5 *slow5, struct SLOW5WriteConf config, FILE *stream);
+// Write a slow5 file header
+uint8_t slow5_write_hdr(struct SLOW5 *slow5, struct SLOW5WriteConf config, FILE *stream);
+// Write header data
+uint8_t slow5_write_hdr_data(struct SLOW5 *slow5, struct SLOW5WriteConf config, FILE *stream);
+// Write header attribute
+uint8_t slow5_write_hdr_data_attr(struct SLOW5 *slow5, struct SLOW5WriteConf config, const char *attr, FILE *stream);
+
+// Print out the SLOW5 structure contents
+void slow5_print_hdr(const struct SLOW5Header *hdr);
+
+// Get the format from a slow5 format name
+enum SLOW5Format str_get_slow5_format(const char *str);
+// Get the format of a slow5 pathname
+enum SLOW5Format path_get_slow5_format(const char *pathname);
+// Get the format of a slow5 FILE
+enum SLOW5Format stream_get_slow5_format(const FILE *stream);
+
+// Get the slow5 format name from the format
+const char *slow5_format_get_str(enum SLOW5Format format);
+
+// Get the slow5 version array from a version string
+//const uint8_t *str_get_slow5_version(const char *str);
+
+// Atoi but to uintx_t
+// and without any symbols
+// and without 0 prefixing
+uint8_t ato_uint8(const char *str);
+uint32_t ato_uint32(const char *str);
+
+// Open a slow5 file
+/*
+struct SLOW5File *slow5_fopen(const char *pathname, const char *mode);
+struct SLOW5File *slow5_fopen_format(enum SLOW5Format format, const char *pathname, const char *mode);
+*/
+
+/*
+// Initiate and destroy a slow5 file
+uint8_t fslow5_init(struct SLOW5 *slow5, FILE *stream);
+*/
 
 #endif
