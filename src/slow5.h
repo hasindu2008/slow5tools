@@ -140,16 +140,17 @@ KHASH_MAP_INIT_STR(s2i, struct SLOW5Index *)
 // SLOW5 object
 struct SLOW5 {
     struct SLOW5Header *header;
-    khash_t(s2i) *read_index;
+    khash_t(s2i) *index;
 };
 
+/* SLOW5 file */
+
 // SLOW5 file object
-/*
 struct SLOW5File {
     FILE *stream;
-    struct SLOW5 *slow5;
+    enum SLOW5Format format;
+    struct Press *compress;
 };
-*/
 
 // SLOW5 writing configuration
 struct SLOW5WriteConf {
@@ -174,7 +175,7 @@ static const struct SLOW5VersionMap SLOW5_VERSION_MAP[] = {
 // Initiate an empty slow5 object
 struct SLOW5 *slow5_init_empty(void);
 // Initiate a slow5 object from a slow5 file
-struct SLOW5 *slow5_init(enum SLOW5Format format, FILE *stream);
+struct SLOW5 *slow5_init(struct SLOW5File *fp);
 // Destroy a slow5 object
 void slow5_destroy(struct SLOW5 **slow5);
 
