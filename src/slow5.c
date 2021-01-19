@@ -13,7 +13,7 @@
 #define SLOW5_HEADER_BUF_CAP (128) // 2^7
 // String buffer capacity for parsing the data header
 #define SLOW5_HEADER_DATA_BUF_CAP (1028) // 2^10 TODO is this too much? Or put to a page length
-#define SLOW5_HEADER_DATA_RGS_INIT_CAP (32) // 2^5
+//#define SLOW5_HEADER_DATA_RGS_INIT_CAP (32) // 2^5 // TODO necessary?
 
 struct SLOW5 *slow5_init_empty(void) {
     struct SLOW5 *slow5 = calloc(1, sizeof *slow5);
@@ -21,8 +21,6 @@ struct SLOW5 *slow5_init_empty(void) {
 
     slow5->header = calloc(1, sizeof *(slow5->header));
     MALLOC_CHK(slow5->header);
-    slow5->header->data = malloc(SLOW5_HEADER_DATA_RGS_INIT_CAP * sizeof *(slow5->header->data));
-    MALLOC_CHK(slow5->header->data);
 
     slow5->reads = kh_init(s2r);
     NULL_CHK(slow5->reads);
@@ -100,10 +98,10 @@ static void slow5_read_hdr(struct SLOW5Header *header, enum SLOW5Format format, 
             assert(buf[strlen(buf) - 1] == '\n');
             buf[strlen(buf) - 1] = '\0'; // Remove newline for later format parsing
             // "#file_format"
-            char *tok = strtok_solo(buf, "\t");
+            char *tok = strtok_solo(buf, SEP);
             assert(strcmp(tok, FILE_FORMAT_HEADER_ID) == 0);
             // Parse format name
-            tok = strtok_solo(NULL, "\t");
+            tok = strtok_solo(NULL, SEP);
             header->format = str_get_slow5_format(tok);
             assert(header->format != FORMAT_NONE);
             assert(format == header->format);
@@ -113,10 +111,10 @@ static void slow5_read_hdr(struct SLOW5Header *header, enum SLOW5Format format, 
             assert(buf[strlen(buf) - 1] == '\n');
             buf[strlen(buf) - 1] = '\0'; // Remove newline for later parsing
             // "#file_version"
-            tok = strtok_solo(buf, "\t");
+            tok = strtok_solo(buf, SEP);
             assert(strcmp(tok, FILE_VERSION_HEADER_ID) == 0);
             // Parse file version
-            tok = strtok_solo(NULL, "\t");
+            tok = strtok_solo(NULL, SEP);
             header->version_str = strdup(tok);
             // Parse file version string
             // TODO necessary to parse it now?
@@ -133,13 +131,15 @@ static void slow5_read_hdr(struct SLOW5Header *header, enum SLOW5Format format, 
             assert(buf[strlen(buf) - 1] == '\n');
             buf[strlen(buf) - 1] = '\0'; // Remove newline for later parsing
             // "#num_read_groups"
-            tok = strtok_solo(buf, "\t");
+            tok = strtok_solo(buf, SEP);
             assert(strcmp(tok, NUM_GROUPS_HEADER_ID) == 0);
             // Parse num read groups
-            tok = strtok_solo(NULL, "\t");
+            tok = strtok_solo(NULL, SEP);
             header->num_read_groups = ato_uint32(tok);
 
             // Header data
+            header->data = malloc(header->num_read_groups * sizeof *(header->data));
+            MALLOC_CHK(header->data);
             assert(fgets(buf, SLOW5_HEADER_DATA_BUF_CAP, stream) != NULL);
             assert(buf[strlen(buf) - 1] == '\n');
             bool first_loop = true;
@@ -151,12 +151,12 @@ static void slow5_read_hdr(struct SLOW5Header *header, enum SLOW5Format format, 
                 char *shift = buf + strlen(SLOW5_HEADER_DATA_PREFIX); // Remove prefix
                 shift[strlen(shift) - 1] = '\0'; // Remove newline for later parsing
 
-                char *attr = strdup(strtok_solo(shift, "\t"));
+                char *attr = strdup(strtok_solo(shift, SEP));
                 char *val;
 
                 uint32_t i = 0;
                 bool first_rg = true;
-                while ((val = strtok_solo(NULL, "\t")) != NULL) {
+                while ((val = strtok_solo(NULL, SEP)) != NULL) {
                     if (first_loop) {
                         header->data[i] = kh_init(s2s);
                         NULL_CHK(header->data[i]);
@@ -223,21 +223,21 @@ static void slow5_read_rec(khash_t(s2r) *reads, enum SLOW5Format format, FILE *s
                 assert((len = getline(&buf, &cap, stream)) != -1);
 
                 switch (i) {
-                    case COL_READ_ID:
+                    case COL_read_id:
                         break;
-                    case COL_READ_GROUP:
+                    case COL_read_group:
                         break;
-                    case COL_DIGITISATION:
+                    case COL_digitisation:
                         break;
-                    case COL_OFFSET:
+                    case COL_offset:
                         break;
-                    case COL_RANGE:
+                    case COL_range:
                         break;
-                    case COL_SAMPLING_RATE:
+                    case COL_sampling_rate:
                         break;
-                    case COL_LEN_RAW_SIGNAL:
+                    case COL_len_raw_signal:
                         break;
-                    case COL_RAW_SIGNAL:
+                    case COL_raw_signal:
                         break;
 
                     // All columns parsed

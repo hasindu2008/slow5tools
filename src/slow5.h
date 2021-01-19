@@ -11,7 +11,7 @@
 #define SLOW5_HEADER_PREFIX         "#"
 #define SLOW5_HEADER_DATA_PREFIX    "@"
 #define COLUMN_HEADER_PREFIX        "#"
-#define SEPARATOR                   "\t"
+#define SEP                         "\t"
 #define HEADER_FILE_FORMAT          "file_format"
 #define HEADER_FILE_VERSION         "file_version"
 #define HEADER_NUM_GROUPS           "num_read_groups"
@@ -34,7 +34,7 @@
 #define GENERATE_STRUCT(type, name)     type name;
 #define GENERATE_ENUM(type, name)       COL_ ## name,
 #define GENERATE_STRING(type, name)     #name
-#define GENERATE_STRING_SEP(type, name) GENERATE_STRING(type, name) SEPARATOR
+#define GENERATE_STRING_SEP(type, name) GENERATE_STRING(type, name) SEP
 
 // More SLOW5 specs
 #define SLOW5_HEADER_ID(header_name)    SLOW5_HEADER_PREFIX header_name
@@ -42,7 +42,7 @@
 #define HEADER_FILE_VERSION_ID          SLOW5_HEADER_ID(HEADER_FILE_VERSION)
 #define HEADER_NUM_GROUPS_ID            SLOW5_HEADER_ID(HEADER_NUM_GROUPS)
 
-#define SLOW5_HEADER_ENTRY(header_name, data) SLOW5_HEADER_ID(header_name) SEPARATOR data "\n"
+#define SLOW5_HEADER_ENTRY(header_name, data) SLOW5_HEADER_ID(header_name) SEP data "\n"
 
 // ASCII SLOW5 specs
 #define ASCII_VERSION           "0.1.0"
@@ -53,25 +53,16 @@
 #define ASCII_NUM_GROUPS        SLOW5_HEADER_ENTRY(NUM_GROUPS_HEADER, "%d")
 #define ASCII_SLOW5_HEADER      ASCII_FILE_FORMAT ASCII_FILE_VERSION ASCII_NUM_GROUPS
 #define ASCII_COLUMN_HEADER_MIN COLUMN_HEADER_PREFIX SLOW5_COLS(GENERATE_STRING_SEP, GENERATE_STRING)
-#define ASCII_COLUMN_HEADER_FULL \
-    ASCII_COLUMN_HEADER_MIN SEPARATOR \
-    "channel_number" SEPARATOR \
-    "median_before" SEPARATOR \
-    "read_number" SEPARATOR \
-    "start_mux" SEPARATOR \
-    "start_time\n"
 
-#define BINARY_VERSION "0.1.0"
-#define BINARY_NAME "blow5"
-#define BINARY_EXTENSION "." BINARY_NAME
-#define BINARY_FILE_FORMAT FILE_FORMAT_HEADER_ID SEPARATOR BINARY_NAME "\n"
-#define BINARY_FILE_VERSION FILE_VERSION_HEADER_ID SEPARATOR BINARY_VERSION "\n"
-#define BINARY_SLOW5_HEADER BINARY_FILE_FORMAT BINARY_FILE_VERSION ASCII_NUM_GROUPS
+// Binary SLOW5 specs
+#define BINARY_VERSION          "0.1.0"
+#define BINARY_NAME             "blow5"
+#define BINARY_EXTENSION        "." BINARY_NAME
+#define BINARY_FILE_FORMAT      SLOW5_HEADER_ENTRY(HEADER_FILE_FORMAT, BINARY_NAME)
+#define BINARY_FILE_VERSION     SLOW5_HEADER_ENTRY(HEADER_FILE_VERSION, BINARY_VERSION)
+#define BINARY_SLOW5_HEADER     BINARY_FILE_FORMAT BINARY_FILE_VERSION ASCII_NUM_GROUPS
 
-// SLOW5 main record columns
-enum SLOW5Cols {
-    SLOW5_COLS_FOREACH(GENERATE_ENUM)
-};
+/* Formats */
 
 // File formats to be dealing with
 enum SLOW5Format {
@@ -80,20 +71,17 @@ enum SLOW5Format {
     FORMAT_BINARY
 };
 
+// SLOW5 file name with corresponding format
 struct SLOW5FormatMap {
     const char *name;
     enum SLOW5Format format;
 };
-
 static const struct SLOW5FormatMap SLOW5_FORMAT_MAP[] = {
     { ASCII_NAME,   FORMAT_ASCII    },
     { BINARY_NAME,  FORMAT_BINARY   }
 };
 
-// Header data map: attribute string -> data string
-KHASH_MAP_INIT_STR(s2s, const char *)
-// Read id map: read id -> read record
-KHASH_MAP_INIT_STR(s2r, struct SLOW5Read *)
+/* Header */
 
 // SLOW5 versioning
 struct SLOW5Version {
@@ -102,6 +90,9 @@ struct SLOW5Version {
     uint8_t patch;
 };
 
+// Header data map: attribute string -> data string
+KHASH_MAP_INIT_STR(s2s, const char *)
+
 // SLOW5 header
 struct SLOW5Header {
     enum SLOW5Format format;
@@ -109,6 +100,13 @@ struct SLOW5Header {
 	struct SLOW5Version version;
     uint32_t num_read_groups;
     khash_t(s2s) **data; // length = num_read_groups
+};
+
+/* Read Record */
+
+// SLOW5 main record columns
+enum SLOW5Cols {
+    SLOW5_COLS_FOREACH(GENERATE_ENUM)
 };
 
 // SLOW5 auxillary record data
@@ -128,11 +126,21 @@ struct SLOW5Read {
     struct SLOW5ReadAux *read_aux;
 };
 
+/* SLOW5 object */
+
+// SLOW5 index
+struct SLOW5Index {
+    uint64_t size;
+    uint64_t offset;
+};
+
+// Read id map: read id -> index data
+KHASH_MAP_INIT_STR(s2i, struct SLOW5Index *)
+
 // SLOW5 object
 struct SLOW5 {
     struct SLOW5Header *header;
-    // TODO do we want the reads to be in order of addition?
-    khash_t(s2r) *reads;
+    khash_t(s2i) *read_index;
 };
 
 // SLOW5 file object
@@ -160,7 +168,8 @@ static const struct SLOW5VersionMap SLOW5_VERSION_MAP[] = {
 };
 */
 
-// API
+
+/* API */
 
 // Initiate an empty slow5 object
 struct SLOW5 *slow5_init_empty(void);
