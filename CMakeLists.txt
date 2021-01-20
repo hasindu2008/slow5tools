@@ -28,7 +28,7 @@ set(index src/index.c)
 set(extract src/extract.c)
 set(slow5idx src/slow5idx.c)
 set(kstring src/kstring.c)
-set(misc src/misc.c)
+set(misc_old src/misc_old.c)
 set(thread src/thread.c)
 set(read_fast5 src/read_fast5.c)
 set(merge_slow5 src/merge_slow5.c)
@@ -36,6 +36,6 @@ set(read_slow5 src/read_slow5.c)
 
 set (hdf5-static "${PROJECT_SOURCE_DIR}/hdf5/lib/libhdf5.a")
 
-add_executable(slow5tools ${main} ${f2s} ${s2f} ${index} ${extract} ${misc} ${slow5idx} ${kstring} ${thread} ${read_fast5} ${merge_slow5} ${read_slow5})
+add_executable(slow5tools ${main} ${f2s} ${s2f} ${index} ${extract} ${misc_old} ${slow5idx} ${kstring} ${thread} ${read_fast5} ${merge_slow5} ${read_slow5})
 
 target_link_libraries(slow5tools ${hdf5-static} -lz -ldl -lm -lpthread -lrt)
