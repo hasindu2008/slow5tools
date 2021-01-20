@@ -279,10 +279,12 @@ fast5_file_t fast5_open(const char* filename);
 void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension);
 
 //implemented in read_slow5.c
-int read_single_group_slow5_header(FILE *slow5, slow5_header_t& slow5Header);
+int read_slow5_header(FILE *slow5, std::vector<slow5_header_t>& slow5Header, hsize_t num_read_group);
 int read_line(FILE* slow5, char ** buffer);
-int read_header(slow5_header_t* slow5_header, FILE* slow5, char** buffer);
+int read_header(std::vector<slow5_header_t>& slow5_headers, FILE* slow5, char** buffer, hsize_t num_read_group);
+int find_num_read_group(FILE* slow5, hsize_t* num_read_group);
+
 void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_headers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count);
-void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow5_file_pointers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count);
+void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow5_file_pointers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count, std::vector<size_t> &file_id_tracker);
 
 #endif

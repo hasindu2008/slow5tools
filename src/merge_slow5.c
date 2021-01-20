@@ -153,47 +153,71 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
     readsCount->total_5 = slow5_files_count;
 
     std::vector<FILE*>slow_files_pointers(slow5_files_count);
-    std::vector<slow5_header_t> slow5_headers(slow5_files_count);
+    std::vector<slow5_header_t> slow5_headers;
     std::vector<std::vector<size_t>> list; //always use list to access slow5_headers. slow5_headers has invalid files' headers too.
     std::vector<std::string> run_ids;
     std::vector<size_t> run_id_indices;
+    std::vector<size_t> file_id_tracker;
 
     for(size_t i =0; i<slow5_files_count; i++) {
         slow_files_pointers[i] = fopen(slow5_files[i].c_str(), "r"); // read mode
+
         if (slow_files_pointers[i] == NULL) {
             WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
-            return -1;
+            continue;
         }
 
-        if (read_single_group_slow5_header(slow_files_pointers[i], slow5_headers[i]) == -1) {
+        hsize_t num_read_group;
+        if(find_num_read_group(slow_files_pointers[i], &num_read_group)==-1){
+            WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
+            continue;
+        }
+        for(size_t j=0; j<num_read_group; j++){
+            file_id_tracker.push_back(i);
+            slow5_header_t slow5_header;
+            slow5_headers.push_back(slow5_header);
+        }
+
+        if (read_slow5_header(slow_files_pointers[i], slow5_headers, num_read_group) == -1) {
             WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
             readsCount->bad_5_file++;
             continue;
         }
-        if (slow5_headers[i].num_read_groups > 1) {
-            WARNING("[%s] has multiple read groups, hence skipped. Use 'split' to create single read group files.",
-                    slow5_files[i].c_str());
-            readsCount->multi_group_slow5++;
-            continue;
-        }
-//        fprintf(stderr,"slow5=%s run_id=%s\n",slow5_files[i].c_str(),slow5_headers[i].run_id);
 
-        size_t flag_run_id_exist = 0;
+        if (slow5_headers[i].num_read_groups > 1) {
+            readsCount->multi_group_slow5++;
+        }
+
+        size_t slow5_headers_count = slow5_headers.size();
+        std::vector<size_t> flags_run_id_exist(num_read_group, 0);
+        size_t start_idx = slow5_headers_count - num_read_group;
+
         //check if run_id is already in the list
-        for (size_t j = 0; j < list.size(); j++) {
-            if (strcmp(slow5_headers[list[j][0]].run_id, slow5_headers[i].run_id) == 0) {
-                list[j].push_back(i);
-                flag_run_id_exist = 1;
-                break;
+        for(size_t k=start_idx; k<slow5_headers_count; k++){
+            for (size_t j = 0; j < list.size(); j++) {
+                if (strcmp(slow5_headers[list[j][0]].run_id, slow5_headers[k].run_id) == 0) {
+                    list[j].push_back(k);
+                    flags_run_id_exist[slow5_headers_count-k-1] = 1;
+                    break;
+                }
             }
         }
+
         //if run_id is new, add it
-        if (flag_run_id_exist == 0) {
-            list.push_back(std::vector<size_t>{i});
-            run_ids.push_back(slow5_headers[i].run_id);
-            run_id_indices.push_back(read_group_count);
-            read_group_count++;
+        for(size_t j=0; j<num_read_group; j++){
+            if (flags_run_id_exist[j] == 0){
+                list.push_back(std::vector<size_t>{start_idx+j});
+                run_ids.push_back(slow5_headers[start_idx+j].run_id);
+                run_id_indices.push_back(read_group_count);
+                read_group_count++;
+            }
         }
+
+    }
+
+    //debug
+    if(readsCount->total_5 == readsCount->bad_5_file){
+        return 1;
     }
 
     // compare headers
@@ -209,11 +233,11 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
         }
     }
 
-    //    sort run_ids lexicographically
+    // sort run_ids lexicographically
     // Use Bubble Sort to arrange run_ids todo: use an efficient sort
-    for (size_t i = 0; i < read_group_count-1; ++i) {
-        for (size_t j = 0; j < read_group_count-1 - i; ++j) {
-            if (run_ids[j] > run_ids[j + 1]) {
+    for (size_t i = 0; i < read_group_count-1; ++i){
+        for (size_t j = 0; j < read_group_count-1 - i; ++j){
+            if (run_ids[j] > run_ids[j + 1]){
 
                 std::string temp = run_ids[j];
                 run_ids[j] = run_ids[j + 1];
@@ -227,14 +251,16 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
     }
 
     print_multi_group_header(f_out, slow5_headers, run_id_indices, list, read_group_count);
-    print_multi_group_records(f_out, slow_files_pointers, run_id_indices, list, read_group_count);
+    print_multi_group_records(f_out, slow_files_pointers, run_id_indices, list, read_group_count, file_id_tracker);
 
-    //free slow5 headers
-    for(size_t i =0; i<slow5_files_count; i++){
-        if(slow_files_pointers[i]){
+    //free slow5 files
+    for(size_t i =0; i<slow5_files_count; i++) {
+        if (slow_files_pointers[i]) {
             fclose(slow_files_pointers[i]);
         }
-
+    }
+    //free slow5 headers
+    for(size_t i=0; i<slow5_headers.size(); i++){
         //context tags
         if(slow5_headers[i].sample_frequency)free(slow5_headers[i].sample_frequency);
         //additional attributes in 2.2

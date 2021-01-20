@@ -22,194 +22,346 @@ int read_line(FILE* slow5, char ** buffer){
     return 1;
 }
 
-int read_header(slow5_header_t* slow5_header, FILE* slow5, char** buffer) {
+int read_header(std::vector<slow5_header_t>& slow5_headers, FILE* slow5, char** buffer, hsize_t num_read_group) {
+    size_t start_idx = slow5_headers.size() - num_read_group;
+    char *attribute_value;
 
-    while(1){
-        if(read_line(slow5, buffer)==-1){
-            ERROR("cannot read line %s","");
+    while (1) {
+        if (read_line(slow5, buffer) == -1) {
+            ERROR("cannot read line %s", "");
             return -1;
-        }; // check return value
-        char key_name[32];
-        char value[500];
-//        fprintf(stderr,"%s",*buffer);
-        if(sscanf(*buffer, "#%[^\t]\t%[^\n]\n", key_name,value)!=2){
-            ERROR("Slow5 format error in line: %s",*buffer);
-            return -1;
-        }
-        if(strcmp("read_id",key_name)==0){
-            break;  //column headers
+        };
+
+        attribute_value = strtok(*buffer, "\t");
+//        fprintf(stderr, "attribute value=%s ", attribute_value);
+
+        if (strcmp("#read_id", attribute_value) == 0) {
+            break;
         }
 
-        if(strcmp("file_format",key_name)==0){
-            slow5_header->file_format = strdup(value);
+        if (strcmp("#file_format", attribute_value) == 0) {
+            attribute_value = strtok(NULL, "\t\n");
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                slow5_headers[i].file_format = strdup(attribute_value);
+            }
+        } else if (strcmp("#file_version", attribute_value) == 0) {
+            attribute_value = strtok(NULL, "\t\n");
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                slow5_headers[i].file_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("file_version",key_name)==0){
-            slow5_header->file_version = strdup(value);
+        else if (strcmp("#file_type", attribute_value) == 0) {
+            attribute_value = strtok(NULL, "\t\n");
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                slow5_headers[i].file_type = strdup(attribute_value);
+            }
         }
-        else if(strcmp("file_type",key_name)==0){
-            slow5_header->file_type = strdup(value);
-        }
-        else if(strcmp("num_read_groups",key_name)==0){
-            slow5_header->num_read_groups = atoi(value);
+        else if (strcmp("#num_read_groups", attribute_value) == 0) {
+            attribute_value = strtok(NULL, "\t\n");
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                slow5_headers[i].num_read_groups = atoi(attribute_value);
+            }
         }
 //            READ
-
-        else if(strcmp("pore_type",key_name)==0){
-            slow5_header->pore_type = strdup(value);
+        else if (strcmp("#pore_type", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].pore_type = strdup(attribute_value);
+            }
         }
-        else if(strcmp("run_id",key_name)==0){
-            slow5_header->run_id = strdup(value);
+        else if (strcmp("#run_id", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].run_id = strdup(attribute_value);
+            }
         }
 //            CONTEXT_TAGS
-        else if(strcmp("sample_frequency",key_name)==0){
-            slow5_header->sample_frequency = strdup(value);
+        else if (strcmp("#sample_frequency", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].sample_frequency = strdup(attribute_value);
+            }
         }
             //additional attributes in 2.0
-        else if(strcmp("filename",key_name)==0){
-            slow5_header->filename = strdup(value);
+        else if (strcmp("#filename", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].filename = strdup(attribute_value);
+            }
         }
-        else if(strcmp("experiment_kit",key_name)==0){
-            slow5_header->experiment_kit = strdup(value);
+        else if (strcmp("#experiment_kit", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].experiment_kit = strdup(attribute_value);
+            }
         }
-        else if(strcmp("user_filename_input",key_name)==0){
-            slow5_header->user_filename_input = strdup(value);
+        else if (strcmp("#user_filename_input", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].user_filename_input = strdup(attribute_value);
+            }
         }
             //additional attributes in 2.2
-        else if(strcmp("barcoding_enabled",key_name)==0){
-            slow5_header->barcoding_enabled = strdup(value);
+        else if (strcmp("#barcoding_enabled", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].barcoding_enabled = strdup(attribute_value);
+            }
         }
-        else if(strcmp("experiment_duration_set",key_name)==0){
-            slow5_header->experiment_duration_set = strdup(value);
+        else if (strcmp("#experiment_duration_set", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].experiment_duration_set = strdup(attribute_value);
+            }
         }
-        else if(strcmp("experiment_type",key_name)==0){
-            slow5_header->experiment_type = strdup(value);
+        else if (strcmp("#experiment_type", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].experiment_type = strdup(attribute_value);
+            }
         }
-        else if(strcmp("local_basecalling",key_name)==0){
-            slow5_header->local_basecalling = strdup(value);
+        else if (strcmp("#local_basecalling", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].local_basecalling = strdup(attribute_value);
+            }
         }
-        else if(strcmp("package",key_name)==0){
-            slow5_header->package = strdup(value);
+        else if (strcmp("#package", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].package = strdup(attribute_value);
+            }
         }
-        else if(strcmp("package_version",key_name)==0){
-            slow5_header->package_version = strdup(value);
+        else if (strcmp("#package_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].package_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("sequencing_kit",key_name)==0){
-            slow5_header->sequencing_kit = strdup(value);
+        else if (strcmp("#sequencing_kit", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].sequencing_kit = strdup(attribute_value);
+            }
         }
 //            TRACKING_ID
-        else if(strcmp("asic_id",key_name)==0){
-            slow5_header->asic_id = strdup(value);
+        else if (strcmp("#asic_id", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].asic_id = strdup(attribute_value);
+            }
         }
-        else if(strcmp("asic_id_eeprom",key_name)==0){
-            slow5_header->asic_id_eeprom = strdup(value);
+        else if (strcmp("#asic_id_eeprom", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].asic_id_eeprom = strdup(attribute_value);
+            }
         }
-        else if(strcmp("asic_temp",key_name)==0){
-            slow5_header->asic_temp = strdup(value);
+        else if (strcmp("#asic_temp", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].asic_temp = strdup(attribute_value);
+            }
         }
-        else if(strcmp("auto_update",key_name)==0){
-            slow5_header->auto_update = strdup(value);
+        else if (strcmp("#auto_update", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].auto_update = strdup(attribute_value);
+            }
         }
-        else if(strcmp("auto_update_source",key_name)==0){
-            slow5_header->auto_update_source = strdup(value);
+        else if (strcmp("#auto_update_source", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].auto_update_source = strdup(attribute_value);
+            }
         }
-        else if(strcmp("bream_is_standard",key_name)==0){
-            slow5_header->bream_is_standard = strdup(value);
+        else if (strcmp("#bream_is_standard", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].bream_is_standard = strdup(attribute_value);
+            }
         }
-        else if(strcmp("device_id",key_name)==0){
-            slow5_header->device_id = strdup(value);
+        else if (strcmp("#device_id", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].device_id = strdup(attribute_value);
+            }
         }
-        else if(strcmp("exp_script_name",key_name)==0){
-            slow5_header->exp_script_name = strdup(value);
+        else if (strcmp("#exp_script_name", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].exp_script_name = strdup(attribute_value);
+            }
         }
-        else if(strcmp("exp_script_purpose",key_name)==0){
-            slow5_header->exp_script_purpose = strdup(value);
+        else if (strcmp("#exp_script_purpose", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].exp_script_purpose = strdup(attribute_value);
+            }
         }
-        else if(strcmp("exp_start_time",key_name)==0){
-            slow5_header->exp_start_time = strdup(value);
+        else if (strcmp("#exp_start_time", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].exp_start_time = strdup(attribute_value);
+            }
         }
-        else if(strcmp("flow_cell_id",key_name)==0){
-            slow5_header->flow_cell_id = strdup(value);
+        else if (strcmp("#flow_cell_id", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].flow_cell_id = strdup(attribute_value);
+            }
         }
-        else if(strcmp("heatsink_temp",key_name)==0){
-            slow5_header->heatsink_temp = strdup(value);
+        else if (strcmp("#heatsink_temp", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].heatsink_temp = strdup(attribute_value);
+            }
         }
-        else if(strcmp("hostname",key_name)==0){
-            slow5_header->hostname = strdup(value);
+        else if (strcmp("#hostname", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].hostname = strdup(attribute_value);
+            }
         }
-        else if(strcmp("installation_type",key_name)==0){
-            slow5_header->installation_type = strdup(value);
+        else if (strcmp("#installation_type", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].installation_type = strdup(attribute_value);
+            }
         }
-        else if(strcmp("local_firmware_file",key_name)==0){
-            slow5_header->local_firmware_file = strdup(value);
+        else if (strcmp("#local_firmware_file", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].local_firmware_file = strdup(attribute_value);
+            }
         }
-        else if(strcmp("operating_system",key_name)==0){
-            slow5_header->operating_system = strdup(value);
+        else if (strcmp("#operating_system", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].operating_system = strdup(attribute_value);
+            }
         }
-        else if(strcmp("protocol_run_id",key_name)==0){
-            slow5_header->protocol_run_id = strdup(value);
+        else if (strcmp("#protocol_run_id", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].protocol_run_id = strdup(attribute_value);
+            }
         }
-        else if(strcmp("protocols_version",key_name)==0){
-            slow5_header->protocols_version = strdup(value);
+        else if (strcmp("#protocols_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].protocols_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("tracking_id_run_id",key_name)==0){
-            slow5_header->tracking_id_run_id = strdup(value);
+        else if (strcmp("#tracking_id_run_id", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].tracking_id_run_id = strdup(attribute_value);
+            }
         }
-        else if(strcmp("usb_config",key_name)==0){
-            slow5_header->usb_config = strdup(value);
+        else if (strcmp("#usb_config", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].usb_config = strdup(attribute_value);
+            }
         }
-        else if(strcmp("version",key_name)==0){
-            slow5_header->version = strdup(value);
+        else if (strcmp("#version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].version = strdup(attribute_value);
+            }
         }
             //additional attributes in 2.0
-        else if(strcmp("bream_core_version",key_name)==0){
-            slow5_header->bream_core_version = strdup(value);
+        else if (strcmp("#bream_core_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].bream_core_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("bream_ont_version",key_name)==0){
-            slow5_header->bream_ont_version = strdup(value);
+        else if (strcmp("#bream_ont_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].bream_ont_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("bream_prod_version",key_name)==0){
-            slow5_header->bream_prod_version = strdup(value);
+        else if (strcmp("#bream_prod_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].bream_prod_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("bream_rnd_version",key_name)==0){
-            slow5_header->bream_rnd_version = strdup(value);
+        else if (strcmp("#bream_rnd_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].bream_rnd_version = strdup(attribute_value);
+            }
         }
             //additional attributes in 2.2
-        else if(strcmp("asic_version",key_name)==0){
-            slow5_header->asic_version = strdup(value);
+        else if (strcmp("#asic_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].asic_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("configuration_version",key_name)==0){
-            slow5_header->configuration_version = strdup(value);
+        else if (strcmp("#configuration_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].configuration_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("device_type",key_name)==0){
-            slow5_header->device_type = strdup(value);
+        else if (strcmp("#device_type", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].device_type = strdup(attribute_value);
+            }
         }
-        else if(strcmp("distribution_status",key_name)==0){
-            slow5_header->distribution_status = strdup(value);
+        else if (strcmp("#distribution_status", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].distribution_status = strdup(attribute_value);
+            }
         }
-        else if(strcmp("distribution_version",key_name)==0){
-            slow5_header->distribution_version = strdup(value);
+        else if (strcmp("#distribution_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].distribution_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("flow_cell_product_code",key_name)==0){
-            slow5_header->flow_cell_product_code = strdup(value);
+        else if (strcmp("#flow_cell_product_code", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].flow_cell_product_code = strdup(attribute_value);
+            }
         }
-        else if(strcmp("guppy_version",key_name)==0){
-            slow5_header->guppy_version = strdup(value);
+        else if (strcmp("#guppy_version", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].guppy_version = strdup(attribute_value);
+            }
         }
-        else if(strcmp("protocol_group_id",key_name)==0){
-            slow5_header->protocol_group_id = strdup(value);
+        else if (strcmp("#protocol_group_id", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].protocol_group_id = strdup(attribute_value);
+            }
         }
-        else if(strcmp("sample_id",key_name)==0){
-            slow5_header->sample_id = strdup(value);
-        }else{
-            fprintf(stderr,"[%s] unidentified header key,value pair %s\n",__func__ , *buffer);
+        else if (strcmp("#sample_id", attribute_value) == 0) {
+            for (size_t i = start_idx; i < slow5_headers.size(); i++) {
+                attribute_value = strtok(NULL, "\t\n");
+                slow5_headers[i].sample_id = strdup(attribute_value);
+            }
+        }
+
+        else {
+            fprintf(stderr, "[%s] unidentified header line %s\n", __func__, *buffer);
         }
     }
 }
 
-int read_single_group_slow5_header(FILE *slow5, slow5_header_t& slow5Header) {
+int read_slow5_header(FILE *slow5, std::vector<slow5_header_t>& slow5Headers, hsize_t num_read_group) {
 
     char *buffer = NULL;
-    if(read_header(&slow5Header, slow5, &buffer)==-1){
+    if(read_header(slow5Headers, slow5, &buffer, num_read_group)==-1){
         return -1;
     }
     if(buffer){
@@ -278,18 +430,59 @@ void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_he
     fprintf(f_out,"%s", COLUMN_HEADERS);
 }
 
-void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow_files_pointers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count) {
-    char* buffer = NULL;
+void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow_files_pointers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count, std::vector<size_t> &file_id_tracker) {
     for(size_t i=0; i<read_group_count; i++){
         for(size_t j=0; j<list[run_id_indices[i]].size(); j++){
-            read_line(slow_files_pointers[list[run_id_indices[i]][j]],&buffer);
-            char read_id[50];
-            if(sscanf(buffer, "%[^\t]", read_id)!=1){
-                ERROR("Slow5 format error in line: %s",*buffer);
+            size_t prev_read_group_id;
+            size_t first_record = 1;
+            while(1){
+                char* buffer = NULL;
+                if(read_line(slow_files_pointers[file_id_tracker[list[run_id_indices[i]][j]]],&buffer)==-1){
+                    break;
+                }
+                char read_id[50];
+                size_t read_group_id;
+                if(sscanf(buffer, "%[^\t]\t%lu", read_id, &read_group_id)!=2){
+                    ERROR("Slow5 format error in line: %s",*buffer);
+                }
+                if(first_record==0){
+                    if(read_group_id!=prev_read_group_id){
+                        fseek(slow_files_pointers[file_id_tracker[list[run_id_indices[i]][j]]],-sizeof(char)*strlen(buffer),SEEK_CUR);
+                        free(buffer);
+                        break;
+                    }
+                }
+                fprintf(f_out,"%s\t%lu\t%s", read_id, i, buffer+strlen(read_id)+strlen("\t")+snprintf(0,0,"%lu",i)+strlen("\t"));
+                prev_read_group_id = read_group_id;
+                first_record=0;
+                free(buffer);
             }
-            fprintf(f_out,"%s\t%lu\t%s", read_id, i, buffer+strlen(read_id)+strlen("\t")+snprintf(0,0,"%lu",i)+strlen("\t"));
         }
     }
+}
 
-    free(buffer);
+int find_num_read_group(FILE* slow5, hsize_t* num_read_group){
+    char *buffer = NULL;
+    if(read_line(slow5, &buffer)==-1 || read_line(slow5, &buffer)==-1 || read_line(slow5, &buffer)==-1){
+        return -1;
+    }
+    char key_name[32];
+    char value[500];
+//        fprintf(stderr,"%s",*buffer);
+    if(sscanf(buffer, "#%[^\t]\t%[^\n]\n", key_name,value)!=2){
+        ERROR("Slow5 format error in line: %s",*buffer);
+        return -1;
+    }
+    if(strcmp("num_read_groups",key_name)==0){
+        *num_read_group = atoi(value);
+    } else{
+        ERROR("Slow5 format error in line: %s",*buffer);
+        return -1;
+    }
+    fseek(slow5,0,SEEK_SET);
+
+    if(buffer){
+        free(buffer);
+    }
+    return 1;
 }
