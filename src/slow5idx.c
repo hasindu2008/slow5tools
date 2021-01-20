@@ -17,8 +17,8 @@
 #include "error.h"
 #include "slow5idx.h"
 
-#include "khash.h"
-#include "kstring.h"
+#include "klib/khash.h"
+#include "klib/kstring.h"
 #include "misc_old.h"
 
 

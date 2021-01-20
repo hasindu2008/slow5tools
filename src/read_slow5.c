@@ -356,6 +356,7 @@ int read_header(std::vector<slow5_header_t>& slow5_headers, FILE* slow5, char** 
             fprintf(stderr, "[%s] unidentified header line %s\n", __func__, *buffer);
         }
     }
+    return -1;
 }
 
 int read_slow5_header(FILE *slow5, std::vector<slow5_header_t>& slow5Headers, hsize_t num_read_group) {
@@ -373,7 +374,7 @@ int read_slow5_header(FILE *slow5, std::vector<slow5_header_t>& slow5Headers, hs
 void print_multi_group_header(FILE *f_out, std::vector<slow5_header_t>& slow5_headers, std::vector<size_t> &run_id_indices, std::vector<std::vector<size_t>> &list, size_t read_group_count) {
     fprintf(f_out, "#file_format\t%s\n", slow5_headers[0].file_format);
     fprintf(f_out, "#file_version\t%s\n", slow5_headers[0].file_version);
-    fprintf(f_out, "#num_read_groups\t%llu\n", read_group_count);
+    fprintf(f_out, "#num_read_groups\t%lu\n", (int64_t)read_group_count);
 
     //fprintf(f_out, "#run_id");for(size_t i=0; i<read_group_count; i++){fprintf(f_out, "\t%s", slow5_headers[list[run_id_indices[i]][0]].run_id);}fprintf(f_out, "\n");
 
@@ -443,7 +444,7 @@ void print_multi_group_records(FILE *f_out, std::vector<FILE*>& slow_files_point
                 char read_id[50];
                 size_t read_group_id;
                 if(sscanf(buffer, "%[^\t]\t%lu", read_id, &read_group_id)!=2){
-                    ERROR("Slow5 format error in line: %s",*buffer);
+                    ERROR("Slow5 format error in line: %s",buffer);
                 }
                 if(first_record==0){
                     if(read_group_id!=prev_read_group_id){
@@ -470,13 +471,13 @@ int find_num_read_group(FILE* slow5, hsize_t* num_read_group){
     char value[500];
 //        fprintf(stderr,"%s",*buffer);
     if(sscanf(buffer, "#%[^\t]\t%[^\n]\n", key_name,value)!=2){
-        ERROR("Slow5 format error in line: %s",*buffer);
+        ERROR("Slow5 format error in line: %s",buffer);
         return -1;
     }
     if(strcmp("num_read_groups",key_name)==0){
         *num_read_group = atoi(value);
     } else{
-        ERROR("Slow5 format error in line: %s",*buffer);
+        ERROR("Slow5 format error in line: %s",buffer);
         return -1;
     }
     fseek(slow5,0,SEEK_SET);

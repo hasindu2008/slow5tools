@@ -81,3 +81,47 @@ char *strtok_solo(char *str, char *seps) {
 
     return pos;
 }
+
+// Atoi but to uint32_t
+// and without any symbols
+// and without 0 prefixing
+uint32_t ato_uint32(const char *str) {
+    uint32_t ret = 0;
+
+    // Ensure first number is not 0 if more letters in string
+    if (strlen(str) > 1) {
+        assert(str[0] != '0');
+    }
+    // Ensure only integers in string
+    for (size_t i = 0; i < strlen(str); ++ i) {
+        assert(str[i] >= 48 && str[i] <= 57);
+    }
+
+    long int tmp = strtol(str, NULL, 10);
+    assert(tmp <= UINT32_MAX);
+    ret = (uint32_t) tmp;
+
+    return ret;
+}
+
+// Atoi but to uint8_t
+// and without any symbols
+// and without 0 prefixing
+uint8_t ato_uint8(const char *str) {
+    uint8_t ret = 0;
+
+    // Ensure first number is not 0 if more letters in string
+    if (strlen(str) > 1) {
+        assert(str[0] != '0');
+    }
+    // Ensure only integers in string
+    for (size_t i = 0; i < strlen(str); ++ i) {
+        assert(str[i] >= 48 && str[i] <= 57);
+    }
+
+    long int tmp = strtol(str, NULL, 10);
+    assert(tmp <= UINT8_MAX);
+    ret = (uint8_t) tmp;
+
+    return ret;
+}

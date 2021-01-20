@@ -58,7 +58,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     FILE *f_out = stdout;
-    enum FormatOut format_out = OUT_ASCII;
+    //enum FormatOut format_out = OUT_ASCII;
 
     // Input arguments
     char *arg_fname_out = NULL;
@@ -353,5 +353,6 @@ int compare_headers(slow5_header_t& slow5Header1, slow5_header_t& slow5Header2, 
             fprintf(stderr,"internal error\n");
             break;
     }
+    return 0;
 
 }
