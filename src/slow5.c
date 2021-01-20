@@ -15,40 +15,60 @@
 #define SLOW5_HEADER_DATA_BUF_CAP (1028) // 2^10 TODO is this too much? Or put to a page length
 //#define SLOW5_HEADER_DATA_RGS_INIT_CAP (32) // 2^5 // TODO necessary?
 
-struct SLOW5 *slow5_init_empty(void) {
-    struct SLOW5 *slow5 = calloc(1, sizeof *slow5);
-    MALLOC_CHK(slow5);
+/* Private */
 
-    slow5->header = calloc(1, sizeof *(slow5->header));
-    MALLOC_CHK(slow5->header);
+static struct SLOW5File *slow5_init(FILE *fp, const char *pathname, enum SLOW5Format format, enum PressMethod compress, bool is_fp_preowned);
 
-    slow5->reads = kh_init(s2r);
-    NULL_CHK(slow5->reads);
 
-    return slow5;
+
+inline struct SLOW5File *slow5_open(const char *pathname, const char *mode) {
+    return slow5_open_with(pathname, mode, FORMAT_UNKNOWN, COMPRESS_NONE);
 }
 
-struct SLOW5 *slow5_init(enum SLOW5Format format, FILE *stream) {
-    struct SLOW5 *slow5 = slow5_init_empty();
-
-    slow5_read(slow5, format, stream);
-
-    return slow5;
+inline struct SLOW5File *slow5_open_with(const char *pathname, const char *mode, enum SLOW5Format format, enum PressMethod compress) {
+    return slow5_init(fopen(pathname, mode), pathname, format, compress, false);
 }
 
-void slow5_destroy(struct SLOW5 **slow5) {
+inline struct SLOW5File *slow5_init_fp(FILE *fp, enum SLOW5Format format, enum PressMethod compress) {
+    return slow5_init(fp, get_pathname(fp), format, compress, true);
+}
+
+static struct SLOW5File *slow5_init(FILE *fp, const char *pathname, enum SLOW5Format format, enum PressMethod compress, bool is_fp_preowned) {
+    NULL_CHK(fp);
+
+    struct SLOW5File *s5p = slow5_init_empty();
+    s5p->fp = fp;
+    s5p->is_fp_preowned = is_fp_preowned;
+
+    if (format == FORMAT_UNKNOWN) {
+        // Attempt to determine format
+        // from pathname
+        NULL_CHK(pathname);
+        format = pathname_get_slow5_format(pathname);
+        assert(format != FORMAT_UNKNOWN);
+    }
+    s5p->format = format;
+
+    // TODO only use when reading?
+    // TODO determine compression?
+    s5p->compress = press_init(compress);
+    s5p->header = slow5_hdr_init(fp, format);
+
+    return s5p;
+}
+
+void slow5_free(struct SLOW5File *slow5) {
     NULL_CHK(slow5);
-    NULL_CHK(*slow5);
 
     // Free version string
-    if ((*slow5)->header->version_str != NULL) {
-        free((*slow5)->header->version_str);
-        (*slow5)->header->version_str = NULL;
+    if (slow5->header->version_str != NULL) {
+        free(slow5->header->version_str);
+        slow5->header->version_str = NULL;
     }
 
     // Free header data map
-    for (uint32_t i = 0; i < (*slow5)->header->num_read_groups; ++ i) {
-        khash_t(s2s) *hdr_data = (*slow5)->header->data[i];
+    for (uint32_t i = 0; i < slow5->header->num_read_groups; ++ i) {
+        khash_t(s2s) *hdr_data = slow5->header->data[i];
         for (khint_t j = kh_begin(hdr_data); j < kh_end(hdr_data); ++ j) {
             if (kh_exist(hdr_data, j)) {
                 if (i == 0) {
@@ -59,18 +79,17 @@ void slow5_destroy(struct SLOW5 **slow5) {
         }
         kh_destroy(s2s, hdr_data);
     }
-    free((*slow5)->header->data);
+    free(slow5->header->data);
 
     // Free header
-    free((*slow5)->header);
-    (*slow5)->header = NULL; // TODO test if header is actually set to NULL
+    free(slow5->header);
+    slow5->header = NULL; // TODO test if header is actually set to NULL
 
     // Free reads
-    kh_destroy(s2r, (*slow5)->reads);
-    (*slow5)->reads = NULL;
+    kh_destroy(s2r, slow5->reads);
+    slow5->reads = NULL;
 
-    free(*slow5);
-    *slow5 = NULL;
+    free(slow5);
 }
 
 /*
@@ -373,51 +392,6 @@ void slow5_write_hdr_data_attr(struct SLOW5File *slow5, const char *attr, const 
 }
 */
 
-enum SLOW5Format str_get_slow5_format(const char *str) {
-    enum SLOW5Format format = FORMAT_NONE;
-
-    for (size_t i = 0; i < sizeof SLOW5_FORMAT_MAP / sizeof SLOW5_FORMAT_MAP[0]; ++ i) {
-        const struct SLOW5FormatMap map = SLOW5_FORMAT_MAP[i];
-        if (strcmp(map.name, str) == 0) {
-            format = map.format;
-            break;
-        }
-    }
-
-    return format;
-}
-
-enum SLOW5Format path_get_slow5_format(const char *pathname) {
-    enum SLOW5Format format = FORMAT_NONE;
-
-    // TODO change type from size_t
-    size_t i;
-    for (i = strlen(pathname) - 1; i == 0; -- i) {
-        if (pathname[i] == '.' && i != strlen(pathname) - 1) {
-            const char *extptr = pathname + i + 1;
-            format = str_get_slow5_format(extptr);
-            break;
-        }
-    }
-
-    return format;
-}
-
-// Get the slow5 format name from the format
-const char *slow5_format_get_str(enum SLOW5Format format) {
-    const char *str = NULL;
-
-    for (size_t i = 0; i < sizeof SLOW5_FORMAT_MAP / sizeof SLOW5_FORMAT_MAP[0]; ++ i) {
-        const struct SLOW5FormatMap map = SLOW5_FORMAT_MAP[i];
-        if (map.format == format) {
-            str = map.name;
-            break;
-        }
-    }
-
-    return str;
-}
-
 /*
 const uint8_t *str_get_slow5_version(const char *str) {
     const uint8_t *version = NULL;
@@ -434,50 +408,6 @@ const uint8_t *str_get_slow5_version(const char *str) {
     return version;
 }
 */
-
-// Atoi but to uint32_t
-// and without any symbols
-// and without 0 prefixing
-uint32_t ato_uint32(const char *str) {
-    uint32_t ret = 0;
-
-    // Ensure first number is not 0 if more letters in string
-    if (strlen(str) > 1) {
-        assert(str[0] != '0');
-    }
-    // Ensure only integers in string
-    for (size_t i = 0; i < strlen(str); ++ i) {
-        assert(str[i] >= 48 && str[i] <= 57);
-    }
-
-    long int tmp = strtol(str, NULL, 10);
-    assert(tmp <= UINT32_MAX);
-    ret = (uint32_t) tmp;
-
-    return ret;
-}
-
-// Atoi but to uint8_t
-// and without any symbols
-// and without 0 prefixing
-uint8_t ato_uint8(const char *str) {
-    uint8_t ret = 0;
-
-    // Ensure first number is not 0 if more letters in string
-    if (strlen(str) > 1) {
-        assert(str[0] != '0');
-    }
-    // Ensure only integers in string
-    for (size_t i = 0; i < strlen(str); ++ i) {
-        assert(str[i] >= 48 && str[i] <= 57);
-    }
-
-    long int tmp = strtol(str, NULL, 10);
-    assert(tmp <= UINT8_MAX);
-    ret = (uint8_t) tmp;
-
-    return ret;
-}
 
 int main(void) {
     struct SLOW5File *slow5_f;

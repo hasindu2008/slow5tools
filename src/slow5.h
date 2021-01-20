@@ -1,4 +1,5 @@
 // Header with slow5 file definitions
+// TODO structure pack to min size
 
 #ifndef SLOW5_H
 #define SLOW5_H
@@ -65,18 +66,18 @@
 /* Formats */
 
 // File formats to be dealing with
-enum SLOW5Format {
-    FORMAT_NONE,
+enum slow5_format {
+    FORMAT_UNKNOWN,
     FORMAT_ASCII,
     FORMAT_BINARY
 };
 
 // SLOW5 file name with corresponding format
-struct SLOW5FormatMap {
+struct slow5_format_map {
     const char *name;
-    enum SLOW5Format format;
+    enum slow5_format format;
 };
-static const struct SLOW5FormatMap SLOW5_FORMAT_MAP[] = {
+static const struct slow5_format_map SLOW5_FORMAT_MAP[] = {
     { ASCII_NAME,   FORMAT_ASCII    },
     { BINARY_NAME,  FORMAT_BINARY   }
 };
@@ -84,7 +85,7 @@ static const struct SLOW5FormatMap SLOW5_FORMAT_MAP[] = {
 /* Header */
 
 // SLOW5 versioning
-struct SLOW5Version {
+struct slow5_version {
     uint8_t major;
     uint8_t minor;
     uint8_t patch;
@@ -94,24 +95,24 @@ struct SLOW5Version {
 KHASH_MAP_INIT_STR(s2s, const char *)
 
 // SLOW5 header
-struct SLOW5Header {
-    enum SLOW5Format format;
+struct slow5_header {
+    enum slow5_format format;
+	enum slow5_version version;
     char *version_str;
-	struct SLOW5Version version;
-    uint32_t num_read_groups;
-    khash_t(s2s) **data; // length = num_read_groups
+    uint32_t num_rgs; // Number of read groups
+    khash_t(s2s) **data; // length = num_rgs
 };
 
 /* Read Record */
 
 // SLOW5 main record columns
-enum SLOW5Cols {
+enum slow5_cols {
     SLOW5_COLS_FOREACH(GENERATE_ENUM)
 };
 
 // SLOW5 auxillary record data
 // TODO make dynamic
-struct SLOW5ReadAux {
+struct slow5_rec_aux {
 	char *channel_number;
     char *end_reason;
     double median_before;
@@ -121,107 +122,76 @@ struct SLOW5ReadAux {
 };
 
 // SLOW5 record data
-struct SLOW5Read {
+struct slow5_rec {
     SLOW5_COLS_FOREACH(GENERATE_STRUCT)
-    struct SLOW5ReadAux *read_aux;
+    struct slow5_rec_aux *read_aux;
 };
 
 /* SLOW5 object */
 
 // SLOW5 index
-struct SLOW5Index {
+struct slow5_idx {
     uint64_t size;
     uint64_t offset;
 };
 
 // Read id map: read id -> index data
-KHASH_MAP_INIT_STR(s2i, struct SLOW5Index *)
-
-// SLOW5 object
-struct SLOW5 {
-    struct SLOW5Header *header;
-    khash_t(s2i) *index;
-};
+KHASH_MAP_INIT_STR(s2i, struct slow5_idx *)
 
 /* SLOW5 file */
 
-// SLOW5 file object
-struct SLOW5File {
-    FILE *stream;
-    enum SLOW5Format format;
+// SLOW5 file structure
+struct slow5_file {
+    FILE *fp;
+    bool is_fp_preowned;
+    enum slow5_format format;
     struct Press *compress;
+    struct slow5_header *header;
+    khash_t(s2i) *idx;
 };
 
-// SLOW5 writing configuration
-struct SLOW5WriteConf {
-    enum SLOW5Format format;
-    struct Press *compress;
-};
 
-/*
-struct SLOW5VersionMap {
-    const char *version_str;
-    const uint8_t version[3];
-};
-
-static const struct SLOW5VersionMap SLOW5_VERSION_MAP[] = {
-    { "0.1.0",  {0, 1, 0}   }
-};
-*/
-
-
-/* API */
-
-// Initiate an empty slow5 object
-struct SLOW5 *slow5_init_empty(void);
-// Initiate a slow5 object from a slow5 file
-struct SLOW5 *slow5_init(struct SLOW5File *fp);
-// Destroy a slow5 object
-void slow5_destroy(struct SLOW5 **slow5);
-
-// Read from a file into a slow5 object
-void slow5_read(struct SLOW5 *slow5, enum SLOW5Format format, FILE *stream);
-
-// Write to a file from a slow5 object
-void slow5_write(struct SLOW5 *slow5, struct SLOW5WriteConf config, FILE *stream);
-// Write a slow5 file header
-uint8_t slow5_write_hdr(struct SLOW5 *slow5, struct SLOW5WriteConf config, FILE *stream);
-// Write header data
-uint8_t slow5_write_hdr_data(struct SLOW5 *slow5, struct SLOW5WriteConf config, FILE *stream);
-// Write header attribute
-uint8_t slow5_write_hdr_data_attr(struct SLOW5 *slow5, struct SLOW5WriteConf config, const char *attr, FILE *stream);
-
-// Print out the SLOW5 structure contents
-void slow5_print_hdr(const struct SLOW5Header *hdr);
-
-// Get the format from a slow5 format name
-enum SLOW5Format str_get_slow5_format(const char *str);
-// Get the format of a slow5 pathname
-enum SLOW5Format path_get_slow5_format(const char *pathname);
-// Get the format of a slow5 FILE
-enum SLOW5Format stream_get_slow5_format(const FILE *stream);
-
-// Get the slow5 format name from the format
-const char *slow5_format_get_str(enum SLOW5Format format);
-
-// Get the slow5 version array from a version string
-//const uint8_t *str_get_slow5_version(const char *str);
-
-// Atoi but to uintx_t
-// and without any symbols
-// and without 0 prefixing
-uint8_t ato_uint8(const char *str);
-uint32_t ato_uint32(const char *str);
+/* Public API */
 
 // Open a slow5 file
-/*
-struct SLOW5File *slow5_fopen(const char *pathname, const char *mode);
-struct SLOW5File *slow5_fopen_format(enum SLOW5Format format, const char *pathname, const char *mode);
-*/
+struct slow5_file *slow5_open(const char *pathname, const char *mode);
 
-/*
-// Initiate and destroy a slow5 file
-uint8_t fslow5_init(struct SLOW5 *slow5, FILE *stream);
-*/
+struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum slow5_format format, PressMethod compress);
+struct slow5_file *slow5_init_fp(FILE *fp, enum slow5_format format, PressMethod compress);
+
+// Write from a slow5 file to another slow5 file
+int8_t slow5_write(struct slow5_file *s5p_from, struct slow5_file *s5p_to); // TODO decide return type
+
+// Merge slow5 files to another slow5 file
+// TODO Just a merge for 2 -> 1?
+// TODO compile time 2 args in ...
+int8_t slow5_merge(struct slow5_file *s5p_to, ...);
+int8_t slow5_vmerge(struct slow5_file *s5p_to, va_list ap);
+
+// Split a slow5 file to a dir
+// TODO split into multiple slow5 files from same rg
+int8_t slow5_split(struct slow5_file *s5p_from, const char *dirname_to);
+
+// Close a slow5 file
+int slow5_close(struct slow5_file *s5p);
+void slow5_free(struct slow5_file *s5p);
+
+
+
+// Get a read entry
+struct Slow5Rec *slow5_get(const char *read_id, const struct slow5_file *s5p);
+struct Slow5Rec **slow5_get_multi(const char **read_id, const uint64_t num_reads, const struct slow5_file *s5p);
+
+// Print read entry
+int slow5_rec_fprint(FILE *fp, struct Slow5Rec *read);
+static inline int slow5_rec_print(struct Slow5Rec *read) { slow5_rec_fprint(stdout, read); }
+
+// Free a read entry
+void slow5_rec_free(struct Slow5Rec *read);
+
+
+
+// Get a header value
+const char *slow5_hdr_get(const char *attr, const struct slow5_file *s5p);
 
 #endif

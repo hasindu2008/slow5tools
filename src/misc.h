@@ -96,4 +96,10 @@ static inline bool is_dir(const char *path) {
 // From https://stackoverflow.com/questions/26522583/c-strtok-skips-second-token-or-consecutive-delimiter
 char *strtok_solo(char *str, char *seps);
 
+// Atoi but to uintx_t
+// and without any symbols
+// and without 0 prefixing
+uint8_t ato_uint8(const char *str);
+uint32_t ato_uint32(const char *str);
+
 #endif
