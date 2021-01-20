@@ -55,7 +55,7 @@ $(BUILD_DIR)/extract.o: src/extract.c src/slow5_old.h src/error.h
 $(BUILD_DIR)/slow5idx.o: src/slow5idx.c src/slow5idx.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/kstring.o: src/kstring.c src/kstring.h
+$(BUILD_DIR)/kstring.o: src/klib/kstring.c src/klib/kstring.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/misc_old.o: src/misc_old.c

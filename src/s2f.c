@@ -18,8 +18,6 @@
 
 
 static double init_realtime = 0;
-static uint64_t bad_fast5_file = 0;
-static uint64_t total_reads = 0;
 
 
 void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype);
@@ -218,11 +216,18 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     group_context_tags = H5Gcreate (group_read, "context_tags", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     set_hdf5_attributes(group_context_tags, CONTEXT_TAGS, slow5_header, &slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_context_tags);
+    if(status<0){
+        WARNING("Closing context_tags group failed. Possible memory leak. status=%d",(int)status);
+    }
+
 
     // creat tracking_id group
     group_tracking_id = H5Gcreate (group_read, "tracking_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     set_hdf5_attributes(group_tracking_id, TRACKING_ID, slow5_header, &slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_tracking_id);
+    if(status<0){
+        WARNING("Closing tracking_id group failed. Possible memory leak. status=%d",(int)status);
+    }
 
     size_t i = 0;
     while(1){
@@ -366,7 +371,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
             continue;
         }
         if(num_read_group>1){
-            ERROR("The file %s has %lu read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), num_read_group);
+            ERROR("The file %s has %lu read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), (int64_t)num_read_group);
             continue;
         }
 
@@ -640,12 +645,20 @@ void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t
     attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
     /* Write the attribute data. */
     status = H5Awrite(attribute_id, atype, attr_value);
+    assert(status>=0);
+
     H5Tclose(atype);
     /* Close the attribute. */
     status = H5Aclose(attribute_id);
+    if(status<0){
+        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
+    }
 
     /* Close the dataspace. */
     status = H5Sclose(dataspace_id);
+    if(status<0){
+        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
+    }
 }
 
 void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t datatype) {
@@ -659,13 +672,20 @@ void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t d
     attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
     /* Write the attribute data. */
     status = H5Awrite(attribute_id, atype, &attr_value);
+    assert(status>=0);
     H5Tclose(atype);
 
     /* Close the attribute. */
     status = H5Aclose(attribute_id);
+    if(status<0){
+        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
+    }
 
     /* Close the dataspace. */
     status = H5Sclose(dataspace_id);
+    if(status<0){
+        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
+    }
 }
 
 void add_attribute(hid_t file_id, const char* attr_name, unsigned long attr_value, hid_t datatype) {
@@ -679,13 +699,19 @@ void add_attribute(hid_t file_id, const char* attr_name, unsigned long attr_valu
     attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
     /* Write the attribute data. */
     status = H5Awrite(attribute_id, atype, &attr_value);
+    assert(status>=0);
     H5Tclose(atype);
 
     /* Close the attribute. */
     status = H5Aclose(attribute_id);
-
+    if(status<0){
+        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
+    }
     /* Close the dataspace. */
     status = H5Sclose(dataspace_id);
+    if(status<0){
+        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
+    }
 }
 
 void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value, hid_t datatype) {
@@ -699,13 +725,19 @@ void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value
     attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
     /* Write the attribute data. */
     status = H5Awrite(attribute_id, atype, &attr_value);
+    assert(status>=0);
     H5Tclose(atype);
 
     /* Close the attribute. */
     status = H5Aclose(attribute_id);
-
+    if(status<0){
+        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
+    }
     /* Close the dataspace. */
     status = H5Sclose(dataspace_id);
+    if(status<0){
+        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
+    }
 }
 
 void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype) {
@@ -719,13 +751,20 @@ void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_
     attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
     /* Write the attribute data. */
     status = H5Awrite(attribute_id, atype, &attr_value);
+    assert(status>=0);
     H5Tclose(atype);
 
     /* Close the attribute. */
     status = H5Aclose(attribute_id);
-
+    if(status<0){
+        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
+    }
     /* Close the dataspace. */
     status = H5Sclose(dataspace_id);
+    if(status<0){
+        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
+    }
+
 }
 
 void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype) {
@@ -739,13 +778,18 @@ void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid
     attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
     /* Write the attribute data. */
     status = H5Awrite(attribute_id, atype, &attr_value);
+    assert(status>=0);
     H5Tclose(atype);
 
     /* Close the attribute. */
     status = H5Aclose(attribute_id);
-
+    if(status<0){
+        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
+    }
     /* Close the dataspace. */
     status = H5Sclose(dataspace_id);
+    if(status<0){
+        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
+    }
+
 }
-
-

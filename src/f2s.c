@@ -241,7 +241,7 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
         H5Fclose(fast5_file.hdf5_file);
         if(output_dir && fast5_file.is_multi_fast5){
             if(fclose(slow5_file_pointer) == EOF) {
-                WARNING("File '%s' failed on closing - %s.", slow5_path.c_str());
+                WARNING("File '%s' failed on closing.", slow5_path.c_str());
             }
             slow5_path = std::string(output_dir);
             slow5_file_pointer = NULL;
@@ -249,7 +249,7 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
     }
     if(output_dir && !fast5_file.is_multi_fast5) {
         if(fclose(slow5_file_pointer) == EOF) {
-            WARNING("File '%s' failed on closing - %s.", slow5_path.c_str());
+            WARNING("File '%s' failed on closing.", slow5_path.c_str());
         }
         slow5_file_pointer = NULL;
     }
@@ -648,4 +648,3 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
 }
-
