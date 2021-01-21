@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "misc.h"
 #include "error.h"
 #include "fast5.h"
@@ -82,6 +83,27 @@ char *strtok_solo(char *str, char *seps) {
     return pos;
 }
 
+// Atoi but to uint64_t
+// and without any symbols
+// and without 0 prefixing
+uint64_t ato_uint64(const char *str) {
+    uint64_t ret = 0;
+
+    // Ensure first number is not 0 if more letters in string
+    if (strlen(str) > 1) {
+        assert(str[0] != '0');
+    }
+    // Ensure only integers in string
+    for (size_t i = 0; i < strlen(str); ++ i) {
+        assert(str[i] >= 48 && str[i] <= 57);
+    }
+
+    ret = strtoull(str, NULL, 10);
+    assert(ret != ULLONG_MAX && errno != ERANGE);
+
+    return ret;
+}
+
 // Atoi but to uint32_t
 // and without any symbols
 // and without 0 prefixing
@@ -97,9 +119,8 @@ uint32_t ato_uint32(const char *str) {
         assert(str[i] >= 48 && str[i] <= 57);
     }
 
-    long int tmp = strtol(str, NULL, 10);
-    assert(tmp <= UINT32_MAX);
-    ret = (uint32_t) tmp;
+    ret = strtoul(str, NULL, 10);
+    assert(ret != ULONG_MAX && errno != ERANGE);
 
     return ret;
 }
@@ -119,7 +140,7 @@ uint8_t ato_uint8(const char *str) {
         assert(str[i] >= 48 && str[i] <= 57);
     }
 
-    long int tmp = strtol(str, NULL, 10);
+    unsigned long int tmp = strtoul(str, NULL, 10);
     assert(tmp <= UINT8_MAX);
     ret = (uint8_t) tmp;
 

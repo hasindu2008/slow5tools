@@ -54,8 +54,8 @@ struct Press *press_init(enum PressMethod press_method) {
     return press;
 }
 
-// Destroy compression stream
-void press_destroy(struct Press **press) {
+// free compression stream
+void press_free(struct Press **press) {
 
     if (press != NULL && *press != NULL) {
 

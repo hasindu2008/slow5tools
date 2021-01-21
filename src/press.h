@@ -6,6 +6,7 @@
 
 // Compression methods
 enum press_method {
+    //COMPRESS_UNKNOWN = -1,
     COMPRESS_NONE,
     COMPRESS_GZIP
 };
@@ -41,9 +42,9 @@ struct press {
 };
 
 
-// Init and destroy compression stream
+// Init and free compression stream
 struct press *press_init(enum press_method method);
-void press_destroy(struct press *compress);
+void press_free(struct press *compress);
 
 // fwrite but with compression
 size_t fwrite_press(struct press *compress, const void *ptr, size_t size, size_t nmemb, FILE *stream);
