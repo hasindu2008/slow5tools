@@ -47,14 +47,14 @@ struct press *press_init(enum press_method method);
 void press_free(struct press *compress);
 
 // fwrite but with compression
-size_t fwrite_press(struct press *compress, const void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t fwrite_press(struct press *compress, const void *ptr, size_t size, size_t nmemb, FILE *fp);
 // fwrite but with gzip compression
-size_t fwrite_gzip(struct gzip_stream *gzip_stream, const void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t fwrite_gzip(struct gzip_stream *gzip, const void *ptr, size_t size, size_t nmemb, FILE *fp);
 
 // fprintf but with compression
-int fprintf_press(struct press *compress, FILE *stream, const char *format, ...);
+int fprintf_press(struct press *compress, FILE *fp, const char *format, ...);
 // vfprintf but with gzip compression
-int vfprintf_gzip(struct gzip_stream *gzip_stream, FILE *stream, const char *format, va_list ap);
+int vfprintf_gzip(struct gzip_stream *gzip, FILE *fp, const char *format, va_list ap);
 
 // Write the compression footer on the immediate next call to fprintf_press
 void press_footer_next(struct press *compress);
