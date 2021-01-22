@@ -13,5 +13,5 @@ int main(){
     else{
         puts("little endian\n");
     }
-
+    return 0;
 }
