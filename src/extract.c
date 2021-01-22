@@ -94,7 +94,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     // Input arguments
     char *arg_num_threads = NULL;
 
-    char opt;
+    int opt;
     // Parse options
     while ((opt = getopt_long(argc, argv, "@:h", long_opts, NULL)) != -1) {
 

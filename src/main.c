@@ -106,7 +106,7 @@ int main(const int argc, char **argv){
             {NULL, 0, NULL, 0 }
         };
 
-        char opt;
+        int opt;
         bool break_flag = false;
         // Parse options up to first non-option argument (command)
         while (!break_flag && (opt = getopt_long(argc, argv, "+dhvV", long_opts, NULL)) != -1) {

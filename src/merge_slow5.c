@@ -63,7 +63,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     // Input arguments
     char *arg_fname_out = NULL;
 
-    char opt;
+    int opt;
     int longindex = 0;
 
     // Parse options
