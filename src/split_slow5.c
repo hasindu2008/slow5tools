@@ -32,6 +32,79 @@ typedef struct {
     size_t n;
 }meta_split_method;
 
+void create_slow5_files(std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, size_t i, operator_obj* tracker, FILE *slow5, meta_split_method metaSplitMethod, size_t number_of_records){
+
+    size_t limit;
+    size_t uneven_bins = metaSplitMethod.n - (number_of_records%metaSplitMethod.n);
+    if(metaSplitMethod.splitMethod==READS_SPLIT){
+        limit = metaSplitMethod.n;
+    }else if(metaSplitMethod.splitMethod==FILE_SPLIT){
+        if(number_of_records<metaSplitMethod.n){
+            limit = 1;
+        }else{
+            limit = number_of_records/metaSplitMethod.n;
+        }
+    }
+
+    size_t file_number = 0;
+    size_t flag_end_of_file = 0;
+
+    while(1) {
+        if(metaSplitMethod.splitMethod==FILE_SPLIT){
+            if(file_number == uneven_bins){
+                limit +=1;
+            }
+        }
+        std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),
+                                                      slow5_files[i].length() -
+                                                      slow5_files[i].find_last_of('/') - 6) + "_" +
+                                std::to_string(file_number) + ".slow5";
+        std::string slow5_path = std::string(output_dir);
+        slow5_path += slow5file;
+//        fprintf(stderr, "file_number=%lu %s\n", file_number, slow5_path.c_str());
+
+        FILE *f_out = NULL;
+        f_out = fopen(slow5_path.c_str(), "w");
+
+        // An error occured
+        if (!f_out) {
+            ERROR("File '%s' could not be opened - %s. Aborting..", slow5_path.c_str(), strerror(errno));
+            return;
+        }
+        tracker->f_out = f_out;
+
+        print_slow5_header(tracker);//remove this later; added for the sake of slow5 format completeness
+
+        for (size_t t = 0; t < limit; t++) {
+            char *buffer = NULL;
+            if (read_line(slow5, &buffer) == -1) {
+                flag_end_of_file = 1;
+                break;
+            }
+            fprintf(f_out, "%s", buffer);
+            free(buffer);
+        }
+        if (fclose(f_out) == EOF) {
+            WARNING("File '%s' failed on closing.", slow5_path.c_str());
+        }
+
+        if(flag_end_of_file == 0){  //check if the for loop finished just before an EOF
+            char *buffer = NULL;
+            if (read_line(slow5, &buffer) == -1) {
+                flag_end_of_file = 1;
+            } else{ // continue
+                fseek(slow5,-sizeof(char)*strlen(buffer),SEEK_CUR);
+                free(buffer);
+            }
+        }
+        if(flag_end_of_file == 1){
+            break;
+        }
+        file_number++;
+    }
+
+}
+
 void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount, meta_split_method metaSplitMethod) {
 
     readsCount->total_5 = args.endi-args.starti;
@@ -43,7 +116,6 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
         std::vector<slow5_header_t> slow5headers;
         FILE *slow5;
         slow5 = fopen(slow5_files[i].c_str(), "r"); // read mode
-        fprintf(stderr,"%s\n",slow5_files[i].c_str());
         if (slow5 == NULL) {
             WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
             readsCount->bad_5_file++;
@@ -62,10 +134,10 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
             ERROR("The file %s already has a single read group", slow5_files[i].c_str());
             continue;
         }
-//        if(num_read_group==1 && metaSplitMethod.splitMethod==GROUP_SPLIT){
-//            ERROR("The file %s already has a single read group", slow5_files[i].c_str());
-//            continue;
-//        }
+        if(num_read_group>1 && metaSplitMethod.splitMethod!=GROUP_SPLIT){
+            ERROR("The file %s a multi read group file. Cannot use read split or file split", slow5_files[i].c_str());
+            continue;
+        }
         for(size_t j=0; j<num_read_group; j++){
             slow5_header_t slow5_header;
             slow5_headers.push_back(slow5_header);
@@ -79,60 +151,11 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 
         //READ_SPLIT
         if(metaSplitMethod.splitMethod==READS_SPLIT) {
-            size_t file_number = 0;
-            size_t flag_end_of_file = 0;
-
             struct operator_obj tracker;
             tracker.meta = meta;
             tracker.slow5_header = &slow5_headers[0];
 
-            while(1) {
-                std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),
-                                                              slow5_files[i].length() -
-                                                              slow5_files[i].find_last_of('/') - 6) + "_" +
-                                        std::to_string(file_number) + ".slow5";
-                std::string slow5_path = std::string(output_dir);
-                slow5_path += slow5file;
-                fprintf(stderr, "file_number=%lu %s\n", file_number, slow5_path.c_str());
-
-                FILE *f_out = NULL;
-                f_out = fopen(slow5_path.c_str(), "w");
-
-                // An error occured
-                if (!f_out) {
-                    ERROR("File '%s' could not be opened - %s. Aborting..", slow5_path.c_str(), strerror(errno));
-                    return;
-                }
-                tracker.f_out = f_out;
-
-                print_slow5_header(&tracker);//remove this later; added for the sake of slow5 format completeness
-
-                for (size_t t = 0; t < metaSplitMethod.n; t++) {
-                    char *buffer = NULL;
-                    if (read_line(slow5, &buffer) == -1) {
-                        flag_end_of_file = 1;
-                        break;
-                    }
-                    fprintf(f_out, "%s", buffer);
-                    free(buffer);
-                }
-                if(flag_end_of_file){ //the for loop detected EOF
-                    break;
-                }else{ //check if the for loop finished just before an EOF
-                    char *buffer = NULL;
-                    if (read_line(slow5, &buffer) == -1) {
-                        flag_end_of_file = 1;
-                        break;
-                    } else{ // continue
-                        fseek(slow5,-sizeof(char)*strlen(buffer),SEEK_CUR);
-                        free(buffer);
-                    }
-                }
-                if (fclose(f_out) == EOF) {
-                    WARNING("File '%s' failed on closing.", slow5_path.c_str());
-                }
-                file_number++;
-            }
+            create_slow5_files(slow5_files, output_dir, meta, i, &tracker, slow5, metaSplitMethod, 0);
 
             free_attributes(READ, &tracker);
             free_attributes(ROOT, &tracker);
@@ -142,14 +165,33 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
                 free((char *) slow5_headers[0].file_format);
             }
 
-        }else if(metaSplitMethod.splitMethod==FILE_SPLIT){
-            fprintf(stderr,"start_i = %lu\n", args.starti);
+        }else if(metaSplitMethod.splitMethod==FILE_SPLIT){ //FILE_SPLIT
+
+            struct operator_obj tracker;
+            tracker.meta = meta;
+            tracker.slow5_header = &slow5_headers[0];
+
+            size_t number_of_records = 0;
+            size_t checkpoint = ftell(slow5);
+            char *buffer = NULL;
+            while(read_line(slow5, &buffer) != -1){
+                number_of_records++;
+            }
+            fseek(slow5, checkpoint, SEEK_SET);
+
+//            fprintf(stderr, "#records=%lu #files=%lu limit=%lu\n",number_of_records, metaSplitMethod.n, limit);
+            create_slow5_files(slow5_files, output_dir, meta, i, &tracker, slow5, metaSplitMethod, number_of_records);
+
+            free_attributes(READ, &tracker);
+            free_attributes(ROOT, &tracker);
+            free_attributes(CONTEXT_TAGS, &tracker);
+            free_attributes(TRACKING_ID, &tracker);
+            if ((char *) slow5_headers[0].file_format){
+                free((char *) slow5_headers[0].file_format);
+            }
+
         }
 
-//        char *buffer = NULL;
-//        read_header(slow5headers, slow5, &buffer, 1); // fill slow5_header values
-//        if (buffer)free(buffer);
-//        write_fast5(&slow5headers[0], slow5, slow5_files[i].c_str());
         //  Close the slow5 file.
         if(fclose(slow5) == EOF) {
             WARNING("File '%s' failed on closing.", slow5_files[i].c_str());
@@ -243,7 +285,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     }
 //    skip_forking:
 
-    fprintf(stderr, "[%s] Parallel converting to fast5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
+    fprintf(stderr, "[%s] Parallel splitting slow5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
 }
 
 
