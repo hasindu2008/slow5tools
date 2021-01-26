@@ -47,7 +47,7 @@
 #define SLOW5_NAME "slow5"
 #define SLOW5_EXTENSION "." SLOW5_NAME
 #define FILE_FORMAT_HEADER "file_format"
-#define SLOW5_FILE_FORMAT GLOBAL_HEADER_PREFIX FILE_FORMAT_HEADER "\t" SLOW5_NAME "v" VERSION "\n"
+#define SLOW5_FILE_FORMAT SLOW5_NAME "v" VERSION
 #define SLOW5_HEADER \
     COLUMN_HEADER_PREFIX \
     "read_id\t" \
@@ -275,6 +275,8 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
 //implemented in read_fast5.c
 int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int write_header_flag, struct program_meta *meta);
 fast5_file_t fast5_open(const char* filename);
+void print_slow5_header(operator_obj* operator_data);
+void free_attributes(group_flags group_flag, operator_obj* operator_data);
 
 void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension);
 

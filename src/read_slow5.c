@@ -36,7 +36,7 @@ int read_header(std::vector<slow5_header_t>& slow5_headers, FILE* slow5, char** 
 //        fprintf(stderr, "attribute value=%s ", attribute_value);
 
         if (strcmp("#read_id", attribute_value) == 0) {
-            break;
+            return 1;
         }
 
         if (strcmp("#file_format", attribute_value) == 0) {
@@ -368,6 +368,7 @@ int read_slow5_header(FILE *slow5, std::vector<slow5_header_t>& slow5Headers, hs
     if(buffer){
         free(buffer);
     }
+
     return 1;
 }
 
@@ -487,3 +488,4 @@ int find_num_read_group(FILE* slow5, hsize_t* num_read_group){
     }
     return 1;
 }
+

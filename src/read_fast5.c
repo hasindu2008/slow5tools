@@ -18,11 +18,9 @@ int group_check(struct operator_obj *od, haddr_t target_addr);
 
 void check_attributes(group_flags group_flag, operator_obj* operator_data);
 void reset_attributes(group_flags group_flag, operator_obj* operator_data);
-void free_attributes(group_flags group_flag, operator_obj* operator_data);
 
 //remove this later; added for the sake of slow5 format completeness
 void print_record(operator_obj* operator_data);
-void print_header(operator_obj* operator_data);
 
 // from nanopolish_fast5_io.cpp
 fast5_file_t fast5_open(const char* filename) {
@@ -432,7 +430,7 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
                 fprintf(stderr, "run_id is not set%s\n", "");
                 exit(EXIT_FAILURE);
             }
-            print_header(&tracker);//remove this later; added for the sake of slow5 format completeness
+            print_slow5_header(&tracker);//remove this later; added for the sake of slow5 format completeness
         }
         print_record(&tracker);//remove this later; added for the sake of slow5 format completeness
         free_attributes(READ, &tracker);
@@ -542,7 +540,7 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                                 fprintf(stderr, "run_id is not set%s\n", "");
                                 exit(EXIT_FAILURE);
                             }
-                            print_header(operator_data);//remove this later; added for the sake of slow5 format completeness
+                            print_slow5_header(operator_data);//remove this later; added for the sake of slow5 format completeness
                         }
                         *(operator_data->nreads) = *(operator_data->nreads) + 1;
 
@@ -1133,12 +1131,12 @@ void check_attributes(group_flags group_flag, operator_obj* operator_data) {
     }
 }
 
-void print_header(operator_obj* operator_data) {
+void print_slow5_header(operator_obj* operator_data) {
     check_attributes(READ, operator_data);
     check_attributes(CONTEXT_TAGS, operator_data);
     check_attributes(TRACKING_ID, operator_data);
     //  main stuff
-    fprintf(operator_data->f_out,"%s", operator_data->slow5_header->file_format);
+    fprintf(operator_data->f_out,"#file_format\t%s\n", operator_data->slow5_header->file_format);
     fprintf(operator_data->f_out,"#file_version\t%s\n", operator_data->slow5_header->file_version);
     fprintf(operator_data->f_out,"#num_read_groups\t%llu\n",operator_data->slow5_header->num_read_groups);
     fprintf(operator_data->f_out,"#file_type\t%s\n", operator_data->slow5_header->file_type);

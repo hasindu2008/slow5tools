@@ -4,13 +4,6 @@
 #include "slow5_old.h"
 #include "error.h"
 
-static double init_realtime = 0;
-
-int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count* readsCount);
-
-int compare_headers(slow5_header_t& slow5Header1, slow5_header_t& slow5Header2, int compare_level);
-
-
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
@@ -20,6 +13,15 @@ int compare_headers(slow5_header_t& slow5Header1, slow5_header_t& slow5Header2, 
     "OPTIONS:\n" \
     "    -h, --help                 display this message and exit\n" \
     "    -o, --output=[FILE]        output converted contents to FILE -- stdout\n" \
+
+static double init_realtime = 0;
+
+int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count* readsCount);
+
+int compare_headers(slow5_header_t& slow5Header1, slow5_header_t& slow5Header2, int compare_level);
+
+
+
 
 int merge_main(int argc, char **argv, struct program_meta *meta){
     init_realtime = realtime();
@@ -184,7 +186,7 @@ int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count*
             continue;
         }
 
-        if (slow5_headers[i].num_read_groups > 1) {
+        if (num_read_group > 1) {
             readsCount->multi_group_slow5++;
         }
 
