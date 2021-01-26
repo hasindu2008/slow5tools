@@ -3,7 +3,7 @@
 
 CC       = gcc
 CXX      = g++
-AR 		 = AR
+AR 		 = ar
 CFLAGS   += -g -rdynamic -Wall -O2 -std=c++11
 LDFLAGS  += $(LIBS) -lpthread -lz
 BUILD_DIR = build
@@ -31,8 +31,8 @@ VERSION = `git describe --tags`
 
 .PHONY: clean distclean format test install uninstall
 
-$(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN)
-	$(CXX) $(CFLAGS) $(OBJ_BIN) $(LDFLAGS) -o $@
+$(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN) $(BUILD_DIR)/libslow5.a
+	$(CXX) $(CFLAGS) $(OBJ_BIN) $(BUILD_DIR)/libslow5.a $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/main.o: src/main.c src/slow5misc.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@

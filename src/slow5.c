@@ -307,7 +307,7 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
 
     struct slow5_rec_idx read_index = slow5_idx_get(s5p->index, read_id);
     size_t read_len = (read_index.size + 1) * sizeof *read_str; // + 1 for '\0'
-    read_str = malloc(read_len);
+    read_str = (char *)malloc(read_len);
     MALLOC_CHK(read_str);
 
     assert(pread(s5p->meta.fd, read_str, read_len - 1, read_index.offset) == read_len - 1);
@@ -362,7 +362,7 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
                         read->len_raw_signal = ato_uint64(tok);
                         break;
 
-                    case COL_raw_signal:
+                    case COL_raw_signal: {
                         read->raw_signal = (int16_t *) malloc(read->len_raw_signal * sizeof *read->raw_signal);
                         MALLOC_CHK(read->raw_signal);
 
@@ -378,13 +378,14 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
                         } while ((signal_tok = strtok_solo(NULL, SEP_RAW_SIGNAL)) != NULL);
                         assert(j == read->len_raw_signal);
 
-                        break;
+                    } break;
 
                     // All columns parsed
-                    case SLOW5_COLS_NUM:
+                    default:
                         main_cols_parsed = true;
                         printf("all main cols parsed\n"); // TESTING
                         break;
+
                 }
                 ++ i;
 
@@ -482,7 +483,7 @@ const char *slow5_fmt_get_name(enum slow5_fmt format) {
 
 char *get_slow5_idx_path(const char *path) {
     size_t new_len = strlen(path) + strlen(INDEX_EXTENSION);
-    char *str = malloc((new_len + 1) * sizeof *str); // +1 for '\0'
+    char *str = (char *)malloc((new_len + 1) * sizeof *str); // +1 for '\0'
     strncpy(str, path, strlen(path));
     strcpy(str + strlen(path), INDEX_EXTENSION);
 

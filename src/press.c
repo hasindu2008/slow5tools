@@ -10,7 +10,7 @@ struct press *press_init(enum press_method method) {
 
     struct press *compress = NULL;
 
-    compress = malloc(sizeof *compress);
+    compress = (struct press *)malloc(sizeof *compress);
     compress->method = method;
 
     switch (method) {
@@ -24,7 +24,7 @@ struct press *press_init(enum press_method method) {
             struct gzip_stream *gzip;
             int ret;
 
-            gzip = malloc(sizeof *gzip);
+            gzip = (struct gzip_stream *)malloc(sizeof *gzip);
             gzip->strm.zalloc = Z_NULL;
             gzip->strm.zfree = Z_NULL;
             gzip->strm.opaque = Z_NULL;
@@ -42,7 +42,7 @@ struct press *press_init(enum press_method method) {
                 free(gzip);
 
             } else {
-                stream = malloc(sizeof *stream);
+                stream = (union press_stream *)malloc(sizeof *stream);
 
                 stream->gzip = gzip;
                 compress->stream = stream;
@@ -205,7 +205,7 @@ int vasprintf(char **strp, const char *fmt, va_list ap) {
     va_copy(ap1, ap);
     size = vsnprintf(NULL, 0, fmt, ap1) + 1;
     va_end(ap1);
-    buffer = calloc(1, size);
+    buffer = (char *)calloc(1, size);
 
     if (!buffer)
         return -1;
