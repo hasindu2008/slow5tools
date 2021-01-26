@@ -4,134 +4,133 @@
 #include <string.h>
 #include <assert.h> // TODO use better error handling?
 #include "slow5.h"
+#include "slow5idx_clean.h"
 #include "press.h"
 #include "error.h"
 #include "misc.h"
 
-// String buffer capacity for parsing the SLOW5 header
-// TODO use kstring?
-#define SLOW5_HEADER_BUF_CAP (128) // 2^7
+// TODO fail with getline if end of file occurs on a non-empty line
+// TODO (void) cast if ignoring return value
+
 // String buffer capacity for parsing the data header
-#define SLOW5_HEADER_DATA_BUF_CAP (1028) // 2^10 TODO is this too much? Or put to a page length
-//#define SLOW5_HEADER_DATA_RGS_INIT_CAP (32) // 2^5 // TODO necessary?
-
-/* Private */
-
-static struct SLOW5File *slow5_init(FILE *fp, const char *pathname, enum SLOW5Format format, enum PressMethod compress, bool is_fp_preowned);
+#define SLOW5_HEADER_DATA_BUF_INIT_CAP (1024) // 2^10 TODO is this too much? Or put to a page length
 
 
+/* Private to this file */
 
-inline struct SLOW5File *slow5_open(const char *pathname, const char *mode) {
-    return slow5_open_with(pathname, mode, FORMAT_UNKNOWN, COMPRESS_NONE);
-}
+// slow5 file
+struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format, bool is_fp_preowned);
 
-inline struct SLOW5File *slow5_open_with(const char *pathname, const char *mode, enum SLOW5Format format, enum PressMethod compress) {
-    return slow5_init(fopen(pathname, mode), pathname, format, compress, false);
-}
+// slow5 header
+struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format);
+inline void slow5_hdr_free(struct slow5_hdr *header);
 
-inline struct SLOW5File *slow5_init_fp(FILE *fp, enum SLOW5Format format, enum PressMethod compress) {
-    return slow5_init(fp, get_pathname(fp), format, compress, true);
-}
+// slow5 header data
+khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, size_t cap, uint32_t num_rgs);
+void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs);
 
-static struct SLOW5File *slow5_init(FILE *fp, const char *pathname, enum SLOW5Format format, enum PressMethod compress, bool is_fp_preowned) {
+// slow5 record
+
+// slow5 extension parsing
+enum slow5_fmt name_get_slow5_fmt(const char *name);
+enum slow5_fmt path_get_slow5_fmt(const char *path);
+const char *slow5_fmt_get_name(enum slow5_fmt format);
+char *get_slow5_idx_path(const char *path);
+
+/* Definitions */
+
+// slow5 file
+
+// Pathname can be NULL if format is not unknown
+struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format, bool is_fp_preowned) {
     NULL_CHK(fp);
 
-    struct SLOW5File *s5p = slow5_init_empty();
+    struct slow5_file *s5p = (struct slow5_file *) calloc(1, sizeof *s5p);
+    MALLOC_CHK(s5p);
+
     s5p->fp = fp;
-    s5p->is_fp_preowned = is_fp_preowned;
+    assert((s5p->meta.fd = fileno(fp)) != -1);
+    s5p->meta.is_fp_preowned = is_fp_preowned;
+    s5p->meta.pathname = pathname;
 
     if (format == FORMAT_UNKNOWN) {
+
         // Attempt to determine format
         // from pathname
-        NULL_CHK(pathname);
-        format = pathname_get_slow5_format(pathname);
+        format = path_get_slow5_fmt(pathname);
         assert(format != FORMAT_UNKNOWN);
     }
     s5p->format = format;
 
     // TODO only use when reading?
     // TODO determine compression?
-    s5p->compress = press_init(compress);
+    //s5p->compress = press_init(compress);
     s5p->header = slow5_hdr_init(fp, format);
+    //s5p->index = slow5_idx_init(index_fp);
 
     return s5p;
 }
 
-void slow5_free(struct SLOW5File *slow5) {
-    NULL_CHK(slow5);
-
-    // Free version string
-    if (slow5->header->version_str != NULL) {
-        free(slow5->header->version_str);
-        slow5->header->version_str = NULL;
-    }
-
-    // Free header data map
-    for (uint32_t i = 0; i < slow5->header->num_read_groups; ++ i) {
-        khash_t(s2s) *hdr_data = slow5->header->data[i];
-        for (khint_t j = kh_begin(hdr_data); j < kh_end(hdr_data); ++ j) {
-            if (kh_exist(hdr_data, j)) {
-                if (i == 0) {
-                    free((void *) kh_key(hdr_data, j)); // TODO avoid void *
-                }
-                free((void *) kh_val(hdr_data, j)); // TODO avoid void *
-            }
-        }
-        kh_destroy(s2s, hdr_data);
-    }
-    free(slow5->header->data);
-
-    // Free header
-    free(slow5->header);
-    slow5->header = NULL; // TODO test if header is actually set to NULL
-
-    // Free reads
-    kh_destroy(s2r, slow5->reads);
-    slow5->reads = NULL;
-
-    free(slow5);
+struct slow5_file *slow5_open(const char *pathname, const char *mode) {
+    return slow5_open_with(pathname, mode, FORMAT_UNKNOWN);
 }
 
-/*
-static inline void assert_f_has_str(char *buf, FILE *stream, const char *exp) {
-    size_t len = strlen(exp);
-    size_t ret = fread(buf, sizeof *buf, len, stream);
-    assert(ret == len);
-    buf[len] = '\0';
-    assert(strcmp(buf, exp) == 0);
+struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum slow5_fmt format) {
+    return slow5_init(fopen(pathname, mode), pathname, format, false);
 }
-*/
 
-static void slow5_read_hdr(struct SLOW5Header *header, enum SLOW5Format format, FILE *stream) {
+// Can be used with slow5_open or slow5_init_fp
+void slow5_close(struct slow5_file *s5p) {
+    NULL_CHK(s5p);
 
+    if (!s5p->meta.is_fp_preowned) {
+        assert(fclose(s5p->fp) == 0);
+    }
+
+    press_free(s5p->compress);
+    slow5_hdr_free(s5p->header);
+    if (s5p->index != NULL) {
+        slow5_idx_free(s5p->index);
+    }
+
+    free(s5p);
+}
+
+
+// slow5 header
+
+struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
+
+    struct slow5_hdr *header = (struct slow5_hdr *) calloc(1, sizeof *(header));
+    MALLOC_CHK(header);
+
+    // Parse slow5 header
     switch (format) {
 
         case FORMAT_ASCII: {
 
             // Buffer for file parsing
-            char *buf = malloc(SLOW5_HEADER_DATA_BUF_CAP * sizeof *buf);
+            size_t cap = SLOW5_HEADER_DATA_BUF_INIT_CAP;
+            char *buf = (char *) malloc(cap * sizeof *buf);
             MALLOC_CHK(buf);
+            ssize_t buf_len;
 
             // 1st line
-            assert(fgets(buf, SLOW5_HEADER_BUF_CAP, stream) != NULL);
-            assert(buf[strlen(buf) - 1] == '\n');
-            buf[strlen(buf) - 1] = '\0'; // Remove newline for later format parsing
+            assert((buf_len = getline(&buf, &cap, fp)) != -1);
+            buf[buf_len - 1] = '\0'; // Remove newline for later format parsing
             // "#file_format"
             char *tok = strtok_solo(buf, SEP);
-            assert(strcmp(tok, FILE_FORMAT_HEADER_ID) == 0);
+            assert(strcmp(tok, HEADER_FILE_FORMAT_ID) == 0);
             // Parse format name
             tok = strtok_solo(NULL, SEP);
-            header->format = str_get_slow5_format(tok);
-            assert(header->format != FORMAT_NONE);
-            assert(format == header->format);
+            assert(format == name_get_slow5_fmt(tok));
 
             // 2nd line
-            assert(fgets(buf, SLOW5_HEADER_BUF_CAP, stream) != NULL);
-            assert(buf[strlen(buf) - 1] == '\n');
-            buf[strlen(buf) - 1] = '\0'; // Remove newline for later parsing
+            assert((buf_len = getline(&buf, &cap, fp)) != -1);
+            buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             // "#file_version"
             tok = strtok_solo(buf, SEP);
-            assert(strcmp(tok, FILE_VERSION_HEADER_ID) == 0);
+            assert(strcmp(tok, HEADER_FILE_VERSION_ID) == 0);
             // Parse file version
             tok = strtok_solo(NULL, SEP);
             header->version_str = strdup(tok);
@@ -146,175 +145,338 @@ static void slow5_read_hdr(struct SLOW5Header *header, enum SLOW5Format format, 
             assert(strtok_solo(NULL, ".") == NULL); // No more tokenators
 
             // 3rd line
-            assert(fgets(buf, SLOW5_HEADER_BUF_CAP, stream) != NULL);
-            assert(buf[strlen(buf) - 1] == '\n');
-            buf[strlen(buf) - 1] = '\0'; // Remove newline for later parsing
+            assert((buf_len = getline(&buf, &cap, fp)) != -1);
+            buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             // "#num_read_groups"
             tok = strtok_solo(buf, SEP);
-            assert(strcmp(tok, NUM_GROUPS_HEADER_ID) == 0);
+            assert(strcmp(tok, HEADER_NUM_GROUPS_ID) == 0);
             // Parse num read groups
             tok = strtok_solo(NULL, SEP);
             header->num_read_groups = ato_uint32(tok);
 
             // Header data
-            header->data = malloc(header->num_read_groups * sizeof *(header->data));
-            MALLOC_CHK(header->data);
-            assert(fgets(buf, SLOW5_HEADER_DATA_BUF_CAP, stream) != NULL);
-            assert(buf[strlen(buf) - 1] == '\n');
-            bool first_loop = true;
-            // While the column header hasn't been reached
-            while (strncmp(buf, ASCII_COLUMN_HEADER_MIN, strlen(ASCII_COLUMN_HEADER_MIN)) != 0) {
-                // Ensure prefix is there
-                assert(strncmp(buf, SLOW5_HEADER_DATA_PREFIX, strlen(SLOW5_HEADER_DATA_PREFIX)) == 0);
-
-                char *shift = buf + strlen(SLOW5_HEADER_DATA_PREFIX); // Remove prefix
-                shift[strlen(shift) - 1] = '\0'; // Remove newline for later parsing
-
-                char *attr = strdup(strtok_solo(shift, SEP));
-                char *val;
-
-                uint32_t i = 0;
-                bool first_rg = true;
-                while ((val = strtok_solo(NULL, SEP)) != NULL) {
-                    if (first_loop) {
-                        header->data[i] = kh_init(s2s);
-                        NULL_CHK(header->data[i]);
-                    }
-
-                    // Set key
-                    int absent = 0;
-                    khint_t pos;
-                    if (first_rg) {
-                        pos = kh_put(s2s, header->data[i], attr, &absent);
-                        first_rg = false;
-                    } else {
-                        pos = kh_put(s2s, header->data[i], attr, &absent);
-                    }
-                    assert(absent != -1);
-
-                    // Set value
-                    kh_val(header->data[i], pos) = strdup(val);
-
-                    ++ i;
-                    printf("%s -> %s\n", attr, val); // TESTING
-                }
-                // Ensure that read group number of entries are read
-                assert(i == header->num_read_groups);
-
-                assert(fgets(buf, SLOW5_HEADER_DATA_BUF_CAP, stream) != NULL);
-                assert(buf[strlen(buf) - 1] == '\n');
-
-                first_loop = false; // TODO minor but is this better; if (first) { ... } ?
-            }
+            header->data = slow5_hdr_data_init(fp, format, buf, cap, header->num_read_groups);
 
             free(buf);
+
         } break;
 
         case FORMAT_BINARY: // TODO
             break;
     }
+
+    return header;
 }
 
-static void slow5_read_rec(khash_t(s2r) *reads, enum SLOW5Format format, FILE *stream) {
+void slow5_hdr_print(const struct slow5_hdr *header) {
+    printf("format='TODO'\n"
+            "version_str='%s'\n"
+            "version={%hu,%hu,%hu}\n"
+            "num_rgs=%u\n",
+            //slow5_fmt_get_name(hdr->format),
+            header->version_str,
+            header->version.major,
+            header->version.minor,
+            header->version.patch,
+            header->num_read_groups);
+}
 
+void slow5_hdr_free(struct slow5_hdr *header) {
+    NULL_CHK(header); //TODO needed or not?
+
+    // Free version string
+    free(header->version_str);
+
+    slow5_hdr_data_free(header->data, header->num_read_groups);
+
+    free(header);
+}
+
+
+// slow5 header data
+
+khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, size_t cap, uint32_t num_rgs) {
+
+    khash_t(s2s) **hdr_data = (khash_t(s2s) **) malloc(num_rgs * sizeof *hdr_data);
+    MALLOC_CHK(hdr_data);
+
+    // TODO check if cast necessary
+    for (uint64_t i = 0; i < (uint64_t) num_rgs; ++ i) {
+        hdr_data[i] = kh_init(s2s);
+        NULL_CHK(hdr_data[i]);
+    }
+
+
+    // Parse slow5 header data
     switch (format) {
 
         case FORMAT_ASCII: {
 
-            uint8_t i = 0;
-            bool finished = false;
-            while (!finished) {
+            ssize_t buf_len;
 
-                // Buffer for read parsing
-                char *buf = NULL;
-                size_t cap = 0;
-                ssize_t len;
+            // Get first line of header data
+            assert((buf_len = getline(&buf, &cap, fp)) != -1);
+            buf[buf_len - 1] = '\0'; // Remove newline for later parsing
 
-                struct SLOW5Read *read = calloc(1, sizeof *read);
+            // While the column header hasn't been reached
+            while (strncmp(buf, ASCII_COLUMN_HEADER_MIN, strlen(ASCII_COLUMN_HEADER_MIN)) != 0) {
 
-                // Parse read id
-                assert((len = getdelim(&buf, &cap, '\t', stream)) != -1);
-                char *read_id = buf;
+                // Ensure prefix is there
+                assert(strncmp(buf, SLOW5_HEADER_DATA_PREFIX, strlen(SLOW5_HEADER_DATA_PREFIX)) == 0);
+                char *shift = buf + strlen(SLOW5_HEADER_DATA_PREFIX); // Remove prefix
 
-                // Parse rest of line
-                buf = NULL;
-                cap = 0;
-                assert((len = getline(&buf, &cap, stream)) != -1);
+                // Get the attribute name
+                char *attr = strdup(strtok_solo(shift, SEP));
+                char *val;
 
+                // Iterate through the values
+                uint32_t i = 0;
+                while ((val = strtok_solo(NULL, SEP)) != NULL && i <= num_rgs - 1) {
+
+                    // Set key
+                    int absent;
+                    khint_t pos = kh_put(s2s, hdr_data[i], attr, &absent);
+                    assert(absent != -1);
+
+                    // Set value
+                    kh_val(hdr_data[i], pos) = strdup(val);
+
+                    ++ i;
+
+                    printf("%s -> %s\n", attr, val); // TESTING
+                }
+                // Ensure that read group number of entries are read
+                assert(i == num_rgs);
+
+                // Get next line
+                assert((buf_len = getline(&buf, &cap, fp)) != -1);
+                buf[buf_len - 1] = '\0'; // Remove newline for later parsing
+            }
+
+            assert(cap == SLOW5_HEADER_DATA_BUF_INIT_CAP); // TESTING to see if getline has to realloc (if this fails often maybe put a larger buffer size)
+
+        } break;
+
+        case FORMAT_BINARY: // TODO
+           break;
+    }
+
+    return hdr_data;
+}
+
+void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs) {
+
+    // Free header data map
+    for (uint64_t i = 0; i < (uint64_t) num_rgs; ++ i) {
+
+        for (khint_t j = kh_begin(hdr_data[i]); j < kh_end(hdr_data[i]); ++ j) {
+            if (kh_exist(hdr_data[i], j)) {
+                if (i == 0) {
+                    free((void *) kh_key(hdr_data[i], j)); // TODO avoid void *
+                }
+                free((void *) kh_val(hdr_data[i], j)); // TODO avoid void *
+            }
+        }
+        kh_destroy(s2s, hdr_data[i]);
+    }
+
+    free(hdr_data);
+}
+
+
+// slow5 record
+
+struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
+    NULL_CHK(read_id);
+    NULL_CHK(s5p);
+    struct slow5_rec *read = NULL;
+
+    if (s5p->index == NULL) {
+        // Get index pathname
+        char *index_pathname = get_slow5_idx_path(s5p->meta.pathname);
+        s5p->index = slow5_idx_init(s5p, index_pathname);
+        free(index_pathname); // TODO save in struct?
+    }
+
+    struct slow5_rec_idx read_index = slow5_idx_get(s5p->index, read_id);
+    char *read_str = malloc(read_index.size * sizeof *read_str);
+    MALLOC_CHK(read_str);
+    assert(pread(s5p->meta.fd, read_str, read_index.size * sizeof *read_str, read_index.offset) != -1);
+
+    read = (struct slow5_rec *) calloc(1, sizeof *read);
+    read->str = strdup(read_str);
+
+    read_str[read_index.size - 1] = '\0'; // Remove newline for later parsing
+
+    switch (s5p->format) {
+
+        case FORMAT_ASCII: {
+
+            char *tok;
+            assert((tok = strtok_solo(read_str, SEP)) != NULL);
+
+            int i = 0;
+            bool main_cols_parsed = false;
+            do {
                 switch (i) {
                     case COL_read_id:
+                        // Ensure line matches requested id
+                        assert(strcmp(tok, read_id) == 0);
+                        read->read_id = strdup(read_id);
                         break;
+
                     case COL_read_group:
+                        read->read_group = ato_uint32(tok);
                         break;
+
                     case COL_digitisation:
+                        read->digitisation = strtof_check(tok);
                         break;
+
                     case COL_offset:
+                        read->offset = strtod_check(tok);
                         break;
+
                     case COL_range:
+                        read->range = strtod_check(tok);
                         break;
+
                     case COL_sampling_rate:
+                        read->sampling_rate = strtod_check(tok);
                         break;
+
                     case COL_len_raw_signal:
+                        read->len_raw_signal = ato_uint64(tok);
                         break;
+
                     case COL_raw_signal:
+                        read->raw_signal = (int16_t *) malloc(read->len_raw_signal * sizeof *read->raw_signal);
+                        MALLOC_CHK(read->raw_signal);
+
+                        char *signal_tok;
+                        assert((signal_tok = strtok_solo(tok, SEP_RAW_SIGNAL)) != NULL);
+
+                        uint64_t j = 0;
+
+                        // Parse raw signal
+                        do {
+                            read->raw_signal[j] = ato_int16(signal_tok);
+                            ++ j;
+                        } while ((signal_tok = strtok_solo(NULL, SEP_RAW_SIGNAL)) != NULL);
+                        assert(j == read->len_raw_signal);
+
                         break;
 
                     // All columns parsed
                     default:
-                        finished = true;
+                        main_cols_parsed = true;
                         break;
                 }
-
                 ++ i;
-            }
+
+            } while (!main_cols_parsed && (tok = strtok_solo(NULL, SEP)) != NULL);
+
+            // Ensure parsed all main columns
+            assert(i == SLOW5_COLS_NUM + 1);
+
+            free(read_str);
+
         } break;
 
         case FORMAT_BINARY: // TODO
             break;
     }
+
+    return read;
 }
 
-void slow5_read(struct SLOW5 *slow5, enum SLOW5Format format, FILE *stream) {
-    NULL_CHK(slow5);
-    NULL_CHK(stream);
+// Print read entry
+// TODO print in different formats
+int slow5_rec_fprint(FILE *fp, struct slow5_rec *read) {
+    NULL_CHK(fp);
+    NULL_CHK(read);
 
-    // Autodetect file type
-    // TODO
-    if (format == FORMAT_NONE) {
-        //format = stream_get_slow5_format(stream);
-    }
-
-    // Setup compression
-    /* TODO put into a slow5_write function?
-    if (slow5->format == FORMAT_BINARY) {
-        slow5->compress = press_init(COMPRESS_GZIP);
-    }
-    */
-
-    slow5_read_hdr(slow5->header, format, stream);
-    slow5_read_rec(slow5->reads, format, stream);
+    return fprintf(fp, "%s", read->str);
 }
 
-void slow5_print_hdr(const struct SLOW5Header *hdr) {
-    printf("format='%s'\n", slow5_format_get_str(hdr->format));
-    printf("version_str='%s'\n", hdr->version_str);
-    printf("version={%hu,%hu,%hu}\n",
-            hdr->version.major,
-            hdr->version.minor,
-            hdr->version.patch);
-    printf("num_rgs=%u\n", hdr->num_read_groups);
+void slow5_rec_free(struct slow5_rec *read) {
+    NULL_CHK(read);
+
+    free(read->str);
+    free(read->read_id);
+    free(read->raw_signal);
+
+    free(read);
+}
+
+
+
+// slow5 extension parsing
+
+enum slow5_fmt name_get_slow5_fmt(const char *name) {
+    enum slow5_fmt format = FORMAT_UNKNOWN;
+
+    for (size_t i = 0; i < sizeof SLOW5_FORMAT_META / sizeof SLOW5_FORMAT_META[0]; ++ i) {
+        const struct slow5_fmt_meta meta = SLOW5_FORMAT_META[i];
+        if (strcmp(meta.name, name) == 0) {
+            format = meta.format;
+            break;
+        }
+    }
+
+    return format;
+}
+
+enum slow5_fmt path_get_slow5_fmt(const char *path) {
+    enum slow5_fmt format = FORMAT_UNKNOWN;
+
+    // TODO change type from size_t
+    size_t i;
+    for (i = strlen(path) - 1; i >= 0; -- i) {
+        if (path[i] == '.') {
+            const char *ext = path + i + 1;
+            format = name_get_slow5_fmt(ext);
+            break;
+        }
+    }
+
+    return format;
+}
+
+// Get the slow5 format name from the format
+const char *slow5_fmt_get_name(enum slow5_fmt format) {
+    const char *str = NULL;
+
+    for (size_t i = 0; i < sizeof SLOW5_FORMAT_META / sizeof SLOW5_FORMAT_META[0]; ++ i) {
+        const struct slow5_fmt_meta meta = SLOW5_FORMAT_META[i];
+        if (meta.format == format) {
+            str = meta.name;
+            break;
+        }
+    }
+
+    return str;
+}
+
+char *get_slow5_idx_path(const char *path) {
+    size_t new_len = strlen(path) + strlen(INDEX_EXTENSION);
+    char *str = malloc((new_len + 1) * sizeof *str); // +1 for '\0'
+    strncpy(str, path, strlen(path));
+    strcpy(str + strlen(path), INDEX_EXTENSION);
+
+    return str;
 }
 
 /*
-struct SLOW5File *slow5_open_format(enum SLOW5Format format, const char *pathname, const char *mode) {
-    struct SLOW5File *slow5 = NULL;
+struct slow5_file *slow5_open_format(enum slow5_fmt format, const char *pathname, const char *mode) {
+    struct slow5_file *slow5 = NULL;
 
     if (pathname != NULL && mode != NULL) {
         FILE *fp = fopen(pathname, mode);
 
         // Try autodetect using extension if format is FORMAT_NONE
         if (format == FORMAT_NONE) {
-            format = path_get_slow5_format(pathname);
+            format = path_get_slow5_fmt(pathname);
         }
 
         slow5 = slow5_init(format, fp);
@@ -323,13 +485,13 @@ struct SLOW5File *slow5_open_format(enum SLOW5Format format, const char *pathnam
     return slow5;
 }
 
-struct SLOW5File *slow5_open(const char *pathname, const char *mode) {
+struct slow5_file *slow5_open(const char *pathname, const char *mode) {
     return slow5_open_format(FORMAT_NONE, pathname, mode);
 }
 
 
 // TODO Return type of fclose is int but we want to use a specific size int?
-int slow5_close(struct SLOW5File *slow5) {
+int slow5_close(struct slow5_file *slow5) {
     int ret = -1; // TODO choose return code for library
 
     if (slow5 != NULL) {
@@ -346,7 +508,7 @@ int slow5_close(struct SLOW5File *slow5) {
     return ret;
 }
 
-uint8_t slow5_write_hdr(struct SLOW5File *slow5) {
+uint8_t slow5_write_hdr(struct slow5_file *slow5) {
     uint8_t ret = 0;
 
     if (slow5 != NULL) {
@@ -384,7 +546,7 @@ uint8_t slow5_write_hdr(struct SLOW5File *slow5) {
     return ret;
 }
 
-void slow5_write_hdr_data_attr(struct SLOW5File *slow5, const char *attr, const char *data) {
+void slow5_write_hdr_data_attr(struct slow5_file *slow5, const char *attr, const char *data) {
 
     if (slow5 != NULL && slow5->header != NULL) {
         khash_t(s2s) **header_data = slow5->header->header_data;
@@ -410,7 +572,7 @@ const uint8_t *str_get_slow5_version(const char *str) {
 */
 
 int main(void) {
-    struct SLOW5File *slow5_f;
+    struct slow5_file *slow5_f;
 
     /*
     slow5_f = slow5_open("../test/data/out/a.out/test.slow5", "w");
@@ -425,14 +587,13 @@ int main(void) {
     */
 
     /*
-     * SLOW5File *f_in = slow5_fopen("hi.slow5", "r");
-     * SLOW5File *f_out = slow5_fopen("hi.blow5", "w");
+     * slow5_file *f_in = slow5_fopen("hi.slow5", "r");
+     * slow5_file *f_out = slow5_fopen("hi.blow5", "w");
      */
-    FILE *f_in = fopen("../test/data/exp/one_fast5/exp_1.slow5", "r");
     //FILE *f_in = fopen("../test/data/err/version_too_large.slow5", "r");
-    FILE *f_out = fopen("hi.blow5", "w");
+    //FILE *f_out = fopen("hi.blow5", "w");
 
-    struct SLOW5 *slow5 = slow5_init(FORMAT_ASCII, f_in);
+    struct slow5_file *s5p = slow5_open("../test/data/exp/one_fast5/exp_1.slow5", "r");
     //struct SLOW5 *slow5 = slow5_init_empty(void);
     //slow5_read(slow5, FORMAT_ASCII, f_in);
 
@@ -445,11 +606,11 @@ int main(void) {
 
     slow5_wconf_destroy(&conf);
     */
-    slow5_print_hdr(slow5->header);
-    slow5_destroy(&slow5);
+    slow5_hdr_print(s5p->header);
+    slow5_close(s5p);
 
-    fclose(f_in);
-    fclose(f_out);
+    //fclose(f_in);
+    //fclose(f_out);
 }
 
 /*

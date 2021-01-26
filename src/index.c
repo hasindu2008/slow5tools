@@ -43,7 +43,7 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
         {NULL, 0, NULL, 0 }
     };
 
-    char opt;
+    int opt;
     // Parse options
     while ((opt = getopt_long(argc, argv, "h", long_opts, NULL)) != -1) {
 

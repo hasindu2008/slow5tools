@@ -6,31 +6,31 @@
 #include "error.h"
 
 // Init compression stream
-struct Press *press_init(enum PressMethod press_method) {
+struct press *press_init(enum press_method method) {
 
-    struct Press *press = NULL;
+    struct press *compress = NULL;
 
-    press = malloc(sizeof *press);
-    press->press_method = press_method;
+    compress = malloc(sizeof *compress);
+    compress->method = method;
 
-    switch (press_method) {
+    switch (method) {
 
         case COMPRESS_NONE:
-            press->press_stream = NULL;
+            compress->stream = NULL;
             break;
 
         case COMPRESS_GZIP: {
-            union PressStream *press_stream;
-            struct GzipStream *gzip_stream;
+            union press_stream *stream;
+            struct gzip_stream *gzip;
             int ret;
 
-            gzip_stream = malloc(sizeof *gzip_stream);
-            gzip_stream->strm.zalloc = Z_NULL;
-            gzip_stream->strm.zfree = Z_NULL;
-            gzip_stream->strm.opaque = Z_NULL;
-            gzip_stream->flush = Z_NO_FLUSH;
+            gzip = malloc(sizeof *gzip);
+            gzip->strm.zalloc = Z_NULL;
+            gzip->strm.zfree = Z_NULL;
+            gzip->strm.opaque = Z_NULL;
+            gzip->flush = Z_NO_FLUSH;
 
-            ret = deflateInit2(&(gzip_stream->strm),
+            ret = deflateInit2(&(gzip->strm),
                     Z_DEFAULT_COMPRESSION,
                     Z_DEFLATED,
                     MAX_WBITS | GZIP_WBITS, // Gzip compatible compression
@@ -39,76 +39,70 @@ struct Press *press_init(enum PressMethod press_method) {
 
             // Error occurred
             if (ret != Z_OK) {
-                free(gzip_stream);
+                free(gzip);
 
             } else {
-                press_stream = malloc(sizeof *press_stream);
+                stream = malloc(sizeof *stream);
 
-                press_stream->gzip_stream = gzip_stream;
-                press->press_stream = press_stream;
+                stream->gzip = gzip;
+                compress->stream = stream;
             }
 
         } break;
     }
 
-    return press;
+    return compress;
 }
 
-// Destroy compression stream
-void press_destroy(struct Press **press) {
+// free compression stream
+void press_free(struct press *compress) {
 
-    if (press != NULL && *press != NULL) {
+    if (compress != NULL) {
 
-        switch ((*press)->press_method) {
+        switch (compress->method) {
 
             case COMPRESS_NONE:
                 break;
 
             case COMPRESS_GZIP: {
-                union PressStream *press_stream;
-                struct GzipStream *gzip_stream;
                 int ret;
 
-                press_stream = (*press)->press_stream;
-                gzip_stream = press_stream->gzip_stream;
-
-                ret = deflateEnd(&(gzip_stream->strm));
+                ret = deflateEnd(&(compress->stream->gzip->strm));
                 // Error occurred
                 if (ret != Z_OK) {
                     // TODO
                 }
 
-                free(gzip_stream);
-                press_stream->gzip_stream = NULL;
-                free(press_stream);
-                (*press)->press_stream = NULL;
+                free(compress->stream->gzip);
+                compress->stream->gzip = NULL;
+                free(compress->stream);
+                compress->stream = NULL;
             } break;
         }
 
-        free(*press);
-        *press = NULL;
+        free(compress);
     }
 }
 
 
-int fprintf_press(struct Press *press, FILE *stream, const char *format, ...) {
+int fprintf_press(struct press *compress, FILE *fp, const char *format, ...) {
     int ret;
 
-    if (press != NULL) {
+    if (compress != NULL) {
         va_list ap;
         va_start(ap, format);
 
-        switch (press->press_method) {
+        switch (compress->method) {
 
             case COMPRESS_NONE:
-                ret = vfprintf(stream, format, ap);
+                ret = vfprintf(fp, format, ap);
                 break;
 
             case COMPRESS_GZIP: {
-                union PressStream *press_stream = press->press_stream;
+                union press_stream *stream = compress->stream;
 
-                if (press_stream != NULL) {
-                    ret = vfprintf_gzip(press_stream->gzip_stream, stream, format, ap);
+                if (stream != NULL) {
+                    ret = vfprintf_gzip(stream->gzip, fp, format, ap);
                 }
 
             } break;
@@ -120,17 +114,17 @@ int fprintf_press(struct Press *press, FILE *stream, const char *format, ...) {
     return ret;
 }
 
-int vfprintf_gzip(struct GzipStream *gzip_stream, FILE *stream, const char *format, va_list ap) {
+int vfprintf_gzip(struct gzip_stream *gzip, FILE *fp, const char *format, va_list ap) {
 
     int ret = -1; // TODO change this to a proper error code
 
-    if (gzip_stream != NULL) {
+    if (gzip != NULL) {
         char *buf;
 
         vasprintf(&buf, format, ap);
-        ret = z_deflate_write(&(gzip_stream->strm), buf, strlen(buf), stream, gzip_stream->flush); // Can also return -1 I think
-        if (gzip_stream->flush == Z_FINISH) {
-            gzip_stream->flush = Z_NO_FLUSH;
+        ret = z_deflate_write(&(gzip->strm), buf, strlen(buf), fp, gzip->flush); // Can also return -1 I think
+        if (gzip->flush == Z_FINISH) {
+            gzip->flush = Z_NO_FLUSH;
         }
 
         free(buf);
@@ -140,21 +134,21 @@ int vfprintf_gzip(struct GzipStream *gzip_stream, FILE *stream, const char *form
 }
 
 
-size_t fwrite_press(struct Press *press, const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+size_t fwrite_press(struct press *compress, const void *ptr, size_t size, size_t nmemb, FILE *fp) {
     size_t ret;
 
-    if (press != NULL) {
-        switch (press->press_method) {
+    if (compress != NULL) {
+        switch (compress->method) {
 
             case COMPRESS_NONE:
-                ret = fwrite(ptr, size, nmemb, stream);
+                ret = fwrite(ptr, size, nmemb, fp);
                 break;
 
             case COMPRESS_GZIP: {
-                union PressStream *press_stream = press->press_stream;
+                union press_stream *stream = compress->stream;
 
-                if (press_stream != NULL) {
-                    ret = fwrite_gzip(press_stream->gzip_stream, ptr, size, nmemb, stream);
+                if (stream != NULL) {
+                    ret = fwrite_gzip(stream->gzip, ptr, size, nmemb, fp);
                 }
 
             } break;
@@ -164,14 +158,14 @@ size_t fwrite_press(struct Press *press, const void *ptr, size_t size, size_t nm
     return ret;
 }
 
-size_t fwrite_gzip(struct GzipStream *gzip_stream, const void *ptr, size_t size, size_t nmemb, FILE *stream) {
+size_t fwrite_gzip(struct gzip_stream *gzip, const void *ptr, size_t size, size_t nmemb, FILE *fp) {
 
     int ret = -1; // TODO change this to a proper error code
 
-    if (gzip_stream != NULL) {
-        ret = z_deflate_write(&(gzip_stream->strm), ptr, size * nmemb, stream, gzip_stream->flush); // Can also return -1 I think
-        if (gzip_stream->flush == Z_FINISH) {
-            gzip_stream->flush = Z_NO_FLUSH;
+    if (gzip != NULL) {
+        ret = z_deflate_write(&(gzip->strm), ptr, size * nmemb, fp, gzip->flush); // Can also return -1 I think
+        if (gzip->flush == Z_FINISH) {
+            gzip->flush = Z_NO_FLUSH;
         }
     }
 
@@ -179,21 +173,21 @@ size_t fwrite_gzip(struct GzipStream *gzip_stream, const void *ptr, size_t size,
 }
 
 
-void press_footer_next(struct Press *press) {
+void press_footer_next(struct press *compress) {
 
-    if (press != NULL && press->press_stream != NULL) {
-        union PressStream *press_stream = press->press_stream;
+    if (compress != NULL && compress->stream != NULL) {
+        union press_stream *stream = compress->stream;
 
-        switch (press->press_method) {
+        switch (compress->method) {
 
             case COMPRESS_NONE:
                 break;
             case COMPRESS_GZIP: {
 
-                struct GzipStream *gzip_stream = press_stream->gzip_stream;
+                struct gzip_stream *gzip = stream->gzip;
 
-                if (gzip_stream != NULL) {
-                    gzip_stream->flush = Z_FINISH;
+                if (gzip != NULL) {
+                    gzip->flush = Z_FINISH;
                 }
 
             } break;

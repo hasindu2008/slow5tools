@@ -452,7 +452,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     char *arg_dir_out = NULL;
     char *arg_fname_idx = NULL;
 
-    char opt;
+    int opt;
     int longindex = 0;
 
     // Parse options

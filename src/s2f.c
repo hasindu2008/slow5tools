@@ -562,7 +562,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     // Input arguments
     char *arg_dir_out = NULL;
     int longindex = 0;
-    char opt;
+    int opt;
     int iop = 1;
 
     // Parse options

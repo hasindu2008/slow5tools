@@ -39,7 +39,16 @@ jobs:
     - name: "OSX pure make"
       os: osx
       script: make && make test
-    - name: "arm64 build"
+    - name: "arm64"
+      arch: arm64
+      os: linux
+      addons:
+        apt:
+          packages:
+            - zlib1g-dev
+            - libhdf5-dev
+      script: autoreconf && ./configure && make && make test
+    - name: "arm64 hdf5 install script"
       arch: arm64
       os: linux
       addons:
@@ -47,6 +56,24 @@ jobs:
           packages:
             - zlib1g-dev
       script: autoreconf && ./scripts/install-hdf5.sh 2> /dev/null && ./configure --enable-localhdf5 && make && make test
+    - name: "IBM Power CPUs"
+      arch: ppc64le
+      os: linux
+      addons:
+        apt:
+          packages:
+            - zlib1g-dev
+            - libhdf5-dev
+      script: autoreconf && ./configure && make && make test
+    - name: "IBM Z CPUs"
+      arch: s390x
+      os: linux
+      addons:
+        apt:
+          packages:
+            - zlib1g-dev
+            - libhdf5-dev
+      script: autoreconf && ./configure && make && make test
     - stage: deploy
       name: "GitHub Release"
       dist: trusty
