@@ -405,7 +405,7 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
     reset_attributes(CONTEXT_TAGS, &tracker);
     reset_attributes(TRACKING_ID, &tracker);
 
-    tracker.slow5_header->file_format = SLOW5_FILE_FORMAT;
+    tracker.slow5_header->file_format = SLOW5_FILE_FORMAT_SHORT;
 
     if (fast5_file->is_multi_fast5) {
         hsize_t number_of_groups = 0;
