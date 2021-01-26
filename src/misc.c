@@ -83,6 +83,55 @@ char *strtok_solo(char *str, char *seps) {
     return pos;
 }
 
+// Adapted from https://stackoverflow.com/questions/26522583/c-strtok-skips-second-token-or-consecutive-delimiter
+/*
+char *strtok_solo_r(char *str, char *seps, char **saveptr) {
+    static char *tpos, *tkn, *pos = NULL;
+    static char savech;
+
+    // Specific actions for first and subsequent calls.
+
+    if (str != NULL) {
+        // First call, set pointer.
+
+        pos = str;
+        savech = 'x';
+    } else {
+        // Subsequent calls, check we've done first.
+
+        if (pos == NULL)
+            return NULL;
+
+        // Then put character back and advance.
+
+        while (*pos != '\0')
+            pos++;
+        *pos++ = savech;
+    }
+
+    // Detect previous end of string.
+
+    if (savech == '\0')
+        return NULL;
+
+    // Now we have pos pointing to first character.
+    // Find first separator or nul.
+
+    tpos = pos;
+    while (*tpos != '\0') {
+        tkn = strchr (seps, *tpos);
+        if (tkn != NULL)
+            break;
+        tpos++;
+    }
+
+    savech = *tpos;
+    *tpos = '\0';
+
+    return pos;
+}
+*/
+
 // Atoi but to uint64_t
 // and without any symbols
 // and without 0 prefixing

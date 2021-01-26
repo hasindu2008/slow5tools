@@ -29,5 +29,6 @@ struct slow5_idx {
 struct slow5_idx *slow5_idx_init(struct slow5_file *s5p, const char *index_pathname);
 void slow5_idx_free(struct slow5_idx *index);
 struct slow5_rec_idx slow5_idx_get(struct slow5_idx *index, const char *read_id);
+void slow5_rec_idx_print(struct slow5_rec_idx read_index);
 
 #endif

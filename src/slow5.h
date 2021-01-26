@@ -188,7 +188,7 @@ struct slow5_rec **slow5_get_multi(const char **read_id, const uint64_t num_read
 // Print read entry
 int slow5_rec_fprint(FILE *fp, struct slow5_rec *read);
 static inline int slow5_rec_print(struct slow5_rec *read) {
-    slow5_rec_fprint(stdout, read);
+    return slow5_rec_fprint(stdout, read);
 }
 
 // Free a read entry

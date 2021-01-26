@@ -30,8 +30,8 @@ struct slow5_idx *slow5_idx_init(struct slow5_file *s5p, const char *index_pathn
 
     // If file doesn't exist
     if ((index_fp = fopen(index_pathname, "r")) == NULL) {
-        index->fp = fopen(index_pathname, "w");
         slow5_idx_build(index, s5p);
+        index->fp = fopen(index_pathname, "w");
         slow5_idx_write(index);
     } else {
         index->fp = index_fp;
@@ -53,14 +53,18 @@ static void slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
 
     switch (s5p->format) {
 
+        case FORMAT_UNKNOWN:
+            break;
+
         case FORMAT_ASCII: {
 
+            offset = ftell(s5p->fp); // TODO returns long (much smaller than uint64_t)
             while ((buf_len = getline(&buf, &cap, s5p->fp)) != -1) { // TODO this return is closer int64_t not unsigned
-                offset = ftell(s5p->fp); // TODO returns long (much smaller than uint64_t)
                 char *read_id = strdup(strtok_solo(buf, SEP)); // TODO quicker to just getdelim ? since don't want to split whole line
                 size = buf_len;
 
                 slow5_idx_insert(index, read_id, offset, size);
+                offset = ftell(s5p->fp); // TODO returns long (much smaller than uint64_t)
             }
         } break;
 
@@ -168,4 +172,11 @@ void slow5_idx_free(struct slow5_idx *index) {
     kh_destroy(s2i, index->hash);
 
     free(index);
+}
+
+void slow5_rec_idx_print(struct slow5_rec_idx read_index) {
+    printf("offset=%" PRIu64 "\n"
+            "size=%" PRIu64 "\n",
+            read_index.offset,
+            read_index.size);
 }

@@ -107,6 +107,9 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
     // Parse slow5 header
     switch (format) {
 
+        case FORMAT_UNKNOWN:
+            break;
+
         case FORMAT_ASCII: {
 
             // Buffer for file parsing
@@ -210,6 +213,9 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, s
     // Parse slow5 header data
     switch (format) {
 
+        case FORMAT_UNKNOWN:
+            break;
+
         case FORMAT_ASCII: {
 
             ssize_t buf_len;
@@ -290,6 +296,7 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
     NULL_CHK(read_id);
     NULL_CHK(s5p);
     struct slow5_rec *read = NULL;
+    char *read_str;
 
     if (s5p->index == NULL) {
         // Get index pathname
@@ -299,9 +306,12 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
     }
 
     struct slow5_rec_idx read_index = slow5_idx_get(s5p->index, read_id);
-    char *read_str = malloc(read_index.size * sizeof *read_str);
+    size_t read_len = (read_index.size + 1) * sizeof *read_str; // + 1 for '\0'
+    read_str = malloc(read_len);
     MALLOC_CHK(read_str);
-    assert(pread(s5p->meta.fd, read_str, read_index.size * sizeof *read_str, read_index.offset) != -1);
+
+    assert(pread(s5p->meta.fd, read_str, read_len - 1, read_index.offset) == read_len - 1);
+    read_str[read_len - 1] = '\0';
 
     read = (struct slow5_rec *) calloc(1, sizeof *read);
     read->str = strdup(read_str);
@@ -309,6 +319,9 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
     read_str[read_index.size - 1] = '\0'; // Remove newline for later parsing
 
     switch (s5p->format) {
+
+        case FORMAT_UNKNOWN:
+            break;
 
         case FORMAT_ASCII: {
 
@@ -368,16 +381,25 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
                         break;
 
                     // All columns parsed
-                    default:
+                    case SLOW5_COLS_NUM:
                         main_cols_parsed = true;
+                        printf("all main cols parsed\n"); // TESTING
                         break;
                 }
                 ++ i;
 
             } while (!main_cols_parsed && (tok = strtok_solo(NULL, SEP)) != NULL);
 
-            // Ensure parsed all main columns
-            assert(i == SLOW5_COLS_NUM + 1);
+            // All columns parsed
+            if (i == SLOW5_COLS_NUM) {
+
+            // Remaining columns to parse
+            } else if (i == SLOW5_COLS_NUM + 1) {
+
+            // Not all main columns parsed
+            } else {
+                assert(false); // TODO put error msg here
+            }
 
             free(read_str);
 
@@ -572,7 +594,6 @@ const uint8_t *str_get_slow5_version(const char *str) {
 */
 
 int main(void) {
-    struct slow5_file *slow5_f;
 
     /*
     slow5_f = slow5_open("../test/data/out/a.out/test.slow5", "w");
@@ -607,6 +628,8 @@ int main(void) {
     slow5_wconf_destroy(&conf);
     */
     slow5_hdr_print(s5p->header);
+    struct slow5_rec *rec = slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", s5p);
+    slow5_rec_free(rec);
     slow5_close(s5p);
 
     //fclose(f_in);
