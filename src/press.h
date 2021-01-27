@@ -60,8 +60,8 @@ int vfprintf_gzip(struct gzip_stream *gzip, FILE *fp, const char *format, va_lis
 void press_footer_next(struct press *compress);
 
 // sprintf and vsprintf but dynamically allocates strp memory
-int asprintf(char **strp, const char *fmt, ...);
-int vasprintf(char **strp, const char *fmt, va_list ap);
+int asprintf_mine(char **strp, const char *fmt, ...);
+int vasprintf_mine(char **strp, const char *fmt, va_list ap);
 
 // Decompress a zlib compressed string of size n
 // Return it and set n to the new size

@@ -121,7 +121,7 @@ int vfprintf_gzip(struct gzip_stream *gzip, FILE *fp, const char *format, va_lis
     if (gzip != NULL) {
         char *buf;
 
-        assert(vasprintf(&buf, format, ap) != -1);
+        assert(vasprintf_mine(&buf, format, ap) != -1);
         ret = z_deflate_write(&(gzip->strm), buf, strlen(buf), fp, gzip->flush); // Can also return -1 I think
         if (gzip->flush == Z_FINISH) {
             gzip->flush = Z_NO_FLUSH;
@@ -197,7 +197,7 @@ void press_footer_next(struct press *compress) {
 
 
 // From https://stackoverflow.com/questions/3774417/sprintf-with-automatic-memory-allocation
-int vasprintf(char **strp, const char *fmt, va_list ap) {
+int vasprintf_mine(char **strp, const char *fmt, va_list ap) {
     va_list ap1;
     size_t size;
     char *buffer;
@@ -216,12 +216,12 @@ int vasprintf(char **strp, const char *fmt, va_list ap) {
 }
 
 // From https://stackoverflow.com/questions/3774417/sprintf-with-automatic-memory-allocation
-int asprintf(char **strp, const char *fmt, ...) {
+int asprintf_mine(char **strp, const char *fmt, ...) {
     int error;
     va_list ap;
 
     va_start(ap, fmt);
-    error = vasprintf(strp, fmt, ap);
+    error = vasprintf_mine(strp, fmt, ap);
     va_end(ap);
 
     return error;

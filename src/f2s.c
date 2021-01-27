@@ -265,8 +265,11 @@ void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_id
     int64_t num_fast5_files = fast5_files.size();
 
     //create processes
-    pid_t pids[iop];
-    proc_arg_t proc_args[iop];
+    std::vector<pid_t> pids_v(iop);
+    std::vector<proc_arg_t> proc_args_v(iop);
+    pid_t *pids = pids_v.data();
+    proc_arg_t *proc_args = proc_args_v.data();
+
     int32_t t;
     int32_t i = 0;
     int32_t step = (num_fast5_files + iop - 1) / iop;
