@@ -1135,6 +1135,7 @@ void print_slow5_header(operator_obj* operator_data) {
     check_attributes(READ, operator_data);
     check_attributes(CONTEXT_TAGS, operator_data);
     check_attributes(TRACKING_ID, operator_data);
+
     //  main stuff
     fprintf(operator_data->f_out,"#file_format\t%s\n", operator_data->slow5_header->file_format);
     fprintf(operator_data->f_out,"#file_version\t%s\n", operator_data->slow5_header->file_version);
