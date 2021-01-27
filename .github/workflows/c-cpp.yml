@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: SlOW5 C/C++ CI
 
 on:
   push:
@@ -7,19 +7,60 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-
+  ubuntu_16:
+    name: Ubuntu 16
+    runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v2
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install zlib1g-dev libhdf5-dev valgrind
-    - name: configure
-      run: autoreconf && ./configure
-    - name: make
-      run: make
-    - name: make test
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
+    - name: build
+      run: autoreconf && ./configure && make -j8
+    - name: test
+      run: make test
+  ubuntu_18:
+    name: Ubuntu 18 hdf5 install script
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev valgrind
+    - name: build
+      run: autoreconf && ./scripts/install-hdf5.sh 2> /dev/null && ./configure --enable-localhdf5 && make -j8
+    - name: test
       run: make test
     - name: valgrind
       run: valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
+  ubuntu_20:
+    name: Ubuntu 20 pure make
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install zlib1g-dev
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
+    - name: build
+      run: autoreconf && ./configure && make -j8
+    - name: test
+      run: make test
+  os_x:
+    name: OSX
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: brew install hdf5
+    - name: build
+      run: autoreconf && ./configure && make -j8
+    - name: test
+      run: make test
+  os_x2:
+    name: OSX pure make
+    runs-on: macos-11.0
+    steps:
+    - uses: actions/checkout@v2
+    - name: build
+      run: autoreconf && ./scripts/install-hdf5.sh 2> /dev/null && ./configure --enable-localhdf5 && make -j8
+    - name: test
+      run: make test
