@@ -32,7 +32,7 @@ jobs:
     - name: valgrind
       run: valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
   ubuntu_20:
-    name: Ubuntu 20 pure make
+    name: Ubuntu 20
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
@@ -44,20 +44,20 @@ jobs:
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
-#  os_x:
-#    name: OSX
-#    runs-on: macos-10.15
-#    steps:
-#    - uses: actions/checkout@v2
-#    - name: install packages
-#      run: brew install hdf5 autoconf automake
-#    - name: build
-#      run: autoreconf && ./configure && make -j8
-#    - name: test
-#      run: make test
+  os_x:
+    name: OSX
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: brew install hdf5 autoconf automake
+    - name: build
+      run: autoreconf && ./configure && make -j8
+    - name: test
+      run: make test
   os_x2:
-    name: OSX pure make
-    runs-on: macos-11.0
+    name: OSX hdf5 install script
+    runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
     - name: install packages
