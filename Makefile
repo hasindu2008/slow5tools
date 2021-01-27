@@ -21,6 +21,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/read_fast5.o \
 	  $(BUILD_DIR)/merge_slow5.o \
 	  $(BUILD_DIR)/read_slow5.o \
+	  $(BUILD_DIR)/split_slow5.o \
 
 OBJ_LIB = $(BUILD_DIR)/slow5.o \
 		$(BUILD_DIR)/misc.o	\
@@ -71,6 +72,9 @@ $(BUILD_DIR)/merge_slow5.o: src/merge_slow5.c src/slow5_old.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/read_slow5.o: src/read_slow5.c src/slow5_old.h src/error.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/split_slow5.o: src/split_slow5.c src/slow5_old.h src/error.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 

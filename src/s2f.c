@@ -14,7 +14,8 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help             display this message and exit\n" \
-    "    -o, --output=[DIR]     output directory where fast5 files are stored\n"           \
+    "    -o, --output=[DIR]     output directory where fast5 files are stored\n" \
+    "    --iop INT                  number of I/O processes to read slow5 files\n" \
 
 
 static double init_realtime = 0;
@@ -384,7 +385,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
     }
 }
 
-void s2f_iop(int iop, std::vector<std::string>& slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
+void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
     double realtime0 = realtime();
     int64_t num_slow5_files = slow5_files.size();
 
@@ -471,7 +472,7 @@ void s2f_iop(int iop, std::vector<std::string>& slow5_files, char *output_dir, p
     fprintf(stderr, "[%s] Parallel converting to fast5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
 }
 
-void recurse_slow5_dir(const char *f_path, reads_count* readsCount, char* output_dir, struct program_meta *meta) {
+void recurse_slow5_dir(const char *f_path, reads_count *readsCount, char *output_dir, program_meta *meta) {
 
     DIR *dir;
     struct dirent *ent;
