@@ -11,6 +11,18 @@ slow5_close(fp);
 slow5_read_free(read_entry1);
 slow5_read_free(read_entry2);
 
+// get read entry alternative
+
+slow5_file *fp = slow5_open("eg.slow5", "r");
+
+slow5_rec *read_entry = slow5_rec_init();
+slow5_get("read_aslkdj20398", &read_entry, fp);
+slow5_rec_print(read_entry); // slow5_read_fprint(stdout, read_entry2);
+
+slow5_close(fp);
+slow5_rec_free(read_entry1);
+slow5_rec_free(read_entry2);
+
 // open slow5 file
 // get read entries from ids
 
@@ -110,3 +122,10 @@ slow5_close(in);
 slow5_file *in = slow5_open("eg.slow5", "r");
 slow5_index(in);
 slow5_close(in);
+
+// sequential reading
+
+slow5_file *s5p = slow5_open("eg.slow5", "r");
+slow5_rec *read1 = slow5_get_next(s5p);
+slow5_rec_free(read1);
+slow5_close(s5p);

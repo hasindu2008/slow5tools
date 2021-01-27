@@ -105,7 +105,7 @@ struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum 
 //struct slow5_file *slow5_init_fp(FILE *fp, enum slow5_fmt format);
 
 // Write from a slow5 file to another slow5 file
-int8_t slow5_write(struct slow5_file *s5p_from, struct slow5_file *s5p_to); // TODO decide return type
+int8_t slow5_write(struct slow5_file *s5p_to, struct slow5_file *s5p_from); // TODO decide return type
 
 // Merge slow5 files to another slow5 file
 // TODO Just a merge for 2 -> 1?
@@ -115,7 +115,7 @@ int8_t slow5_vmerge(struct slow5_file *s5p_to, va_list ap);
 
 // Split a slow5 file to a dir
 // TODO split into multiple slow5 files from same rg
-int8_t slow5_split(struct slow5_file *s5p_from, const char *dirname_to);
+int8_t slow5_split(const char *dirname_to, struct slow5_file *s5p_from);
 
 // Close a slow5 file
 void slow5_close(struct slow5_file *s5p);
@@ -123,8 +123,10 @@ void slow5_close(struct slow5_file *s5p);
 
 
 // Get a read entry
-struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p);
-struct slow5_rec **slow5_get_multi(const char **read_id, const uint64_t num_reads, const struct slow5_file *s5p);
+void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s5p);
+
+// Get next read entry under file pointer
+struct slow5_rec *slow5_get_next(struct slow5_file *s5p);
 
 // Print read entry
 int slow5_rec_fprint(FILE *fp, struct slow5_rec *read);

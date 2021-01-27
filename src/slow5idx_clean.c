@@ -57,10 +57,12 @@ static void slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
             break;
 
         case FORMAT_ASCII: {
+            char *bufp;
 
             offset = ftell(s5p->fp); // TODO returns long (much smaller than uint64_t)
             while ((buf_len = getline(&buf, &cap, s5p->fp)) != -1) { // TODO this return is closer int64_t not unsigned
-                char *read_id = strdup(strtok_solo(buf, SEP)); // TODO quicker to just getdelim ? since don't want to split whole line
+                bufp = buf;
+                char *read_id = strdup(strsep(&bufp, SEP)); // TODO quicker to just getdelim ? since don't want to split whole line
                 size = buf_len;
 
                 slow5_idx_insert(index, read_id, offset, size);
@@ -99,6 +101,7 @@ static void slow5_idx_read(struct slow5_idx *index) {
     // Buffer for file parsing
     size_t cap = SLOW5_INDEX_BUF_INIT_CAP;
     char *buf = (char *) malloc(cap * sizeof *buf);
+    char *bufp;
     MALLOC_CHK(buf);
 
     // Header
@@ -110,12 +113,13 @@ static void slow5_idx_read(struct slow5_idx *index) {
     while ((buf_len = getline(&buf, &cap, index->fp)) != -1) {
         buf[buf_len - 1] = '\0'; // Remove newline for later parsing
 
-        char *read_id = strdup(strtok_solo(buf, SEP));
+        bufp = buf;
+        char *read_id = strdup(strsep(&bufp, SEP));
 
-        char *offset_str = strtok_solo(NULL, SEP);
+        char *offset_str = strsep(&bufp, SEP);
         uint64_t offset = ato_uint64(offset_str);
 
-        char *size_str = strtok_solo(NULL, SEP);
+        char *size_str = strsep(&bufp, SEP);
         uint64_t size = ato_uint64(size_str);
 
         slow5_idx_insert(index, read_id, offset, size);

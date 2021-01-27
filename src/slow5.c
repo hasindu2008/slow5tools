@@ -115,6 +115,7 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
             // Buffer for file parsing
             size_t cap = SLOW5_HEADER_DATA_BUF_INIT_CAP;
             char *buf = (char *) malloc(cap * sizeof *buf);
+            char *bufp;
             MALLOC_CHK(buf);
             ssize_t buf_len;
 
@@ -122,39 +123,43 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
             assert((buf_len = getline(&buf, &cap, fp)) != -1);
             buf[buf_len - 1] = '\0'; // Remove newline for later format parsing
             // "#file_format"
-            char *tok = strtok_solo(buf, SEP);
+            bufp = buf;
+            char *tok = strsep(&bufp, SEP);
             assert(strcmp(tok, HEADER_FILE_FORMAT_ID) == 0);
             // Parse format name
-            tok = strtok_solo(NULL, SEP);
+            tok = strsep(&bufp, SEP);
             assert(format == name_get_slow5_fmt(tok));
 
             // 2nd line
             assert((buf_len = getline(&buf, &cap, fp)) != -1);
             buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             // "#file_version"
-            tok = strtok_solo(buf, SEP);
+            bufp = buf;
+            tok = strsep(&bufp, SEP);
             assert(strcmp(tok, HEADER_FILE_VERSION_ID) == 0);
             // Parse file version
-            tok = strtok_solo(NULL, SEP);
+            tok = strsep(&bufp, SEP);
             header->version_str = strdup(tok);
             // Parse file version string
             // TODO necessary to parse it now?
-            assert((tok = strtok_solo(tok, ".")) != NULL); // Major version
-            header->version.major = ato_uint8(tok);
-            assert((tok = strtok_solo(NULL, ".")) != NULL); // Minor version
-            header->version.minor = ato_uint8(tok);
-            assert((tok = strtok_solo(NULL, ".")) != NULL); // Patch version
-            header->version.patch = ato_uint8(tok);
-            assert(strtok_solo(NULL, ".") == NULL); // No more tokenators
+            char *toksub;
+            assert((toksub = strsep(&tok, ".")) != NULL); // Major version
+            header->version.major = ato_uint8(toksub);
+            assert((toksub = strsep(&tok, ".")) != NULL); // Minor version
+            header->version.minor = ato_uint8(toksub);
+            assert((toksub = strsep(&tok, ".")) != NULL); // Patch version
+            header->version.patch = ato_uint8(toksub);
+            assert(strsep(&tok, ".") == NULL); // No more tokenators
 
             // 3rd line
             assert((buf_len = getline(&buf, &cap, fp)) != -1);
             buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             // "#num_read_groups"
-            tok = strtok_solo(buf, SEP);
+            bufp = buf;
+            tok = strsep(&bufp, SEP);
             assert(strcmp(tok, HEADER_NUM_GROUPS_ID) == 0);
             // Parse num read groups
-            tok = strtok_solo(NULL, SEP);
+            tok = strsep(&bufp, SEP);
             header->num_read_groups = ato_uint32(tok);
 
             // Header data
@@ -232,12 +237,12 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, s
                 char *shift = buf + strlen(SLOW5_HEADER_DATA_PREFIX); // Remove prefix
 
                 // Get the attribute name
-                char *attr = strdup(strtok_solo(shift, SEP));
+                char *attr = strdup(strsep(&shift, SEP));
                 char *val;
 
                 // Iterate through the values
                 uint32_t i = 0;
-                while ((val = strtok_solo(NULL, SEP)) != NULL && i <= num_rgs - 1) {
+                while ((val = strsep(&shift, SEP)) != NULL && i <= num_rgs - 1) {
 
                     // Set key
                     int absent;
@@ -292,11 +297,12 @@ void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs) {
 
 // slow5 record
 
-struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
+void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s5p) {
     NULL_CHK(read_id);
+    NULL_CHK(read);
     NULL_CHK(s5p);
-    struct slow5_rec *read = NULL;
     char *read_str;
+    char *read_strp;
 
     if (s5p->index == NULL) {
         // Get index pathname
@@ -307,14 +313,17 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
 
     struct slow5_rec_idx read_index = slow5_idx_get(s5p->index, read_id);
     size_t read_len = (read_index.size + 1) * sizeof *read_str; // + 1 for '\0'
-    read_str = (char *)malloc(read_len);
+    read_str = (char *) malloc(read_len);
     MALLOC_CHK(read_str);
 
     assert(pread(s5p->meta.fd, read_str, read_len - 1, read_index.offset) == read_len - 1);
     read_str[read_len - 1] = '\0';
 
-    read = (struct slow5_rec *) calloc(1, sizeof *read);
-    read->str = strdup(read_str);
+    // Allocate memory for read if NULL
+    if (*read == NULL) {
+        *read = (struct slow5_rec *) calloc(1, sizeof **read);
+        (*read)->str = strdup(read_str);
+    }
 
     read_str[read_index.size - 1] = '\0'; // Remove newline for later parsing
 
@@ -326,7 +335,8 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
         case FORMAT_ASCII: {
 
             char *tok;
-            assert((tok = strtok_solo(read_str, SEP)) != NULL);
+            read_strp = read_str;
+            assert((tok = strsep(&read_strp, SEP)) != NULL);
 
             int i = 0;
             bool main_cols_parsed = false;
@@ -335,48 +345,48 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
                     case COL_read_id:
                         // Ensure line matches requested id
                         assert(strcmp(tok, read_id) == 0);
-                        read->read_id = strdup(read_id);
+                        (*read)->read_id = strdup(read_id);
                         break;
 
                     case COL_read_group:
-                        read->read_group = ato_uint32(tok);
+                        (*read)->read_group = ato_uint32(tok);
                         break;
 
                     case COL_digitisation:
-                        read->digitisation = strtof_check(tok);
+                        (*read)->digitisation = strtof_check(tok);
                         break;
 
                     case COL_offset:
-                        read->offset = strtod_check(tok);
+                        (*read)->offset = strtod_check(tok);
                         break;
 
                     case COL_range:
-                        read->range = strtod_check(tok);
+                        (*read)->range = strtod_check(tok);
                         break;
 
                     case COL_sampling_rate:
-                        read->sampling_rate = strtod_check(tok);
+                        (*read)->sampling_rate = strtod_check(tok);
                         break;
 
                     case COL_len_raw_signal:
-                        read->len_raw_signal = ato_uint64(tok);
+                        (*read)->len_raw_signal = ato_uint64(tok);
                         break;
 
                     case COL_raw_signal: {
-                        read->raw_signal = (int16_t *) malloc(read->len_raw_signal * sizeof *read->raw_signal);
-                        MALLOC_CHK(read->raw_signal);
+                        (*read)->raw_signal = (int16_t *) malloc((*read)->len_raw_signal * sizeof *((*read)->raw_signal));
+                        MALLOC_CHK((*read)->raw_signal);
 
                         char *signal_tok;
-                        assert((signal_tok = strtok_solo(tok, SEP_RAW_SIGNAL)) != NULL);
+                        assert((signal_tok = strsep(&tok, SEP_RAW_SIGNAL)) != NULL);
 
                         uint64_t j = 0;
 
                         // Parse raw signal
                         do {
-                            read->raw_signal[j] = ato_int16(signal_tok);
+                            ((*read)->raw_signal)[j] = ato_int16(signal_tok);
                             ++ j;
-                        } while ((signal_tok = strtok_solo(NULL, SEP_RAW_SIGNAL)) != NULL);
-                        assert(j == read->len_raw_signal);
+                        } while ((signal_tok = strsep(&tok, SEP_RAW_SIGNAL)) != NULL);
+                        assert(j == (*read)->len_raw_signal);
 
                     } break;
 
@@ -389,7 +399,7 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
                 }
                 ++ i;
 
-            } while (!main_cols_parsed && (tok = strtok_solo(NULL, SEP)) != NULL);
+            } while (!main_cols_parsed && (tok = strsep(&read_strp, SEP)) != NULL);
 
             // All columns parsed
             if (i == SLOW5_COLS_NUM) {
@@ -409,8 +419,6 @@ struct slow5_rec *slow5_get(const char *read_id, struct slow5_file *s5p) {
         case FORMAT_BINARY: // TODO
             break;
     }
-
-    return read;
 }
 
 // Print read entry
@@ -483,7 +491,7 @@ const char *slow5_fmt_get_name(enum slow5_fmt format) {
 
 char *get_slow5_idx_path(const char *path) {
     size_t new_len = strlen(path) + strlen(INDEX_EXTENSION);
-    char *str = (char *)malloc((new_len + 1) * sizeof *str); // +1 for '\0'
+    char *str = (char *) malloc((new_len + 1) * sizeof *str); // +1 for '\0'
     strncpy(str, path, strlen(path));
     strcpy(str + strlen(path), INDEX_EXTENSION);
 
@@ -629,7 +637,8 @@ int main(void) {
     slow5_wconf_destroy(&conf);
     */
     slow5_hdr_print(s5p->header);
-    struct slow5_rec *rec = slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", s5p);
+    struct slow5_rec *rec = NULL;
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &rec, s5p);
     slow5_rec_free(rec);
     slow5_close(s5p);
 

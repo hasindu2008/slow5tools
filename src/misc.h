@@ -93,8 +93,8 @@ static inline bool is_dir(const char *path) {
     return S_ISDIR(path_stat.st_mode);
 }
 
-// From https://stackoverflow.com/questions/26522583/c-strtok-skips-second-token-or-consecutive-delimiter
-char *strtok_solo(char *str, char *seps);
+// From https://code.woboq.org/userspace/glibc/string/strsep.c.html
+char *strsep (char **stringp, const char *delim);
 
 // Atoi but to xintx_t
 // and without any symbols

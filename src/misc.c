@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <string.h>
 #include "misc.h"
 #include "error.h"
 #include "fast5.h"
@@ -36,101 +37,27 @@ bool has_fast5_ext(const char *f_path) {
     return ret;
 }
 
-// From https://stackoverflow.com/questions/26522583/c-strtok-skips-second-token-or-consecutive-delimiter
-char *strtok_solo(char *str, char *seps) {
-    static char *tpos, *tkn, *pos = NULL;
-    static char savech;
-
-    // Specific actions for first and subsequent calls.
-
-    if (str != NULL) {
-        // First call, set pointer.
-
-        pos = str;
-        savech = 'x';
-    } else {
-        // Subsequent calls, check we've done first.
-
-        if (pos == NULL)
-            return NULL;
-
-        // Then put character back and advance.
-
-        while (*pos != '\0')
-            pos++;
-        *pos++ = savech;
+// From https://code.woboq.org/userspace/glibc/string/strsep.c.html
+char *
+strsep (char **stringp, const char *delim)
+{
+  char *begin, *end;
+  begin = *stringp;
+  if (begin == NULL)
+    return NULL;
+  /* Find the end of the token.  */
+  end = begin + strcspn (begin, delim);
+  if (*end)
+    {
+      /* Terminate the token and set *STRINGP past NUL character.  */
+      *end++ = '\0';
+      *stringp = end;
     }
-
-    // Detect previous end of string.
-
-    if (savech == '\0')
-        return NULL;
-
-    // Now we have pos pointing to first character.
-    // Find first separator or nul.
-
-    tpos = pos;
-    while (*tpos != '\0') {
-        tkn = strchr (seps, *tpos);
-        if (tkn != NULL)
-            break;
-        tpos++;
-    }
-
-    savech = *tpos;
-    *tpos = '\0';
-
-    return pos;
+  else
+    /* No more delimiters; this is the last token.  */
+    *stringp = NULL;
+  return begin;
 }
-
-// Adapted from https://stackoverflow.com/questions/26522583/c-strtok-skips-second-token-or-consecutive-delimiter
-/*
-char *strtok_solo_r(char *str, char *seps, char **saveptr) {
-    static char *tpos, *tkn, *pos = NULL;
-    static char savech;
-
-    // Specific actions for first and subsequent calls.
-
-    if (str != NULL) {
-        // First call, set pointer.
-
-        pos = str;
-        savech = 'x';
-    } else {
-        // Subsequent calls, check we've done first.
-
-        if (pos == NULL)
-            return NULL;
-
-        // Then put character back and advance.
-
-        while (*pos != '\0')
-            pos++;
-        *pos++ = savech;
-    }
-
-    // Detect previous end of string.
-
-    if (savech == '\0')
-        return NULL;
-
-    // Now we have pos pointing to first character.
-    // Find first separator or nul.
-
-    tpos = pos;
-    while (*tpos != '\0') {
-        tkn = strchr (seps, *tpos);
-        if (tkn != NULL)
-            break;
-        tpos++;
-    }
-
-    savech = *tpos;
-    *tpos = '\0';
-
-    return pos;
-}
-*/
 
 // Atoi but to uint64_t
 // and without any symbols
