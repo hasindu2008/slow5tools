@@ -86,7 +86,7 @@ void press_free(struct press *compress) {
 
 
 int fprintf_press(struct press *compress, FILE *fp, const char *format, ...) {
-    int ret;
+    int ret = -1;
 
     if (compress != NULL) {
         va_list ap;
@@ -121,7 +121,7 @@ int vfprintf_gzip(struct gzip_stream *gzip, FILE *fp, const char *format, va_lis
     if (gzip != NULL) {
         char *buf;
 
-        vasprintf(&buf, format, ap);
+        assert(vasprintf(&buf, format, ap) != -1);
         ret = z_deflate_write(&(gzip->strm), buf, strlen(buf), fp, gzip->flush); // Can also return -1 I think
         if (gzip->flush == Z_FINISH) {
             gzip->flush = Z_NO_FLUSH;
@@ -135,7 +135,7 @@ int vfprintf_gzip(struct gzip_stream *gzip, FILE *fp, const char *format, va_lis
 
 
 size_t fwrite_press(struct press *compress, const void *ptr, size_t size, size_t nmemb, FILE *fp) {
-    size_t ret;
+    size_t ret = -1;
 
     if (compress != NULL) {
         switch (compress->method) {

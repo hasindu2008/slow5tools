@@ -292,7 +292,7 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
     }
 
     struct slow5_rec_idx read_index = slow5_idx_get(s5p->index, read_id);
-    size_t read_len = (read_index.size + 1) * sizeof *read_str; // + 1 for '\0'
+    ssize_t read_len = (read_index.size + 1) * sizeof *read_str; // + 1 for '\0'
     read_str = (char *) malloc(read_len);
     MALLOC_CHK(read_str);
 
