@@ -215,14 +215,16 @@ struct command tests[] = {
 
 int main(void) {
     int test_n = sizeof (tests) / sizeof (struct command);
+    int ret = 0;
 
     for (int i = 0; i < test_n; ++ i) {
         if (tests[i].exe()) {
-            fprintf(stdout, "%s Passed\n", tests[i].str);
+            fprintf(stderr, "%s Passed\n", tests[i].str);
         } else {
-            fprintf(stdout, "%s Failed\n", tests[i].str);
+            fprintf(stderr, "%s Failed\n", tests[i].str);
+            ret = 1;
         }
     }
 
-    return 0;
+    return ret;
 }
