@@ -39,7 +39,7 @@ bool has_fast5_ext(const char *f_path) {
 
 // From https://code.woboq.org/userspace/glibc/string/strsep.c.html
 char *
-strsep_cp (char **stringp, const char *delim)
+strsep_mine (char **stringp, const char *delim)
 {
   char *begin, *end;
   begin = *stringp;

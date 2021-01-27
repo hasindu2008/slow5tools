@@ -108,10 +108,10 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
             buf[buf_len - 1] = '\0'; // Remove newline for later format parsing
             // "#file_format"
             bufp = buf;
-            char *tok = strsep_cp(&bufp, SEP);
+            char *tok = strsep_mine(&bufp, SEP);
             assert(strcmp(tok, HEADER_FILE_FORMAT_ID) == 0);
             // Parse format name
-            tok = strsep_cp(&bufp, SEP);
+            tok = strsep_mine(&bufp, SEP);
             assert(format == name_get_slow5_fmt(tok));
 
             // 2nd line
@@ -119,31 +119,31 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
             buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             // "#file_version"
             bufp = buf;
-            tok = strsep_cp(&bufp, SEP);
+            tok = strsep_mine(&bufp, SEP);
             assert(strcmp(tok, HEADER_FILE_VERSION_ID) == 0);
             // Parse file version
-            tok = strsep_cp(&bufp, SEP);
+            tok = strsep_mine(&bufp, SEP);
             header->version_str = strdup(tok);
             // Parse file version string
             // TODO necessary to parse it now?
             char *toksub;
-            assert((toksub = strsep_cp(&tok, ".")) != NULL); // Major version
+            assert((toksub = strsep_mine(&tok, ".")) != NULL); // Major version
             header->version.major = ato_uint8(toksub);
-            assert((toksub = strsep_cp(&tok, ".")) != NULL); // Minor version
+            assert((toksub = strsep_mine(&tok, ".")) != NULL); // Minor version
             header->version.minor = ato_uint8(toksub);
-            assert((toksub = strsep_cp(&tok, ".")) != NULL); // Patch version
+            assert((toksub = strsep_mine(&tok, ".")) != NULL); // Patch version
             header->version.patch = ato_uint8(toksub);
-            assert(strsep_cp(&tok, ".") == NULL); // No more tokenators
+            assert(strsep_mine(&tok, ".") == NULL); // No more tokenators
 
             // 3rd line
             assert((buf_len = getline(&buf, &cap, fp)) != -1);
             buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             // "#num_read_groups"
             bufp = buf;
-            tok = strsep_cp(&bufp, SEP);
+            tok = strsep_mine(&bufp, SEP);
             assert(strcmp(tok, HEADER_NUM_GROUPS_ID) == 0);
             // Parse num read groups
-            tok = strsep_cp(&bufp, SEP);
+            tok = strsep_mine(&bufp, SEP);
             header->num_read_groups = ato_uint32(tok);
 
             // Header data
@@ -221,12 +221,12 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, s
                 char *shift = buf + strlen(SLOW5_HEADER_DATA_PREFIX); // Remove prefix
 
                 // Get the attribute name
-                char *attr = strdup(strsep_cp(&shift, SEP));
+                char *attr = strdup(strsep_mine(&shift, SEP));
                 char *val;
 
                 // Iterate through the values
                 uint32_t i = 0;
-                while ((val = strsep_cp(&shift, SEP)) != NULL && i <= num_rgs - 1) {
+                while ((val = strsep_mine(&shift, SEP)) != NULL && i <= num_rgs - 1) {
 
                     // Set key
                     int absent;
@@ -284,13 +284,21 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
     NULL_CHK(read);
     NULL_CHK(s5p);
     char *read_str;
-    char *read_strp;
 
     if (s5p->index == NULL) {
         // Get index pathname
         char *index_pathname = get_slow5_idx_path(s5p->meta.pathname);
         s5p->index = slow5_idx_init(s5p, index_pathname);
         free(index_pathname); // TODO save in struct?
+    }
+
+    if (*read == NULL) {
+        // Allocate memory for read
+        *read = (struct slow5_rec *) calloc(1, sizeof **read);
+    } else {
+        // Free previously allocated strings
+        free((*read)->str);
+        free((*read)->read_id);
     }
 
     struct slow5_rec_idx read_index = slow5_idx_get(s5p->index, read_id);
@@ -301,15 +309,18 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
     assert(pread(s5p->meta.fd, read_str, read_len - 1, read_index.offset) == read_len - 1);
     read_str[read_len - 1] = '\0';
 
-    // Allocate memory for read if NULL
-    if (*read == NULL) {
-        *read = (struct slow5_rec *) calloc(1, sizeof **read);
-        (*read)->str = strdup(read_str);
-    }
+    (*read)->str = strdup(read_str);
 
     read_str[read_index.size - 1] = '\0'; // Remove newline for later parsing
 
-    switch (s5p->format) {
+    slow5_rec_parse(read_str, read_id, *read, s5p->format);
+    free(read_str);
+}
+
+void slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read, enum slow5_fmt format) {
+    uint64_t prev_len_raw_signal = 0;
+
+    switch (format) {
 
         case FORMAT_UNKNOWN:
             break;
@@ -317,8 +328,7 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
         case FORMAT_ASCII: {
 
             char *tok;
-            read_strp = read_str;
-            assert((tok = strsep_cp(&read_strp, SEP)) != NULL);
+            assert((tok = strsep_mine(&read_str, SEP)) != NULL);
 
             int i = 0;
             bool main_cols_parsed = false;
@@ -326,49 +336,57 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
                 switch (i) {
                     case COL_read_id:
                         // Ensure line matches requested id
-                        assert(strcmp(tok, read_id) == 0);
-                        (*read)->read_id = strdup(read_id);
+                        if (read_id != NULL) {
+                            assert(strcmp(tok, read_id) == 0);
+                        }
+                        read->read_id = strdup(tok);
                         break;
 
                     case COL_read_group:
-                        (*read)->read_group = ato_uint32(tok);
+                        read->read_group = ato_uint32(tok);
                         break;
 
                     case COL_digitisation:
-                        (*read)->digitisation = strtof_check(tok);
+                        read->digitisation = strtof_check(tok);
                         break;
 
                     case COL_offset:
-                        (*read)->offset = strtod_check(tok);
+                        read->offset = strtod_check(tok);
                         break;
 
                     case COL_range:
-                        (*read)->range = strtod_check(tok);
+                        read->range = strtod_check(tok);
                         break;
 
                     case COL_sampling_rate:
-                        (*read)->sampling_rate = strtod_check(tok);
+                        read->sampling_rate = strtod_check(tok);
                         break;
 
                     case COL_len_raw_signal:
-                        (*read)->len_raw_signal = ato_uint64(tok);
+                        if (read->len_raw_signal != 0) {
+                            prev_len_raw_signal = read->len_raw_signal;
+                        }
+                        read->len_raw_signal = ato_uint64(tok);
                         break;
 
                     case COL_raw_signal: {
-                        (*read)->raw_signal = (int16_t *) malloc((*read)->len_raw_signal * sizeof *((*read)->raw_signal));
-                        MALLOC_CHK((*read)->raw_signal);
+                        if (read->raw_signal == NULL) {
+                            read->raw_signal = (int16_t *) malloc(read->len_raw_signal * sizeof *(read->raw_signal));
+                        } else if (prev_len_raw_signal < read->len_raw_signal) {
+                            read->raw_signal = (int16_t *) realloc(read->raw_signal, read->len_raw_signal * sizeof *(read->raw_signal));
+                        }
 
                         char *signal_tok;
-                        assert((signal_tok = strsep_cp(&tok, SEP_RAW_SIGNAL)) != NULL);
+                        assert((signal_tok = strsep_mine(&tok, SEP_RAW_SIGNAL)) != NULL);
 
                         uint64_t j = 0;
 
                         // Parse raw signal
                         do {
-                            ((*read)->raw_signal)[j] = ato_int16(signal_tok);
+                            (read->raw_signal)[j] = ato_int16(signal_tok);
                             ++ j;
-                        } while ((signal_tok = strsep_cp(&tok, SEP_RAW_SIGNAL)) != NULL);
-                        assert(j == (*read)->len_raw_signal);
+                        } while ((signal_tok = strsep_mine(&tok, SEP_RAW_SIGNAL)) != NULL);
+                        assert(j == read->len_raw_signal);
 
                     } break;
 
@@ -380,7 +398,7 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
                 }
                 ++ i;
 
-            } while (!main_cols_parsed && (tok = strsep_cp(&read_strp, SEP)) != NULL);
+            } while (!main_cols_parsed && (tok = strsep_mine(&read_str, SEP)) != NULL);
 
             // All columns parsed
             if (i == SLOW5_COLS_NUM) {
@@ -393,13 +411,36 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
                 assert(false); // TODO put error msg here
             }
 
-            free(read_str);
-
         } break;
 
         case FORMAT_BINARY: // TODO
             break;
     }
+}
+
+void slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
+    NULL_CHK(read);
+    NULL_CHK(s5p);
+    char *read_str = NULL;
+
+    if (*read == NULL) {
+        // Allocate memory for read
+        *read = (struct slow5_rec *) calloc(1, sizeof **read);
+    } else {
+        // Free previously allocated strings
+        free((*read)->str);
+        free((*read)->read_id);
+    }
+
+    size_t cap = 0;
+    ssize_t read_len;
+    assert((read_len = getline(&read_str, &cap, s5p->fp)) != -1);
+    (*read)->str = strdup(read_str);
+
+    read_str[read_len - 1] = '\0'; // Remove newline for later parsing
+
+    slow5_rec_parse(read_str, NULL, *read, s5p->format);
+    free(read_str);
 }
 
 // Print read entry

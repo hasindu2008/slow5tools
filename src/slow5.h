@@ -126,7 +126,7 @@ int slow5_close(struct slow5_file *s5p);
 void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s5p);
 
 // Get next read entry under file pointer
-struct slow5_rec *slow5_get_next(struct slow5_file *s5p);
+void slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p);
 
 // Print read entry
 int slow5_rec_fprint(FILE *fp, struct slow5_rec *read);

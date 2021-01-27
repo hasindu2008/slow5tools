@@ -62,7 +62,7 @@ static void slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
             offset = ftell(s5p->fp); // TODO returns long (much smaller than uint64_t)
             while ((buf_len = getline(&buf, &cap, s5p->fp)) != -1) { // TODO this return is closer int64_t not unsigned
                 bufp = buf;
-                char *read_id = strdup(strsep_cp(&bufp, SEP)); // TODO quicker to just getdelim ? since don't want to split whole line
+                char *read_id = strdup(strsep_mine(&bufp, SEP)); // TODO quicker to just getdelim ? since don't want to split whole line
                 size = buf_len;
 
                 slow5_idx_insert(index, read_id, offset, size);
@@ -114,12 +114,12 @@ static void slow5_idx_read(struct slow5_idx *index) {
         buf[buf_len - 1] = '\0'; // Remove newline for later parsing
 
         bufp = buf;
-        char *read_id = strdup(strsep_cp(&bufp, SEP));
+        char *read_id = strdup(strsep_mine(&bufp, SEP));
 
-        char *offset_str = strsep_cp(&bufp, SEP);
+        char *offset_str = strsep_mine(&bufp, SEP);
         uint64_t offset = ato_uint64(offset_str);
 
-        char *size_str = strsep_cp(&bufp, SEP);
+        char *size_str = strsep_mine(&bufp, SEP);
         uint64_t size = ato_uint64(size_str);
 
         slow5_idx_insert(index, read_id, offset, size);
