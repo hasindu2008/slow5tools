@@ -10,7 +10,6 @@ struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt for
 
 // slow5 header
 struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format);
-inline void slow5_hdr_free(struct slow5_hdr *header);
 
 // slow5 header data
 khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, size_t cap, uint32_t num_rgs);

@@ -16,6 +16,7 @@
 // String buffer capacity for parsing the data header
 #define SLOW5_HEADER_DATA_BUF_INIT_CAP (1024) // 2^10 TODO is this too much? Or put to a page length
 
+inline void slow5_hdr_free(struct slow5_hdr *header);
 
 /* Definitions */
 
@@ -60,11 +61,12 @@ struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum 
 }
 
 // Can be used with slow5_open or slow5_init_fp
-void slow5_close(struct slow5_file *s5p) {
+int slow5_close(struct slow5_file *s5p) {
     NULL_CHK(s5p);
+    int ret = 0;
 
     if (!s5p->meta.is_fp_preowned) {
-        assert(fclose(s5p->fp) == 0);
+        ret = fclose(s5p->fp);
     }
 
     press_free(s5p->compress);
@@ -74,6 +76,8 @@ void slow5_close(struct slow5_file *s5p) {
     }
 
     free(s5p);
+
+    return ret;
 }
 
 
@@ -233,8 +237,6 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, s
                     kh_val(hdr_data[i], pos) = strdup(val);
 
                     ++ i;
-
-                    printf("%s -> %s\n", attr, val); // TESTING
                 }
                 // Ensure that read group number of entries are read
                 assert(i == num_rgs);
@@ -373,7 +375,6 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
                     // All columns parsed
                     default:
                         main_cols_parsed = true;
-                        printf("all main cols parsed\n"); // TESTING
                         break;
 
                 }
@@ -427,11 +428,13 @@ void slow5_rec_free(struct slow5_rec *read) {
 enum slow5_fmt name_get_slow5_fmt(const char *name) {
     enum slow5_fmt format = FORMAT_UNKNOWN;
 
-    for (size_t i = 0; i < sizeof SLOW5_FORMAT_META / sizeof SLOW5_FORMAT_META[0]; ++ i) {
-        const struct slow5_fmt_meta meta = SLOW5_FORMAT_META[i];
-        if (strcmp(meta.name, name) == 0) {
-            format = meta.format;
-            break;
+    if (name != NULL) {
+        for (size_t i = 0; i < sizeof SLOW5_FORMAT_META / sizeof SLOW5_FORMAT_META[0]; ++ i) {
+            const struct slow5_fmt_meta meta = SLOW5_FORMAT_META[i];
+            if (strcmp(meta.name, name) == 0) {
+                format = meta.format;
+                break;
+            }
         }
     }
 
@@ -442,12 +445,14 @@ enum slow5_fmt path_get_slow5_fmt(const char *path) {
     enum slow5_fmt format = FORMAT_UNKNOWN;
 
     // TODO change type from size_t
-    size_t i;
-    for (i = strlen(path) - 1; i >= 0; -- i) {
-        if (path[i] == '.') {
-            const char *ext = path + i + 1;
-            format = name_get_slow5_fmt(ext);
-            break;
+    if (path != NULL) {
+        size_t i;
+        for (i = strlen(path) - 1; i >= 0; -- i) {
+            if (path[i] == '.') {
+                const char *ext = path + i + 1;
+                format = name_get_slow5_fmt(ext);
+                break;
+            }
         }
     }
 
@@ -582,7 +587,7 @@ const uint8_t *str_get_slow5_version(const char *str) {
 }
 */
 
-int main(void) {
+//int main(void) {
 
     /*
     slow5_f = slow5_open("../test/data/out/a.out/test.slow5", "w");
@@ -603,7 +608,7 @@ int main(void) {
     //FILE *f_in = fopen("../test/data/err/version_too_large.slow5", "r");
     //FILE *f_out = fopen("hi.blow5", "w");
 
-    struct slow5_file *s5p = slow5_open("../test/data/exp/one_fast5/exp_1.slow5", "r");
+ //   struct slow5_file *s5p = slow5_open("../test/data/exp/one_fast5/exp_1.slow5", "r");
     //struct SLOW5 *slow5 = slow5_init_empty(void);
     //slow5_read(slow5, FORMAT_ASCII, f_in);
 
@@ -616,15 +621,17 @@ int main(void) {
 
     slow5_wconf_destroy(&conf);
     */
+/*
     slow5_hdr_print(s5p->header);
     struct slow5_rec *rec = NULL;
     slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &rec, s5p);
     slow5_rec_free(rec);
     slow5_close(s5p);
+    */
 
     //fclose(f_in);
     //fclose(f_out);
-}
+//}
 
 /*
 slow5_convert(Format from_format, Format to_format, FILE *from_file, FILE *to_file) {

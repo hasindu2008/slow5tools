@@ -118,7 +118,7 @@ int8_t slow5_vmerge(struct slow5_file *s5p_to, va_list ap);
 int8_t slow5_split(const char *dirname_to, struct slow5_file *s5p_from);
 
 // Close a slow5 file
-void slow5_close(struct slow5_file *s5p);
+int slow5_close(struct slow5_file *s5p);
 
 
 
