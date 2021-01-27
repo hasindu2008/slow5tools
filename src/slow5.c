@@ -4,6 +4,7 @@
 #include <string.h>
 #include <assert.h> // TODO use better error handling?
 #include "slow5.h"
+#include "slow5_extra.h"
 #include "slow5idx_clean.h"
 #include "press.h"
 #include "error.h"
@@ -15,27 +16,6 @@
 // String buffer capacity for parsing the data header
 #define SLOW5_HEADER_DATA_BUF_INIT_CAP (1024) // 2^10 TODO is this too much? Or put to a page length
 
-
-/* Private to this file */
-
-// slow5 file
-struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format, bool is_fp_preowned);
-
-// slow5 header
-struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format);
-inline void slow5_hdr_free(struct slow5_hdr *header);
-
-// slow5 header data
-khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, size_t cap, uint32_t num_rgs);
-void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs);
-
-// slow5 record
-
-// slow5 extension parsing
-enum slow5_fmt name_get_slow5_fmt(const char *name);
-enum slow5_fmt path_get_slow5_fmt(const char *path);
-const char *slow5_fmt_get_name(enum slow5_fmt format);
-char *get_slow5_idx_path(const char *path);
 
 /* Definitions */
 
@@ -124,10 +104,10 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
             buf[buf_len - 1] = '\0'; // Remove newline for later format parsing
             // "#file_format"
             bufp = buf;
-            char *tok = strsep(&bufp, SEP);
+            char *tok = strsep_cp(&bufp, SEP);
             assert(strcmp(tok, HEADER_FILE_FORMAT_ID) == 0);
             // Parse format name
-            tok = strsep(&bufp, SEP);
+            tok = strsep_cp(&bufp, SEP);
             assert(format == name_get_slow5_fmt(tok));
 
             // 2nd line
@@ -135,31 +115,31 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
             buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             // "#file_version"
             bufp = buf;
-            tok = strsep(&bufp, SEP);
+            tok = strsep_cp(&bufp, SEP);
             assert(strcmp(tok, HEADER_FILE_VERSION_ID) == 0);
             // Parse file version
-            tok = strsep(&bufp, SEP);
+            tok = strsep_cp(&bufp, SEP);
             header->version_str = strdup(tok);
             // Parse file version string
             // TODO necessary to parse it now?
             char *toksub;
-            assert((toksub = strsep(&tok, ".")) != NULL); // Major version
+            assert((toksub = strsep_cp(&tok, ".")) != NULL); // Major version
             header->version.major = ato_uint8(toksub);
-            assert((toksub = strsep(&tok, ".")) != NULL); // Minor version
+            assert((toksub = strsep_cp(&tok, ".")) != NULL); // Minor version
             header->version.minor = ato_uint8(toksub);
-            assert((toksub = strsep(&tok, ".")) != NULL); // Patch version
+            assert((toksub = strsep_cp(&tok, ".")) != NULL); // Patch version
             header->version.patch = ato_uint8(toksub);
-            assert(strsep(&tok, ".") == NULL); // No more tokenators
+            assert(strsep_cp(&tok, ".") == NULL); // No more tokenators
 
             // 3rd line
             assert((buf_len = getline(&buf, &cap, fp)) != -1);
             buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             // "#num_read_groups"
             bufp = buf;
-            tok = strsep(&bufp, SEP);
+            tok = strsep_cp(&bufp, SEP);
             assert(strcmp(tok, HEADER_NUM_GROUPS_ID) == 0);
             // Parse num read groups
-            tok = strsep(&bufp, SEP);
+            tok = strsep_cp(&bufp, SEP);
             header->num_read_groups = ato_uint32(tok);
 
             // Header data
@@ -237,12 +217,12 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, s
                 char *shift = buf + strlen(SLOW5_HEADER_DATA_PREFIX); // Remove prefix
 
                 // Get the attribute name
-                char *attr = strdup(strsep(&shift, SEP));
+                char *attr = strdup(strsep_cp(&shift, SEP));
                 char *val;
 
                 // Iterate through the values
                 uint32_t i = 0;
-                while ((val = strsep(&shift, SEP)) != NULL && i <= num_rgs - 1) {
+                while ((val = strsep_cp(&shift, SEP)) != NULL && i <= num_rgs - 1) {
 
                     // Set key
                     int absent;
@@ -336,7 +316,7 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
 
             char *tok;
             read_strp = read_str;
-            assert((tok = strsep(&read_strp, SEP)) != NULL);
+            assert((tok = strsep_cp(&read_strp, SEP)) != NULL);
 
             int i = 0;
             bool main_cols_parsed = false;
@@ -377,7 +357,7 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
                         MALLOC_CHK((*read)->raw_signal);
 
                         char *signal_tok;
-                        assert((signal_tok = strsep(&tok, SEP_RAW_SIGNAL)) != NULL);
+                        assert((signal_tok = strsep_cp(&tok, SEP_RAW_SIGNAL)) != NULL);
 
                         uint64_t j = 0;
 
@@ -385,7 +365,7 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
                         do {
                             ((*read)->raw_signal)[j] = ato_int16(signal_tok);
                             ++ j;
-                        } while ((signal_tok = strsep(&tok, SEP_RAW_SIGNAL)) != NULL);
+                        } while ((signal_tok = strsep_cp(&tok, SEP_RAW_SIGNAL)) != NULL);
                         assert(j == (*read)->len_raw_signal);
 
                     } break;
@@ -399,7 +379,7 @@ void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *
                 }
                 ++ i;
 
-            } while (!main_cols_parsed && (tok = strsep(&read_strp, SEP)) != NULL);
+            } while (!main_cols_parsed && (tok = strsep_cp(&read_strp, SEP)) != NULL);
 
             // All columns parsed
             if (i == SLOW5_COLS_NUM) {

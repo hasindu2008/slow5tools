@@ -94,7 +94,7 @@ static inline bool is_dir(const char *path) {
 }
 
 // From https://code.woboq.org/userspace/glibc/string/strsep.c.html
-char *strsep (char **stringp, const char *delim);
+char *strsep_cp (char **stringp, const char *delim);
 
 // Atoi but to xintx_t
 // and without any symbols
