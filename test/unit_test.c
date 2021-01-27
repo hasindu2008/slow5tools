@@ -90,6 +90,24 @@ int open_close_slow5_file(void) {
     return 1;
 }
 
+int open_with_close_slow5_file(void) {
+    struct slow5_file *s5p = slow5_open_with("test/data/exp/one_fast5/exp_1.slow5", "r", FORMAT_ASCII);
+    assert(s5p != NULL);
+    assert(slow5_close(s5p) == 0);
+
+    return 1;
+}
+
+/*
+int open_with_close_slow5_file_fail(void) {
+    struct slow5_file *s5p = slow5_open_with("test/data/exp/one_fast5/exp_1.slow5", "r", FORMAT_BINARY);
+    assert(s5p == NULL);
+    assert(slow5_close(s5p) == EOF);
+
+    return 1;
+}
+*/
+
 int get_read(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
     assert(s5p != NULL);
@@ -117,12 +135,82 @@ int get_read_and_print(void) {
     return 1;
 }
 
+int get_reads(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    assert(s5p != NULL);
+
+    struct slow5_rec *read = NULL;
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_rec_free(read);
+
+    assert(slow5_close(s5p) == 0);
+
+    return 1;
+}
+
+int get_next_read(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    assert(s5p != NULL);
+
+    struct slow5_rec *read = NULL;
+    slow5_get_next(&read, s5p);
+    slow5_rec_print(read);
+    slow5_rec_free(read);
+
+    assert(slow5_close(s5p) == 0);
+
+    return 1;
+}
+
+/*
+int get_next_read_empty(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    assert(s5p != NULL);
+
+    struct slow5_rec *read = NULL;
+    slow5_get_next(&read, s5p);
+    slow5_rec_print(read);
+    slow5_get_next(&read, s5p);
+    slow5_rec_print(read);
+    slow5_rec_free(read);
+
+    assert(slow5_close(s5p) == 0);
+
+    return 1;
+}
+*/
+
+int get_many_same_reads(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    assert(s5p != NULL);
+
+    struct slow5_rec *read = NULL;
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
+    slow5_rec_free(read);
+
+    assert(slow5_close(s5p) == 0);
+
+    return 1;
+}
+
 struct command tests[] = {
     CMD(test_path_get_slow5_fmt)
     CMD(test_name_get_slow5_fmt)
     CMD(open_close_slow5_file)
+    CMD(open_with_close_slow5_file)
+    //CMD(open_with_close_slow5_file_fail)
     CMD(get_read)
     CMD(get_read_and_print)
+    CMD(get_reads)
+    CMD(get_many_same_reads)
+    CMD(get_next_read)
 };
 
 int main(void) {
