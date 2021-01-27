@@ -50,7 +50,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install packages
-      run: brew install hdf5
+      run: brew install hdf5 autoconf automake
     - name: build
       run: autoreconf && ./configure && make -j8
     - name: test
@@ -60,6 +60,8 @@ jobs:
     runs-on: macos-11.0
     steps:
     - uses: actions/checkout@v2
+    - name: install packages
+      run: brew install hdf5 autoconf automake
     - name: build
       run: autoreconf && ./scripts/install-hdf5.sh 2> /dev/null && ./configure --enable-localhdf5 && make -j8
     - name: test
