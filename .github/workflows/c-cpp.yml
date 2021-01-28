@@ -63,6 +63,6 @@ jobs:
     - name: install packages
       run: brew install gcc autoconf automake
     - name: build
-      run: autoreconf && CC=gcc CXX=g++ CFLAGS= ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
+      run: autoreconf && CC=gcc CXX=g++ CFLAGS="-Wno-implicit-function-declaration" ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
       run: make test
