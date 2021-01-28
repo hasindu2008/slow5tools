@@ -153,3 +153,10 @@ uninstall:
 
 test: $(BINARY)
 	./test/test.sh
+
+pyslow5:
+	make clean
+	rm -rf *.so python/pyslow5.cpp build/lib.* build/temp.*
+	CC=g++ python3 setup.py build
+	cp build/lib.*/*.so  ./
+	python3 < python/example.py
