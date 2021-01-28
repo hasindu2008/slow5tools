@@ -16,7 +16,7 @@ static void slow5_idx_insert(struct slow5_idx *index, char *read_id, uint64_t of
 
 static inline struct slow5_idx *slow5_idx_init_empty(void) {
 
-    struct slow5_idx *index = calloc(1, sizeof *index);
+    struct slow5_idx *index = (struct slow5_idx *)calloc(1, sizeof *index);
     index->hash = kh_init(s2i);
 
     return index;
@@ -25,7 +25,7 @@ static inline struct slow5_idx *slow5_idx_init_empty(void) {
 // TODO return NULL if idx_init fails
 struct slow5_idx *slow5_idx_init(struct slow5_file *s5p, const char *index_pathname) {
 
-    struct slow5_idx *index = slow5_idx_init_empty();
+    struct slow5_idx *index = (struct slow5_idx *)slow5_idx_init_empty();
 
     FILE *index_fp;
 
