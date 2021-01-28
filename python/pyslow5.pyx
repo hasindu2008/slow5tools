@@ -11,6 +11,6 @@ def slow5_open_py(pathname, mode):
    p=str.encode(pathname)
    m=str.encode(mode)
    print(p,m)
-   cdef slow5_file_t *file = slow5_open(<const char *>p, <const char *>m)
+   #cdef slow5_file_t *file = slow5_open(<const char *>p, <const char *>m)
    #f = <long >file
    print(1)

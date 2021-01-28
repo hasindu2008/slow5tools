@@ -44,17 +44,17 @@ jobs:
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
-  os_x:
-    name: OSX
-    runs-on: macos-10.15
-    steps:
-    - uses: actions/checkout@v2
-    - name: install packages
-      run: brew install hdf5@1.10 autoconf automake
-    - name: build
-      run: autoreconf && ./configure && make -j8
-    - name: test
-      run: make test
+  # os_x:
+  #   name: OSX
+  #   runs-on: macos-10.15
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #   - name: install packages
+  #     run: brew install hdf5 autoconf automake
+  #   - name: build
+  #     run: autoreconf && ./configure && make -j8
+  #   - name: test
+  #     run: make test
   os_x2:
     name: OSX hdf5 hdf5 install script
     runs-on: macos-10.15
@@ -66,3 +66,12 @@ jobs:
       run: autoreconf && CC=gcc CXX=g++ CFLAGS="-Wno-implicit-function-declaration" ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
       run: make test
+  pyslow5_ubuntu_16:
+    name: pyslow5 Ubuntu 16
+    runs-on: ubuntu-16.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev python3-pip && pip3 install cython buildtools
+    - name: build
+      run: autoreconf && ./configure && make pyslow5

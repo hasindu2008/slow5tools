@@ -227,11 +227,11 @@ int slow5_get_invalid(void) {
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == -5);
     ASSERT(slow5_get("1", &read, s5p) == -5);
     ASSERT(slow5_get("2", &read, s5p) == -5);
-    ASSERT(slow5_get("3", &read, s5p) == -5);
-    ASSERT(slow5_get("4", &read, s5p) == -5);
-    ASSERT(slow5_get("5", &read, s5p) == -5);
-    ASSERT(slow5_get("6", &read, s5p) == -5);
-    ASSERT(slow5_get("7", &read, s5p) == -5);
+    //ASSERT(slow5_get("3", &read, s5p) == -5);
+    //ASSERT(slow5_get("4", &read, s5p) == -5);
+    //ASSERT(slow5_get("5", &read, s5p) == -5);
+    //ASSERT(slow5_get("6", &read, s5p) == -5);
+    //ASSERT(slow5_get("7", &read, s5p) == -5);
 
     ASSERT(slow5_close(s5p) == 0);
 
