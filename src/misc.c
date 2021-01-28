@@ -74,8 +74,11 @@ uint64_t ato_uint64(const char *str) {
         assert(str[i] >= 48 && str[i] <= 57);
     }
 
-    ret = strtoull(str, NULL, 10);
+    unsigned long long int tmp = strtoull(str, NULL, 10);
     assert(ret != ULLONG_MAX && errno != ERANGE);
+
+    assert(tmp <= UINT64_MAX);
+    ret = (uint64_t) tmp;
 
     return ret;
 }
@@ -95,8 +98,11 @@ uint32_t ato_uint32(const char *str) {
         assert(str[i] >= 48 && str[i] <= 57);
     }
 
-    ret = strtoul(str, NULL, 10);
-    assert(ret != ULONG_MAX && errno != ERANGE);
+    unsigned long int tmp = strtoul(str, NULL, 10);
+    assert(tmp != ULONG_MAX && errno != ERANGE);
+
+    assert(tmp <= UINT32_MAX);
+    ret = (uint32_t) tmp;
 
     return ret;
 }
