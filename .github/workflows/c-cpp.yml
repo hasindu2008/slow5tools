@@ -61,7 +61,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install packages
-      run: brew install gcc g++ autoconf automake
+      run: brew install gcc autoconf automake
     - name: build
       run: autoreconf && CC=gcc CXX=g++ CFLAGS= ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
