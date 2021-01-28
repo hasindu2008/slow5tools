@@ -1,4 +1,4 @@
-name: SlOW5 C/C++ CI
+name: SLOW5 C/C++ CI
 
 on:
   push:
