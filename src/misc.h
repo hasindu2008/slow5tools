@@ -12,6 +12,7 @@
 #include <sys/resource.h>
 #include <math.h>
 #include <stdint.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
