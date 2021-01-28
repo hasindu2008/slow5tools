@@ -1,4 +1,4 @@
-name: SlOW5 Cython CI
+name: SlOW5 pyslow5 CI
 
 on:
   push:
