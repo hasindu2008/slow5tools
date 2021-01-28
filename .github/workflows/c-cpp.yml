@@ -44,17 +44,17 @@ jobs:
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
-#  os_x:
-#    name: OSX
-#    runs-on: macos-10.15
-#    steps:
-#    - uses: actions/checkout@v2
-#    - name: install packages
-#      run: brew install hdf5 autoconf automake
-#    - name: build
-#      run: autoreconf && ./configure && make -j8
-#    - name: test
-#      run: make test
+  os_x:
+    name: OSX
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: brew install hdf5@1.10 autoconf automake
+    - name: build
+      run: autoreconf && ./configure && make -j8
+    - name: test
+      run: make test
   os_x2:
     name: OSX hdf5 hdf5 install script
     runs-on: macos-10.15
