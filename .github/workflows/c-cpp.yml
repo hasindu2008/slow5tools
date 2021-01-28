@@ -56,13 +56,13 @@ jobs:
 #    - name: test
 #      run: make test
   os_x2:
-    name: OSX hdf5 pure make
+    name: OSX hdf5 hdf5 install script
     runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
     - name: install packages
-      run: brew install autoconf automake
+      run: brew install gcc g++ autoconf automake
     - name: build
-      run: make
+      run: autoreconf && CC=gcc CXX=g++ CFLAGS= ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
       run: make test
