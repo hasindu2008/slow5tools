@@ -22,6 +22,7 @@ static inline struct slow5_idx *slow5_idx_init_empty(void) {
     return index;
 }
 
+// TODO return NULL if idx_init fails
 struct slow5_idx *slow5_idx_init(struct slow5_file *s5p, const char *index_pathname) {
 
     struct slow5_idx *index = slow5_idx_init_empty();
@@ -117,10 +118,17 @@ static void slow5_idx_read(struct slow5_idx *index) {
         char *read_id = strdup(strsep_mine(&bufp, SEP));
 
         char *offset_str = strsep_mine(&bufp, SEP);
-        uint64_t offset = ato_uint64(offset_str);
+        int err;
+        uint64_t offset = ato_uint64(offset_str, &err);
+        if (err == -1) {
+            // TODO handle
+        }
 
         char *size_str = strsep_mine(&bufp, SEP);
-        uint64_t size = ato_uint64(size_str);
+        uint64_t size = ato_uint64(size_str, &err);
+        if (err == -1) {
+            // TODO handle
+        }
 
         slow5_idx_insert(index, read_id, offset, size);
     }
@@ -154,13 +162,19 @@ static void slow5_idx_insert(struct slow5_idx *index, char *read_id, uint64_t of
     read_index->size = size;
 }
 
-struct slow5_rec_idx slow5_idx_get(struct slow5_idx *index, const char *read_id) {
-    // TODO null check?
+// -1 if read_id not in the hash map
+// 0 otherwise
+int slow5_idx_get(struct slow5_idx *index, const char *read_id, struct slow5_rec_idx *read_index) {
+    int ret = 0;
 
     khint_t pos = kh_get(s2i, index->hash, read_id);
-    assert(pos != kh_end(index->hash));
+    if (pos == kh_end(index->hash)) {
+        ret = -1;
+    } else {
+        *read_index = kh_value(index->hash, pos);
+    }
 
-    return kh_value(index->hash, pos);
+    return ret;
 }
 
 void slow5_idx_free(struct slow5_idx *index) {
