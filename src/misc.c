@@ -59,124 +59,169 @@ strsep_mine (char **stringp, const char *delim)
   return begin;
 }
 
+int int_check(const char *str) {
+
+    // Check for:
+    // empty string
+    // first number is not 0 if more letters in string
+    if (strlen(str) == 0 || (strlen(str) > 1 && str[0] == '0')) {
+        return -1;
+    }
+
+    // Ensure only integers in string
+    for (size_t i = 0; i < strlen(str); ++ i) {
+        if (!(str[i] >= '0' && str[i] <= '9')) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+int float_check(const char *str) {
+
+    // Ensure no empty string
+    if (strlen(str) == 0) {
+        return -1;
+    }
+
+    // Ensure only integers in string or '.'
+    for (size_t i = 0; i < strlen(str); ++ i) {
+        if (!((str[i] >= '0' && str[i] <= '9') || str[i] == '.')) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 // Atoi but to uint64_t
 // and without any symbols
 // and without 0 prefixing
-uint64_t ato_uint64(const char *str) {
+uint64_t ato_uint64(const char *str, int *err) {
     uint64_t ret = 0;
 
-    // Ensure first number is not 0 if more letters in string
-    if (strlen(str) > 1) {
-        assert(str[0] != '0');
-    }
-    // Ensure only integers in string
-    for (size_t i = 0; i < strlen(str); ++ i) {
-        assert(str[i] >= 48 && str[i] <= 57);
+    if (int_check(str) == -1) {
+        *err = -1;
+        return ret;
     }
 
     unsigned long long int tmp = strtoull(str, NULL, 10);
-    assert(ret != ULLONG_MAX && errno != ERANGE);
+    if (ret == ULLONG_MAX && errno == ERANGE) {
+        *err = -1;
+        return ret;
+    }
 
-    assert(tmp <= UINT64_MAX);
+    if (tmp > UINT64_MAX) {
+        *err = -1;
+        return ret;
+    }
+
     ret = (uint64_t) tmp;
-
+    *err = 0;
     return ret;
 }
 
 // Atoi but to uint32_t
 // and without any symbols
 // and without 0 prefixing
-uint32_t ato_uint32(const char *str) {
+uint32_t ato_uint32(const char *str, int *err) {
     uint32_t ret = 0;
-
-    // Ensure first number is not 0 if more letters in string
-    if (strlen(str) > 1) {
-        assert(str[0] != '0');
-    }
-    // Ensure only integers in string
-    for (size_t i = 0; i < strlen(str); ++ i) {
-        assert(str[i] >= 48 && str[i] <= 57);
+    if (int_check(str) == -1) {
+        *err = -1;
+        return ret;
     }
 
     unsigned long int tmp = strtoul(str, NULL, 10);
-    assert(tmp != ULONG_MAX && errno != ERANGE);
+    if (tmp == ULONG_MAX && errno == ERANGE) {
+        *err = -1;
+        return ret;
+    }
 
-    assert(tmp <= UINT32_MAX);
+    if (tmp > UINT32_MAX) {
+        *err = -1;
+        return ret;
+    }
+
     ret = (uint32_t) tmp;
-
+    *err = 0;
     return ret;
 }
 
 // Atoi but to uint8_t
 // and without any symbols
 // and without 0 prefixing
-uint8_t ato_uint8(const char *str) {
+uint8_t ato_uint8(const char *str, int *err) {
     uint8_t ret = 0;
-
-    // Ensure first number is not 0 if more letters in string
-    if (strlen(str) > 1) {
-        assert(str[0] != '0');
-    }
-    // Ensure only integers in string
-    for (size_t i = 0; i < strlen(str); ++ i) {
-        assert(str[i] >= 48 && str[i] <= 57);
+    if (int_check(str) == -1) {
+        *err = -1;
+        return ret;
     }
 
     unsigned long int tmp = strtoul(str, NULL, 10);
-    assert(tmp <= UINT8_MAX);
-    ret = (uint8_t) tmp;
+    if (tmp > UINT8_MAX) {
+        *err = -1;
+        return ret;
+    }
 
+    ret = (uint8_t) tmp;
+    *err = 0;
     return ret;
 }
 
 // Atoi but to int16_t
 // and without any symbols
 // and without 0 prefixing
-int16_t ato_int16(const char *str) {
+int16_t ato_int16(const char *str, int *err) {
     uint8_t ret = 0;
-
-    // Ensure first number is not 0 if more letters in string
-    if (strlen(str) > 1) {
-        assert(str[0] != '0');
-    }
-    // Ensure only integers in string
-    for (size_t i = 0; i < strlen(str); ++ i) {
-        assert(str[i] >= 48 && str[i] <= 57);
+    if (int_check(str) == -1) {
+        *err = -1;
+        return ret;
     }
 
     long int tmp = strtol(str, NULL, 10);
-    assert(tmp <= INT16_MAX && tmp >= INT16_MIN);
+    if (tmp > INT16_MAX || tmp < INT16_MIN) {
+        *err = -1;
+        return ret;
+    }
+
     ret = (int16_t) tmp;
-
+    *err = 0;
     return ret;
 }
 
-double strtod_check(const char *str) {
+double strtod_check(const char *str, int *err) {
+    double ret = 0;
 
-    // Ensure only integers in string or '.'
-    for (size_t i = 0; i < strlen(str); ++ i) {
-        assert((str[i] >= 48 && str[i] <= 57) || str[i] == '.');
+    if (float_check(str) == -1) {
+        *err = -1;
+        return ret;
     }
 
-    double ret = strtod(str, NULL);
-    if (errno == ERANGE) {
-        assert(ret != HUGE_VAL && ret != -HUGE_VAL && ret != 0);
+    ret = strtod(str, NULL);
+    if (errno == ERANGE && (ret == HUGE_VAL || ret == -HUGE_VAL || ret == (double) 0)) {
+        *err = -1;
+        return ret;
     }
 
+    *err = 0;
     return ret;
 }
 
-float strtof_check(const char *str) {
+float strtof_check(const char *str, int *err) {
+    float ret = 0;
 
-    // Ensure only integers in string or '.'
-    for (size_t i = 0; i < strlen(str); ++ i) {
-        assert((str[i] >= 48 && str[i] <= 57) || str[i] == '.');
+    if (float_check(str) == -1) {
+        *err = -1;
+        return ret;
     }
 
-    double ret = strtof(str, NULL);
-    if (errno == ERANGE) {
-        assert(ret != HUGE_VAL && ret != -HUGE_VAL && ret != 0);
+    ret = strtof(str, NULL);
+    if (errno == ERANGE && (ret == HUGE_VAL || ret == -HUGE_VAL || ret == (float) 0)) {
+        *err = -1;
+        return ret;
     }
 
+    *err = 0;
     return ret;
 }

@@ -100,14 +100,14 @@ char *strsep_mine (char **stringp, const char *delim);
 // Atoi but to xintx_t
 // and without any symbols
 // and without 0 prefixing
-uint8_t ato_uint8(const char *str);
-uint32_t ato_uint32(const char *str);
-uint64_t ato_uint64(const char *str);
-int16_t ato_int16(const char *str);
+uint8_t ato_uint8(const char *str, int *err);
+uint32_t ato_uint32(const char *str, int *err);
+uint64_t ato_uint64(const char *str, int *err);
+int16_t ato_int16(const char *str, int *err);
 
 // Strox but
 // without any symbols and spaces
-double strtod_check(const char *str);
-float strtof_check(const char *str);
+double strtod_check(const char *str, int *err);
+float strtof_check(const char *str, int *err);
 
 #endif

@@ -81,7 +81,6 @@ struct slow5_rec {
 // SLOW5 file meta
 struct slow5_file_meta {
     const char *pathname;
-    bool is_fp_preowned;
     int fd;
     //enum press_mtd compress_hint;
 };
@@ -99,10 +98,38 @@ struct slow5_file {
 
 /* Public API */
 
-// Open a slow5 file
+/**
+ * Open a slow5 file with a specific mode given it's pathname.
+ *
+ * Attempt to guess the file's slow5 format from the pathname's extension.
+ * Return NULL if pathname or mode is NULL,
+ * or if the pathname's extension is not recognised,
+ * of if the pathname is invalid.
+ *
+ * Otherwise, return a slow5 file structure with the header parsed.
+ * slow5_close() should be called when finished with the structure.
+ *
+ * @param   pathname    relative or absolute path to slow5 file
+ * @param   mode        same mode as in fopen()
+ * @return              slow5 file structure
+ */
 struct slow5_file *slow5_open(const char *pathname, const char *mode);
+
+/**
+ * Open a slow5 file of a specific format with a mode given it's pathname.
+ *
+ * Return NULL if pathname or mode is NULL, or if the format specified doesn't match the file.
+ * slow5_open_with(pathname, mode, FORMAT_UNKNOWN) is equivalent to slow5_open(pathname, mode).
+ *
+ * Otherwise, return a slow5 file structure with the header parsed.
+ * slow5_close() should be called when finished with the structure.
+ *
+ * @param   pathname    relative or absolute path to slow5 file
+ * @param   mode        same mode as in fopen()
+ * @param   format      format of the slow5 file
+ * @return              slow5 file structure
+ */
 struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum slow5_fmt format);
-//struct slow5_file *slow5_init_fp(FILE *fp, enum slow5_fmt format);
 
 // Write from a slow5 file to another slow5 file
 int8_t slow5_write(struct slow5_file *s5p_to, struct slow5_file *s5p_from); // TODO decide return type
@@ -117,13 +144,37 @@ int8_t slow5_vmerge(struct slow5_file *s5p_to, va_list ap);
 // TODO split into multiple slow5 files from same rg
 int8_t slow5_split(const char *dirname_to, struct slow5_file *s5p_from);
 
-// Close a slow5 file
+/**
+ * Close a slow5 file and free its memory.
+ *
+ * @param   s5p slow5 file structure
+ * @return      same as fclose()
+ */
 int slow5_close(struct slow5_file *s5p);
 
 
 
-// Get a read entry
-void slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s5p);
+/**
+ * Get a read entry from a slow5 file corresponding to a read_id.
+ *
+ * Allocates memory for *read if it is NULL.
+ * Otherwise, the data in *read is freed and overwritten.
+ * slow5_rec_free() should be called when finished with the structure.
+ *
+ * Return
+ *  0   the read was successfully found and stored
+ * -1   read_id, read or s5p is NULL
+ * -2   the index was not previously init and failed to init
+ * -3   read_id was not found in the index
+ * -4   reading error when reading the slow5 file
+ * -5   parsing error
+ *
+ * @param   read_id the read identifier
+ * @param   read    address of a slow5_rec pointer
+ * @param   s5p     slow5 file
+ * @return  error code described above
+ */
+int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s5p);
 
 // Get next read entry under file pointer
 void slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p);

@@ -6,7 +6,7 @@
 
 
 // slow5 file
-struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format, bool is_fp_preowned);
+struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format);
 
 // slow5 header
 struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format);
@@ -17,7 +17,7 @@ void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs);
 
 // slow5 record
 void slow5_rec_free_most(struct slow5_rec *read);
-void slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read, enum slow5_fmt format);
+int slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read, enum slow5_fmt format);
 
 // slow5 extension parsing
 enum slow5_fmt name_get_slow5_fmt(const char *name);
