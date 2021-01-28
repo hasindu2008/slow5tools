@@ -1,17 +1,55 @@
-#!/bin/bash
+#!/bin/sh
 
-./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null || exit 1
+if [ "$1" = "mem" ]; then
+    mem=1
+else
+    mem=0
+fi
 
-gcc -Wall test/endian_test.c -o test/endian_test && test/endian_test
+echo_test() {
+    printf "\n--%s--\n" "$1"
+}
 
-if gcc -Wall -Werror -g test/unit_test.c -o test/unit_test src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
-    echo "compiled"
-    if test/unit_test > test/unit_test_out.txt; then
-        echo "success"
-        exit 0
+ex() {
+    if [ $mem -eq 1 ]; then
+        valgrind "$@"
     else
-        exit 1
+        "$@"
+    fi
+}
+
+fail() {
+    echo "FAILURE"
+    ret=1
+}
+
+not_compiled() {
+    echo "NOT COMPILED"
+    ret=1
+}
+
+ret=0
+
+echo_test "cli test"
+if ! ex ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null; then
+    fail
+fi
+
+echo_test "endian test"
+if gcc -Wall test/endian_test.c -o test/endian_test; then
+    ex test/endian_test
+else
+    not_compiled
+fi
+
+
+echo_test "unit test"
+if gcc -Wall -Werror -g test/unit_test.c -o test/unit_test src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
+    if ! ex test/unit_test > test/unit_test_out.txt; then
+        fail
     fi
 else
-    exit 1
+    not_compiled
 fi
+
+exit $ret

@@ -8,10 +8,10 @@ static inline int ed_is_big(void)
 
 int main(){
     if(ed_is_big()){
-        puts("big endian\n");
+        puts("big endian");
     }
     else{
-        puts("little endian\n");
+        puts("little endian");
     }
     return 0;
 }

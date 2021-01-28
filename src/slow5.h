@@ -162,6 +162,7 @@ int slow5_close(struct slow5_file *s5p);
  * slow5_rec_free() should be called when finished with the structure.
  *
  * Return
+ * TODO are these error codes too much?
  *  0   the read was successfully found and stored
  * -1   read_id, read or s5p is NULL
  * -2   the index was not previously init and failed to init
@@ -176,8 +177,26 @@ int slow5_close(struct slow5_file *s5p);
  */
 int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s5p);
 
-// Get next read entry under file pointer
-void slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p);
+/**
+ * Get the read entry under the current file pointer of a slow5 file.
+ *
+ * Allocates memory for *read if it is NULL.
+ * Otherwise, the data in *read is freed and overwritten.
+ * slow5_rec_free() should be called when finished with the structure.
+ *
+ * Return
+ * TODO are these error codes too much?
+ *  0   the read was successfully found and stored
+ * -1   read_id, read or s5p is NULL
+ * -2   the index was not previously init and failed to init
+ * -3   reading error when reading the slow5 file
+ * -4   parsing error
+ *
+ * @param   read    address of a slow5_rec pointer
+ * @param   s5p     slow5 file
+ * @return  error code described above
+ */
+int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p);
 
 // Print read entry
 int slow5_rec_fprint(FILE *fp, struct slow5_rec *read);

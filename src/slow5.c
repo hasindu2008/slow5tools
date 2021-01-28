@@ -392,8 +392,6 @@ int slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read,
     int ret = 0;
     uint64_t prev_len_raw_signal = 0;
 
-    printf("%s\n", read_str); // TESTING
-
     switch (format) {
 
         case FORMAT_UNKNOWN:
@@ -410,7 +408,6 @@ int slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read,
             bool main_cols_parsed = false;
             int err;
             do {
-                printf("%s\n", tok); // TESTING
                 switch (i) {
                     case COL_read_id:
                         // Ensure line matches requested id
@@ -533,10 +530,37 @@ int slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read,
     return ret;
 }
 
-void slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
-    NULL_CHK(read);
-    NULL_CHK(s5p);
+/**
+ * Get the read entry under the current file pointer of a slow5 file.
+ *
+ * Allocates memory for *read if it is NULL.
+ * Otherwise, the data in *read is freed and overwritten.
+ * slow5_rec_free() should be called when finished with the structure.
+ *
+ * Return
+ * TODO are these error codes too much?
+ *  0   the read was successfully found and stored
+ * -1   read_id, read or s5p is NULL
+ * -2   reading error when reading the slow5 file
+ * -3   parsing error
+ *
+ * @param   read    address of a slow5_rec pointer
+ * @param   s5p     slow5 file
+ * @return  error code described above
+ */
+int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
+    if (read == NULL || s5p == NULL) {
+        return -1;
+    }
+
+    int ret = 0;
     char *read_str = NULL;
+
+    size_t cap = 0;
+    ssize_t read_len;
+    if ((read_len = getline(&read_str, &cap, s5p->fp)) == -1) {
+        return -2;
+    }
 
     if (*read == NULL) {
         // Allocate memory for read
@@ -546,16 +570,16 @@ void slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
         free((*read)->str);
         free((*read)->read_id);
     }
-
-    size_t cap = 0;
-    ssize_t read_len;
-    assert((read_len = getline(&read_str, &cap, s5p->fp)) != -1);
     (*read)->str = strdup(read_str);
 
     read_str[read_len - 1] = '\0'; // Remove newline for later parsing
 
-    slow5_rec_parse(read_str, NULL, *read, s5p->format);
+    if (slow5_rec_parse(read_str, NULL, *read, s5p->format) == -1) {
+        ret = -3;
+    }
     free(read_str);
+
+    return ret;
 }
 
 // Print read entry

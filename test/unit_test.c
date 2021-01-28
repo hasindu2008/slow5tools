@@ -3,7 +3,13 @@
 #include "slow5.h"
 #include "slow5_extra.h"
 
-#define ASSERT(statement) if (!(statement)) {fprintf(stderr, "assertion `%s' failed\n", #statement); return EXIT_FAILURE;}
+static char assert_fail[256];
+
+#define ASSERT(statement) \
+if (!(statement)) { \
+    sprintf(assert_fail, "assertion `%s' failed", #statement); \
+    return EXIT_FAILURE; \
+}
 
 #define CMD(foo) {#foo, foo},
 
@@ -227,11 +233,38 @@ int slow5_get_invalid(void) {
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == -5);
     ASSERT(slow5_get("1", &read, s5p) == -5);
     ASSERT(slow5_get("2", &read, s5p) == -5);
-    //ASSERT(slow5_get("3", &read, s5p) == -5);
-    //ASSERT(slow5_get("4", &read, s5p) == -5);
-    //ASSERT(slow5_get("5", &read, s5p) == -5);
-    //ASSERT(slow5_get("6", &read, s5p) == -5);
-    //ASSERT(slow5_get("7", &read, s5p) == -5);
+    ASSERT(slow5_get("3", &read, s5p) == -5);
+    ASSERT(slow5_get("4", &read, s5p) == -5);
+    ASSERT(slow5_get("5", &read, s5p) == -5);
+    ASSERT(slow5_get("6", &read, s5p) == -5);
+    ASSERT(slow5_get("7", &read, s5p) == -5);
+
+    ASSERT(slow5_close(s5p) == 0);
+
+    return EXIT_SUCCESS;
+}
+
+int slow5_get_next_valid(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    ASSERT(s5p != NULL);
+
+    struct slow5_rec *read = NULL;
+    ASSERT(slow5_get_next(&read, s5p) == 0);
+    slow5_rec_free(read);
+
+    ASSERT(slow5_close(s5p) == 0);
+
+    return EXIT_SUCCESS;
+}
+
+int slow5_get_next_null(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    ASSERT(s5p != NULL);
+
+    struct slow5_rec *read = NULL;
+    ASSERT(slow5_get_next(NULL, s5p) == -1);
+    ASSERT(slow5_get_next(&read, NULL) == -1);
+    ASSERT(slow5_get_next(NULL, NULL) == -1);
 
     ASSERT(slow5_close(s5p) == 0);
 
@@ -260,20 +293,6 @@ int get_reads(void) {
     struct slow5_rec *read = NULL;
     slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
     slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p);
-    slow5_rec_free(read);
-
-    ASSERT(slow5_close(s5p) == 0);
-
-    return EXIT_SUCCESS;
-}
-
-int get_next_read(void) {
-    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
-    ASSERT(s5p != NULL);
-
-    struct slow5_rec *read = NULL;
-    slow5_get_next(&read, s5p);
-    slow5_rec_print(read);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -327,23 +346,31 @@ struct command tests[] = {
 
     CMD(slow5_open_with_valid)
     CMD(slow5_open_with_null)
-    //CMD(slow5_open_with_invalid)
+    CMD(slow5_open_with_invalid)
 
     CMD(slow5_get_valid)
     CMD(slow5_get_null)
     CMD(slow5_get_invalid)
+
+    CMD(slow5_get_next_valid)
+    CMD(slow5_get_next_null)
 };
 
 int main(void) {
     int test_n = sizeof (tests) / sizeof (struct command);
     int ret = EXIT_SUCCESS;
+    int n_passed = 0;
 
     for (int i = 0; i < test_n; ++ i) {
         if (tests[i].exe() == EXIT_FAILURE) {
-            fprintf(stderr, "failed: %s\n", tests[i].str);
+            fprintf(stderr, "%s\t\t%s\n", tests[i].str, assert_fail);
             ret = EXIT_FAILURE;
+        } else {
+            ++ n_passed;
         }
     }
+
+    fprintf(stderr, "%d/%d\n", n_passed, test_n);
 
     return ret;
 }
