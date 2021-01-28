@@ -1,4 +1,4 @@
-name: SlOW5 Cython CI
+name: C/C++ CI
 
 on:
   push:
@@ -7,12 +7,17 @@ on:
     branches: [ master ]
 
 jobs:
-  ubuntu_16:
-    name: Ubuntu 16
-    runs-on: ubuntu-16.04
+  build:
+
+    runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
-    - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev python3-pip && pip3 install cython setuptools
-    - name: build
-      run: autoreconf && ./configure && make pyslow5
+    - name: configure
+      run: ./configure
+    - name: make
+      run: make
+    - name: make check
+      run: make check
+    - name: make distcheck
+      run: make distcheck
