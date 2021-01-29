@@ -8,7 +8,7 @@ on:
 
 jobs:
   simple_install:
-    name: Linux x86
+    name: Linux
     runs-on: ${{ matrix.runners }}
     strategy:
       matrix:
@@ -20,7 +20,7 @@ jobs:
     - name: test
       run: make test
   hdf5_compile:
-    name: Linux x86 hdf5 install script
+    name: Linux hdf5 install script
     runs-on: ${{ matrix.runners }}
     strategy:
       matrix:
@@ -32,9 +32,9 @@ jobs:
     - name: test
       run: make test
     - name: valgrind
-      run: valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
+      run: ./test/test.sh mem
   pyslow5:
-    name: pyslow5 Linux x86
+    name: pyslow5 Linux
     runs-on: ${{ matrix.runners }}
     strategy:
       matrix:
