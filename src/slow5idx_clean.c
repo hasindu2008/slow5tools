@@ -17,6 +17,7 @@ static void slow5_idx_insert(struct slow5_idx *index, char *read_id, uint64_t of
 static inline struct slow5_idx *slow5_idx_init_empty(void) {
 
     struct slow5_idx *index = (struct slow5_idx *) calloc(1, sizeof *index);
+    MALLOC_CHK(index);
     index->hash = kh_init(s2i);
 
     return index;
@@ -46,6 +47,7 @@ static void slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
 
     size_t cap = BUF_INIT_CAP;
     char *buf = (char *) malloc(cap * sizeof *buf);
+    MALLOC_CHK(buf);
     ssize_t buf_len;
 
     uint64_t offset = 0;

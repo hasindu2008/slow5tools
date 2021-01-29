@@ -559,6 +559,7 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
     size_t cap = 0;
     ssize_t read_len;
     if ((read_len = getline(&read_str, &cap, s5p->fp)) == -1) {
+        free(read_str);
         return -2;
     }
 

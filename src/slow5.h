@@ -188,9 +188,8 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
  * TODO are these error codes too much?
  *  0   the read was successfully found and stored
  * -1   read_id, read or s5p is NULL
- * -2   the index was not previously init and failed to init
- * -3   reading error when reading the slow5 file
- * -4   parsing error
+ * -2   reading error when reading the slow5 file
+ * -3   parsing error
  *
  * @param   read    address of a slow5_rec pointer
  * @param   s5p     slow5 file

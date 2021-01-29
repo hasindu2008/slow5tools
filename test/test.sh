@@ -12,7 +12,9 @@ echo_test() {
 
 ex() {
     if [ $mem -eq 1 ]; then
-        valgrind "$@"
+        if ! valgrind --leak-check=full --error-exitcode=1 "$@"; then
+            fail
+        fi
     else
         "$@"
     fi
