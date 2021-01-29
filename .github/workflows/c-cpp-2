@@ -1,0 +1,42 @@
+name: SLOW5 C/C++ CI 2
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  linux_x86:
+    name: Linux x86
+    runs-on: linux-x86
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
+    - name: build
+      run: autoreconf && ./configure && make -j8
+    - name: test
+      run: make test
+  linux_x86_script:
+    name: Linux x86 hdf5 install script
+    runs-on: linux-x86
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev valgrind
+    - name: build
+      run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
+    - name: test
+      run: make test
+    - name: valgrind
+      run: valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
+  pyslow5_linux_x86:
+    name: pyslow5 Linux x86
+    runs-on: linux-x86
+    steps:
+    - uses: actions/checkout@v2
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev python3-pip && pip3 install setuptools cython
+    - name: build
+      run: autoreconf && ./configure && make pyslow5
