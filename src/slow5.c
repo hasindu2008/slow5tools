@@ -220,6 +220,35 @@ void slow5_hdr_print(const struct slow5_hdr *header) {
             header->num_read_groups);
 }
 
+/**
+ * Get a header data attribute.
+ *
+ * Returns NULL if the attribute name doesn't exist
+ * or an input parameter is NULL.
+ *
+ * @param   attr    attribute name
+ * @param   s5p     slow5 file
+ * @return  the attribute's value, or NULL on error
+ */
+char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_file *s5p) {
+    char *value;
+
+    if (attr == NULL || s5p == NULL || read_group >= s5p->header->num_read_groups) {
+        return NULL;
+    }
+
+    khash_t(s2s) *hdr_data = s5p->header->data[read_group];
+
+    khint_t pos = kh_get(s2s, hdr_data, attr);
+    if (pos == kh_end(hdr_data)) {
+        return NULL;
+    } else {
+        value = kh_value(hdr_data, pos);
+    }
+
+    return value;
+}
+
 void slow5_hdr_free(struct slow5_hdr *header) {
     NULL_CHK(header); //TODO needed or not?
 
@@ -428,7 +457,7 @@ int slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read,
                         break;
 
                     case COL_digitisation:
-                        read->digitisation = strtof_check(tok, &err);
+                        read->digitisation = strtod_check(tok, &err);
                         if (err == -1) {
                             ret = -1;
                         }

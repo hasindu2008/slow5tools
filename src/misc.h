@@ -105,9 +105,9 @@ uint32_t ato_uint32(const char *str, int *err);
 uint64_t ato_uint64(const char *str, int *err);
 int16_t ato_int16(const char *str, int *err);
 
-// Strox but
-// without any symbols and spaces
+// Strtod but
+// without any symbols, spaces
+// only in decimal form
 double strtod_check(const char *str, int *err);
-float strtof_check(const char *str, int *err);
 
 #endif

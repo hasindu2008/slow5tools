@@ -9,10 +9,14 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 #include "misc.h"
 #include "error.h"
 #include "fast5.h"
 
+int uint_check(const char *str);
+int int_check(const char *str);
+int float_check(const char *str);
 
 // FAST5
 
@@ -59,6 +63,25 @@ strsep_mine (char **stringp, const char *delim)
   return begin;
 }
 
+int uint_check(const char *str) {
+
+    // Check for:
+    // empty string
+    // first number is not 0 if more letters in string
+    if (strlen(str) == 0 || (strlen(str) > 1 && str[0] == '0')) {
+        return -1;
+    }
+
+    // Ensure only integers in string
+    for (size_t i = 0; i < strlen(str); ++ i) {
+        if (!isdigit(str[i])) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 int int_check(const char *str) {
 
     // Check for:
@@ -70,7 +93,7 @@ int int_check(const char *str) {
 
     // Ensure only integers in string
     for (size_t i = 0; i < strlen(str); ++ i) {
-        if (!(str[i] >= '0' && str[i] <= '9')) {
+        if (!(isdigit(str[i]) || str[i] == '-')) {
             return -1;
         }
     }
@@ -85,9 +108,9 @@ int float_check(const char *str) {
         return -1;
     }
 
-    // Ensure only integers in string or '.'
+    // Ensure only integers in string, '.', '-'
     for (size_t i = 0; i < strlen(str); ++ i) {
-        if (!((str[i] >= '0' && str[i] <= '9') || str[i] == '.')) {
+        if (!(isdigit(str[i]) || str[i] == '.' || str[i] == '-')) {
             return -1;
         }
     }
@@ -101,7 +124,7 @@ int float_check(const char *str) {
 uint64_t ato_uint64(const char *str, int *err) {
     uint64_t ret = 0;
 
-    if (int_check(str) == -1) {
+    if (uint_check(str) == -1) {
         *err = -1;
         return ret;
     }
@@ -127,7 +150,7 @@ uint64_t ato_uint64(const char *str, int *err) {
 // and without 0 prefixing
 uint32_t ato_uint32(const char *str, int *err) {
     uint32_t ret = 0;
-    if (int_check(str) == -1) {
+    if (uint_check(str) == -1) {
         *err = -1;
         return ret;
     }
@@ -153,7 +176,7 @@ uint32_t ato_uint32(const char *str, int *err) {
 // and without 0 prefixing
 uint8_t ato_uint8(const char *str, int *err) {
     uint8_t ret = 0;
-    if (int_check(str) == -1) {
+    if (uint_check(str) == -1) {
         *err = -1;
         return ret;
     }
@@ -173,7 +196,7 @@ uint8_t ato_uint8(const char *str, int *err) {
 // and without any symbols
 // and without 0 prefixing
 int16_t ato_int16(const char *str, int *err) {
-    uint8_t ret = 0;
+    int16_t ret = 0;
     if (int_check(str) == -1) {
         *err = -1;
         return ret;
@@ -200,24 +223,6 @@ double strtod_check(const char *str, int *err) {
 
     ret = strtod(str, NULL);
     if (errno == ERANGE && (ret == HUGE_VAL || ret == -HUGE_VAL || ret == (double) 0)) {
-        *err = -1;
-        return ret;
-    }
-
-    *err = 0;
-    return ret;
-}
-
-float strtof_check(const char *str, int *err) {
-    float ret = 0;
-
-    if (float_check(str) == -1) {
-        *err = -1;
-        return ret;
-    }
-
-    ret = strtof(str, NULL);
-    if (errno == ERANGE && (ret == HUGE_VAL || ret == -HUGE_VAL || ret == (float) 0)) {
         *err = -1;
         return ret;
     }

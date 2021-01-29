@@ -16,7 +16,6 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, s
 void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs);
 
 // slow5 record
-void slow5_rec_free_most(struct slow5_rec *read);
 int slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read, enum slow5_fmt format);
 
 // slow5 extension parsing

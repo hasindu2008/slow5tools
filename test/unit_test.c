@@ -2,11 +2,10 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <limits.h>
+#include <float.h>
 #include "slow5.h"
 #include "slow5_extra.h"
 #include "misc.h"
-
-static char assert_fail[256];
 
 #define ASSERT(statement) \
 if (!(statement)) { \
@@ -16,12 +15,21 @@ if (!(statement)) { \
 
 #define CMD(foo) {#foo, foo},
 
+#define APPROX_MARGIN (1e-100)
+
+static char assert_fail[256];
+
 typedef struct command command_t;
 
 struct command {
 	const char *str;
 	int (*exe)(void);
 };
+
+bool approx(double x, double y) {
+    return ((x - y) <= APPROX_MARGIN &&
+            (x - y) >= -APPROX_MARGIN);
+}
 
 int ato_xintx_valid(void) {
     int err;
@@ -48,6 +56,231 @@ int ato_xintx_valid(void) {
     sprintf(buf, "%" PRIu32, UINT32_MAX);
     ASSERT(ato_uint32(buf, &err) == UINT32_MAX);
     ASSERT(err == 0);
+
+    ASSERT(ato_uint64("0", &err) == 0);
+    ASSERT(err == 0);
+    ASSERT(ato_uint64("1", &err) == 1);
+    ASSERT(err == 0);
+    ASSERT(ato_uint64("100", &err) == 100);
+    ASSERT(err == 0);
+    ASSERT(ato_uint64("2000", &err) == 2000);
+    ASSERT(err == 0);
+    sprintf(buf, "%" PRIu32, UINT32_MAX);
+    ASSERT(ato_uint64(buf, &err) == UINT32_MAX);
+    ASSERT(err == 0);
+    sprintf(buf, "%" PRId64, INT64_MAX);
+    ASSERT(ato_uint64(buf, &err) == INT64_MAX);
+    ASSERT(err == 0);
+    sprintf(buf, "%" PRIu64, UINT64_MAX);
+    ASSERT(ato_uint64(buf, &err) == UINT64_MAX);
+    ASSERT(err == 0);
+
+    sprintf(buf, "%" PRId16, INT16_MIN);
+    ASSERT(ato_int16(buf, &err) == INT16_MIN);
+    ASSERT(err == 0);
+    ASSERT(ato_int16("-2000", &err) == -2000);
+    ASSERT(err == 0);
+    ASSERT(ato_int16("-100", &err) == -100);
+    ASSERT(err == 0);
+    ASSERT(ato_int16("-1", &err) == -1);
+    ASSERT(err == 0);
+    ASSERT(ato_int16("0", &err) == 0);
+    ASSERT(err == 0);
+    ASSERT(ato_int16("1", &err) == 1);
+    ASSERT(err == 0);
+    ASSERT(ato_int16("100", &err) == 100);
+    ASSERT(err == 0);
+    ASSERT(ato_int16("2000", &err) == 2000);
+    ASSERT(err == 0);
+    sprintf(buf, "%" PRId16, INT16_MAX);
+    ASSERT(ato_int16(buf, &err) == INT16_MAX);
+    ASSERT(err == 0);
+
+    return EXIT_SUCCESS;
+}
+
+int ato_xintx_invalid(void) {
+    int err;
+    char buf[256];
+
+    ASSERT(ato_uint8("-1", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(ato_uint8("-100", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(ato_uint8("-1000", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(ato_uint8("-lol", &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%" PRIu16, (uint16_t) (UINT8_MAX) + 1);
+    ASSERT(ato_uint8(buf, &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%" PRIu16, UINT16_MAX);
+    ASSERT(ato_uint8(buf, &err) == 0);
+    ASSERT(err == -1);
+
+    ASSERT(ato_uint32("-1", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(ato_uint32("-100", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(ato_uint32("-1000", &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%" PRIu64, (uint64_t) (UINT32_MAX) + 1);
+    ASSERT(ato_uint32(buf, &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%" PRIu64, UINT64_MAX);
+    ASSERT(ato_uint32(buf, &err) == 0);
+    ASSERT(err == -1);
+
+    ASSERT(ato_uint64("-1", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(ato_uint64("-100", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(ato_uint64("-1000", &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%" PRId64, INT64_MIN);
+    ASSERT(ato_uint64(buf, &err) == 0);
+    ASSERT(err == -1);
+
+    sprintf(buf, "%" PRIu16, UINT16_MAX);
+    ASSERT(ato_int16(buf, &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%" PRId32, (int32_t) (INT16_MIN) - 1);
+    ASSERT(ato_int16(buf, &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%" PRId32, (int32_t) (INT16_MAX) + 1);
+    ASSERT(ato_int16(buf, &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%" PRId64, INT64_MIN);
+    ASSERT(ato_int16(buf, &err) == 0);
+    ASSERT(err == -1);
+
+    return EXIT_SUCCESS;
+}
+
+int strtod_check_valid(void) {
+    int err;
+    char buf[512];
+
+    ASSERT(strtod_check("0", &err) == (double) 0);
+    ASSERT(err == 0);
+    ASSERT(strtod_check("1", &err) == (double) 1);
+    ASSERT(err == 0);
+    ASSERT(strtod_check("100", &err) == (double) 100);
+    ASSERT(err == 0);
+    ASSERT(strtod_check("-100", &err) == (double) -100);
+    ASSERT(err == 0);
+    ASSERT(strtod_check("0.0", &err) == (double) 0.0);
+    ASSERT(err == 0);
+    ASSERT(strtod_check("2.5", &err) == (double) 2.5);
+    ASSERT(err == 0);
+    ASSERT(strtod_check("-100.7892", &err) == (double) -100.7892);
+    ASSERT(err == 0);
+    ASSERT(strtod_check("1.2", &err) == (double) 1.2);
+    ASSERT(err == 0);
+    sprintf(buf, "%lf", -DBL_MAX);
+    ASSERT(strtod_check(buf, &err) == -DBL_MAX);
+    ASSERT(err == 0);
+    sprintf(buf, "%lf", DBL_MIN);
+    ASSERT(approx(strtod_check(buf, &err), DBL_MIN));
+    ASSERT(err == 0);
+    sprintf(buf, "%lf", DBL_MAX);
+    ASSERT(strtod_check(buf, &err) == DBL_MAX);
+    ASSERT(err == 0);
+
+    return EXIT_SUCCESS;
+}
+
+int strtod_check_invalid(void) {
+    int err;
+    char buf[8192];
+
+    ASSERT(strtod_check("hithere", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(strtod_check("sometext", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(strtod_check("inf", &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(strtod_check("-inf", &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%le", 10e3);
+    ASSERT(strtod_check(buf, &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%le", -10e-3);
+    ASSERT(strtod_check(buf, &err) == 0);
+    ASSERT(err == -1);
+    ASSERT(strtod_check("-inf", &err) == 0);
+    ASSERT(err == -1);
+    sprintf(buf, "%Lf", LDBL_MAX);
+    ASSERT(strtod_check(buf, &err) == HUGE_VAL);
+    ASSERT(err == -1);
+    sprintf(buf, "%Lf", -LDBL_MAX);
+    ASSERT(strtod_check(buf, &err) == -HUGE_VAL);
+    ASSERT(err == -1);
+
+    return EXIT_SUCCESS;
+}
+
+int has_fast5_ext_valid(void) {
+
+    ASSERT(has_fast5_ext("test.fast5"));
+    ASSERT(has_fast5_ext("hithere/test.fast5"));
+    ASSERT(has_fast5_ext("testaskdj.fast5"));
+    ASSERT(has_fast5_ext("fast5.fast5"));
+    ASSERT(has_fast5_ext("slow5.fast5"));
+    ASSERT(has_fast5_ext("hi...fast5.fast5"));
+    ASSERT(has_fast5_ext("1234.fast5"));
+    ASSERT(has_fast5_ext("myfast5.fast5"));
+    ASSERT(has_fast5_ext("hithere///test.fast5"));
+    ASSERT(has_fast5_ext("hithere///test.fast5/test.fast5"));
+    ASSERT(has_fast5_ext("testaslkdjlaskjdfalsdifaslkfdj234.fast5"));
+    ASSERT(has_fast5_ext(".fast5"));
+
+    return EXIT_SUCCESS;
+}
+
+int has_fast5_ext_invalid(void) {
+
+    ASSERT(!has_fast5_ext("."));
+    ASSERT(!has_fast5_ext("..."));
+    ASSERT(!has_fast5_ext("fast5"));
+    ASSERT(!has_fast5_ext("fast5."));
+    ASSERT(!has_fast5_ext("blow5"));
+    ASSERT(!has_fast5_ext("blablabla"));
+    ASSERT(!has_fast5_ext(""));
+    ASSERT(!has_fast5_ext(NULL));
+
+    return EXIT_SUCCESS;
+}
+
+int is_dir_valid(void) {
+
+    ASSERT(is_dir("/"));
+    ASSERT(is_dir("////////"));
+    ASSERT(is_dir("."));
+    ASSERT(is_dir("./"));
+    ASSERT(is_dir(".."));
+    ASSERT(is_dir("../"));
+    ASSERT(is_dir("../test"));
+    ASSERT(is_dir("../test/"));
+    ASSERT(is_dir("data///"));
+    ASSERT(is_dir("../src"));
+    ASSERT(is_dir("random"));
+    ASSERT(is_dir("data/exp/one_fast5"));
+
+    return EXIT_SUCCESS;
+}
+
+int is_dir_invalid(void) {
+
+    ASSERT(!is_dir("./unit_test"));
+    ASSERT(!is_dir("notadir"));
+    ASSERT(!is_dir("lolwhat"));
+    ASSERT(!is_dir("///lolwhat///"));
+    ASSERT(!is_dir("./unit_test.c"));
+    ASSERT(!is_dir(""));
+    ASSERT(!is_dir("../Make"));
+    ASSERT(!is_dir("../Makefile"));
+    ASSERT(!is_dir(NULL));
 
     return EXIT_SUCCESS;
 }
@@ -390,13 +623,80 @@ int slow5_get_next_invalid(void) {
     return EXIT_SUCCESS;
 }
 
+int slow5_hdr_get_valid(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    ASSERT(s5p != NULL);
+
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p), "3574887596") == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id_eeprom", 0, s5p), "0") == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_temp", 0, s5p), "29.2145729") == 0);
+    ASSERT(strcmp(slow5_hdr_get("auto_update_source", 0, s5p), "https://mirror.oxfordnanoportal.com/software/MinKNOW/") == 0);
+    ASSERT(strcmp(slow5_hdr_get("bream_core_version", 0, s5p), "1.1.20.1") == 0);
+    ASSERT(strcmp(slow5_hdr_get("usb_config", 0, s5p), "1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto") == 0);
+    ASSERT(strcmp(slow5_hdr_get("version", 0, s5p), "1.1.20") == 0);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
+int slow5_hdr_get_null(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    ASSERT(s5p != NULL);
+
+    ASSERT(slow5_hdr_get(NULL, 0, s5p) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", -1, s5p) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", 1, s5p) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", 20, s5p) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", UINT32_MAX, s5p) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", 0, NULL) == NULL);
+    ASSERT(slow5_hdr_get(NULL, 0, NULL) == NULL);
+    ASSERT(slow5_hdr_get(NULL, -1, s5p) == NULL);
+    ASSERT(slow5_hdr_get("auto_update_source", -1, NULL) == NULL);
+    ASSERT(slow5_hdr_get(NULL, -200, NULL) == NULL);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
+int slow5_hdr_get_invalid(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1.slow5", "r");
+    ASSERT(s5p != NULL);
+
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p), "3574887597") != 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id_eeprom", 0, s5p), "100.0") != 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_temp", 0, s5p), "292145729") != 0);
+    ASSERT(strcmp(slow5_hdr_get("auto_update_source", 0, s5p), "ttps://mirror.oxfordnanoportal.com/software/MinKNOW/") != 0);
+    ASSERT(strcmp(slow5_hdr_get("bream_core_version", 0, s5p), "1..20.1") != 0);
+    ASSERT(strcmp(slow5_hdr_get("usb_config", 0, s5p), "1.0.11_ONTMinION_fpga_1.0.1#ctrl#Auto") != 0);
+    ASSERT(strcmp(slow5_hdr_get("version", 0, s5p), "1.1.2") != 0);
+
+    ASSERT(slow5_hdr_get("file_format", 0, s5p) == NULL);
+    ASSERT(slow5_hdr_get("num_read_groups", 0, s5p) == NULL);
+    ASSERT(slow5_hdr_get("lol", 0, s5p) == NULL);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
 
 struct command tests[] = {
+    // Helpers
     CMD(ato_xintx_valid)
+    CMD(ato_xintx_invalid)
+
+    CMD(strtod_check_valid)
+    CMD(strtod_check_invalid)
+
+    CMD(has_fast5_ext_valid)
+    CMD(has_fast5_ext_invalid)
+
+    CMD(has_fast5_ext_valid)
+    CMD(has_fast5_ext_invalid)
 
     CMD(path_get_slow5_fmt_test)
     CMD(name_get_slow5_fmt_test)
 
+    // API
     CMD(slow5_open_valid)
     CMD(slow5_open_null)
     CMD(slow5_open_invalid)
@@ -415,6 +715,10 @@ struct command tests[] = {
     CMD(slow5_get_next_null)
     CMD(slow5_get_next_empty)
     //CMD(slow5_get_next_invalid)
+
+    CMD(slow5_hdr_get_valid)
+    CMD(slow5_hdr_get_null)
+    CMD(slow5_hdr_get_invalid)
 };
 
 int main(void) {

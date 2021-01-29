@@ -16,7 +16,7 @@
 #define SLOW5_COLS(col, end) \
     col(char *,         read_id) \
     col(uint32_t,       read_group) \
-    col(float,          digitisation) \
+    col(double,         digitisation) \
     col(double,         offset) \
     col(double,         range) \
     col(double,         sampling_rate) \

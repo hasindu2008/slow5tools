@@ -40,7 +40,7 @@ struct slow5_version {
 };
 
 // Header data map: attribute string -> data string
-KHASH_MAP_INIT_STR(s2s, const char *)
+KHASH_MAP_INIT_STR(s2s, char *)
 
 // SLOW5 header
 struct slow5_hdr {
@@ -208,8 +208,19 @@ void slow5_rec_free(struct slow5_rec *read);
 
 
 
-// Get a header value
-const char *slow5_hdr_get(const char *attr, const struct slow5_file *s5p);
+/**
+ * Get a header data attribute for a particular read_group.
+ *
+ * Returns NULL if the attribute name doesn't exist
+ * or the read group is out of range
+ * or an input parameter is NULL.
+ *
+ * @param   attr        attribute name
+ * @param   read_group  the read group
+ * @param   s5p         slow5 file
+ * @return  the attribute's value, or NULL on error
+ */
+char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_file *s5p);
 void slow5_hdr_print(const struct slow5_hdr *header);
 
 #endif
