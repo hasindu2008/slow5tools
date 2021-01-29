@@ -7,18 +7,24 @@ on:
     branches: [ master ]
 
 jobs:
-  linux_x86:
+  simple_install:
     name: Linux x86
-    runs-on: linux-x86
+    runs-on: ${{ matrix.runners }}
+    strategy:
+      matrix:
+        runners: [linux-x86, linux-arm64]
     steps:
     - uses: actions/checkout@v2
     - name: build
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
-  linux_x86_script:
+  hdf5_compile:
     name: Linux x86 hdf5 install script
-    runs-on: linux-x86
+    runs-on: ${{ matrix.runners }}
+    strategy:
+      matrix:
+        runners: [linux-x86, linux-arm64]
     steps:
     - uses: actions/checkout@v2
     - name: build
@@ -27,9 +33,12 @@ jobs:
       run: make test
     - name: valgrind
       run: valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
-  pyslow5_linux_x86:
+  pyslow5:
     name: pyslow5 Linux x86
-    runs-on: linux-x86
+    runs-on: ${{ matrix.runners }}
+    strategy:
+      matrix:
+        runners: [linux-x86, linux-arm64]
     steps:
     - uses: actions/checkout@v2
     - name: build
