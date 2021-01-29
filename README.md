@@ -4,7 +4,7 @@ A toolset for converting to and from SLOW5 files.
 <todo>
 
 [![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?token=pN7xnsxgLrRxbAn8WLVQ&branch=master)](https://travis-ci.com/hasindu2008/slow5)
-[![SLOW5 C/C++ CI](https://github.com/hasindu2008/slow5/workflows/SlOW5%20C/C++%20CI/badge.svg)](https://github.com/hasindu2008/slow5/actions)
+[![SLOW5 C/C++ CI](https://github.com/hasindu2008/slow5/workflows/SLOW5%20C/C++%20CI/badge.svg)](https://github.com/hasindu2008/slow5/actions)
 
 ## Quick start
 
