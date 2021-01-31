@@ -97,6 +97,10 @@ static inline bool is_dir(const char *path) {
 // From https://code.woboq.org/userspace/glibc/string/strsep.c.html
 char *strsep_mine (char **stringp, const char *delim);
 
+// Check that int/float is in a certain format
+int int_check(const char *str);
+int float_check(const char *str);
+
 // Atoi but to xintx_t
 // and without any symbols
 // and without 0 prefixing
