@@ -221,6 +221,11 @@ void slow5_rec_free(struct slow5_rec *read);
  * @return  the attribute's value, or NULL on error
  */
 char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_file *s5p);
+/**
+ * Set a header data attribute for a particular read_group.
+ *
+ */
+int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, const struct slow5_file *s5p);
 void slow5_hdr_print(const struct slow5_hdr *header);
 
 #endif
