@@ -6,7 +6,7 @@
 #include "slow5_old.h"
 #include "error.h"
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
+#define USAGE_MSG "Usage: %s [OPTION]... -o [output DIR] [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Convert slow5 or (compressed) blow5 file(s) to fast5.\n" \
@@ -14,7 +14,6 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help             display this message and exit\n" \
-    "    -o, --output=[DIR]     output directory where fast5 files are stored\n" \
     "    --iop INT                  number of I/O processes to read slow5 files\n" \
 
 
@@ -178,7 +177,7 @@ void initialize_end_reason(hid_t* end_reason_enum_id) {
     H5Tenum_insert(*end_reason_enum_id, "signal_negative", (val=5,&val));
 }
 
-void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FILE) {
+void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char* FAST5_FILE) {
 
     slow5_record_t slow5_record;
 
@@ -188,23 +187,16 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     hid_t end_reason_enum_id;
     initialize_end_reason(&end_reason_enum_id);
 
-    size_t file_length = strlen(SLOW5_FILE);
-    char FAST5_FILE[file_length];
-    memcpy(FAST5_FILE, &SLOW5_FILE[0], file_length - 5);
-    FAST5_FILE[file_length - 5] = 'f';FAST5_FILE[file_length - 4] = 'a';FAST5_FILE[file_length - 3] = 's';FAST5_FILE[file_length - 2] = 't';FAST5_FILE[file_length - 1] = '5';FAST5_FILE[file_length] = '\0';
 //    fprintf(stderr, "%s\n", FAST5_FILE);
-
     /* Create a new file using default properties. */
     file_id = H5Fcreate(FAST5_FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     set_hdf5_attributes(file_id, ROOT, slow5_header, &slow5_record, &end_reason_enum_id);
 
     char * buffer = NULL;
     char* attribute_value;
-
     read_line(slow5, &buffer);    //read first read
     attribute_value = strtok(buffer, "\t");
     slow5_record.read_id = strdup(attribute_value);
-
 
     // create first read group
     const char* read_tag = "read_";
@@ -220,7 +212,6 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
     if(status<0){
         WARNING("Closing context_tags group failed. Possible memory leak. status=%d",(int)status);
     }
-
 
     // creat tracking_id group
     group_tracking_id = H5Gcreate (group_read, "tracking_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
@@ -263,10 +254,8 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         slow5_record.duration = atoi(attribute_value);
 
         set_hdf5_attributes(group_read, READ, slow5_header, &slow5_record, &end_reason_enum_id);
-
         // creat Raw group
         group_raw = H5Gcreate (group_read, "Raw", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
         if(i>0){
             // creat context_tags group link
             status = H5Lcreate_hard(group_read_first, "context_tags", group_read, "context_tags", H5P_DEFAULT, H5P_DEFAULT);
@@ -334,10 +323,8 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FI
         free(slow5_record.read_id);
 
         i++;
-
         //to check if peak RAM increase over time
         //fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
-
     }
 
     H5Tclose(end_reason_enum_id);
@@ -379,7 +366,14 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
         char *buffer = NULL;
         read_header(slow5headers, slow5, &buffer, 1); // fill slow5_header values
         if (buffer)free(buffer);
-        write_fast5(&slow5headers[0], slow5, slow5_files[i].c_str());
+
+        std::string fast5_path = std::string(output_dir);
+        std::string fast5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),
+                                                      slow5_files[i].length() -
+                                                      slow5_files[i].find_last_of('/') - 6) + ".fast5";
+        fast5_path += fast5file;
+
+        write_fast5(&slow5headers[0], slow5, fast5_path.c_str());
         //  Close the slow5 file.
         fclose(slow5);
     }
@@ -622,9 +616,9 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     if(iop==1){
-        MESSAGE(stderr, "total fast5: %lu, bad fast5: %lu", readsCount.total_5, readsCount.bad_5_file);
+        MESSAGE(stderr, "total slow5: %lu, bad slow5: %lu", readsCount.total_5, readsCount.bad_5_file);
     }else{
-        fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, slow5_files.size(), realtime() - realtime0);
+        fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), realtime() - realtime0);
         s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
     }
 
