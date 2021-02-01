@@ -44,14 +44,18 @@ else
     not_compiled
 fi
 
-
 echo_test "unit test"
 if gcc -Wall -Werror -g test/unit_test.c -o test/unit_test src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
-    if ! ex test/unit_test > test/unit_test_out.txt; then
+    if ! ex test/unit_test > test/unit_test_out; then
         fail
     fi
 else
     not_compiled
+fi
+
+echo_test "diff test"
+if ! ex diff test/unit_test_out test/unit_test_exp -q; then
+    fail
 fi
 
 exit $ret

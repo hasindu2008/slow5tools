@@ -197,10 +197,32 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
  */
 int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p);
 
-// Print read entry
-int slow5_rec_fprint(FILE *fp, struct slow5_rec *read);
-static inline int slow5_rec_print(struct slow5_rec *read) {
-    return slow5_rec_fprint(stdout, read);
+/**
+ * Get the read entry as a string in the specified format.
+ *
+ * Returns NULL if read is NULL, or format is FORMAT_UNKNOWN,
+ * or the read attribute values are invalid
+ *
+ * @param   read    slow5_rec pointer
+ * @param   format  slow5 format to write the entry in
+ * @return  malloced string to use free() on, NULL on error
+ */
+char *slow5_rec_to_str(struct slow5_rec *read, enum slow5_fmt format);
+
+/**
+ * Print a read entry in the specified format to a file pointer.
+ *
+ * On success, the number of bytes written is returned.
+ * On error, -1 is returned.
+ *
+ * @param   fp      output file pointer
+ * @param   read    slow5_rec pointer
+ * @param   read    slow5_rec pointer
+ * @return  number of bytes written, -1 on error
+ */
+int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format);
+static inline int slow5_rec_print(struct slow5_rec *read, enum slow5_fmt format) {
+    return slow5_rec_fprint(stdout, read, format);
 }
 
 // Free a read entry
@@ -224,6 +246,18 @@ char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_fi
 /**
  * Set a header data attribute for a particular read_group.
  *
+ * Doesn't take memory ownership of the value given.
+ *
+ * Returns -1 if the attribute name doesn't exist
+ * or the read group is out of range
+ * or an input parameter is NULL.
+ * Returns 0 other.
+ *
+ * @param   attr        attribute name
+ * @param   value       new attribute value
+ * @param   read_group  the read group
+ * @param   s5p         slow5 file
+ * @return  0 on success, -1 on error
  */
 int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, const struct slow5_file *s5p);
 void slow5_hdr_print(const struct slow5_hdr *header);
