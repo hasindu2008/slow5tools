@@ -91,7 +91,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
                 }
             }
             if (value.attr_string && !value.attr_string[0]) {
-                fprintf(stderr,"warning: attribute value of %s/%s is an empty string\n",operator_data->group_name, name);
+                WARNING("The attribute value of %s/%s is an empty string",operator_data->group_name, name);
                 if(flag_value_string){ // hack to skip the free() at the bottom of the function
                     free(value.attr_string);
                     flag_value_string = 0;
@@ -314,7 +314,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
     else if(strcmp("sample_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_header->sample_id = strdup(value.attr_string);
     }else{
-        fprintf(stderr,"[%s] we don't store the attribute %s/%s\n",__func__ , operator_data->group_name, name);
+        WARNING("The attribute %s/%s is not stored ", operator_data->group_name, name);
     }
 
     if(flag_value_string){
@@ -390,13 +390,13 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
     slow5_record_t slow5_record;
     int flag_context_tags = 0;
     int flag_tracking_id = 0;
-    size_t number_reads = 0;
+    size_t zero = 0;
 
     tracker.slow5_header = &slow5_header;
     tracker.slow5_record = &slow5_record;
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
-    tracker.nreads = &number_reads;
+    tracker.nreads = &zero;
 
     reset_attributes(ROOT, &tracker);
     reset_attributes(READ, &tracker);
