@@ -71,7 +71,6 @@ struct slow5_rec_aux {
 
 // SLOW5 record data
 struct slow5_rec {
-    char *str;
     SLOW5_COLS_FOREACH(GENERATE_STRUCT)
     struct slow5_rec_aux *read_aux;
 };

@@ -114,4 +114,7 @@ int16_t ato_int16(const char *str, int *err);
 // only in decimal form
 double strtod_check(const char *str, int *err);
 
+// Convert double to decimal string without trailing 0s
+char *double_to_str(double x);
+
 #endif

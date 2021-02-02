@@ -14,6 +14,8 @@
 #include "error.h"
 #include "fast5.h"
 
+#define DBL_STRING_BUF_FIXED_CAP (64) // 2^6
+
 int uint_check(const char *str);
 int int_check(const char *str);
 int float_check(const char *str);
@@ -229,4 +231,28 @@ double strtod_check(const char *str, int *err) {
 
     *err = 0;
     return ret;
+}
+
+// Convert double to decimal string without trailing 0s
+char *double_to_str(double x) {
+    char *str = (char *) malloc(DBL_STRING_BUF_FIXED_CAP * sizeof *str);
+    MALLOC_CHK(str);
+
+    int len = sprintf(str, "%f", x);
+
+    char *ptr = NULL;
+    for (int i = len - 1; i >= 1; -- i) {
+        if (str[i] == '0') {
+            ptr = str + i;
+        } else if (str[i] == '.') {
+            // Set pointer on decimal point if it was just after it
+            if (ptr == str + i + 1) {
+                ptr = str + i;
+            }
+            *ptr = '\0';
+            break;
+        }
+    }
+
+    return str;
 }

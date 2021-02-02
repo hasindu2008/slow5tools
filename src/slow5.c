@@ -15,6 +15,10 @@
 
 // String buffer capacity for parsing the data header
 #define SLOW5_HEADER_DATA_BUF_INIT_CAP (1024) // 2^10 TODO is this too much? Or put to a page length
+// Max length is 6 (−32768) for a int16_t
+#define INT16_MAX_LENGTH (6)
+// String buffer capacity for storing signal
+#define SLOW5_SIGNAL_BUF_FIXED_CAP (8) // 2^3 since INT16_MAX_LENGTH=6
 
 inline void slow5_hdr_free(struct slow5_hdr *header);
 
@@ -148,21 +152,10 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
 
             // 1st line
             assert((buf_len = getline(&buf, &cap, fp)) != -1);
-            buf[buf_len - 1] = '\0'; // Remove newline for later format parsing
-            // "#file_format"
+            buf[buf_len - 1] = '\0'; // Remove newline for later parsing
+            // "#slow5_version"
             bufp = buf;
             char *tok = strsep_mine(&bufp, SEP);
-            assert(strcmp(tok, HEADER_FILE_FORMAT_ID) == 0);
-            // Parse format name
-            tok = strsep_mine(&bufp, SEP);
-            assert(format == name_get_slow5_fmt(tok));
-
-            // 2nd line
-            assert((buf_len = getline(&buf, &cap, fp)) != -1);
-            buf[buf_len - 1] = '\0'; // Remove newline for later parsing
-            // "#file_version"
-            bufp = buf;
-            tok = strsep_mine(&bufp, SEP);
             assert(strcmp(tok, HEADER_FILE_VERSION_ID) == 0);
             // Parse file version
             tok = strsep_mine(&bufp, SEP);
@@ -325,7 +318,7 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, s
             buf[buf_len - 1] = '\0'; // Remove newline for later parsing
 
             // While the column header hasn't been reached
-            while (strncmp(buf, ASCII_COLUMN_HEADER_MIN, strlen(ASCII_COLUMN_HEADER_MIN)) != 0) {
+            while (strncmp(buf, ASCII_TYPE_HEADER_MIN, strlen(ASCII_TYPE_HEADER_MIN)) != 0) {
 
                 // Ensure prefix is there
                 assert(strncmp(buf, SLOW5_HEADER_DATA_PREFIX, strlen(SLOW5_HEADER_DATA_PREFIX)) == 0);
@@ -356,6 +349,10 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, enum slow5_fmt format, char *buf, s
                 assert((buf_len = getline(&buf, &cap, fp)) != -1);
                 buf[buf_len - 1] = '\0'; // Remove newline for later parsing
             }
+            // Get header
+            assert((buf_len = getline(&buf, &cap, fp)) != -1);
+            buf[buf_len - 1] = '\0'; // Remove newline for later parsing
+            assert(strncmp(buf, ASCII_COLUMN_HEADER_MIN, strlen(ASCII_COLUMN_HEADER_MIN)) == 0);
 
             assert(cap == SLOW5_HEADER_DATA_BUF_INIT_CAP); // TESTING to see if getline has to realloc (if this fails often maybe put a larger buffer size)
 
@@ -436,11 +433,8 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
         MALLOC_CHK(*read);
     } else {
         // Free previously allocated strings
-        free((*read)->str); // TODO use a string buffer
         free((*read)->read_id);
     }
-
-    (*read)->str = strdup(read_str);
 
     read_str[read_index.size - 1] = '\0'; // Remove newline for later parsing
     if (slow5_rec_parse(read_str, read_id, *read, s5p->format) == -1) {
@@ -574,14 +568,8 @@ int slow5_rec_parse(char *read_str, const char *read_id, struct slow5_rec *read,
                     !main_cols_parsed &&
                     (tok = strsep_mine(&read_str, SEP)) != NULL);
 
-            // All columns parsed
-            if (i == SLOW5_COLS_NUM) {
-
-            // Remaining columns to parse
-            } else if (i == SLOW5_COLS_NUM + 1) {
-
-            // Not all main columns parsed
-            } else {
+            // Check if all main columns parsed and no more extra columns
+            if (i != SLOW5_COLS_NUM) {
                 ret = -1;
             }
 
@@ -632,10 +620,8 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
         *read = (struct slow5_rec *) calloc(1, sizeof **read);
     } else {
         // Free previously allocated strings
-        free((*read)->str);
         free((*read)->read_id);
     }
-    (*read)->str = strdup(read_str);
 
     read_str[read_len - 1] = '\0'; // Remove newline for later parsing
 
@@ -648,7 +634,10 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
 }
 
 /**
- * Print a read entry in the correct format to a file pointer.
+ * Print a read entry in the correct format with newline character to a file pointer.
+ *
+ * Error if fp or read is NULL,
+ * of if the format is FORMAT_UNKNOWN.
  *
  * On success, the number of bytes written is returned.
  * On error, -1 is returned.
@@ -664,11 +653,16 @@ int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format) {
         return -1;
     }
 
-    return fprintf(fp, "%s", read_str);
+    int ret = fprintf(fp, "%s\n", read_str);
+
+    free(read_str);
+    return ret;
 }
 
 /**
  * Get the read entry as a string in the specified format.
+ *
+ * No trailing newline when using FORMAT_ASCII.
  *
  * Returns NULL if read is NULL, or format is FORMAT_UNKNOWN,
  * or the read attribute values are invalid
@@ -677,146 +671,55 @@ int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format) {
  * @param   format  slow5 format to write the entry in
  * @return  malloced string to use free() on, NULL on error
  */
-/*
 char *slow5_rec_to_str(struct slow5_rec *read, enum slow5_fmt format) {
     if (read == NULL || format == FORMAT_UNKNOWN) {
         return NULL;
     }
+
+    char *digitisation_str = double_to_str(read->digitisation);
+    char *offset_str = double_to_str(read->offset);
+    char *range_str = double_to_str(read->range);
+    char *sampling_rate_str = double_to_str(read->sampling_rate);
     char *str;
-    // TODO asprintf and realloc after for signal array
-    // Then handle auxillary columns
-    asprintf_mine(&str, "%s%");
+    int curr_len = asprintf_mine(&str,
+            SLOW5_COLS(GENERATE_FORMAT_STRING_SEP, GENERATE_NULL),
+            read->read_id,
+            read->read_group,
+            digitisation_str,
+            offset_str,
+            range_str,
+            sampling_rate_str,
+            read->len_raw_signal);
+    free(digitisation_str);
+    free(offset_str);
+    free(range_str);
+    free(sampling_rate_str);
     MALLOC_CHK(str);
 
-    switch (format) {
+    // TODO memory optimise
+    // <max length> = <current length> + (<max signal length> + ','/'\0') * <number of signals>
+    const size_t max_len = curr_len + (INT16_MAX_LENGTH + 1) * read->len_raw_signal;
+    str = (char *) realloc(str, max_len * sizeof *str);
+    MALLOC_CHK(str);
 
-        case FORMAT_UNKNOWN:
-            break;
+    char sig_buf[SLOW5_SIGNAL_BUF_FIXED_CAP];
 
-        case FORMAT_ASCII: {
+    uint64_t i;
+    for (i = 0; i < read->len_raw_signal - 1; ++ i) {
+        int sig_len = sprintf(sig_buf, FORMAT_STRING_RAW_SIGNAL SEP_RAW_SIGNAL, read->raw_signal[i]);
 
-            int i = 0;
-            int err;
-            do {
-                switch (i) {
-                    case COL_read_id:
-                        if (read->read_id != NULL) {
-                        }
-                        read->read_id = strdup(tok);
-                        break;
-
-                    case COL_read_group:
-                        read->read_group = ato_uint32(tok, &err);
-                        if (err == -1) {
-                            ret = -1;
-                        }
-                        break;
-
-                    case COL_digitisation:
-                        read->digitisation = strtod_check(tok, &err);
-                        if (err == -1) {
-                            ret = -1;
-                        }
-                        break;
-
-                    case COL_offset:
-                        read->offset = strtod_check(tok, &err);
-                        if (err == -1) {
-                            ret = -1;
-                        }
-                        break;
-
-                    case COL_range:
-                        read->range = strtod_check(tok, &err);
-                        if (err == -1) {
-                            ret = -1;
-                        }
-                        break;
-
-                    case COL_sampling_rate:
-                        read->sampling_rate = strtod_check(tok, &err);
-                        if (err == -1) {
-                            ret = -1;
-                        }
-                        break;
-
-                    case COL_len_raw_signal:
-                        if (read->len_raw_signal != 0) {
-                            prev_len_raw_signal = read->len_raw_signal;
-                        }
-                        read->len_raw_signal = ato_uint64(tok, &err);
-                        if (err == -1) {
-                            ret = -1;
-                        }
-                        break;
-
-                    case COL_raw_signal: {
-                        if (read->raw_signal == NULL) {
-                            read->raw_signal = (int16_t *) malloc(read->len_raw_signal * sizeof *(read->raw_signal));
-                            MALLOC_CHK(read->raw_signal);
-                        } else if (prev_len_raw_signal < read->len_raw_signal) {
-                            read->raw_signal = (int16_t *) realloc(read->raw_signal, read->len_raw_signal * sizeof *(read->raw_signal));
-                            MALLOC_CHK(read->raw_signal);
-                        }
-
-                        char *signal_tok;
-                        if ((signal_tok = strsep_mine(&tok, SEP_RAW_SIGNAL)) == NULL) {
-                            // 0 signals
-                            ret = -1;
-                            break;
-                        }
-
-                        uint64_t j = 0;
-
-                        // Parse raw signal
-                        do {
-                            (read->raw_signal)[j] = ato_int16(signal_tok, &err);
-                            if (err == -1) {
-                                ret = -1;
-                                break;
-                            }
-                            ++ j;
-                        } while ((signal_tok = strsep_mine(&tok, SEP_RAW_SIGNAL)) != NULL);
-                        if (ret != -1 && j != read->len_raw_signal) {
-                            ret = -1;
-                        }
-
-                    } break;
-
-                    // All columns parsed
-                    default:
-                        main_cols_parsed = true;
-                        break;
-
-                }
-                ++ i;
-
-            } while (ret != -1 &&
-                    !main_cols_parsed &&
-                    (tok = strsep_mine(&read_str, SEP)) != NULL);
-
-            // All columns parsed
-            if (i == SLOW5_COLS_NUM) {
-
-            // Remaining columns to parse
-            } else if (i == SLOW5_COLS_NUM + 1) {
-
-            // Not all main columns parsed
-            } else {
-                ret = -1;
-            }
-
-        } break;
-
-        case FORMAT_BINARY: // TODO
-            break;
+        strncpy(str + curr_len, sig_buf, sig_len);
+        curr_len += sig_len;
     }
+    // Trailing signal
+    sprintf(sig_buf, FORMAT_STRING_RAW_SIGNAL, read->raw_signal[i]);
+    strcpy(str + curr_len, sig_buf); // Copies null byte as well
+
+    return str;
 }
-*/
 
 void slow5_rec_free(struct slow5_rec *read) {
     if (read != NULL) {
-        free(read->str);
         free(read->read_id);
         free(read->raw_signal);
         free(read);

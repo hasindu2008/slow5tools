@@ -46,7 +46,7 @@ fi
 
 echo_test "unit test"
 if gcc -Wall -Werror -g test/unit_test.c -o test/unit_test src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
-    if ! ex test/unit_test > test/unit_test_out; then
+    if ! ex test/unit_test > test/data/out/unit_test_out; then
         fail
     fi
 else
@@ -54,7 +54,9 @@ else
 fi
 
 echo_test "diff test"
-if ! ex diff test/unit_test_out test/unit_test_exp -q; then
+if ! ex diff test/data/out/unit_test_out test/data/exp/unit_test_exp -q; then
+    fail
+elif ! ex diff test/data/out/unit_test_out_fprint test/data/exp/unit_test_exp_fprint -q; then
     fail
 fi
 
