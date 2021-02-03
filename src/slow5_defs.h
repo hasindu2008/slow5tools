@@ -5,23 +5,25 @@
 #include <inttypes.h>
 
 // SLOW5 format specs
-#define SLOW5_HEADER_PREFIX         "#"
-#define SLOW5_HEADER_DATA_PREFIX    "@"
-#define COLUMN_HEADER_PREFIX        "#"
-#define SEP                         "\t"
-#define SEP_RAW_SIGNAL              ","
-#define HEADER_FILE_VERSION         "slow5_version"
-#define HEADER_NUM_GROUPS           "num_read_groups"
-#define HEADER_NUM_GROUPS_INIT      (1)
+#define SLOW5_HEADER_PREFIX             "#"
+#define SLOW5_HEADER_DATA_PREFIX        "@"
+#define SLOW5_HEADER_DATA_PREFIX_CHAR   '@'
+#define COLUMN_HEADER_PREFIX            "#"
+#define SEP                             "\t"
+#define SEP_CHAR                        '\t'
+#define SEP_RAW_SIGNAL                  ","
+#define HEADER_FILE_VERSION             "slow5_version"
+#define HEADER_NUM_GROUPS               "num_read_groups"
+#define HEADER_NUM_GROUPS_INIT          (1)
 
 // Order, format string and type of main SLOW5 columns
-#define SLOW5_COLS(col, end) \
-    col(char*,      "%s",       read_id) \
-    col(uint32_t,   "%" PRIu32, read_group) \
-    col(double,     "%s",      digitisation) \
-    col(double,     "%s",      offset) \
-    col(double,     "%s",      range) \
-    col(double,     "%s",      sampling_rate) \
+#define SLOW5_COLS(col, end)                    \
+    col(char*,      "%s",       read_id)        \
+    col(uint32_t,   "%" PRIu32, read_group)     \
+    col(double,     "%s",       digitisation)   \
+    col(double,     "%s",       offset)         \
+    col(double,     "%s",       range)          \
+    col(double,     "%s",       sampling_rate)  \
     col(uint64_t,   "%" PRIu64, len_raw_signal) \
     end(int16_t*,   ,           raw_signal) // Use end() for last column
 // Format string of raw signal
@@ -48,14 +50,17 @@
 #define SLOW5_HEADER_ENTRY(header_name, data) SLOW5_HEADER_ID(header_name) SEP data "\n"
 
 // ASCII SLOW5 specs
-#define ASCII_VERSION           "0.1.0"
-#define ASCII_NAME              "slow5"
-#define ASCII_EXTENSION         "." ASCII_NAME
-#define ASCII_FILE_VERSION      SLOW5_HEADER_ENTRY(HEADER_FILE_VERSION, ASCII_VERSION)
-#define ASCII_NUM_GROUPS        SLOW5_HEADER_ENTRY(NUM_GROUPS_HEADER, "%d")
-#define ASCII_SLOW5_HEADER      ASCII_FILE_VERSION ASCII_NUM_GROUPS
-#define ASCII_TYPE_HEADER_MIN   COLUMN_HEADER_PREFIX SLOW5_COLS(GENERATE_TYPE_STRING_SEP, GENERATE_TYPE_STRING)
-#define ASCII_COLUMN_HEADER_MIN COLUMN_HEADER_PREFIX SLOW5_COLS(GENERATE_NAME_STRING_SEP, GENERATE_NAME_STRING)
+#define ASCII_NAME                      "slow5"
+#define ASCII_EXTENSION                 "." ASCII_NAME
+#define ASCII_VERSION                   "0.1.0"
+#define ASCII_VERSION_FORMAT            "%" PRIu8 ".%" PRIu8 ".%" PRIu8
+#define ASCII_NUM_GROUPS_FORMAT         "%" PRIu32
+#define ASCII_ENTRY_VERSION             SLOW5_HEADER_ENTRY(HEADER_FILE_VERSION, ASCII_VERSION)
+#define ASCII_ENTRY_VERSION_FORMAT      SLOW5_HEADER_ENTRY(HEADER_FILE_VERSION, ASCII_VERSION_FORMAT)
+#define ASCII_ENTRY_NUM_GROUPS_FORMAT   SLOW5_HEADER_ENTRY(HEADER_NUM_GROUPS, ASCII_NUM_GROUPS_FORMAT)
+#define ASCII_SLOW5_HEADER_FORMAT       ASCII_ENTRY_VERSION_FORMAT ASCII_ENTRY_NUM_GROUPS_FORMAT
+#define ASCII_TYPE_HEADER_MIN           COLUMN_HEADER_PREFIX SLOW5_COLS(GENERATE_TYPE_STRING_SEP, GENERATE_TYPE_STRING)
+#define ASCII_COLUMN_HEADER_MIN         COLUMN_HEADER_PREFIX SLOW5_COLS(GENERATE_NAME_STRING_SEP, GENERATE_NAME_STRING)
 
 // Binary SLOW5 specs
 #define BINARY_VERSION          "0.1.0"

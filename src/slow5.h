@@ -45,8 +45,8 @@ KHASH_MAP_INIT_STR(s2s, char *)
 // SLOW5 header
 struct slow5_hdr {
 	struct slow5_version version;
-    char *version_str;
     uint32_t num_read_groups; // Number of read groups
+    uint32_t num_attrs; // Number of header attributes TODO type ok maybe smaller?
     khash_t(s2s) **data; // length = num_read_groups
 };
 
@@ -216,7 +216,7 @@ char *slow5_rec_to_str(struct slow5_rec *read, enum slow5_fmt format);
  *
  * @param   fp      output file pointer
  * @param   read    slow5_rec pointer
- * @param   read    slow5_rec pointer
+ * @param   format  slow5 format to write entry in
  * @return  number of bytes written, -1 on error
  */
 int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format);
@@ -242,6 +242,22 @@ void slow5_rec_free(struct slow5_rec *read);
  * @return  the attribute's value, or NULL on error
  */
 char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_file *s5p);
+
+/**
+ * Add a new header data attribute.
+ *
+ * All values are set to NULL for each read group.
+ *
+ * Returns -1 if an input parameter is NULL.
+ * Returns -2 if the attribute already exists.
+ * Returns 0 other.
+ *
+ * @param   attr        attribute name
+ * @param   s5p         slow5 file
+ * @return  0 on success, <0 on error as described above
+ */
+int slow5_hdr_add(const char *attr, const struct slow5_file *s5p);
+
 /**
  * Set a header data attribute for a particular read_group.
  *
@@ -259,6 +275,34 @@ char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_fi
  * @return  0 on success, -1 on error
  */
 int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, const struct slow5_file *s5p);
-void slow5_hdr_print(const struct slow5_hdr *header);
+
+/**
+ * Get the header as a string in the specified format.
+ *
+ * Returns NULL if read is NULL
+ * or format is FORMAT_UNKNOWN
+ * or an internal error occurs.
+ *
+ * @param   s5p     slow5 file
+ * @param   format  slow5 format to write the entry in
+ * @return  malloced string to use free() on, NULL on error
+ */
+char *slow5_hdr_to_str(struct slow5_file *s5p, enum slow5_fmt format);
+
+/**
+ * Print the header in the specified format to a file pointer.
+ *
+ * On success, the number of bytes written is returned.
+ * On error, -1 is returned.
+ *
+ * @param   fp      output file pointer
+ * @param   s5p     slow5_rec pointer
+ * @param   format  slow5 format to write the entry in
+ * @return  number of bytes written, -1 on error
+ */
+int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format);
+static inline int slow5_hdr_print(struct slow5_file *s5p, enum slow5_fmt format) {
+    return slow5_hdr_fprint(stdout, s5p, format);
+}
 
 #endif
