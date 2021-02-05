@@ -6,7 +6,7 @@
 #include "klib/khash.h"
 #include "slow5.h"
 
-#define INDEX_EXTENSION "." "index"
+#define INDEX_EXTENSION "." "idx"
 
 // SLOW5 record index
 struct slow5_rec_idx {

@@ -279,15 +279,17 @@ int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, cons
 /**
  * Get the header as a string in the specified format.
  *
- * Returns NULL if read is NULL
+ * Returns NULL if s5p is NULL
  * or format is FORMAT_UNKNOWN
  * or an internal error occurs.
  *
  * @param   s5p     slow5 file
  * @param   format  slow5 format to write the entry in
- * @return  malloced string to use free() on, NULL on error
+ * @param   written number of bytes written to the returned buffer
+ * @return  malloced memory storing the slow5 header representation,
+ *          to use free() on afterwards
  */
-char *slow5_hdr_to_str(struct slow5_file *s5p, enum slow5_fmt format);
+void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *written);
 
 /**
  * Print the header in the specified format to a file pointer.

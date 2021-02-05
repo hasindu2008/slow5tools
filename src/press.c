@@ -6,7 +6,7 @@
 #include "error.h"
 
 // Init compression stream
-struct press *press_init(enum press_method method) {
+struct press *press_init(press_method_t method) {
 
     struct press *compress = NULL;
 

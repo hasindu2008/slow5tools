@@ -3,13 +3,14 @@
 
 #include <zlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 // Compression methods
 enum press_method {
-    //COMPRESS_UNKNOWN = -1,
     COMPRESS_NONE,
     COMPRESS_GZIP
 };
+typedef uint8_t press_method_t;
 
 
 // Gzip related definitions
@@ -37,13 +38,13 @@ union press_stream {
 
 // Compression object
 struct press {
-    enum press_method method;
+    press_method_t method;
     union press_stream *stream;
 };
 
 
 // Init and free compression stream
-struct press *press_init(enum press_method method);
+struct press *press_init(press_method_t method);
 void press_free(struct press *compress);
 
 // fwrite but with compression

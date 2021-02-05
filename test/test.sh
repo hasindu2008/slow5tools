@@ -44,9 +44,27 @@ else
     not_compiled
 fi
 
-echo_test "unit test"
-if gcc -Wall -Werror -g test/unit_test.c -o test/unit_test src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
-    if ! ex test/unit_test > test/data/out/unit_test_out; then
+echo_test "unit test helpers"
+if gcc -Wall -Werror -g test/unit_test_helpers.c -o test/unit_test_helpers src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
+    if ! ex test/unit_test_helpers; then
+        fail
+    fi
+else
+    not_compiled
+fi
+
+echo_test "unit test ascii"
+if gcc -Wall -Werror -g test/unit_test_ascii.c -o test/unit_test_ascii src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
+    if ! ex test/unit_test_ascii > test/data/out/unit_test_out_ascii; then
+        fail
+    fi
+else
+    not_compiled
+fi
+
+echo_test "unit test binary"
+if gcc -Wall -Werror -g test/unit_test_binary.c -o test/unit_test_binary src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
+    if ! ex test/unit_test_binary > test/data/out/unit_test_out_binary; then
         fail
     fi
 else
@@ -54,9 +72,13 @@ else
 fi
 
 echo_test "diff test"
-if ! ex diff test/data/out/unit_test_out test/data/exp/unit_test_exp -q; then
+if ! ex diff test/data/out/unit_test_out_ascii test/data/exp/unit_test_exp_ascii -q; then
     fail
-elif ! ex diff test/data/out/unit_test_out_fprint test/data/exp/unit_test_exp_fprint -q; then
+fi
+if ! ex diff test/data/out/unit_test_out_fprint test/data/exp/unit_test_exp_fprint -q; then
+    fail
+fi
+if ! ex diff test/data/out/unit_test_out_binary test/data/exp/unit_test_exp_binary -q; then
     fail
 fi
 

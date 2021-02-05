@@ -63,11 +63,12 @@
 #define ASCII_COLUMN_HEADER_MIN         COLUMN_HEADER_PREFIX SLOW5_COLS(GENERATE_NAME_STRING_SEP, GENERATE_NAME_STRING)
 
 // Binary SLOW5 specs
-#define BINARY_VERSION          "0.1.0"
-#define BINARY_NAME             "blow5"
-#define BINARY_EXTENSION        "." BINARY_NAME
-#define BINARY_FILE_VERSION     SLOW5_HEADER_ENTRY(HEADER_FILE_VERSION, BINARY_VERSION)
-#define BINARY_SLOW5_HEADER     BINARY_FILE_VERSION ASCII_NUM_GROUPS
+#define BINARY_NAME                     "blow5"
+#define BINARY_EXTENSION                "." BINARY_NAME
+#define BINARY_VERSION                  { 0, 1, 0 }
+#define BINARY_MAGIC_NUMBER             { 'B', 'L', 'O', 'W', '5', '\1' }
+#define BINARY_EOF                      { '5', 'W', 'O', 'L', 'B' }
+#define BINARY_HEADER_SIZE_OFFSET       (64L)
 
 // SLOW5 Index specs
 #define SLOW5_INDEX_HEADER_PREFIX   "#"
