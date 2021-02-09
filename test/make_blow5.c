@@ -71,9 +71,9 @@ int main(void) {
     struct slow5_rec *read = NULL;
     slow5_get_next(&read, s5p);
 
-    uint16_t read_id_len = strlen(read->read_id);
-    fwrite(&read_id_len, sizeof read_id_len, 1, fp);
-    fwrite(read->read_id, sizeof *read->read_id, read_id_len, fp);
+    read->read_id_len = strlen(read->read_id);
+    fwrite(&read->read_id_len, sizeof read->read_id_len, 1, fp);
+    fwrite(read->read_id, sizeof *read->read_id, read->read_id_len, fp);
     fwrite(&read->read_group, sizeof read->read_group, 1, fp);
     fwrite(&read->digitisation, sizeof read->digitisation, 1, fp);
     fwrite(&read->offset, sizeof read->offset, 1, fp);

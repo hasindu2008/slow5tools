@@ -3,16 +3,15 @@
 #include "klib/khash.h"
 #include "slow5idx_clean.h"
 #include "slow5.h"
+#include "slow5_extra.h"
 #include "misc.h"
 
 #define BUF_INIT_CAP (20*1024*1024)
 #define SLOW5_INDEX_BUF_INIT_CAP (64) // 2^6 TODO is this too little?
 
 static inline struct slow5_idx *slow5_idx_init_empty(void);
-static void slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p);
-static void slow5_idx_write(struct slow5_idx *index);
+static int slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p);
 static void slow5_idx_read(struct slow5_idx *index);
-static void slow5_idx_insert(struct slow5_idx *index, char *read_id, uint64_t offset, uint64_t size);
 
 static inline struct slow5_idx *slow5_idx_init_empty(void) {
 
@@ -24,17 +23,19 @@ static inline struct slow5_idx *slow5_idx_init_empty(void) {
 }
 
 // TODO return NULL if idx_init fails
-struct slow5_idx *slow5_idx_init(struct slow5_file *s5p, const char *index_pathname) {
+struct slow5_idx *slow5_idx_init(struct slow5_file *s5p) {
 
     struct slow5_idx *index = slow5_idx_init_empty();
+    index->pathname = get_slow5_idx_path(s5p->meta.pathname);
 
     FILE *index_fp;
 
     // If file doesn't exist
-    if ((index_fp = fopen(index_pathname, "r")) == NULL) {
-        slow5_idx_build(index, s5p);
-        index->fp = fopen(index_pathname, "w");
-        slow5_idx_write(index);
+    if ((index_fp = fopen(index->pathname, "r")) == NULL) {
+        if (slow5_idx_build(index, s5p) != 0) {
+            slow5_idx_free(index);
+            return NULL;
+        }
     } else {
         index->fp = index_fp;
         slow5_idx_read(index);
@@ -43,44 +44,145 @@ struct slow5_idx *slow5_idx_init(struct slow5_file *s5p, const char *index_pathn
     return index;
 }
 
-static void slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
+/**
+ * Create the index file for slow5 file.
+ * Overrides if already exists.
+ *
+ * @param   s5p         slow5 file structure
+ * @param   pathname    pathname to write index to
+ * @return  -1 on error, 0 on success
+ */
+int slow5_idx_to(struct slow5_file *s5p, const char *pathname) {
 
-    size_t cap = BUF_INIT_CAP;
-    char *buf = (char *) malloc(cap * sizeof *buf);
-    MALLOC_CHK(buf);
-    ssize_t buf_len;
+    struct slow5_idx *index = slow5_idx_init_empty();
+    if (slow5_idx_build(index, s5p) == -1) {
+        slow5_idx_free(index);
+        return -1;
+    }
+
+    index->fp = fopen(pathname, "w");
+    slow5_idx_write(index);
+
+    slow5_idx_free(index);
+    return 0;
+}
+
+static int slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
+
+    uint64_t curr_offset = ftello(s5p->fp);
+    if (fseeko(s5p->fp, s5p->meta.start_rec_offset, SEEK_SET != 0)) {
+        return -1;
+    }
 
     uint64_t offset = 0;
     uint64_t size = 0;
 
+    if (s5p->format == FORMAT_ASCII) {
+        size_t cap = BUF_INIT_CAP;
+        char *buf = (char *) malloc(cap * sizeof *buf);
+        MALLOC_CHK(buf);
+        ssize_t buf_len;
+        char *bufp;
 
-    switch (s5p->format) {
+        offset = ftello(s5p->fp);
+        while ((buf_len = getline(&buf, &cap, s5p->fp)) != -1) { // TODO this return is closer int64_t not unsigned
+            bufp = buf;
+            char *read_id = strdup(strsep_mine(&bufp, SEP)); // TODO quicker to not split the whole line just the first delim
+            size = buf_len;
 
-        case FORMAT_UNKNOWN:
-            break;
+            slow5_idx_insert(index, read_id, offset, size);
+            offset += buf_len;
+        }
 
-        case FORMAT_ASCII: {
-            char *bufp;
+        free(buf);
 
-            offset = ftell(s5p->fp); // TODO returns long (much smaller than uint64_t)
-            while ((buf_len = getline(&buf, &cap, s5p->fp)) != -1) { // TODO this return is closer int64_t not unsigned
-                bufp = buf;
-                char *read_id = strdup(strsep_mine(&bufp, SEP)); // TODO quicker to just getdelim ? since don't want to split whole line
-                size = buf_len;
+    } else if (s5p->format == FORMAT_BINARY) {
+        const char eof[] = BINARY_EOF;
+        char buf_eof[sizeof eof]; // TODO is this a vla?
 
-                slow5_idx_insert(index, read_id, offset, size);
-                offset = ftell(s5p->fp); // TODO returns long (much smaller than uint64_t)
+        struct slow5_rec read;
+        if (fread(buf_eof, sizeof *eof, sizeof eof, s5p->fp) != sizeof eof) {
+            return -1;
+        }
+        if (memcmp(eof, buf_eof, sizeof *eof * sizeof eof) != 0) {
+            if (fseek(s5p->fp, - sizeof *eof * sizeof eof, SEEK_CUR) != 0) { // Seek back
+                return -1;
             }
-        } break;
 
-        case FORMAT_BINARY:
-            break;
+            // Set start offset
+            offset = ftello(s5p->fp);
+
+            // Get read id length
+            if (fread(&read.read_id_len, sizeof read.read_id_len, 1, s5p->fp) != 1) {
+                return -1;
+            }
+
+            // Get read id
+            read.read_id = (char *) malloc((read.read_id_len + 1) * sizeof *read.read_id); // +1 for '\0'
+            MALLOC_CHK(read.read_id);
+            if (fread(read.read_id, sizeof *read.read_id, read.read_id_len, s5p->fp) != read.read_id_len) {
+                free(read.read_id);
+                return -1;
+            }
+            read.read_id[read.read_id_len] = '\0';
+
+            // Seek to raw signal length
+            if (fseeko(s5p->fp, sizeof read.read_group +
+                        sizeof read.digitisation +
+                        sizeof read.offset +
+                        sizeof read.range +
+                        sizeof read.sampling_rate,
+                        SEEK_CUR) != 0) {
+                free(read.read_id);
+                return -1;
+            }
+
+            // Get raw signal length
+            if (fread(&read.len_raw_signal, sizeof read.len_raw_signal, 1, s5p->fp) != 1) {
+                free(read.read_id);
+                return -1;
+            }
+
+            // Seek to end of read
+            if (fseeko(s5p->fp, read.len_raw_signal * sizeof *read.raw_signal, SEEK_CUR) != 0) {
+                free(read.read_id);
+                return -1;
+            }
+
+            // Set size of record
+            size = sizeof read.read_id_len +
+                read.read_id_len * sizeof *read.read_id +
+                sizeof read.read_group +
+                sizeof read.digitisation +
+                sizeof read.offset +
+                sizeof read.range +
+                sizeof read.sampling_rate +
+                sizeof read.len_raw_signal +
+                read.len_raw_signal * sizeof *read.raw_signal;
+
+            // Insert index record
+            slow5_idx_insert(index, read.read_id, offset, size);
+
+            // Read in potential eof marker
+            if (fread(buf_eof, sizeof *eof, sizeof eof, s5p->fp) != sizeof eof) {
+                return -1;
+            }
+        }
+
+        // Ensure actually at end of file
+        if (fread(buf_eof, 1, 1, s5p->fp) != 0) {
+            return -1;
+        }
     }
 
-    free(buf);
+    if (fseeko(s5p->fp, curr_offset, SEEK_SET != 0)) {
+        return -1;
+    }
+
+    return 0;
 }
 
-static void slow5_idx_write(struct slow5_idx *index) {
+void slow5_idx_write(struct slow5_idx *index) {
 
     fprintf(index->fp, SLOW5_INDEX_HEADER);
 
@@ -122,15 +224,11 @@ static void slow5_idx_read(struct slow5_idx *index) {
         char *offset_str = strsep_mine(&bufp, SEP);
         int err;
         uint64_t offset = ato_uint64(offset_str, &err);
-        if (err == -1) {
-            // TODO handle
-        }
+        assert(err != -1);
 
         char *size_str = strsep_mine(&bufp, SEP);
         uint64_t size = ato_uint64(size_str, &err);
-        if (err == -1) {
-            // TODO handle
-        }
+        assert(err != -1);
 
         slow5_idx_insert(index, read_id, offset, size);
     }
@@ -139,7 +237,7 @@ static void slow5_idx_read(struct slow5_idx *index) {
     free(buf);
 }
 
-static void slow5_idx_insert(struct slow5_idx *index, char *read_id, uint64_t offset, uint64_t size) {
+void slow5_idx_insert(struct slow5_idx *index, char *read_id, uint64_t offset, uint64_t size) {
 
     int absent;
     khint_t k = kh_put(s2i, index->hash, read_id, &absent);
@@ -173,7 +271,9 @@ int slow5_idx_get(struct slow5_idx *index, const char *read_id, struct slow5_rec
     if (pos == kh_end(index->hash)) {
         ret = -1;
     } else {
-        *read_index = kh_value(index->hash, pos);
+        if (read_index != NULL) {
+            *read_index = kh_value(index->hash, pos);
+        }
     }
 
     return ret;
@@ -182,7 +282,9 @@ int slow5_idx_get(struct slow5_idx *index, const char *read_id, struct slow5_rec
 void slow5_idx_free(struct slow5_idx *index) {
     //NULL_CHK(index); // TODO necessary?
 
-    assert(fclose(index->fp) == 0);
+    if (index->fp != NULL) {
+        assert(fclose(index->fp) == 0);
+    }
 
     for (uint64_t i = 0; i < index->num_ids; ++ i) {
         free(index->ids[i]);
@@ -191,12 +293,6 @@ void slow5_idx_free(struct slow5_idx *index) {
 
     kh_destroy(s2i, index->hash);
 
+    free(index->pathname);
     free(index);
-}
-
-void slow5_rec_idx_print(struct slow5_rec_idx read_index) {
-    printf("offset=%" PRIu64 "\n"
-            "size=%" PRIu64 "\n",
-            read_index.offset,
-            read_index.size);
 }

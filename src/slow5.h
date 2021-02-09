@@ -71,6 +71,7 @@ struct slow5_rec_aux {
 
 // SLOW5 record data
 struct slow5_rec {
+    uint16_t read_id_len;
     SLOW5_COLS_FOREACH(GENERATE_STRUCT)
     struct slow5_rec_aux *read_aux;
 };
@@ -81,6 +82,7 @@ struct slow5_rec {
 struct slow5_file_meta {
     const char *pathname;
     int fd;
+    uint64_t start_rec_offset;
     //enum press_mtd compress_hint;
 };
 
@@ -152,13 +154,39 @@ int8_t slow5_split(const char *dirname_to, struct slow5_file *s5p_from);
 int slow5_close(struct slow5_file *s5p);
 
 
+/**
+ * Create the index file for slow5 file.
+ * Overrides if already exists.
+ *
+ * Return -1 on error,
+ * 0 on success.
+ *
+ * @param   s5p slow5 file structure
+ * @return  error codes described above
+ */
+int slow5_idx(struct slow5_file *s5p);
+
+
+/**
+ * Get an empty read structure.
+ * To be freed with slow5_rec_free().
+ *
+ * @return  ptr to the record
+ */
+static inline struct slow5_rec *slow5_rec_init(void) {
+    struct slow5_rec *read = (struct slow5_rec *) calloc(1, sizeof *read);
+
+    return read;
+}
 
 /**
  * Get a read entry from a slow5 file corresponding to a read_id.
  *
  * Allocates memory for *read if it is NULL.
  * Otherwise, the data in *read is freed and overwritten.
- * slow5_rec_free() should be called when finished with the structure.
+ * slow5_rec_free() should always be called when finished with the structure.
+ *
+ * Creates the index if not already there
  *
  * Return
  * TODO are these error codes too much?
@@ -181,7 +209,7 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
  *
  * Allocates memory for *read if it is NULL.
  * Otherwise, the data in *read is freed and overwritten.
- * slow5_rec_free() should be called when finished with the structure.
+ * slow5_rec_free() should always be called when finished with the structure.
  *
  * Return
  * TODO are these error codes too much?
@@ -197,16 +225,49 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
 int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p);
 
 /**
- * Get the read entry as a string in the specified format.
+ * Add a read entry to the slow5 file.
  *
- * Returns NULL if read is NULL, or format is FORMAT_UNKNOWN,
+ * Return
+ *  0   the read was successfully stored
+ * -1   read or s5p is NULL
+ * -2   the index was not previously init and failed to init
+ * -3   duplicate read id
+ * -4   writing failure
+ *
+ * @param   read    slow5_rec ptr
+ * @param   s5p     slow5 file
+ * @return  error code described above
+ */
+int slow5_rec_add(struct slow5_rec *read, struct slow5_file *s5p);
+
+/**
+ * Remove a read entry at a read_id in a slow5 file.
+ *
+ * Return
+ *  0   the read was successfully stored
+ * -1   an input parameter is NULL
+ * -2   the index was not previously init and failed to init
+ * -3   read_id was not found in the index
+ *
+ * @param   read_id the read identifier
+ * @param   s5p     slow5 file
+ * @return  error code described above
+ */
+int slow5_rec_rm(const char *read_id, struct slow5_file *s5p);
+
+/**
+ * Get the read entry in the specified format.
+ *
+ * Returns NULL if read is NULL,
+ * or format is FORMAT_UNKNOWN,
  * or the read attribute values are invalid
  *
  * @param   read    slow5_rec pointer
  * @param   format  slow5 format to write the entry in
+ * @param   written number of bytes written to the returned buffer
  * @return  malloced string to use free() on, NULL on error
  */
-char *slow5_rec_to_str(struct slow5_rec *read, enum slow5_fmt format);
+void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, size_t *written);
 
 /**
  * Print a read entry in the specified format to a file pointer.
@@ -277,7 +338,7 @@ int slow5_hdr_add(const char *attr, const struct slow5_file *s5p);
 int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, const struct slow5_file *s5p);
 
 /**
- * Get the header as a string in the specified format.
+ * Get the header in the specified format.
  *
  * Returns NULL if s5p is NULL
  * or format is FORMAT_UNKNOWN
@@ -298,13 +359,27 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *wr
  * On error, -1 is returned.
  *
  * @param   fp      output file pointer
- * @param   s5p     slow5_rec pointer
+ * @param   s5p     slow5_file pointer
  * @param   format  slow5 format to write the entry in
  * @return  number of bytes written, -1 on error
  */
 int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format);
 static inline int slow5_hdr_print(struct slow5_file *s5p, enum slow5_fmt format) {
     return slow5_hdr_fprint(stdout, s5p, format);
+}
+
+/**
+ * Print the binary end of file to a file pointer.
+ *
+ * On success, the number of bytes written is returned.
+ * On error, -1 is returned.
+ *
+ * @param   fp      output file pointer
+ * @return  number of bytes written, -1 on error
+ */
+ssize_t slow5_eof_fprint(FILE *fp);
+static inline ssize_t slow5_eof_print(void) {
+    return slow5_eof_fprint(stdout);
 }
 
 #endif

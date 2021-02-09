@@ -1,13 +1,13 @@
 #!/bin/sh
 
-if [ "$1" = "mem" ]; then
+if [ "$1" = 'mem' ]; then
     mem=1
 else
     mem=0
 fi
 
 echo_test() {
-    printf "\n--%s--\n" "$1"
+    printf '\n--%s--\n' "$1"
 }
 
 ex() {
@@ -21,30 +21,49 @@ ex() {
 }
 
 fail() {
-    echo "FAILURE"
+    echo 'FAILURE'
     ret=1
 }
 
 not_compiled() {
-    echo "NOT COMPILED"
+    echo 'NOT COMPILED'
     ret=1
+}
+
+my_diff() {
+    if ! ex diff "$1" "$2" -q; then
+        fail
+    fi
+}
+
+prep() {
+    rm 'test/data/exp/one_fast5/exp_1_default.slow5.idx'
+    rm 'test/data/err/parse_bad.slow5.idx'
+    cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_empty.slow5'
+    cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_valid.slow5'
+    cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_duplicate.slow5'
+
+    rm 'test/data/exp/one_fast5/exp_1_default.blow5.idx'
+    rm 'test/data/err/no_eof.blow5.idx'
 }
 
 ret=0
 
-echo_test "cli test"
+prep
+
+echo_test 'cli test'
 if ! ex ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null; then
     fail
 fi
 
-echo_test "endian test"
+echo_test 'endian test'
 if gcc -Wall test/endian_test.c -o test/endian_test; then
     ex test/endian_test
 else
     not_compiled
 fi
 
-echo_test "unit test helpers"
+echo_test 'unit test helpers'
 if gcc -Wall -Werror -g test/unit_test_helpers.c -o test/unit_test_helpers src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
     if ! ex test/unit_test_helpers; then
         fail
@@ -53,7 +72,7 @@ else
     not_compiled
 fi
 
-echo_test "unit test ascii"
+echo_test 'unit test ascii'
 if gcc -Wall -Werror -g test/unit_test_ascii.c -o test/unit_test_ascii src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
     if ! ex test/unit_test_ascii > test/data/out/unit_test_out_ascii; then
         fail
@@ -62,7 +81,8 @@ else
     not_compiled
 fi
 
-echo_test "unit test binary"
+
+echo_test 'unit test binary'
 if gcc -Wall -Werror -g test/unit_test_binary.c -o test/unit_test_binary src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
     if ! ex test/unit_test_binary > test/data/out/unit_test_out_binary; then
         fail
@@ -71,15 +91,12 @@ else
     not_compiled
 fi
 
-echo_test "diff test"
-if ! ex diff test/data/out/unit_test_out_ascii test/data/exp/unit_test_exp_ascii -q; then
-    fail
-fi
-if ! ex diff test/data/out/unit_test_out_fprint test/data/exp/unit_test_exp_fprint -q; then
-    fail
-fi
-if ! ex diff test/data/out/unit_test_out_binary test/data/exp/unit_test_exp_binary -q; then
-    fail
-fi
+echo_test 'diff test'
+my_diff 'test/data/out/unit_test_out_ascii' 'test/data/exp/unit_test_exp_ascii'
+my_diff 'test/data/out/unit_test_out_fprint' 'test/data/exp/unit_test_exp_fprint'
+my_diff 'test/data/out/unit_test_out_binary' 'test/data/exp/unit_test_exp_binary'
+my_diff 'test/data/out/exp_1_default_add_empty.slow5' 'test/data/exp/exp_1_default_add_empty.slow5'
+my_diff 'test/data/out/exp_1_default_add_valid.slow5' 'test/data/exp/exp_1_default_add_valid.slow5'
+my_diff 'test/data/out/exp_1_default_add_duplicate.slow5' 'test/data/exp/exp_1_default_add_duplicate.slow5'
 
 exit $ret

@@ -6,6 +6,7 @@
 #include "unit_test.h"
 #include "slow5.h"
 #include "slow5_extra.h"
+#include "slow5idx_clean.h"
 #include "misc.h"
 
 int slow5_open_valid(void) {
@@ -276,14 +277,14 @@ int slow5_get_next_invalid(void) {
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_to_str_valid(void) {
+int slow5_rec_to_mem_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    char *str = slow5_rec_to_str(read, FORMAT_ASCII);
-    printf("%s\n", str);
+    char *str = slow5_rec_to_mem(read, FORMAT_ASCII, NULL);
+    printf("%s", str);
     free(str);
     slow5_rec_free(read);
 
@@ -291,22 +292,26 @@ int slow5_rec_to_str_valid(void) {
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_to_str_null(void) {
+int slow5_rec_to_mem_null(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
     struct slow5_rec *read = NULL;
+    size_t num_bytes;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_to_str(NULL, FORMAT_ASCII) == NULL);
-    ASSERT(slow5_rec_to_str(read, FORMAT_UNKNOWN) == NULL);
-    ASSERT(slow5_rec_to_str(NULL, FORMAT_UNKNOWN) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, FORMAT_ASCII, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(read, FORMAT_UNKNOWN, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, FORMAT_UNKNOWN, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(read, FORMAT_UNKNOWN, NULL) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, FORMAT_ASCII, NULL) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, FORMAT_UNKNOWN, NULL) == NULL);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_to_str_change(void) {
+int slow5_rec_to_mem_change(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
@@ -315,8 +320,8 @@ int slow5_rec_to_str_change(void) {
     free(read->read_id);
     read->read_id = strdup("testing123");
     char *str;
-    ASSERT((str = slow5_rec_to_str(read, FORMAT_ASCII)) != NULL);
-    printf("%s\n", str);
+    ASSERT((str = slow5_rec_to_mem(read, FORMAT_ASCII, NULL)) != NULL);
+    printf("%s", str);
     free(str);
     slow5_rec_free(read);
 
@@ -767,6 +772,85 @@ int slow5_hdr_print_add_attr(void) {
     return EXIT_SUCCESS;
 }
 
+int slow5_idx_init_valid(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
+    ASSERT(s5p != NULL);
+
+    struct slow5_idx *idx = slow5_idx_init(s5p);
+    ASSERT(idx != NULL);
+    struct slow5_rec_idx read_idx;
+    ASSERT(slow5_idx_get(idx, "a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read_idx) == 0);
+    ASSERT(read_idx.offset == 1256);
+    ASSERT(read_idx.size == 238771);
+
+    slow5_idx_free(idx);
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
+int slow5_rec_add_empty(void) {
+    remove("test/data/out/exp_1_default_add_empty.slow5.idx");
+    struct slow5_file *s5p = slow5_open("test/data/out/exp_1_default_add_empty.slow5", "r+");
+    ASSERT(s5p != NULL);
+
+    struct slow5_rec *read = slow5_rec_init();
+    read->read_id = strdup("");
+    ASSERT(slow5_rec_add(read, s5p) == 0);
+    slow5_rec_free(read);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
+int slow5_rec_add_null(void) {
+    struct slow5_file *s5p = slow5_open("test/data/out/exp_1_default_add_empty.slow5", "r+");
+    ASSERT(s5p != NULL);
+
+    struct slow5_rec *read = slow5_rec_init();
+    read->read_id = strdup("");
+    ASSERT(slow5_rec_add(read, NULL) == -1);
+    ASSERT(slow5_rec_add(NULL, s5p) == -1);
+    ASSERT(slow5_rec_add(NULL, NULL) == -1);
+    free(read->read_id);
+    read->read_id = NULL;
+    ASSERT(slow5_rec_add(read, s5p) == -1);
+    slow5_rec_free(read);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
+int slow5_rec_add_valid(void) {
+    remove("test/data/out/exp_1_default_add_valid.slow5.idx");
+    struct slow5_file *s5p = slow5_open("test/data/out/exp_1_default_add_valid.slow5", "r+");
+    ASSERT(s5p != NULL);
+
+    struct slow5_rec *read = slow5_rec_init();
+    ASSERT(slow5_get_next(&read, s5p) == 0);
+
+    read->read_id[strlen(read->read_id) - 1] = '\0';
+
+    ASSERT(slow5_rec_add(read, s5p) == 0);
+    slow5_rec_free(read);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
+int slow5_rec_add_duplicate(void) {
+    remove("test/data/out/exp_1_default_add_duplicate.slow5.idx");
+    struct slow5_file *s5p = slow5_open("test/data/out/exp_1_default_add_duplicate.slow5", "r+");
+    ASSERT(s5p != NULL);
+
+    struct slow5_rec *read = slow5_rec_init();
+    ASSERT(slow5_get_next(&read, s5p) == 0);
+    ASSERT(slow5_rec_add(read, s5p) == -3);
+    slow5_rec_free(read);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
 
 int main(void) {
 
@@ -791,9 +875,9 @@ int main(void) {
         CMD(slow5_get_next_empty)
         CMD(slow5_get_next_invalid)
 
-        CMD(slow5_rec_to_str_valid)
-        CMD(slow5_rec_to_str_null)
-        CMD(slow5_rec_to_str_change)
+        CMD(slow5_rec_to_mem_valid)
+        CMD(slow5_rec_to_mem_null)
+        CMD(slow5_rec_to_mem_change)
 
         CMD(slow5_rec_print_valid)
         CMD(slow5_rec_print_null)
@@ -830,6 +914,13 @@ int main(void) {
         CMD(slow5_hdr_print_change_attr)
         CMD(slow5_hdr_print_add_empty_attr)
         CMD(slow5_hdr_print_add_attr)
+
+        CMD(slow5_idx_init_valid)
+
+        CMD(slow5_rec_add_empty)
+        CMD(slow5_rec_add_null)
+        CMD(slow5_rec_add_valid)
+        CMD(slow5_rec_add_duplicate)
     };
 
     return RUN_TESTS(tests);

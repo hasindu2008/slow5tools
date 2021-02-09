@@ -17,8 +17,11 @@
 #define HEADER_NUM_GROUPS_INIT          (1)
 
 // Order, format string and type of main SLOW5 columns
+// NOTE if this is changed, also edit:
+//      slow5.c:slow5_rec_to_str FORMAT_BINARY
+//      slow5idx_clean.c
 #define SLOW5_COLS(col, end)                    \
-    col(char*,      "%s",       read_id)        \
+    col(char*,      "%s",       read_id)        /* A malloced string */ \
     col(uint32_t,   "%" PRIu32, read_group)     \
     col(double,     "%s",       digitisation)   \
     col(double,     "%s",       offset)         \
