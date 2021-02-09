@@ -6,7 +6,7 @@
 #include "unit_test.h"
 #include "slow5.h"
 #include "slow5_extra.h"
-#include "slow5idx_clean.h"
+#include "slow5idx.h"
 #include "misc.h"
 
 int slow5_open_valid(void) {

@@ -5,7 +5,7 @@
 #include <assert.h> // TODO use better error handling?
 #include "slow5.h"
 #include "slow5_extra.h"
-#include "slow5idx_clean.h"
+#include "slow5idx.h"
 #include "press.h"
 #include "error.h"
 #include "misc.h"

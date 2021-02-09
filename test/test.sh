@@ -64,7 +64,7 @@ else
 fi
 
 echo_test 'unit test helpers'
-if gcc -Wall -Werror -g test/unit_test_helpers.c -o test/unit_test_helpers src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
+if gcc -Wall -Werror -g test/unit_test_helpers.c -o test/unit_test_helpers src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/unit_test_helpers; then
         fail
     fi
@@ -73,7 +73,7 @@ else
 fi
 
 echo_test 'unit test ascii'
-if gcc -Wall -Werror -g test/unit_test_ascii.c -o test/unit_test_ascii src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
+if gcc -Wall -Werror -g test/unit_test_ascii.c -o test/unit_test_ascii src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/unit_test_ascii > test/data/out/unit_test_out_ascii; then
         fail
     fi
@@ -83,7 +83,7 @@ fi
 
 
 echo_test 'unit test binary'
-if gcc -Wall -Werror -g test/unit_test_binary.c -o test/unit_test_binary src/slow5.c src/misc.c src/slow5idx_clean.c src/press.c -I src/ -lz; then
+if gcc -Wall -Werror -g test/unit_test_binary.c -o test/unit_test_binary src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/unit_test_binary > test/data/out/unit_test_out_binary; then
         fail
     fi

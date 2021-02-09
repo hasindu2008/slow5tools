@@ -11,7 +11,7 @@
 #include <dirent.h>
 #include <getopt.h>
 #include <unistd.h>
-#include "slow5idx.h"
+#include "slow5idx_old.h"
 
 static double realtime0=0;
 /*
