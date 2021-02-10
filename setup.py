@@ -15,8 +15,8 @@ cmdclass['build_ext'] = build_ext
 
 
 #TODO add all
-sources=[module_src, 'src/slow5.c', 'src/press.c', 'src/misc.c', 'src/slow5idx_clean.c' ]
-depends=['python/pyslow5.pxd', 'python/pyslow5.h', 'src/config.h', 'src/error.h', 'src/slow5.h', 'src/misc.h', 'src/press.h', 'src/slow5idx_clean.h']
+sources=[module_src, 'src/slow5.c', 'src/press.c', 'src/misc.c', 'src/slow5idx.c' ]
+depends=['python/pyslow5.pxd', 'python/pyslow5.h', 'src/config.h', 'src/error.h', 'src/slow5.h', 'src/misc.h', 'src/press.h', 'src/slow5idx.h']
 extra_compile_args = ['-g', '-Wall', '-O2', '-std=c++11', '-Wno-strict-prototypes']
 libraries = ['z','m','pthread', 'hdf5_serial']
 include_dirs = ['.']
