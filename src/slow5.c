@@ -51,7 +51,8 @@ struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt for
     }
 
     struct slow5_file *s5p;
-    struct slow5_hdr *header = slow5_hdr_init(fp, format);
+    press_method_t method;
+    struct slow5_hdr *header = slow5_hdr_init(fp, format, &method);
     if (header == NULL) {
         fclose(fp);
         s5p = NULL;
@@ -62,9 +63,7 @@ struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt for
         s5p->fp = fp;
         s5p->format = format;
         s5p->header = header;
-        // TODO only use when reading?
-        // TODO determine compression?
-        s5p->compress = press_init(COMPRESS_NONE);
+        s5p->compress = press_init(method);
 
         if ((s5p->meta.fd = fileno(fp)) == -1) {
             slow5_close(s5p);
@@ -146,7 +145,7 @@ int slow5_close(struct slow5_file *s5p) {
 
 // slow5 header
 
-struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
+struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t *method) {
 
     struct slow5_hdr *header = (struct slow5_hdr *) calloc(1, sizeof *(header));
     MALLOC_CHK(header);
@@ -155,6 +154,8 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
     // Parse slow5 header
 
     if (format == FORMAT_ASCII) {
+
+        *method = COMPRESS_NONE;
 
         // Buffer for file parsing
         size_t cap = SLOW5_HEADER_DATA_BUF_INIT_CAP;
@@ -238,7 +239,6 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
         const char magic[] = BINARY_MAGIC_NUMBER;
 
         char buf_magic[sizeof magic]; // TODO is this a vla?
-        press_method_t method;
         uint32_t header_size;
 
         // TODO pack and do one read
@@ -249,7 +249,7 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
                 fread(&header->version.major, sizeof header->version.major, 1, fp) != 1 ||
                 fread(&header->version.minor, sizeof header->version.minor, 1, fp) != 1 ||
                 fread(&header->version.patch, sizeof header->version.patch, 1, fp) != 1 ||
-                fread(&method, sizeof method, 1, fp) != 1 ||
+                fread(method, sizeof *method, 1, fp) != 1 ||
                 fread(&header->num_read_groups, sizeof header->num_read_groups, 1, fp) != 1 ||
                 fseek(fp, BINARY_HEADER_SIZE_OFFSET, SEEK_SET) == -1 ||
                 fread(&header_size, sizeof header_size, 1, fp) != 1) {
@@ -286,11 +286,11 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format) {
  *
  * @param   s5p     slow5 file
  * @param   format  slow5 format to write the entry in
- * @param   written number of bytes written to the returned buffer
+ * @param   n       number of bytes written to the returned buffer
  * @return  malloced memory storing the slow5 header representation,
  *          to use free() on afterwards
  */
-void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *written) {
+void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *n) {
     char *mem = NULL;
 
     if (s5p == NULL || format == FORMAT_UNKNOWN) {
@@ -470,8 +470,8 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *wr
         memcpy(mem + BINARY_HEADER_SIZE_OFFSET, &header_size, sizeof header_size);
     }
 
-    if (written != NULL) {
-        *written = len;
+    if (n != NULL) {
+        *n = len;
     }
 
     return (void *) mem;
@@ -497,8 +497,8 @@ int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format) {
         return -1;
     }
 
-    size_t written = fwrite(hdr, hdr_size, 1, fp);
-    if (written != 1) {
+    size_t n = fwrite(hdr, hdr_size, 1, fp);
+    if (n != 1) {
         ret = -1;
     } else {
         ret = hdr_size; // TODO is this okay
@@ -1126,7 +1126,7 @@ int slow5_rec_add(struct slow5_rec *read, struct slow5_file *s5p) {
     // Append record to file
     void *mem = NULL;
     size_t bytes;
-    if ((mem = slow5_rec_to_mem(read, s5p->format, &bytes)) == NULL) {
+    if ((mem = slow5_rec_to_mem(read, s5p->format, s5p->compress, &bytes)) == NULL) {
         return -4;
     }
     if (fseek(s5p->fp, 0L, SEEK_END) != 0) {
@@ -1197,17 +1197,17 @@ int slow5_rec_rm(const char *read_id, struct slow5_file *s5p) {
  * @param   read    slow5_rec pointer
  * @return  number of bytes written, -1 on error
  */
-int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format) {
+int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format, struct press *compress) {
     int ret;
     void *read_mem;
     size_t read_size;
 
-    if (fp == NULL || read == NULL || (read_mem = slow5_rec_to_mem(read, format, &read_size)) == NULL) {
+    if (fp == NULL || read == NULL || (read_mem = slow5_rec_to_mem(read, format, compress, &read_size)) == NULL) {
         return -1;
     }
 
-    size_t written = fwrite(read_mem, read_size, 1, fp);
-    if (written != 1) {
+    size_t n = fwrite(read_mem, read_size, 1, fp);
+    if (n != 1) {
         ret = -1;
     } else {
         ret = read_size; // TODO is this okay
@@ -1224,12 +1224,13 @@ int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format) {
  * or format is FORMAT_UNKNOWN,
  * or the read attribute values are invalid
  *
- * @param   read    slow5_rec pointer
- * @param   format  slow5 format to write the entry in
- * @param   written number of bytes written to the returned buffer
+ * @param   read        slow5_rec pointer
+ * @param   format      slow5 format to write the entry in
+ * @param   compress    compress structure
+ * @param   n           number of bytes written to the returned buffer
  * @return  malloced string to use free() on, NULL on error
  */
-void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, size_t *written) {
+void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, struct press *compress, size_t *n) {
     char *mem = NULL;
 
     if (read == NULL || format == FORMAT_UNKNOWN) {
@@ -1294,6 +1295,12 @@ void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, size_t *wr
 
     } else if (format == FORMAT_BINARY) {
 
+        bool compress_to_free = false;
+        if (compress == NULL) {
+            compress = press_init(COMPRESS_NONE);
+            compress_to_free = true;
+        }
+
         size_t len = sizeof read->read_id_len +
             read->read_id_len * sizeof *read->read_id +
             sizeof read->read_group +
@@ -1324,10 +1331,14 @@ void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, size_t *wr
         curr_len += sizeof read->len_raw_signal;
         memcpy(mem + curr_len, read->raw_signal, read->len_raw_signal * sizeof *read->raw_signal);
         curr_len += read->len_raw_signal * sizeof *read->raw_signal;
+
+        if (compress_to_free) {
+            press_free(compress);
+        }
     }
 
-    if (written != NULL) {
-        *written = curr_len;
+    if (n != NULL) {
+        *n = curr_len;
     }
 
     return (void *) mem;
@@ -1379,11 +1390,11 @@ int slow5_idx(struct slow5_file *s5p) {
 ssize_t slow5_eof_fprint(FILE *fp) {
     const char eof[] = BINARY_EOF;
 
-    size_t written;
-    if ((written = fwrite(eof, sizeof *eof, sizeof eof, fp)) != sizeof eof) {
+    size_t n;
+    if ((n = fwrite(eof, sizeof *eof, sizeof eof, fp)) != sizeof eof) {
         return -1;
     } else {
-        return written;
+        return n;
     }
 }
 

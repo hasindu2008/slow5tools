@@ -283,7 +283,7 @@ int slow5_rec_to_mem_valid(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    char *str = slow5_rec_to_mem(read, FORMAT_ASCII, NULL);
+    char *str = slow5_rec_to_mem(read, FORMAT_ASCII, s5p->compress, NULL);
     printf("%s", str);
     free(str);
     slow5_rec_free(read);
@@ -299,12 +299,12 @@ int slow5_rec_to_mem_null(void) {
     struct slow5_rec *read = NULL;
     size_t num_bytes;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_to_mem(NULL, FORMAT_ASCII, &num_bytes) == NULL);
-    ASSERT(slow5_rec_to_mem(read, FORMAT_UNKNOWN, &num_bytes) == NULL);
-    ASSERT(slow5_rec_to_mem(NULL, FORMAT_UNKNOWN, &num_bytes) == NULL);
-    ASSERT(slow5_rec_to_mem(read, FORMAT_UNKNOWN, NULL) == NULL);
-    ASSERT(slow5_rec_to_mem(NULL, FORMAT_ASCII, NULL) == NULL);
-    ASSERT(slow5_rec_to_mem(NULL, FORMAT_UNKNOWN, NULL) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, FORMAT_ASCII, s5p->compress, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(read, FORMAT_UNKNOWN, NULL, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, FORMAT_UNKNOWN, s5p->compress, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(read, FORMAT_UNKNOWN, NULL, NULL) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, FORMAT_ASCII, NULL, NULL) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, FORMAT_UNKNOWN, s5p->compress, NULL) == NULL);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -320,7 +320,7 @@ int slow5_rec_to_mem_change(void) {
     free(read->read_id);
     read->read_id = strdup("testing123");
     char *str;
-    ASSERT((str = slow5_rec_to_mem(read, FORMAT_ASCII, NULL)) != NULL);
+    ASSERT((str = slow5_rec_to_mem(read, FORMAT_ASCII, NULL, NULL)) != NULL);
     printf("%s", str);
     free(str);
     slow5_rec_free(read);
@@ -335,7 +335,7 @@ int slow5_rec_print_valid(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_print(read, FORMAT_ASCII) == 238771);
+    ASSERT(slow5_rec_print(read, FORMAT_ASCII, NULL) == 238771);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -349,9 +349,9 @@ int slow5_rec_print_null(void) {
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
 
-    ASSERT(slow5_rec_print(NULL, FORMAT_ASCII) == -1);
-    ASSERT(slow5_rec_print(read, FORMAT_UNKNOWN) == -1);
-    ASSERT(slow5_rec_print(NULL, FORMAT_UNKNOWN) == -1);
+    ASSERT(slow5_rec_print(NULL, FORMAT_ASCII, NULL) == -1);
+    ASSERT(slow5_rec_print(read, FORMAT_UNKNOWN, NULL) == -1);
+    ASSERT(slow5_rec_print(NULL, FORMAT_UNKNOWN, NULL) == -1);
 
     slow5_rec_free(read);
 
@@ -370,7 +370,7 @@ int slow5_rec_print_change(void) {
     free(read->read_id);
     read->read_id = strdup("lol");
 
-    ASSERT(slow5_rec_print(read, FORMAT_ASCII) == 238738);
+    ASSERT(slow5_rec_print(read, FORMAT_ASCII, NULL) == 238738);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -385,7 +385,7 @@ int slow5_rec_fprint_valid(void) {
     ASSERT(slow5_get_next(&read, s5p) == 0);
     FILE *fp;
     ASSERT((fp = fopen("test/data/out/unit_test_out_fprint", "w")) != NULL);
-    ASSERT(slow5_rec_fprint(fp, read, FORMAT_ASCII) == 238771);
+    ASSERT(slow5_rec_fprint(fp, read, FORMAT_ASCII, NULL) == 238771);
     slow5_rec_free(read);
 
     ASSERT(fclose(fp) == 0);
@@ -399,9 +399,9 @@ int slow5_rec_fprint_null(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_fprint(NULL, read, FORMAT_ASCII) == -1);
-    ASSERT(slow5_rec_fprint(stdout, NULL, FORMAT_ASCII) == -1);
-    ASSERT(slow5_rec_fprint(NULL, NULL, FORMAT_ASCII) == -1);
+    ASSERT(slow5_rec_fprint(NULL, read, FORMAT_ASCII, s5p->compress) == -1);
+    ASSERT(slow5_rec_fprint(stdout, NULL, FORMAT_ASCII, NULL) == -1);
+    ASSERT(slow5_rec_fprint(NULL, NULL, FORMAT_ASCII, NULL) == -1);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -418,7 +418,7 @@ int slow5_rec_fprint_change(void) {
     read->read_id = strdup("lol");
     FILE *fp;
     ASSERT((fp = fopen("test/data/out/unit_test_out_fprint", "a")) != NULL);
-    ASSERT(slow5_rec_fprint(fp, read, FORMAT_ASCII) == 238738);
+    ASSERT(slow5_rec_fprint(fp, read, FORMAT_ASCII, NULL) == 238738);
     slow5_rec_free(read);
 
     ASSERT(fclose(fp) == 0);

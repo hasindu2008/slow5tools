@@ -72,6 +72,15 @@ else
     not_compiled
 fi
 
+echo_test 'unit test press'
+if gcc -Wall -Werror -g test/unit_test_press.c -o test/unit_test_press src/press.c -I src/ -lz; then
+    if ! ex test/unit_test_press > test/data/out/unit_test_out_press; then
+        fail
+    fi
+else
+    not_compiled
+fi
+
 echo_test 'unit test ascii'
 if gcc -Wall -Werror -g test/unit_test_ascii.c -o test/unit_test_ascii src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/unit_test_ascii > test/data/out/unit_test_out_ascii; then
@@ -95,6 +104,7 @@ echo_test 'diff test'
 my_diff 'test/data/out/unit_test_out_ascii' 'test/data/exp/unit_test_exp_ascii'
 my_diff 'test/data/out/unit_test_out_fprint' 'test/data/exp/unit_test_exp_fprint'
 my_diff 'test/data/out/unit_test_out_binary' 'test/data/exp/unit_test_exp_binary'
+my_diff 'test/data/out/unit_test_out_press' 'test/data/exp/unit_test_exp_press'
 my_diff 'test/data/out/exp_1_default_add_empty.slow5' 'test/data/exp/exp_1_default_add_empty.slow5'
 my_diff 'test/data/out/exp_1_default_add_valid.slow5' 'test/data/exp/exp_1_default_add_valid.slow5'
 my_diff 'test/data/out/exp_1_default_add_duplicate.slow5' 'test/data/exp/exp_1_default_add_duplicate.slow5'

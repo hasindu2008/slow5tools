@@ -4,6 +4,7 @@
 #include <zlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 // Compression methods
 enum press_method {
@@ -26,7 +27,8 @@ static const int GZIP_MAGIC_NUM[] = { 0x1f, 0x8b };
 
 // Gzip stream
 struct gzip_stream {
-    z_stream strm;
+    z_stream strm_inflate;
+    z_stream strm_deflate;
     int flush;
 };
 
@@ -42,32 +44,42 @@ struct press {
     union press_stream *stream;
 };
 
-
-// Init and free compression stream
+/* --- Init / free press structure --- */
 struct press *press_init(press_method_t method);
-void press_free(struct press *compress);
+void press_free(struct press *comp);
 
-// fwrite but with compression
-size_t fwrite_press(struct press *compress, const void *ptr, size_t size, size_t nmemb, FILE *fp);
-// fwrite but with gzip compression
-size_t fwrite_gzip(struct gzip_stream *gzip, const void *ptr, size_t size, size_t nmemb, FILE *fp);
+/* --- Compress / decompress a ptr to some memory --- */
+void *ptr_compress(struct press *comp, const void *ptr, size_t count, size_t *n);
+static inline void *str_compress(struct press *comp, const char *str, size_t *n) {
+    return ptr_compress(comp, str, strlen(str) + 1, n); // Include '\0'
+}
+void *ptr_depress(struct press *comp, const void *ptr, size_t count, size_t *n);
 
-// fprintf but with compression
-int fprintf_press(struct press *compress, FILE *fp, const char *format, ...);
-// vfprintf but with gzip compression
-int vfprintf_gzip(struct gzip_stream *gzip, FILE *fp, const char *format, va_list ap);
+/* --- Compress / decompress a ptr to some file --- */
+size_t fwrite_compress(struct press *comp, const void *ptr, size_t size, size_t nmemb, FILE *fp);
+size_t fwrite_depress(struct press *comp, const void *ptr, size_t size, size_t nmemb, FILE *fp);
+static inline size_t print_compress(struct press *comp, const void *ptr, size_t size, size_t nmemb) {
+    return fwrite_compress(comp, ptr, size, nmemb, stdout);
+}
+static inline size_t print_depress(struct press *comp, const void *ptr, size_t size, size_t nmemb) {
+    return fwrite_depress(comp, ptr, size, nmemb, stdout);
+}
+static inline size_t fwrite_str_compress(struct press *comp, const char *str, FILE *fp) {
+    return fwrite_compress(comp, str, sizeof *str, strlen(str), fp); // Don't include '\0'
+}
+static inline size_t print_str_compress(struct press *comp, const char *str) {
+    return fwrite_str_compress(comp, str, stdout);
+}
 
-// Write the compression footer on the immediate next call to fprintf_press
-void press_footer_next(struct press *compress);
+/* --- Compress with format string to some file --- */
+int fprintf_compress(struct press *comp, FILE *fp, const char *format, ...);
+int printf_compress(struct press *comp, const char *format, ...);
+
+/* --- Write compression footer on immediate next compression call --- */
+void compress_footer_next(struct press *comp);
 
 // sprintf and vsprintf but dynamically allocates strp memory
 int asprintf_mine(char **strp, const char *fmt, ...);
 int vasprintf_mine(char **strp, const char *fmt, va_list ap);
-
-// Decompress a zlib compressed string of size n
-// Return it and set n to the new size
-unsigned char *z_inflate_buf(const char *comp_str, size_t *n);
-// Write zlib compressed ptr to f_out
-int z_deflate_write(z_stream *strmp, const void *ptr, uLong size, FILE *f_out, int flush);
 
 #endif

@@ -90,7 +90,7 @@ struct slow5_file_meta {
 struct slow5_file {
     FILE *fp;
     enum slow5_fmt format;
-    struct press *compress;
+    struct press *compress; // TODO better name
     struct slow5_hdr *header;
     struct slow5_idx *index;
     struct slow5_file_meta meta;
@@ -262,12 +262,13 @@ int slow5_rec_rm(const char *read_id, struct slow5_file *s5p);
  * or format is FORMAT_UNKNOWN,
  * or the read attribute values are invalid
  *
- * @param   read    slow5_rec pointer
- * @param   format  slow5 format to write the entry in
- * @param   written number of bytes written to the returned buffer
+ * @param   read        slow5_rec pointer
+ * @param   format      slow5 format to write the entry in
+ * @param   written     number of bytes written to the returned buffer
+ * @param   compress    compress structure
  * @return  malloced string to use free() on, NULL on error
  */
-void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, size_t *written);
+void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, struct press *compress, size_t *written);
 
 /**
  * Print a read entry in the specified format to a file pointer.
@@ -278,11 +279,12 @@ void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, size_t *wr
  * @param   fp      output file pointer
  * @param   read    slow5_rec pointer
  * @param   format  slow5 format to write entry in
+ * @param   compress
  * @return  number of bytes written, -1 on error
  */
-int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format);
-static inline int slow5_rec_print(struct slow5_rec *read, enum slow5_fmt format) {
-    return slow5_rec_fprint(stdout, read, format);
+int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format, struct press *compress);
+static inline int slow5_rec_print(struct slow5_rec *read, enum slow5_fmt format, struct press *compress) {
+    return slow5_rec_fprint(stdout, read, format, compress);
 }
 
 // Free a read entry
