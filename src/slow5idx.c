@@ -128,7 +128,7 @@ static int slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
                 return -1;
             }
 
-            uint8_t *read_decomp = ptr_depress(s5p->compress, read_comp, record_size, NULL);
+            uint8_t *read_decomp = (uint8_t *) ptr_depress(s5p->compress, read_comp, record_size, NULL);
             if (read_decomp == NULL) {
                 free(read_comp);
                 free(read_decomp);
