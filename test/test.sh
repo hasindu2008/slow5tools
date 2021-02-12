@@ -48,6 +48,7 @@ prep() {
     rm 'test/data/exp/one_fast5/exp_1_default.blow5.idx'
     rm 'test/data/exp/one_fast5/exp_1_default_gzip.blow5.idx'
 
+    mkdir -p 'test/data/out/one_fast5'
     rm 'test/data/out/one_fast5/slow5_to_blow5_uncomp.blow5'
     rm 'test/data/out/one_fast5/slow5_to_blow5_gzip.blow5'
     rm 'test/data/out/one_fast5/blow5_uncomp_to_slow5.slow5'
