@@ -3,6 +3,7 @@ Get the hierarchy of a hdf5 file given h5dump file
 Built for fast5 files
 
 Usage: python3 $0 [h5dump_file]
+       python3 $0 <(h5dump [fast5_file])
 """
 
 from sys import argv

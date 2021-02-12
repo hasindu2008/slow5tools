@@ -1,7 +1,8 @@
 """
-Print out which fields of FAST5 files are static or variable for the same experiment
-In a nice hierarchical format
-Given h5dump output of any number of FAST5 files
+Print out which fields of FAST5 files are static or variable for the same experiment.
+In a nice hierarchical format.
+Given h5dump output of any number of FAST5 files.
+Show the constant values with -c flag.
 
 Usage: python3 $0 [h5dump_FAST5_output...] [-c]
 """

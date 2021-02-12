@@ -84,7 +84,6 @@ struct slow5_file_meta {
     const char *pathname;
     int fd;
     uint64_t start_rec_offset;
-    //enum press_mtd compress_hint;
 };
 
 // SLOW5 file structure
@@ -349,11 +348,12 @@ int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, cons
  *
  * @param   s5p     slow5 file
  * @param   format  slow5 format to write the entry in
+ * @param   comp    compression method
  * @param   written number of bytes written to the returned buffer
  * @return  malloced memory storing the slow5 header representation,
  *          to use free() on afterwards
  */
-void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *written);
+void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp, size_t *written);
 
 /**
  * Print the header in the specified format to a file pointer.
@@ -366,9 +366,9 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *wr
  * @param   format  slow5 format to write the entry in
  * @return  number of bytes written, -1 on error
  */
-int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format);
-static inline int slow5_hdr_print(struct slow5_file *s5p, enum slow5_fmt format) {
-    return slow5_hdr_fprint(stdout, s5p, format);
+int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp);
+static inline int slow5_hdr_print(struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp) {
+    return slow5_hdr_fprint(stdout, s5p, format, comp);
 }
 
 /**

@@ -44,10 +44,10 @@ struct press *press_init(press_method_t method) {
             if (deflateInit2(&(gzip->strm_deflate),
                         Z_DEFAULT_COMPRESSION,
                         Z_DEFLATED,
-                        MAX_WBITS | GZIP_WBITS, // Gzip compatible compression
+                        MAX_WBITS,
                         Z_MEM_DEFAULT,
                         Z_DEFAULT_STRATEGY) != Z_OK ||
-                    inflateInit2(&(gzip->strm_inflate), MAX_WBITS | GZIP_WBITS) != Z_OK) {
+                    inflateInit2(&(gzip->strm_inflate), MAX_WBITS) != Z_OK) {
 
                 // Error occurred
                 free(gzip);

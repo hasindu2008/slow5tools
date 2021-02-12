@@ -286,11 +286,13 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t
  *
  * @param   s5p     slow5 file
  * @param   format  slow5 format to write the entry in
+ * @param   comp    compression method
  * @param   n       number of bytes written to the returned buffer
  * @return  malloced memory storing the slow5 header representation,
  *          to use free() on afterwards
  */
-void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *n) {
+// TODO don't allow comp of COMPRESS_GZIP for FORMAT_ASCII
+void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp, size_t *n) {
     char *mem = NULL;
 
     if (s5p == NULL || format == FORMAT_UNKNOWN) {
@@ -335,7 +337,7 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *n)
         len += sizeof version->minor;
         memcpy(mem + len, &version->patch, sizeof version->patch);
         len += sizeof version->patch;
-        memcpy(mem + len, &s5p->compress->method, sizeof s5p->compress->method);
+        memcpy(mem + len, &comp, sizeof comp);
         len += sizeof s5p->compress->method;
         memcpy(mem + len, &s5p->header->num_read_groups, sizeof s5p->header->num_read_groups);
         len += sizeof s5p->header->num_read_groups;
@@ -488,12 +490,12 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, size_t *n)
  * @param   format  slow5 format to write the entry in
  * @return  number of bytes written, -1 on error
  */
-int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format) {
+int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp) {
     int ret;
     void *hdr;
     size_t hdr_size;
 
-    if (fp == NULL || s5p == NULL || (hdr = slow5_hdr_to_mem(s5p, format, &hdr_size)) == NULL) {
+    if (fp == NULL || s5p == NULL || (hdr = slow5_hdr_to_mem(s5p, format, comp, &hdr_size)) == NULL) {
         return -1;
     }
 
@@ -1068,11 +1070,13 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
 
         slow5_rec_size_t record_size;
         if (fread(&record_size, sizeof record_size, 1, s5p->fp) != 1) {
-            return -3;
+            return -2;
         }
 
         uint8_t *rec_decomp = (uint8_t *) fread_depress(s5p->compress, record_size, s5p->fp);
-        NULL_CHK(rec_decomp);
+        if (rec_decomp == NULL) {
+            return -2;
+        }
 
         uint64_t curr_len = 0;
 

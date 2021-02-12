@@ -77,8 +77,8 @@ int slow5_open_valid(void) {
     ASSERT(s5p->index == NULL);
     ASSERT(s5p->fp != NULL);
 
-    ASSERT(slow5_hdr_print(s5p, FORMAT_ASCII) != -1);
-    ASSERT(slow5_hdr_print(s5p, FORMAT_BINARY) != -1);
+    ASSERT(slow5_hdr_print(s5p, FORMAT_ASCII, COMPRESS_NONE) != -1);
+    ASSERT(slow5_hdr_print(s5p, FORMAT_BINARY, COMPRESS_NONE) != -1);
 
     ASSERT(slow5_close(s5p) == 0);
 
@@ -142,12 +142,12 @@ int slow5_hdr_to_mem_valid(void) {
 
     void *mem;
     size_t len;
-    ASSERT((mem = slow5_hdr_to_mem(s5p, FORMAT_BINARY, &len)) != NULL);
+    ASSERT((mem = slow5_hdr_to_mem(s5p, FORMAT_BINARY, COMPRESS_NONE, &len)) != NULL);
     ASSERT(fwrite(mem, len, 1, stdout) == 1);
     free(mem);
 
     char *str;
-    ASSERT((str = slow5_hdr_to_mem(s5p, FORMAT_ASCII, &len)) != NULL);
+    ASSERT((str = slow5_hdr_to_mem(s5p, FORMAT_ASCII, COMPRESS_NONE, &len)) != NULL);
     ASSERT(fwrite(str, len, 1, stdout) == 1);
     ASSERT(printf("%s", str) == len);
     free(str);
@@ -163,7 +163,7 @@ int slow5_hdr_to_mem_change_attr(void) {
     void *mem;
     size_t len;
     ASSERT(slow5_hdr_set("asic_id_eeprom", "100", 0, s5p) == 0);
-    ASSERT((mem = slow5_hdr_to_mem(s5p, FORMAT_BINARY, &len)) != NULL);
+    ASSERT((mem = slow5_hdr_to_mem(s5p, FORMAT_BINARY, COMPRESS_NONE, &len)) != NULL);
     ASSERT(fwrite(mem, len, 1, stdout) == 1);
     free(mem);
 
@@ -178,7 +178,7 @@ int slow5_hdr_print_change_version(void) {
     s5p->header->version.major = 10;
     s5p->header->version.minor = 200;
 
-    ASSERT(slow5_hdr_print(s5p, FORMAT_BINARY) > 0);
+    ASSERT(slow5_hdr_print(s5p, FORMAT_BINARY, COMPRESS_NONE) > 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -225,6 +225,13 @@ int slow5_get_valid(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
+    ASSERT(strcmp(read->read_id, "a649a4ae-c43d-492a-b6a1-a5b8b8076be4") == 0);
+    ASSERT(read->read_group == 0);
+    ASSERT(read->digitisation == 8192);
+    ASSERT(read->offset == 23);
+    ASSERT(read->range == 1467.61);
+    ASSERT(read->sampling_rate == 4000);
+    ASSERT(read->len_raw_signal == 59676);
     ASSERT(read != NULL);
     slow5_rec_free(read);
 
