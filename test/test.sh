@@ -37,6 +37,8 @@ my_diff() {
 }
 
 prep() {
+    mkdir -p 'test/bin'
+
     rm 'test/data/exp/one_fast5/exp_1_default.slow5.idx'
     rm 'test/data/err/parse_bad.slow5.idx'
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_empty.slow5'
