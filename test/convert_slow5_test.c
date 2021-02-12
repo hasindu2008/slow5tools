@@ -16,6 +16,7 @@ int slow5_to_blow5_uncomp(void) {
     while ((ret = slow5_get_next(&read, from)) == 0) {
         ASSERT(slow5_rec_fprint(to, read, FORMAT_BINARY, NULL) != -1);
     }
+    slow5_rec_free(read);
     ASSERT(ret == -2);
 
     ASSERT(slow5_eof_fprint(to) != -1);
@@ -42,6 +43,7 @@ int slow5_to_blow5_gzip(void) {
     while ((ret = slow5_get_next(&read, from)) == 0) {
         ASSERT(slow5_rec_fprint(to, read, FORMAT_BINARY, gzip) != -1);
     }
+    slow5_rec_free(read);
     ASSERT(ret == -2);
 
     ASSERT(slow5_eof_fprint(to) != -1);
@@ -67,6 +69,7 @@ int blow5_uncomp_to_slow5(void) {
     while ((ret = slow5_get_next(&read, from)) == 0) {
         ASSERT(slow5_rec_fprint(to, read, FORMAT_ASCII, NULL) != -1);
     }
+    slow5_rec_free(read);
     ASSERT(ret == -2);
 
     ASSERT(slow5_close(from) == 0);
@@ -89,6 +92,7 @@ int blow5_gzip_to_slow5(void) {
     while ((ret = slow5_get_next(&read, from)) == 0) {
         ASSERT(slow5_rec_fprint(to, read, FORMAT_ASCII, NULL) != -1);
     }
+    slow5_rec_free(read);
     ASSERT(ret == -2);
 
     ASSERT(slow5_close(from) == 0);
@@ -111,6 +115,7 @@ int blow5_gzip_to_blow5_uncomp(void) {
     while ((ret = slow5_get_next(&read, from)) == 0) {
         ASSERT(slow5_rec_fprint(to, read, FORMAT_BINARY, COMPRESS_NONE) != -1);
     }
+    slow5_rec_free(read);
     ASSERT(ret == -2);
 
     ASSERT(slow5_eof_fprint(to) != -1);
@@ -137,6 +142,7 @@ int blow5_uncomp_to_blow5_gzip(void) {
     while ((ret = slow5_get_next(&read, from)) == 0) {
         ASSERT(slow5_rec_fprint(to, read, FORMAT_BINARY, gzip) != -1);
     }
+    slow5_rec_free(read);
     ASSERT(ret == -2);
 
     ASSERT(slow5_eof_fprint(to) != -1);

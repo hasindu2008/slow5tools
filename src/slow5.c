@@ -796,6 +796,7 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
     } else {
         // Free previously allocated strings
         free((*read)->read_id);
+        (*read)->read_id = NULL;
     }
 
     if (slow5_rec_parse(read_mem, read_id, *read, s5p->format) == -1) {
@@ -1050,6 +1051,7 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
         } else {
             // Free previously allocated read id
             free((*read)->read_id);
+            (*read)->read_id = NULL;
         }
 
         if (slow5_rec_parse(read_mem, NULL, *read, s5p->format) == -1) {
@@ -1066,6 +1068,7 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
         } else {
             // Free previously allocated read id
             free((*read)->read_id);
+            (*read)->read_id = NULL;
         }
 
         slow5_rec_size_t record_size;
