@@ -34,6 +34,7 @@ int run_tests(struct command *tests, int num_tests) {
     int n_passed = 0;
 
     for (int i = 0; i < num_tests; ++ i) {
+        //fprintf(stderr, "%s\n", tests[i].str); // TESTING
         if (tests[i].exe() == EXIT_FAILURE) {
             fprintf(stderr, "%s\t\t%s\n", tests[i].str, assert_fail);
             ret = EXIT_FAILURE;

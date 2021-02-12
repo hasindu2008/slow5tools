@@ -72,6 +72,17 @@ void make_blow5(void) {
     struct slow5_rec *read = NULL;
     slow5_get_next(&read, s5p);
 
+    slow5_rec_size_t record_size = sizeof read->read_id_len +
+        read->read_id_len * sizeof *read->read_id +
+        sizeof read->read_group +
+        sizeof read->digitisation +
+        sizeof read->offset +
+        sizeof read->range +
+        sizeof read->sampling_rate +
+        sizeof read->len_raw_signal +
+        read->len_raw_signal * sizeof *read->raw_signal;
+    fwrite(&record_size, sizeof record_size, 1, fp);
+
     read->read_id_len = strlen(read->read_id);
     fwrite(&read->read_id_len, sizeof read->read_id_len, 1, fp);
     fwrite(read->read_id, sizeof *read->read_id, read->read_id_len, fp);
@@ -162,21 +173,9 @@ void make_gzip_blow5(void) {
     slow5_get_next(&read, s5p);
 
     struct press *gzip = press_init(COMPRESS_GZIP);
-
-    read->read_id_len = strlen(read->read_id);
-    fwrite_press(gzip, &read->read_id_len, sizeof read->read_id_len, 1, fp);
-    fwrite_press(gzip, read->read_id, sizeof *read->read_id, read->read_id_len, fp);
-    fwrite_press(gzip, &read->read_group, sizeof read->read_group, 1, fp);
-    fwrite_press(gzip, &read->digitisation, sizeof read->digitisation, 1, fp);
-    fwrite_press(gzip, &read->offset, sizeof read->offset, 1, fp);
-    fwrite_press(gzip, &read->range, sizeof read->range, 1, fp);
-    fwrite_press(gzip, &read->sampling_rate, sizeof read->sampling_rate, 1, fp);
-    fwrite_press(gzip, &read->len_raw_signal, sizeof read->len_raw_signal, 1, fp);
-    press_footer_next(gzip);
-    fwrite_press(gzip, read->raw_signal, sizeof *read->raw_signal, read->len_raw_signal, fp);
+    slow5_rec_fprint(fp, read, FORMAT_BINARY, gzip);
 
     char eof[] = BINARY_EOF;
-
     fwrite(eof, sizeof *eof, sizeof eof, fp);
 
     slow5_close(s5p);

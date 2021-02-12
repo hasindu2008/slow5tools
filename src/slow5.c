@@ -767,18 +767,24 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
 
     } else if (s5p->format == FORMAT_BINARY) {
 
-        // Malloc string to hold the read
-        ssize_t read_size = read_index.size * sizeof *read_mem;
-        read_mem = (char *) malloc(read_size);
-        MALLOC_CHK(read_mem);
-
-        // Read into the string
-        if (pread(s5p->meta.fd, read_mem, read_size, read_index.offset) != read_size) {
-            free(read_mem);
+        // Read into the string and miss the preceding size
+        read_mem = (char *) pread_depress(s5p->compress, s5p->meta.fd,
+                read_index.size - sizeof (slow5_rec_size_t),
+                read_index.offset + sizeof (slow5_rec_size_t));
+        if (read_mem == NULL) {
             // reading error
             return -4;
         }
-
+        /*
+        read_mem = (char *) malloc(read_size);
+        pread(s5p->meta.fd, read_mem, read_size, read_index.offset + sizeof read_size);
+        printf("printing read_mem comp:\n"); // TESTING
+        fwrite(read_mem, read_size, 1, stdout); // TESTING
+        size_t decomp_size = 0;
+        void *read_decomp = ptr_depress(s5p->compress, read_mem, read_size, &decomp_size);
+        printf("\nprinting read_mem decomp:\n"); // TESTING
+        fwrite(read_decomp, read_size, 1, stdout); // TESTING
+        */
     }
 
     if (*read == NULL) {
@@ -1020,7 +1026,6 @@ int slow5_rec_parse(char *read_mem, const char *read_id, struct slow5_rec *read,
  * @return  error code described above
  */
 int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
-    // TODO implement binary parsing
     if (read == NULL || s5p == NULL) {
         return -1;
     }
@@ -1061,33 +1066,60 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
             free((*read)->read_id);
         }
 
-        if (fread(&(*read)->read_id_len, sizeof (*read)->read_id_len, 1, s5p->fp) != 1) {
+        slow5_rec_size_t record_size;
+        if (fread(&record_size, sizeof record_size, 1, s5p->fp) != 1) {
             return -3;
         }
+
+        uint8_t *rec_decomp = (uint8_t *) fread_depress(s5p->compress, record_size, s5p->fp);
+        NULL_CHK(rec_decomp);
+
+        uint64_t curr_len = 0;
+
+        size_t to_cp = sizeof (*read)->read_id_len;
+        memcpy(&(*read)->read_id_len, rec_decomp + curr_len, to_cp);
+        curr_len += to_cp;
 
         (*read)->read_id = (char *) malloc(((*read)->read_id_len + 1) * sizeof (*read)->read_id); // +1 for '\0'
         MALLOC_CHK((*read)->read_id);
 
-        if (fread((*read)->read_id, sizeof *(*read)->read_id, (*read)->read_id_len, s5p->fp) != (*read)->read_id_len ||
-                fread(&(*read)->read_group, sizeof (*read)->read_group, 1, s5p->fp) != 1 ||
-                fread(&(*read)->digitisation, sizeof (*read)->digitisation, 1, s5p->fp) != 1 ||
-                fread(&(*read)->offset, sizeof (*read)->offset, 1, s5p->fp) != 1 ||
-                fread(&(*read)->range, sizeof (*read)->range, 1, s5p->fp) != 1 ||
-                fread(&(*read)->sampling_rate, sizeof (*read)->sampling_rate, 1, s5p->fp) != 1 ||
-                fread(&(*read)->len_raw_signal, sizeof (*read)->len_raw_signal, 1, s5p->fp) != 1) {
-            free((*read)->read_id);
-            return -3;
-        }
+        to_cp = sizeof *(*read)->read_id * (*read)->read_id_len;
+        memcpy((*read)->read_id, rec_decomp + curr_len, to_cp);
+        curr_len += to_cp;
+
+        to_cp = sizeof (*read)->read_group;
+        memcpy(&(*read)->read_group, rec_decomp + curr_len, to_cp);
+        curr_len += to_cp;
+
+        to_cp = sizeof (*read)->digitisation;
+        memcpy(&(*read)->digitisation, rec_decomp + curr_len, to_cp);
+        curr_len += to_cp;
+
+        to_cp = sizeof (*read)->offset;
+        memcpy(&(*read)->offset, rec_decomp + curr_len, to_cp);
+        curr_len += to_cp;
+
+        to_cp = sizeof (*read)->range;
+        memcpy(&(*read)->range, rec_decomp + curr_len, to_cp);
+        curr_len += to_cp;
+
+        to_cp = sizeof (*read)->sampling_rate;
+        memcpy(&(*read)->sampling_rate, rec_decomp + curr_len, to_cp);
+        curr_len += to_cp;
+
+        to_cp = sizeof (*read)->len_raw_signal;
+        memcpy(&(*read)->len_raw_signal, rec_decomp + curr_len, to_cp);
+        curr_len += to_cp;
+
         (*read)->read_id[(*read)->read_id_len] = '\0'; // Null terminate
 
         (*read)->raw_signal = (int16_t *) malloc((*read)->len_raw_signal * sizeof (*read)->raw_signal);
         MALLOC_CHK((*read)->raw_signal);
 
-        if (fread((*read)->raw_signal, sizeof *(*read)->raw_signal, (*read)->len_raw_signal, s5p->fp) != (*read)->len_raw_signal) {
-            free((*read)->read_id);
-            free((*read)->raw_signal);
-            return -3;
-        }
+        to_cp = sizeof *(*read)->raw_signal * (*read)->len_raw_signal;
+        memcpy((*read)->raw_signal, rec_decomp + curr_len, to_cp);
+
+        free(rec_decomp);
     }
 
     return ret;
@@ -1331,6 +1363,27 @@ void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, struct pre
         curr_len += sizeof read->len_raw_signal;
         memcpy(mem + curr_len, read->raw_signal, read->len_raw_signal * sizeof *read->raw_signal);
         curr_len += read->len_raw_signal * sizeof *read->raw_signal;
+
+        compress_footer_next(compress);
+        slow5_rec_size_t record_size;
+        void *comp_mem = ptr_compress(compress, mem, curr_len, &record_size);
+        free(mem);
+
+        if (comp_mem != NULL) {
+            uint8_t *comp_mem_full = (uint8_t *) malloc(sizeof record_size + record_size);
+            // Copy size of compressed record
+            memcpy(comp_mem_full, &record_size, sizeof record_size);
+            // Copy compressed record
+            memcpy(comp_mem_full + sizeof record_size, comp_mem, record_size);
+            free(comp_mem);
+
+            curr_len = sizeof record_size + record_size;
+            mem = (char *) comp_mem_full;
+        } else {
+            free(mem);
+            curr_len = 0;
+            mem = NULL;
+        }
 
         if (compress_to_free) {
             press_free(compress);

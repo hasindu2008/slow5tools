@@ -40,13 +40,14 @@ struct press *press_init(press_method_t method) {
 
             gzip->flush = Z_NO_FLUSH;
 
+            // TODO free deflate stream if inflate stream ends
             if (deflateInit2(&(gzip->strm_deflate),
                         Z_DEFAULT_COMPRESSION,
                         Z_DEFLATED,
                         MAX_WBITS | GZIP_WBITS, // Gzip compatible compression
                         Z_MEM_DEFAULT,
                         Z_DEFAULT_STRATEGY) != Z_OK ||
-                    inflateInit2(&(gzip->strm_inflate), GZIP_WBITS) != Z_OK) {
+                    inflateInit2(&(gzip->strm_inflate), MAX_WBITS | GZIP_WBITS) != Z_OK) {
 
                 // Error occurred
                 free(gzip);
@@ -152,6 +153,7 @@ static void *ptr_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t
 
     if (gzip->flush == Z_FINISH) {
         gzip->flush = Z_NO_FLUSH;
+        deflateReset(strm);
     }
 
     return out;
@@ -199,26 +201,26 @@ static void *ptr_depress_gzip(struct gzip_stream *gzip, const void *ptr, size_t 
     strm->avail_in = count;
     strm->next_in = (Bytef *) ptr;
 
-    uLong chunk_sz = Z_OUT_CHUNK;
-
     do {
-        out = (uint8_t *) realloc(out, n_cur + chunk_sz);
+        out = (uint8_t *) realloc(out, n_cur + Z_OUT_CHUNK);
 
-        strm->avail_out = chunk_sz;
+        strm->avail_out = Z_OUT_CHUNK;
         strm->next_out = out + n_cur;
 
-        if (inflate(strm, Z_NO_FLUSH) == Z_STREAM_ERROR) {
+        int ret = inflate(strm, Z_NO_FLUSH);
+        if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR) {
             free(out);
             out = NULL;
             n_cur = 0;
             break;
         }
 
-        n_cur += chunk_sz - strm->avail_out;
+        n_cur += Z_OUT_CHUNK - strm->avail_out;
 
     } while (strm->avail_out == 0);
 
     *n = n_cur;
+    inflateReset(strm);
 
     return out;
 }
@@ -287,6 +289,39 @@ static size_t fwrite_compress_gzip(struct gzip_stream *gzip, const void *ptr, si
     }
 
     return bytes;
+}
+
+
+/* --- Decompress to a ptr from some file --- */
+
+void *fread_depress(struct press *comp, size_t count, FILE *fp) {
+    void *raw = (void *) malloc(count);
+    MALLOC_CHK(raw);
+
+    if (fread(raw, count, 1, fp) != 1) {
+        free(raw);
+        return NULL;
+    }
+
+    void *out = ptr_depress(comp, raw, count, NULL);
+    free(raw);
+
+    return out;
+}
+
+void *pread_depress(struct press *comp, int fd, size_t count, off_t offset) {
+    void *raw = (void *) malloc(count);
+    MALLOC_CHK(raw);
+
+    if (pread(fd, raw, count, offset) == -1) {
+        free(raw);
+        return NULL;
+    }
+
+    void *out = ptr_depress(comp, raw, count, NULL);
+    free(raw);
+
+    return out;
 }
 
 

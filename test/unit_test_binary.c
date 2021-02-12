@@ -18,10 +18,23 @@ int slow5_idx_init_valid(void) {
     struct slow5_rec_idx read_idx;
     ASSERT(slow5_idx_get(idx, "a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read_idx) == 0);
     ASSERT(read_idx.offset == 1284);
-    ASSERT(read_idx.size == 119434);
+    ASSERT(read_idx.size == 119442);
 
     slow5_idx_free(idx);
     ASSERT(slow5_close(s5p) == 0);
+
+
+    s5p = slow5_open("test/data/exp/one_fast5/exp_1_default_gzip.blow5", "r");
+    ASSERT(s5p != NULL);
+
+    idx = slow5_idx_init(s5p);
+    ASSERT(idx != NULL);
+    ASSERT(slow5_idx_get(idx, "a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read_idx) == 0);
+    ASSERT(read_idx.offset == 1284);
+
+    slow5_idx_free(idx);
+    ASSERT(slow5_close(s5p) == 0);
+
     return EXIT_SUCCESS;
 }
 
@@ -55,6 +68,8 @@ int slow5_open_valid(void) {
 
     ASSERT(s5p != NULL);
     ASSERT(s5p->format == FORMAT_BINARY);
+    ASSERT(s5p->compress != NULL);
+    ASSERT(s5p->compress->method == COMPRESS_NONE);
     ASSERT(s5p->header != NULL);
     ASSERT(s5p->header->version.major == 0);
     ASSERT(s5p->header->version.minor == 1);
@@ -250,6 +265,37 @@ int slow5_get_invalid(void) {
     return EXIT_SUCCESS;
 }
 
+int slow5_open_gzip(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default_gzip.blow5", "r");
+    ASSERT(s5p != NULL);
+
+    ASSERT(s5p->format == FORMAT_BINARY);
+    ASSERT(s5p->compress != NULL);
+    ASSERT(s5p->compress->method == COMPRESS_GZIP);
+    ASSERT(s5p->header != NULL);
+    ASSERT(s5p->header->version.major == 0);
+    ASSERT(s5p->header->version.minor == 1);
+    ASSERT(s5p->header->version.patch == 0);
+    ASSERT(s5p->index == NULL);
+    ASSERT(s5p->fp != NULL);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
+int slow5_rec_to_mem_gzip(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default_gzip.blow5", "r");
+    ASSERT(s5p != NULL);
+
+    struct slow5_rec *read = NULL;
+    ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
+    ASSERT(read != NULL);
+    slow5_rec_free(read);
+
+    ASSERT(slow5_close(s5p) == 0);
+    return EXIT_SUCCESS;
+}
+
 
 int main(void) {
 
@@ -276,6 +322,9 @@ int main(void) {
 
         CMD(slow5_get_valid)
         CMD(slow5_get_invalid)
+
+        CMD(slow5_open_gzip)
+        CMD(slow5_rec_to_mem_gzip)
     };
 
     return RUN_TESTS(tests);

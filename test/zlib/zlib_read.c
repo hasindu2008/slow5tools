@@ -4,74 +4,104 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdint.h>
 
 #define CHUNK (16384)
+#define GZIP_WBITS (16)
 
+/* Input
+ * 1: filepath
+ * 2: offset
+ * 3: length
+ *
+ * Reads in buffer,
+ * decompresses to buffer
+ * prints out buffer
+ */
 int main(int argc, char **argv) {
 
     const char *f_name = argv[1];
-    long start = atol(argv[2]);
-    long len = atol(argv[3]);
+    long offset = atol(argv[2]);
+    long size = atol(argv[3]);
+
     z_stream strm;
     int ret;
+    size_t n_cur = 0;
+    uint8_t *out = NULL;
 
-    int fd = open(f_name, O_RDONLY);
+    int fd;
+    if ((fd = open(f_name, O_RDONLY)) == -1) {
+        printf("open error\n");
+        return EXIT_FAILURE;
+    }
 
-    char *data = malloc(sizeof *data * len);
-    if (pread(fd, data, len, start) == -1) {
-        printf("error pread\n");
+    uint8_t *data = malloc(size);
+    if (data == NULL) {
+        printf("malloc data error\n");
+        return EXIT_FAILURE;
+    }
+    ssize_t read;
+    if ((read = pread(fd, data, size, offset)) != size) {
+        printf("pread error: returned %zu\n", read);
         return EXIT_FAILURE;
     }
     close(fd);
 
+    /*
     fwrite(data, 1, len, stdout);
     printf("\n");
+    */
 
     strm.zalloc = Z_NULL;
     strm.zfree = Z_NULL;
     strm.opaque = Z_NULL;
 
-    strm.avail_in = len;
+    strm.avail_in = size;
     strm.next_in = data;
 
-    inflateInit2(&strm, 15 | 16);
-
-    uLong out_sz = CHUNK;
-    char *out = malloc(sizeof *out * out_sz);
+    if (inflateInit2(&strm, GZIP_WBITS) != Z_OK) {
+        printf("inflate init error\n");
+        return EXIT_FAILURE;
+    }
 
     do {
-        strm.avail_out = out_sz;
-        strm.next_out = out;
+        out = (uint8_t *) realloc(out, n_cur + CHUNK);
+        if (out == NULL) {
+            printf("realloc out error\n");
+            return EXIT_FAILURE;
+        }
+
+        strm.avail_out = CHUNK;
+        strm.next_out = out + n_cur;
 
         ret = inflate(&strm, Z_NO_FLUSH);
 
         switch (ret) {
             case Z_MEM_ERROR:
-                fprintf(stderr, "mem error\n");
+                fprintf(stderr, "zlib mem error\n");
                 break;
             case Z_BUF_ERROR:
-                fprintf(stderr, "buf error\n");
+                fprintf(stderr, "zlib buf error\n");
                 break;
             case Z_DATA_ERROR:
-                fprintf(stderr, "data error\n");
+                fprintf(stderr, "zlib data error\n");
                 break;
             case Z_OK:
-                fprintf(stderr, "ok\n");
+                fprintf(stderr, "zlib ok\n");
                 break;
             case Z_STREAM_END:
-                fprintf(stderr, "stream end\n");
+                fprintf(stderr, "zlib stream end\n");
                 break;
         }
 
-        unsigned have = CHUNK - strm.avail_out;
-        fwrite(out, 1, have, stdout);
+        n_cur += CHUNK - strm.avail_out;
 
     } while (strm.avail_out == 0);
 
-    free(data);
-    inflateEnd(&strm);
-    
+    fwrite(out, 1, n_cur, stdout);
+
     free(out);
+    free(data);
 
     if (ret == Z_OK || ret == Z_STREAM_END) {
         return EXIT_SUCCESS;

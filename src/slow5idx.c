@@ -5,6 +5,7 @@
 #include "slow5.h"
 #include "slow5_extra.h"
 #include "misc.h"
+//TODO MALLOC_CHK for testing
 
 #define BUF_INIT_CAP (20*1024*1024)
 #define SLOW5_INDEX_BUF_INIT_CAP (64) // 2^6 TODO is this too little?
@@ -112,56 +113,44 @@ static int slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
             // Set start offset
             offset = ftello(s5p->fp);
 
-            // Get read id length
-            if (fread(&read.read_id_len, sizeof read.read_id_len, 1, s5p->fp) != 1) {
+            // Get record size
+            slow5_rec_size_t record_size;
+            if (fread(&record_size, sizeof record_size, 1, s5p->fp) != 1) {
                 return -1;
             }
+
+            size = sizeof record_size + record_size;
+
+            uint8_t *read_comp = (uint8_t *) malloc(record_size);
+            MALLOC_CHK(read_comp);
+            if (fread(read_comp, record_size, 1, s5p->fp) != 1) {
+                free(read_comp);
+                return -1;
+            }
+
+            uint8_t *read_decomp = ptr_depress(s5p->compress, read_comp, record_size, NULL);
+            if (read_decomp == NULL) {
+                free(read_comp);
+                free(read_decomp);
+                return -1;
+            }
+            free(read_comp);
+
+            // Get read id length
+            uint64_t cur_len = 0;
+            memcpy(&read.read_id_len, read_decomp + cur_len, sizeof read.read_id_len);
+            cur_len += sizeof read.read_id_len;
 
             // Get read id
             read.read_id = (char *) malloc((read.read_id_len + 1) * sizeof *read.read_id); // +1 for '\0'
             MALLOC_CHK(read.read_id);
-            if (fread(read.read_id, sizeof *read.read_id, read.read_id_len, s5p->fp) != read.read_id_len) {
-                free(read.read_id);
-                return -1;
-            }
+            memcpy(read.read_id, read_decomp + cur_len, read.read_id_len * sizeof *read.read_id);
             read.read_id[read.read_id_len] = '\0';
-
-            // Seek to raw signal length
-            if (fseeko(s5p->fp, sizeof read.read_group +
-                        sizeof read.digitisation +
-                        sizeof read.offset +
-                        sizeof read.range +
-                        sizeof read.sampling_rate,
-                        SEEK_CUR) != 0) {
-                free(read.read_id);
-                return -1;
-            }
-
-            // Get raw signal length
-            if (fread(&read.len_raw_signal, sizeof read.len_raw_signal, 1, s5p->fp) != 1) {
-                free(read.read_id);
-                return -1;
-            }
-
-            // Seek to end of read
-            if (fseeko(s5p->fp, read.len_raw_signal * sizeof *read.raw_signal, SEEK_CUR) != 0) {
-                free(read.read_id);
-                return -1;
-            }
-
-            // Set size of record
-            size = sizeof read.read_id_len +
-                read.read_id_len * sizeof *read.read_id +
-                sizeof read.read_group +
-                sizeof read.digitisation +
-                sizeof read.offset +
-                sizeof read.range +
-                sizeof read.sampling_rate +
-                sizeof read.len_raw_signal +
-                read.len_raw_signal * sizeof *read.raw_signal;
 
             // Insert index record
             slow5_idx_insert(index, read.read_id, offset, size);
+
+            free(read_decomp);
 
             // Read in potential eof marker
             if (fread(buf_eof, sizeof *eof, sizeof eof, s5p->fp) != sizeof eof) {

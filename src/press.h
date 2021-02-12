@@ -71,6 +71,10 @@ static inline size_t print_str_compress(struct press *comp, const char *str) {
     return fwrite_str_compress(comp, str, stdout);
 }
 
+/* --- Decompress to a ptr from some file --- */
+void *fread_depress(struct press *comp, size_t count, FILE *fp);
+void *pread_depress(struct press *comp, int fd, size_t count, off_t offset);
+
 /* --- Compress with format string to some file --- */
 int fprintf_compress(struct press *comp, FILE *fp, const char *format, ...);
 int printf_compress(struct press *comp, const char *format, ...);

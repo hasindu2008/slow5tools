@@ -44,7 +44,7 @@ prep() {
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_duplicate.slow5'
 
     rm 'test/data/exp/one_fast5/exp_1_default.blow5.idx'
-    rm 'test/data/err/no_eof.blow5.idx'
+    rm 'test/data/exp/one_fast5/exp_1_default_gzip.blow5.idx'
 }
 
 ret=0
