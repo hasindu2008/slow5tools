@@ -282,9 +282,9 @@ void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, struct pre
  * @param   compress
  * @return  number of bytes written, -1 on error
  */
-int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format, struct press *compress);
+int slow5_rec_fwrite(FILE *fp, struct slow5_rec *read, enum slow5_fmt format, struct press *compress);
 static inline int slow5_rec_print(struct slow5_rec *read, enum slow5_fmt format, struct press *compress) {
-    return slow5_rec_fprint(stdout, read, format, compress);
+    return slow5_rec_fwrite(stdout, read, format, compress);
 }
 
 // Free a read entry
@@ -366,9 +366,9 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
  * @param   format  slow5 format to write the entry in
  * @return  number of bytes written, -1 on error
  */
-int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp);
+int slow5_hdr_fwrite(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp);
 static inline int slow5_hdr_print(struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp) {
-    return slow5_hdr_fprint(stdout, s5p, format, comp);
+    return slow5_hdr_fwrite(stdout, s5p, format, comp);
 }
 
 /**
@@ -380,9 +380,9 @@ static inline int slow5_hdr_print(struct slow5_file *s5p, enum slow5_fmt format,
  * @param   fp      output file pointer
  * @return  number of bytes written, -1 on error
  */
-ssize_t slow5_eof_fprint(FILE *fp);
+ssize_t slow5_eof_fwrite(FILE *fp);
 static inline ssize_t slow5_eof_print(void) {
-    return slow5_eof_fprint(stdout);
+    return slow5_eof_fwrite(stdout);
 }
 
 #endif

@@ -160,3 +160,7 @@ pyslow5:
 	CC=g++ python3 setup.py build
 	cp build/lib.*/*.so  ./
 	python3 < python/example.py
+
+test_prep: $(BINARY)
+	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5idx.c src/misc.c -o test/bin/make_blow5
+	./test/bin/make_blow5

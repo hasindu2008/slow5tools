@@ -119,6 +119,15 @@ else
     not_compiled
 fi
 
+echo_test 'unit test two read groups'
+if gcc -Wall -Werror -g test/unit_test_two_rg.c -o test/bin/unit_test_two_rg src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+    if ! ex test/bin/unit_test_two_rg; then
+        fail
+    fi
+else
+    not_compiled
+fi
+
 echo_test 'diff test'
 # Unit test output diffs
 my_diff 'test/data/out/unit_test_out_ascii' 'test/data/exp/unit_test_exp_ascii'
@@ -136,5 +145,7 @@ my_diff 'test/data/out/one_fast5/blow5_uncomp_to_slow5.slow5' 'test/data/exp/one
 my_diff 'test/data/out/one_fast5/blow5_gzip_to_slow5.slow5' 'test/data/exp/one_fast5/exp_1_default.slow5'
 my_diff 'test/data/out/one_fast5/blow5_gzip_to_blow5_uncomp.blow5' 'test/data/exp/one_fast5/exp_1_default.blow5'
 my_diff 'test/data/out/one_fast5/blow5_uncomp_to_blow5_gzip.blow5' 'test/data/exp/one_fast5/exp_1_default_gzip.blow5'
+my_diff 'test/data/out/two_rg/out_default.blow5' 'test/data/exp/two_rg/exp_default.blow5'
+my_diff 'test/data/out/two_rg/out_default_gzip.blow5' 'test/data/exp/two_rg/exp_default_gzip.blow5'
 
 exit $ret

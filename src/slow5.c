@@ -490,7 +490,7 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
  * @param   format  slow5 format to write the entry in
  * @return  number of bytes written, -1 on error
  */
-int slow5_hdr_fprint(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp) {
+int slow5_hdr_fwrite(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp) {
     int ret;
     void *hdr;
     size_t hdr_size;
@@ -1236,7 +1236,7 @@ int slow5_rec_rm(const char *read_id, struct slow5_file *s5p) {
  * @param   read    slow5_rec pointer
  * @return  number of bytes written, -1 on error
  */
-int slow5_rec_fprint(FILE *fp, struct slow5_rec *read, enum slow5_fmt format, struct press *compress) {
+int slow5_rec_fwrite(FILE *fp, struct slow5_rec *read, enum slow5_fmt format, struct press *compress) {
     int ret;
     void *read_mem;
     size_t read_size;
@@ -1447,7 +1447,7 @@ int slow5_idx(struct slow5_file *s5p) {
  * @param   fp      output file pointer
  * @return  number of bytes written, -1 on error
  */
-ssize_t slow5_eof_fprint(FILE *fp) {
+ssize_t slow5_eof_fwrite(FILE *fp) {
     const char eof[] = BINARY_EOF;
 
     size_t n;

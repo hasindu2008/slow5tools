@@ -377,7 +377,7 @@ int slow5_rec_print_change(void) {
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_fprint_valid(void) {
+int slow5_rec_fwrite_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
@@ -385,7 +385,7 @@ int slow5_rec_fprint_valid(void) {
     ASSERT(slow5_get_next(&read, s5p) == 0);
     FILE *fp;
     ASSERT((fp = fopen("test/data/out/unit_test_out_fprint", "w")) != NULL);
-    ASSERT(slow5_rec_fprint(fp, read, FORMAT_ASCII, NULL) == 238771);
+    ASSERT(slow5_rec_fwrite(fp, read, FORMAT_ASCII, NULL) == 238771);
     slow5_rec_free(read);
 
     ASSERT(fclose(fp) == 0);
@@ -393,22 +393,22 @@ int slow5_rec_fprint_valid(void) {
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_fprint_null(void) {
+int slow5_rec_fwrite_null(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_fprint(NULL, read, FORMAT_ASCII, s5p->compress) == -1);
-    ASSERT(slow5_rec_fprint(stdout, NULL, FORMAT_ASCII, NULL) == -1);
-    ASSERT(slow5_rec_fprint(NULL, NULL, FORMAT_ASCII, NULL) == -1);
+    ASSERT(slow5_rec_fwrite(NULL, read, FORMAT_ASCII, s5p->compress) == -1);
+    ASSERT(slow5_rec_fwrite(stdout, NULL, FORMAT_ASCII, NULL) == -1);
+    ASSERT(slow5_rec_fwrite(NULL, NULL, FORMAT_ASCII, NULL) == -1);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_fprint_change(void) {
+int slow5_rec_fwrite_change(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
@@ -418,7 +418,7 @@ int slow5_rec_fprint_change(void) {
     read->read_id = strdup("lol");
     FILE *fp;
     ASSERT((fp = fopen("test/data/out/unit_test_out_fprint", "a")) != NULL);
-    ASSERT(slow5_rec_fprint(fp, read, FORMAT_ASCII, NULL) == 238738);
+    ASSERT(slow5_rec_fwrite(fp, read, FORMAT_ASCII, NULL) == 238738);
     slow5_rec_free(read);
 
     ASSERT(fclose(fp) == 0);
@@ -883,9 +883,9 @@ int main(void) {
         CMD(slow5_rec_print_null)
         CMD(slow5_rec_print_change)
 
-        CMD(slow5_rec_fprint_valid)
-        CMD(slow5_rec_fprint_null)
-        CMD(slow5_rec_fprint_change)
+        CMD(slow5_rec_fwrite_valid)
+        CMD(slow5_rec_fwrite_null)
+        CMD(slow5_rec_fwrite_change)
 
         CMD(slow5_hdr_get_valid)
         CMD(slow5_hdr_get_null)
