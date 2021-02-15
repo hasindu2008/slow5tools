@@ -33,6 +33,8 @@
 #include <string>
 #include <vector>
 
+#define H5_USE_110_API 1
+
 typedef struct {
     int16_t* rawptr;   // raw signal
     uint64_t nsample; // number of samples
