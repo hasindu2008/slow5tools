@@ -1373,7 +1373,7 @@ void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, struct pre
 
         compress_footer_next(compress);
         slow5_rec_size_t record_size;
-        void *comp_mem = ptr_compress(compress, mem, curr_len, &record_size);
+        void *comp_mem = ptr_compress(compress, mem, curr_len, (size_t *) &record_size);
         free(mem);
 
         if (comp_mem != NULL) {
