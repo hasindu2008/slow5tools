@@ -63,9 +63,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install packages
-      run: brew install gcc autoconf automake
-    - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev valgrind
+      run: brew install gcc autoconf automake valgrind
     - name: build
       run: autoreconf && CC=gcc CXX=g++ CFLAGS="-Wno-implicit-function-declaration" ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
