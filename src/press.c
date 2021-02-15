@@ -90,7 +90,7 @@ void press_free(struct press *comp) {
 
 void *ptr_compress(struct press *comp, const void *ptr, size_t count, size_t *n) {
     void *out = NULL;
-    uint64_t n_tmp = 0;
+    size_t n_tmp = 0;
 
     if (comp != NULL && ptr != NULL) {
 
@@ -161,7 +161,7 @@ static void *ptr_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t
 
 void *ptr_depress(struct press *comp, const void *ptr, size_t count, size_t *n) {
     void *out = NULL;
-    uint64_t n_tmp = 0;
+    size_t n_tmp = 0;
 
     if (comp != NULL && ptr != NULL) {
 
