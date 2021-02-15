@@ -74,7 +74,7 @@
 #define BINARY_HEADER_SIZE_OFFSET       (64L)
 
 // SLOW5 Index specs
-#define SLOW5_INDEX_HEADER_PREFIX   "#"
-#define SLOW5_INDEX_HEADER          SLOW5_INDEX_HEADER_PREFIX "read_id" SEP "offset" SEP "length\n"
+//#define SLOW5_INDEX_HEADER_PREFIX   "#"
+//#define SLOW5_INDEX_HEADER          SLOW5_INDEX_HEADER_PREFIX "read_id" SEP "offset" SEP "length\n"
 
 #endif

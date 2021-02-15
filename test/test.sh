@@ -38,18 +38,21 @@ my_diff() {
 
 prep() {
     mkdir -p 'test/bin'
+    mkdir -p 'test/data/out/one_fast5'
     mkdir -p 'test/data/out/two_rg'
 
-    rm 'test/data/exp/one_fast5/exp_1_default.slow5.idx'
-    rm 'test/data/err/parse_bad.slow5.idx'
+    rm test/data/out/*.idx
+    rm test/data/out/one_fast5/*.idx
+    rm test/data/out/two_rg/*.idx
+    rm test/data/exp/one_fast5/*.idx
+    rm test/data/exp/two_rg/*.idx
+    rm test/data/test/*.idx
+    rm test/data/err/*.idx
+
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_empty.slow5'
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_valid.slow5'
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_duplicate.slow5'
 
-    rm 'test/data/exp/one_fast5/exp_1_default.blow5.idx'
-    rm 'test/data/exp/one_fast5/exp_1_default_gzip.blow5.idx'
-
-    mkdir -p 'test/data/out/one_fast5'
     rm 'test/data/out/one_fast5/slow5_to_blow5_uncomp.blow5'
     rm 'test/data/out/one_fast5/slow5_to_blow5_gzip.blow5'
     rm 'test/data/out/one_fast5/blow5_uncomp_to_slow5.slow5'

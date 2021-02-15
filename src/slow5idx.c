@@ -101,11 +101,10 @@ static int slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
         const char eof[] = BINARY_EOF;
         char buf_eof[sizeof eof]; // TODO is this a vla?
 
-        struct slow5_rec read;
         if (fread(buf_eof, sizeof *eof, sizeof eof, s5p->fp) != sizeof eof) {
             return -1;
         }
-        if (memcmp(eof, buf_eof, sizeof *eof * sizeof eof) != 0) {
+        while (memcmp(eof, buf_eof, sizeof *eof * sizeof eof) != 0) {
             if (fseek(s5p->fp, - sizeof *eof * sizeof eof, SEEK_CUR) != 0) { // Seek back
                 return -1;
             }
@@ -138,17 +137,18 @@ static int slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
 
             // Get read id length
             uint64_t cur_len = 0;
-            memcpy(&read.read_id_len, read_decomp + cur_len, sizeof read.read_id_len);
-            cur_len += sizeof read.read_id_len;
+            slow5_rid_len_t read_id_len;
+            memcpy(&read_id_len, read_decomp + cur_len, sizeof read_id_len);
+            cur_len += sizeof read_id_len;
 
             // Get read id
-            read.read_id = (char *) malloc((read.read_id_len + 1) * sizeof *read.read_id); // +1 for '\0'
-            MALLOC_CHK(read.read_id);
-            memcpy(read.read_id, read_decomp + cur_len, read.read_id_len * sizeof *read.read_id);
-            read.read_id[read.read_id_len] = '\0';
+            char *read_id = (char *) malloc((read_id_len + 1) * sizeof *read_id); // +1 for '\0'
+            MALLOC_CHK(read_id);
+            memcpy(read_id, read_decomp + cur_len, read_id_len * sizeof *read_id);
+            read_id[read_id_len] = '\0';
 
             // Insert index record
-            slow5_idx_insert(index, read.read_id, offset, size);
+            slow5_idx_insert(index, read_id, offset, size);
 
             free(read_decomp);
 
@@ -173,7 +173,24 @@ static int slow5_idx_build(struct slow5_idx *index, struct slow5_file *s5p) {
 
 void slow5_idx_write(struct slow5_idx *index) {
 
-    fprintf(index->fp, SLOW5_INDEX_HEADER);
+    //fprintf(index->fp, SLOW5_INDEX_HEADER);
+
+    const char magic[] = INDEX_MAGIC_NUMBER;
+    assert(fwrite(magic, sizeof *magic, sizeof magic, index->fp) == sizeof magic);
+
+    struct slow5_version version = INDEX_VERSION;
+    assert(fwrite(&version.major, sizeof version.major, 1, index->fp) == 1);
+    assert(fwrite(&version.minor, sizeof version.minor, 1, index->fp) == 1);
+    assert(fwrite(&version.patch, sizeof version.patch, 1, index->fp) == 1);
+
+    uint8_t padding = INDEX_HEADER_SIZE_OFFSET -
+            sizeof magic * sizeof *magic -
+            sizeof version.major -
+            sizeof version.minor -
+            sizeof version.patch;
+    uint8_t *zeroes = (uint8_t *) calloc(padding, sizeof *zeroes);
+    assert(fwrite(zeroes, sizeof *zeroes, padding, index->fp) == padding);
+    free(zeroes);
 
     for (uint64_t i = 0; i < index->num_ids; ++ i) {
 
@@ -182,48 +199,60 @@ void slow5_idx_write(struct slow5_idx *index) {
 
         struct slow5_rec_idx read_index = kh_value(index->hash, pos);
 
+        /*
         assert(fprintf(index->fp, "%s" SEP "%" PRIu64 SEP "%" PRIu64 "\n",
                 index->ids[i],
                 read_index.offset,
                 read_index.size) >= 0);
-        // TODO snprintf + fputs to test
+        */
+        slow5_rid_len_t read_id_len = strlen(index->ids[i]);
+        assert(fwrite(&read_id_len, sizeof read_id_len, 1, index->fp) == 1);
+        assert(fwrite(index->ids[i], sizeof *index->ids[i], read_id_len, index->fp) == read_id_len);
+        assert(fwrite(&read_index.offset, sizeof read_index.offset, 1, index->fp) == 1);
+        assert(fwrite(&read_index.size, sizeof read_index.size, 1, index->fp) == 1);
     }
+
+    const char eof[] = INDEX_EOF;
+    assert(fwrite(eof, sizeof *eof, sizeof eof, index->fp) == sizeof eof);
 }
 
 static void slow5_idx_read(struct slow5_idx *index) {
 
-    // Buffer for file parsing
-    size_t cap = SLOW5_INDEX_BUF_INIT_CAP;
-    char *buf = (char *) malloc(cap * sizeof *buf);
-    char *bufp;
-    MALLOC_CHK(buf);
+    const char magic[] = INDEX_MAGIC_NUMBER;
+    char buf_magic[sizeof magic]; // TODO is this a vla?
+    assert(fread(buf_magic, sizeof *magic, sizeof magic, index->fp) == sizeof magic);
+    assert(memcmp(magic, buf_magic, sizeof *magic * sizeof magic) == 0);
 
-    // Header
-    assert(getline(&buf, &cap, index->fp) != -1);
-    assert(strcmp(buf, SLOW5_INDEX_HEADER) == 0);
+    assert(fread(&index->version.major, sizeof index->version.major, 1, index->fp) == 1);
+    assert(fread(&index->version.minor, sizeof index->version.minor, 1, index->fp) == 1);
+    assert(fread(&index->version.patch, sizeof index->version.patch, 1, index->fp) == 1);
 
-    // Index data
-    ssize_t buf_len;
-    while ((buf_len = getline(&buf, &cap, index->fp)) != -1) {
-        buf[buf_len - 1] = '\0'; // Remove newline for later parsing
+    assert(fseek(index->fp, INDEX_HEADER_SIZE_OFFSET, SEEK_SET) != -1);
 
-        bufp = buf;
-        char *read_id = strdup(strsep_mine(&bufp, SEP));
+    const char eof[] = INDEX_EOF;
+    char buf_eof[sizeof eof]; // TODO is this a vla?
 
-        char *offset_str = strsep_mine(&bufp, SEP);
-        int err;
-        uint64_t offset = ato_uint64(offset_str, &err);
-        assert(err != -1);
+    assert(fread(buf_eof, sizeof *eof, sizeof eof, index->fp) == sizeof eof);
+    while (memcmp(eof, buf_eof, sizeof *eof * sizeof eof) != 0) {
+        assert(fseek(index->fp, - sizeof *eof * sizeof eof, SEEK_CUR) == 0); // Seek back
 
-        char *size_str = strsep_mine(&bufp, SEP);
-        uint64_t size = ato_uint64(size_str, &err);
-        assert(err != -1);
+        slow5_rid_len_t read_id_len;
+        assert(fread(&read_id_len, sizeof read_id_len, 1, index->fp) == 1);
+        char *read_id = (char *) malloc((read_id_len + 1) * sizeof *read_id); // +1 for '\0'
+        NULL_CHK(read_id);
+        assert(fread(read_id, sizeof *read_id, read_id_len, index->fp) == read_id_len);
+        read_id[read_id_len] = '\0'; // Add null byte
+
+        uint64_t offset;
+        uint64_t size;
+
+        assert(fread(&offset, sizeof offset, 1, index->fp) == 1);
+        assert(fread(&size, sizeof size, 1, index->fp) == 1);
 
         slow5_idx_insert(index, read_id, offset, size);
-    }
 
-    assert(cap == SLOW5_INDEX_BUF_INIT_CAP); // TESTING to see if getline has to realloc (if this fails often maybe put a larger buffer size)
-    free(buf);
+        assert(fread(buf_eof, sizeof *eof, sizeof eof, index->fp) == sizeof eof);
+    }
 }
 
 void slow5_idx_insert(struct slow5_idx *index, char *read_id, uint64_t offset, uint64_t size) {

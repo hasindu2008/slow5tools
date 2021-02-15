@@ -6,7 +6,11 @@
 #include "klib/khash.h"
 #include "slow5.h"
 
-#define INDEX_EXTENSION "." "idx"
+#define INDEX_EXTENSION             "." "idx"
+#define INDEX_VERSION               { 0, 1, 0 }
+#define INDEX_MAGIC_NUMBER          { 'S', 'L', 'O', 'W', '5', 'I', 'D', 'X', '\1' }
+#define INDEX_EOF                   { 'X', 'D', 'I', '5', 'W', 'O', 'L', 'S' }
+#define INDEX_HEADER_SIZE_OFFSET    (64L)
 
 // SLOW5 record index
 struct slow5_rec_idx {
@@ -19,6 +23,7 @@ KHASH_MAP_INIT_STR(s2i, struct slow5_rec_idx)
 
 // SLOW5 index
 struct slow5_idx {
+    struct slow5_version version;
     FILE *fp;
     char *pathname;
     char **ids;

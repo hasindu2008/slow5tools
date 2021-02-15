@@ -71,8 +71,9 @@ struct slow5_rec_aux {
 
 // SLOW5 record data
 typedef uint64_t slow5_rec_size_t;
+typedef uint16_t slow5_rid_len_t;
 struct slow5_rec {
-    uint16_t read_id_len;
+    slow5_rid_len_t read_id_len;
     SLOW5_COLS_FOREACH(GENERATE_STRUCT)
     struct slow5_rec_aux *read_aux;
 };
