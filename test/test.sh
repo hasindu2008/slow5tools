@@ -38,6 +38,7 @@ my_diff() {
 
 prep() {
     mkdir -p 'test/bin'
+    mkdir -p 'test/data/out/two_rg'
 
     rm 'test/data/exp/one_fast5/exp_1_default.slow5.idx'
     rm 'test/data/err/parse_bad.slow5.idx'
