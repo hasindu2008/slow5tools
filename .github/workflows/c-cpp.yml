@@ -18,6 +18,8 @@ jobs:
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
+    - name: test valgrind
+      run: ./test/test.sh mem
   ubuntu_18:
     name: Ubuntu 18 hdf5 install script
     runs-on: ubuntu-18.04
@@ -29,6 +31,8 @@ jobs:
       run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
       run: make test
+    - name: test valgrind
+      run: ./test/test.sh mem
     - name: valgrind
       run: valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
   ubuntu_20:
@@ -44,6 +48,8 @@ jobs:
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
+    - name: test valgrind
+      run: ./test/test.sh mem
   os_x:
     name: OSX
     runs-on: macos-10.15
@@ -55,6 +61,8 @@ jobs:
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
+    - name: test valgrind
+      run: ./test/test.sh mem
   os_x2:
     name: OSX hdf5 hdf5 install script
     runs-on: macos-10.15
@@ -66,6 +74,8 @@ jobs:
       run: autoreconf && CC=gcc CXX=g++ CFLAGS="-Wno-implicit-function-declaration" ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
       run: make test
+    - name: test valgrind
+      run: ./test/test.sh mem
   pyslow5_ubuntu_16:
     name: pyslow5 Ubuntu 16
     runs-on: ubuntu-16.04
