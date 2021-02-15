@@ -52,8 +52,8 @@ int ato_xintx_valid(void) {
     ASSERT(ato_uint64(buf, &err) == UINT64_MAX);
     ASSERT(err == 0);
 
-    sprintf(buf, "%" PRId16, INT16_MIN);
-    ASSERT(ato_int16(buf, &err) == INT16_MIN);
+    sprintf(buf, "%" PRId16, (int16_t) INT16_MIN);
+    ASSERT(ato_int16(buf, &err) == (int16_t) INT16_MIN);
     ASSERT(err == 0);
     ASSERT(ato_int16("-2000", &err) == -2000);
     ASSERT(err == 0);
@@ -69,8 +69,8 @@ int ato_xintx_valid(void) {
     ASSERT(err == 0);
     ASSERT(ato_int16("2000", &err) == 2000);
     ASSERT(err == 0);
-    sprintf(buf, "%" PRId16, INT16_MAX);
-    ASSERT(ato_int16(buf, &err) == INT16_MAX);
+    sprintf(buf, "%" PRId16, (int16_t) INT16_MAX);
+    ASSERT(ato_int16(buf, &err) == (int16_t) INT16_MAX);
     ASSERT(err == 0);
 
     return EXIT_SUCCESS;
@@ -88,10 +88,10 @@ int ato_xintx_invalid(void) {
     ASSERT(err == -1);
     ASSERT(ato_uint8("-lol", &err) == 0);
     ASSERT(err == -1);
-    sprintf(buf, "%" PRIu16, (uint16_t) (UINT8_MAX) + 1);
+    sprintf(buf, "%" PRIu16, (uint16_t) ( (uint16_t) UINT8_MAX + 1));
     ASSERT(ato_uint8(buf, &err) == 0);
     ASSERT(err == -1);
-    sprintf(buf, "%" PRIu16, UINT16_MAX);
+    sprintf(buf, "%" PRIu16, (uint16_t) UINT16_MAX);
     ASSERT(ato_uint8(buf, &err) == 0);
     ASSERT(err == -1);
 
@@ -118,7 +118,7 @@ int ato_xintx_invalid(void) {
     ASSERT(ato_uint64(buf, &err) == 0);
     ASSERT(err == -1);
 
-    sprintf(buf, "%" PRIu16, UINT16_MAX);
+    sprintf(buf, "%" PRIu16, (uint16_t) UINT16_MAX);
     ASSERT(ato_int16(buf, &err) == 0);
     ASSERT(err == -1);
     sprintf(buf, "%" PRId32, (int32_t) (INT16_MIN) - 1);
