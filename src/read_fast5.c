@@ -4,7 +4,6 @@
 #include "slow5_old.h"
 #include <float.h>
 #include "error.h"
-#define H5_USE_110_API 1
 
 // Operator function to be called by H5Aiterate.
 herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *operator_data);
