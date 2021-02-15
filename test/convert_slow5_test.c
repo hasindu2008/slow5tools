@@ -113,7 +113,7 @@ int blow5_gzip_to_blow5_uncomp(void) {
     struct slow5_rec *read = NULL;
     int ret;
     while ((ret = slow5_get_next(&read, from)) == 0) {
-        ASSERT(slow5_rec_fwrite(to, read, FORMAT_BINARY, COMPRESS_NONE) != -1);
+        ASSERT(slow5_rec_fwrite(to, read, FORMAT_BINARY, NULL) != -1);
     }
     slow5_rec_free(read);
     ASSERT(ret == -2);
