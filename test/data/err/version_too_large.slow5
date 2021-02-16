@@ -1,5 +1,4 @@
-#file_format	slow5
-#file_version	0.1.256
+#slow5_version	0.1.256
 #num_read_groups	1
 @asic_id	3574887596
 @asic_id_eeprom	0

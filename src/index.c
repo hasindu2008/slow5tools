@@ -61,7 +61,7 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
-            default: // case '?' 
+            default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
@@ -72,7 +72,7 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
     if (optind >= argc) {
         MESSAGE(stderr, "missing slow5 or blow5 file%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        
+
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
 
@@ -80,7 +80,7 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
     } else if (optind < argc - 1) {
         MESSAGE(stderr, "too many files given%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        
+
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }

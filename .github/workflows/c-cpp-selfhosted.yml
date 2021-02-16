@@ -1,4 +1,4 @@
-name: SLOW5 C/C++ CI 2
+name: SLOW5 C/C++ CI Local
 
 on:
   push:

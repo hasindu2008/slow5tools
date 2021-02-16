@@ -5,7 +5,6 @@
 #include <float.h>
 #include "error.h"
 
-
 // Operator function to be called by H5Aiterate.
 herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *operator_data);
 // Operator function to be called by H5Literate.

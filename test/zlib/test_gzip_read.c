@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     gzread(f_in, buf, len * sizeof *buf);
 
     fwrite(buf, len, 1, stdout);
-    
+
     free(buf);
     buf = NULL;
 

@@ -6,6 +6,8 @@
     #include "config.h"
 #endif
 
+#define H5_USE_110_API 1
+
 #ifdef HAVE_HDF5_SERIAL_HDF5_H
 #    include <hdf5/serial/hdf5.h>
 #endif

@@ -5,186 +5,389 @@
 #include "press.h"
 #include "error.h"
 
-// Init compression stream
-struct press *press_init(enum press_method method) {
+static void *ptr_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t count, size_t *n);
+static void *ptr_depress_gzip(struct gzip_stream *gzip, const void *ptr, size_t count, size_t *n);
+static size_t fwrite_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t size, size_t nmemb, FILE *fp);
+static int vfprintf_compress(struct press *comp, FILE *fp, const char *format, va_list ap);
 
-    struct press *compress = NULL;
+/* --- Init / free press structure --- */
 
-    compress = (struct press *) malloc(sizeof *compress);
-    compress->method = method;
+struct press *press_init(press_method_t method) {
+
+    struct press *comp = NULL;
+
+    comp = (struct press *) malloc(sizeof *comp);
+    comp->method = method;
 
     switch (method) {
 
         case COMPRESS_NONE:
-            compress->stream = NULL;
+            comp->stream = NULL;
             break;
 
         case COMPRESS_GZIP: {
-            union press_stream *stream;
             struct gzip_stream *gzip;
-            int ret;
 
             gzip = (struct gzip_stream *) malloc(sizeof *gzip);
-            gzip->strm.zalloc = Z_NULL;
-            gzip->strm.zfree = Z_NULL;
-            gzip->strm.opaque = Z_NULL;
+
+            gzip->strm_deflate.zalloc = Z_NULL;
+            gzip->strm_deflate.zfree = Z_NULL;
+            gzip->strm_deflate.opaque = Z_NULL;
+
+            gzip->strm_inflate.zalloc = Z_NULL;
+            gzip->strm_inflate.zfree = Z_NULL;
+            gzip->strm_inflate.opaque = Z_NULL;
+
             gzip->flush = Z_NO_FLUSH;
 
-            ret = deflateInit2(&(gzip->strm),
-                    Z_DEFAULT_COMPRESSION,
-                    Z_DEFLATED,
-                    MAX_WBITS | GZIP_WBITS, // Gzip compatible compression
-                    Z_MEM_DEFAULT,
-                    Z_DEFAULT_STRATEGY);
+            // TODO free deflate stream if inflate stream ends
+            if (deflateInit2(&(gzip->strm_deflate),
+                        Z_DEFAULT_COMPRESSION,
+                        Z_DEFLATED,
+                        MAX_WBITS,
+                        Z_MEM_DEFAULT,
+                        Z_DEFAULT_STRATEGY) != Z_OK ||
+                    inflateInit2(&(gzip->strm_inflate), MAX_WBITS) != Z_OK) {
 
-            // Error occurred
-            if (ret != Z_OK) {
+                // Error occurred
                 free(gzip);
+                comp->stream = NULL;
 
             } else {
-                stream = (union press_stream *) malloc(sizeof *stream);
-
-                stream->gzip = gzip;
-                compress->stream = stream;
+                comp->stream = (union press_stream *) malloc(sizeof *comp->stream);
+                comp->stream->gzip = gzip;
             }
 
         } break;
     }
 
-    return compress;
+    return comp;
 }
 
-// free compression stream
-void press_free(struct press *compress) {
+void press_free(struct press *comp) {
 
-    if (compress != NULL) {
+    if (comp != NULL) {
 
-        switch (compress->method) {
+        switch (comp->method) {
 
             case COMPRESS_NONE:
                 break;
 
             case COMPRESS_GZIP: {
-                int ret;
-
-                ret = deflateEnd(&(compress->stream->gzip->strm));
-                // Error occurred
-                if (ret != Z_OK) {
-                    // TODO
-                }
-
-                free(compress->stream->gzip);
-                compress->stream->gzip = NULL;
-                free(compress->stream);
-                compress->stream = NULL;
+                (void) deflateEnd(&(comp->stream->gzip->strm_deflate));
+                (void) inflateEnd(&(comp->stream->gzip->strm_inflate));
+                free(comp->stream->gzip);
+                free(comp->stream);
             } break;
         }
 
-        free(compress);
+        free(comp);
     }
 }
 
 
-int fprintf_press(struct press *compress, FILE *fp, const char *format, ...) {
+/* --- Compress / decompress to some memory --- */
+
+void *ptr_compress(struct press *comp, const void *ptr, size_t count, size_t *n) {
+    void *out = NULL;
+    size_t n_tmp = 0;
+
+    if (comp != NULL && ptr != NULL) {
+
+        switch (comp->method) {
+
+            case COMPRESS_NONE:
+                out = (void *) malloc(count);
+                if (out == NULL) {
+                    // Malloc failed
+                    return out;
+                }
+                memcpy(out, ptr, count);
+                n_tmp = count;
+                break;
+
+            case COMPRESS_GZIP:
+                if (comp->stream != NULL && comp->stream->gzip != NULL) {
+                    out = ptr_compress_gzip(comp->stream->gzip, ptr, count, &n_tmp);
+                }
+                break;
+        }
+    }
+
+    if (n != NULL) {
+        *n = n_tmp;
+    }
+
+    return out;
+}
+
+static void *ptr_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t count, size_t *n) {
+    uint8_t *out = NULL;
+
+    size_t n_cur = 0;
+    z_stream *strm = &(gzip->strm_deflate);
+
+    strm->avail_in = count;
+    strm->next_in = (Bytef *) ptr;
+
+    uLong chunk_sz = Z_OUT_CHUNK;
+
+    do {
+        out = (uint8_t *) realloc(out, n_cur + chunk_sz);
+
+        strm->avail_out = chunk_sz;
+        strm->next_out = out + n_cur;
+
+        if (deflate(strm, gzip->flush) == Z_STREAM_ERROR) {
+            free(out);
+            out = NULL;
+            n_cur = 0;
+            break;
+        }
+
+        n_cur += chunk_sz - strm->avail_out;
+
+    } while (strm->avail_out == 0);
+
+    *n = n_cur;
+
+    if (gzip->flush == Z_FINISH) {
+        gzip->flush = Z_NO_FLUSH;
+        deflateReset(strm);
+    }
+
+    return out;
+}
+
+void *ptr_depress(struct press *comp, const void *ptr, size_t count, size_t *n) {
+    void *out = NULL;
+    size_t n_tmp = 0;
+
+    if (comp != NULL && ptr != NULL) {
+
+        switch (comp->method) {
+
+            case COMPRESS_NONE:
+                out = (void *) malloc(count);
+                if (out == NULL) {
+                    // Malloc failed
+                    return out;
+                }
+                memcpy(out, ptr, count);
+                n_tmp = count;
+                break;
+
+            case COMPRESS_GZIP:
+                if (comp->stream != NULL && comp->stream->gzip != NULL) {
+                    out = ptr_depress_gzip(comp->stream->gzip, ptr, count, &n_tmp);
+                }
+                break;
+        }
+    }
+
+    if (n != NULL) {
+        *n = n_tmp;
+    }
+
+    return out;
+}
+
+static void *ptr_depress_gzip(struct gzip_stream *gzip, const void *ptr, size_t count, size_t *n) {
+    uint8_t *out = NULL;
+
+    size_t n_cur = 0;
+    z_stream *strm = &(gzip->strm_inflate);
+
+    strm->avail_in = count;
+    strm->next_in = (Bytef *) ptr;
+
+    do {
+        out = (uint8_t *) realloc(out, n_cur + Z_OUT_CHUNK);
+
+        strm->avail_out = Z_OUT_CHUNK;
+        strm->next_out = out + n_cur;
+
+        int ret = inflate(strm, Z_NO_FLUSH);
+        if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR) {
+            free(out);
+            out = NULL;
+            n_cur = 0;
+            break;
+        }
+
+        n_cur += Z_OUT_CHUNK - strm->avail_out;
+
+    } while (strm->avail_out == 0);
+
+    *n = n_cur;
+    inflateReset(strm);
+
+    return out;
+}
+
+
+/* --- Compress / decompress a ptr to some file --- */
+
+size_t fwrite_compress(struct press *comp, const void *ptr, size_t size, size_t nmemb, FILE *fp) {
+    size_t bytes = -1;
+
+    if (comp != NULL) {
+        switch (comp->method) {
+
+            case COMPRESS_NONE:
+                bytes = fwrite(ptr, size, nmemb, fp);
+                break;
+
+            case COMPRESS_GZIP:
+                if (comp->stream != NULL && comp->stream->gzip != NULL) {
+                    bytes = fwrite_compress_gzip(comp->stream->gzip, ptr, size, nmemb, fp);
+                }
+                break;
+        }
+    }
+
+    return bytes;
+}
+
+static size_t fwrite_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t size, size_t nmemb, FILE *fp) {
+
+    size_t bytes = 0;
+    z_stream *strm = &(gzip->strm_deflate);
+
+    strm->avail_in = size * nmemb;
+    strm->next_in = (Bytef *) ptr;
+
+    uLong chunk_sz = Z_OUT_CHUNK;
+    uint8_t *buf = (uint8_t *) malloc(sizeof *buf * chunk_sz);
+    if (buf == NULL) {
+        return -1;
+    }
+
+    do {
+        strm->avail_out = chunk_sz;
+        strm->next_out = buf;
+
+        if (deflate(strm, gzip->flush) == Z_STREAM_ERROR) {
+            bytes = -1;
+            break;
+        }
+
+        size_t have = (sizeof *buf * chunk_sz) - strm->avail_out;
+        if (fwrite(buf, sizeof *buf, have, fp) != have || ferror(fp)) {
+            bytes = -1;
+            break;
+        }
+
+        bytes += have;
+
+    } while (strm->avail_out == 0);
+
+    free(buf);
+
+    if (gzip->flush == Z_FINISH) {
+        gzip->flush = Z_NO_FLUSH;
+    }
+
+    return bytes;
+}
+
+
+/* --- Decompress to a ptr from some file --- */
+
+void *fread_depress(struct press *comp, size_t count, FILE *fp) {
+    void *raw = (void *) malloc(count);
+    MALLOC_CHK(raw);
+
+    if (fread(raw, count, 1, fp) != 1) {
+        free(raw);
+        return NULL;
+    }
+
+    void *out = ptr_depress(comp, raw, count, NULL);
+    free(raw);
+
+    return out;
+}
+
+void *pread_depress(struct press *comp, int fd, size_t count, off_t offset) {
+    void *raw = (void *) malloc(count);
+    MALLOC_CHK(raw);
+
+    if (pread(fd, raw, count, offset) == -1) {
+        free(raw);
+        return NULL;
+    }
+
+    void *out = ptr_depress(comp, raw, count, NULL);
+    free(raw);
+
+    return out;
+}
+
+
+/* --- Compress with printf to some file --- */
+
+int fprintf_compress(struct press *comp, FILE *fp, const char *format, ...) {
     int ret = -1;
 
-    if (compress != NULL) {
-        va_list ap;
-        va_start(ap, format);
+    va_list ap;
+    va_start(ap, format);
 
-        switch (compress->method) {
+    ret = vfprintf_compress(comp, fp, format, ap);
 
-            case COMPRESS_NONE:
-                ret = vfprintf(fp, format, ap);
-                break;
-
-            case COMPRESS_GZIP: {
-                union press_stream *stream = compress->stream;
-
-                if (stream != NULL) {
-                    ret = vfprintf_gzip(stream->gzip, fp, format, ap);
-                }
-
-            } break;
-        }
-
-        va_end(ap);
-    }
+    va_end(ap);
 
     return ret;
 }
 
-int vfprintf_gzip(struct gzip_stream *gzip, FILE *fp, const char *format, va_list ap) {
+int printf_compress(struct press *comp, const char *format, ...) {
+    int ret = -1;
 
-    int ret = -1; // TODO change this to a proper error code
+    va_list ap;
+    va_start(ap, format);
 
-    if (gzip != NULL) {
-        char *buf;
+    ret = vfprintf_compress(comp, stdout, format, ap);
 
-        assert(vasprintf_mine(&buf, format, ap) != -1);
-        ret = z_deflate_write(&(gzip->strm), buf, strlen(buf), fp, gzip->flush); // Can also return -1 I think
-        if (gzip->flush == Z_FINISH) {
-            gzip->flush = Z_NO_FLUSH;
-        }
-
-        free(buf);
-    }
+    va_end(ap);
 
     return ret;
 }
 
+static int vfprintf_compress(struct press *comp, FILE *fp, const char *format, va_list ap) {
+    int ret = -1;
 
-size_t fwrite_press(struct press *compress, const void *ptr, size_t size, size_t nmemb, FILE *fp) {
-    size_t ret = -1;
+    if (comp != NULL) {
 
-    if (compress != NULL) {
-        switch (compress->method) {
-
-            case COMPRESS_NONE:
-                ret = fwrite(ptr, size, nmemb, fp);
-                break;
-
-            case COMPRESS_GZIP: {
-                union press_stream *stream = compress->stream;
-
-                if (stream != NULL) {
-                    ret = fwrite_gzip(stream->gzip, ptr, size, nmemb, fp);
-                }
-
-            } break;
+        if (comp->method == COMPRESS_NONE) {
+            ret = vfprintf(fp, format, ap);
+        } else {
+            char *buf;
+            if (vasprintf_mine(&buf, format, ap) != -1) {
+                ret = fwrite_str_compress(comp, buf, fp);
+                free(buf);
+            }
         }
-    }
 
-    return ret;
-}
-
-size_t fwrite_gzip(struct gzip_stream *gzip, const void *ptr, size_t size, size_t nmemb, FILE *fp) {
-
-    int ret = -1; // TODO change this to a proper error code
-
-    if (gzip != NULL) {
-        ret = z_deflate_write(&(gzip->strm), ptr, size * nmemb, fp, gzip->flush); // Can also return -1 I think
-        if (gzip->flush == Z_FINISH) {
-            gzip->flush = Z_NO_FLUSH;
-        }
     }
 
     return ret;
 }
 
 
-void press_footer_next(struct press *compress) {
+/* --- Write compression footer on immediate next compression call --- */
 
-    if (compress != NULL && compress->stream != NULL) {
-        union press_stream *stream = compress->stream;
+void compress_footer_next(struct press *comp) {
 
-        switch (compress->method) {
+    if (comp != NULL && comp->stream != NULL) {
+
+        switch (comp->method) {
 
             case COMPRESS_NONE:
                 break;
+
             case COMPRESS_GZIP: {
 
-                struct gzip_stream *gzip = stream->gzip;
+                struct gzip_stream *gzip = comp->stream->gzip;
 
                 if (gzip != NULL) {
                     gzip->flush = Z_FINISH;
@@ -229,12 +432,14 @@ int asprintf_mine(char **strp, const char *fmt, ...) {
 
 
 
+
 /* Decompress a zlib-compressed string
  *
  * @param       compressed string
  * @param       ptr to size of compressed string, updated to size of returned malloced string
  * @return      malloced string
  */
+/*
 unsigned char *z_inflate_buf(const char *comp_str, size_t *n) {
 
     z_stream strm;
@@ -290,18 +495,9 @@ unsigned char *z_inflate_buf(const char *comp_str, size_t *n) {
     return out;
 }
 
-/* Gzip compress some data to a file.
- * Doesn't close the stream or file.
- *
- * @param       zlib stream
- * @param       data to write
- * @param       size of data
- * @param       file ptr
- * @param       flush input to deflate() function
- * @return      status code from deflate(), Z_OK on success
- */
-int z_deflate_write(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, int flush) {
-    int ret = Z_OK;
+size_t z_deflate_buf(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, int flush, int *err) {
+unsigned char *z_inflate_buf(const char *comp_str, size_t *n) {
+    size_t written = 0;
 
     strmp->avail_in = size;
     strmp->next_in = (Bytef *) ptr;
@@ -316,14 +512,19 @@ int z_deflate_write(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, i
         ret = deflate(strmp, flush);
         if (ret == Z_STREAM_ERROR) {
             ERROR("deflate failed\n%s", ""); // testing
-            return ret;
+            *err = ret;
+            return written;
         }
 
         unsigned have = out_sz - strmp->avail_out;
-        if (fwrite(out, sizeof *out, have, f_out) != have || ferror(f_out)) {
+        size_t tmp;
+        if ((tmp = fwrite(out, sizeof *out, have, f_out)) != have || ferror(f_out)) {
             ERROR("fwrite\n%s", ""); // testing
-            return Z_ERRNO;
+            *err = Z_ERRNO;
+            written += tmp * sizeof *out;
+            return written;
         }
+        written += tmp * sizeof *out;
 
     } while (strmp->avail_out == 0);
 
@@ -333,8 +534,10 @@ int z_deflate_write(z_streamp strmp, const void *ptr, uLong size, FILE *f_out, i
     // If still input to deflate
     if (strmp->avail_in != 0) {
         ERROR("still more input to deflate\n%s", ""); // testing
-        return Z_ERRNO;
+        *err = Z_ERRNO;
     }
 
-    return ret;
+    *err = Z_OK;
+    return written;
 }
+*/
