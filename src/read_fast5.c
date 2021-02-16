@@ -430,6 +430,9 @@ int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out,
                 fprintf(stderr, "run_id is not set%s\n", "");
                 exit(EXIT_FAILURE);
             }
+            check_attributes(READ, &tracker);
+            check_attributes(CONTEXT_TAGS, &tracker);
+            check_attributes(TRACKING_ID, &tracker);
             print_slow5_header(&tracker);//remove this later; added for the sake of slow5 format completeness
         }
         print_record(&tracker);//remove this later; added for the sake of slow5 format completeness
@@ -540,6 +543,9 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                                 fprintf(stderr, "run_id is not set%s\n", "");
                                 exit(EXIT_FAILURE);
                             }
+                            check_attributes(READ, operator_data);
+                            check_attributes(CONTEXT_TAGS, operator_data);
+                            check_attributes(TRACKING_ID, operator_data);
                             print_slow5_header(operator_data);//remove this later; added for the sake of slow5 format completeness
                         }
                         *(operator_data->nreads) = *(operator_data->nreads) + 1;
@@ -1132,9 +1138,6 @@ void check_attributes(group_flags group_flag, operator_obj* operator_data) {
 }
 
 void print_slow5_header(operator_obj* operator_data) {
-    check_attributes(READ, operator_data);
-    check_attributes(CONTEXT_TAGS, operator_data);
-    check_attributes(TRACKING_ID, operator_data);
 
     //  main stuff
     fprintf(operator_data->f_out,"#file_format\t%s\n", operator_data->slow5_header->file_format);
