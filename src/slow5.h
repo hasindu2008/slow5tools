@@ -42,12 +42,20 @@ struct slow5_version {
 // Header data map: attribute string -> data string
 KHASH_MAP_INIT_STR(s2s, char *)
 
+struct slow5_aux_meta {
+    uint8_t num_attrs; // TODO change to uint32_t but change all related buffering to dynamic
+    char **attrs;
+    char **types;
+    uint8_t *sizes;
+};
+
 // SLOW5 header
 struct slow5_hdr {
 	struct slow5_version version;
     uint32_t num_read_groups; // Number of read groups
     uint32_t num_attrs; // Number of header attributes TODO type ok maybe smaller?
     khash_t(s2s) **data; // length = num_read_groups
+    struct slow5_aux_meta *aux_meta;
 };
 
 /* Read Record */
@@ -58,16 +66,15 @@ enum slow5_cols {
     SLOW5_COLS_NUM
 };
 
-// SLOW5 auxillary record data
-// TODO make dynamic
+// SLOW5 auxiliary attributed data
 struct slow5_rec_aux {
-	char *channel_number;
-    char *end_reason;
-    double median_before;
-	int32_t read_number;
-	uint64_t start_time;
-    uint8_t start_mux;
+    char *type;
+    uint64_t len;
+    uint8_t *data;
 };
+
+// Header data map: auxiliary attribute string -> auxiliary data
+KHASH_MAP_INIT_STR(s2a, struct slow5_rec_aux)
 
 // SLOW5 record data
 typedef uint64_t slow5_rec_size_t;
@@ -75,7 +82,7 @@ typedef uint16_t slow5_rid_len_t;
 struct slow5_rec {
     slow5_rid_len_t read_id_len;
     SLOW5_COLS_FOREACH(GENERATE_STRUCT)
-    struct slow5_rec_aux *read_aux;
+    khash_t(s2a) *read_aux;
 };
 
 /* SLOW5 file */
@@ -255,6 +262,20 @@ int slow5_rec_add(struct slow5_rec *read, struct slow5_file *s5p);
  * @return  error code described above
  */
 int slow5_rec_rm(const char *read_id, struct slow5_file *s5p);
+
+int8_t slow5_rec_get_int8(const struct slow5_rec *read, const char *attr, int *err);
+int16_t slow5_rec_get_int16(const struct slow5_rec *read, const char *attr, int *err);
+int32_t slow5_rec_get_int32(const struct slow5_rec *read, const char *attr, int *err);
+int64_t slow5_rec_get_int64(const struct slow5_rec *read, const char *attr, int *err);
+uint8_t slow5_rec_get_uint8(const struct slow5_rec *read, const char *attr, int *err);
+uint16_t slow5_rec_get_uint16(const struct slow5_rec *read, const char *attr, int *err);
+uint32_t slow5_rec_get_uint32(const struct slow5_rec *read, const char *attr, int *err);
+uint64_t slow5_rec_get_uint64(const struct slow5_rec *read, const char *attr, int *err);
+float slow5_rec_get_float(const struct slow5_rec *read, const char *attr, int *err);
+double slow5_rec_get_double(const struct slow5_rec *read, const char *attr, int *err);
+char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err);
+char *slow5_rec_get_char_array(const struct slow5_rec *read, const char *attr, int *err);
+// TODO add other array types
 
 /**
  * Get the read entry in the specified format.
