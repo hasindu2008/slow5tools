@@ -21,6 +21,21 @@
 //#define MIN(A,B) ( ( (A) < (B) ) ? (A) : (B) )
 //#define MAX(A,B) ( ( (A) > (B) ) ? (A) : (B) )
 
+// Types to sizes
+
+#define TYPE(name, type) (strcmp(name, # type) == 0)
+#define TYPE_TRUNC(name, type) (strncmp(name, # type, strlen(# type)) == 0)
+#define PTR(name, type) (strcmp(name + strlen(# type), "*") == 0)
+#define CHECK_TYPE(name, type) \
+    (TYPE_TRUNC(name, type)) { \
+        if (PTR(name, type)) { \
+            size = UINT8_MAX; \
+        } else { \
+            size = sizeof (type); \
+        } \
+    }
+
+
 // Timing
 
 // From minimap2/misc
@@ -104,10 +119,14 @@ int float_check(const char *str);
 // Atoi but to xintx_t
 // and without any symbols
 // and without 0 prefixing
+int8_t ato_int8(const char *str, int *err);
+int16_t ato_int16(const char *str, int *err);
+int32_t ato_int32(const char *str, int *err);
+int64_t ato_int64(const char *str, int *err);
 uint8_t ato_uint8(const char *str, int *err);
+uint16_t ato_uint16(const char *str, int *err);
 uint32_t ato_uint32(const char *str, int *err);
 uint64_t ato_uint64(const char *str, int *err);
-int16_t ato_int16(const char *str, int *err);
 
 // Strtod but
 // without any symbols, spaces
@@ -116,5 +135,8 @@ double strtod_check(const char *str, int *err);
 
 // Convert double to decimal string without trailing 0s
 char *double_to_str(double x);
+
+uint8_t get_type_size(const char *type);
+int memcpy_type(uint8_t *data, const char *value, const char *type);
 
 #endif

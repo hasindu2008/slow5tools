@@ -42,8 +42,6 @@ prep() {
     mkdir -p 'test/data/out/two_rg'
 
     rm test/data/out/*.idx
-    rm test/data/out/one_fast5/*.idx
-    rm test/data/out/two_rg/*.idx
     rm test/data/exp/one_fast5/*.idx
     rm test/data/exp/two_rg/*.idx
     rm test/data/test/*.idx
@@ -78,7 +76,7 @@ else
 fi
 
 echo_test 'unit test helpers'
-if gcc -Wall -Werror -g test/unit_test_helpers.c -o test/bin/unit_test_helpers src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/unit_test_helpers.c -o test/bin/unit_test_helpers src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/bin/unit_test_helpers; then
         fail
     fi
@@ -87,7 +85,7 @@ else
 fi
 
 echo_test 'unit test press'
-if gcc -Wall -Werror -g test/unit_test_press.c -o test/bin/unit_test_press src/press.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/unit_test_press.c -o test/bin/unit_test_press src/press.c -I src/ -lz; then
     if ! ex test/bin/unit_test_press > test/data/out/unit_test_out_press; then
         fail
     fi
@@ -96,7 +94,7 @@ else
 fi
 
 echo_test 'unit test ascii'
-if gcc -Wall -Werror -g test/unit_test_ascii.c -o test/bin/unit_test_ascii src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/unit_test_ascii.c -o test/bin/unit_test_ascii src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/bin/unit_test_ascii > test/data/out/unit_test_out_ascii; then
         fail
     fi
@@ -106,7 +104,7 @@ fi
 
 
 echo_test 'unit test binary'
-if gcc -Wall -Werror -g test/unit_test_binary.c -o test/bin/unit_test_binary src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/unit_test_binary.c -o test/bin/unit_test_binary src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/bin/unit_test_binary > test/data/out/unit_test_out_binary; then
         fail
     fi
@@ -115,7 +113,7 @@ else
 fi
 
 echo_test 'slow5 conversion test'
-if gcc -Wall -Werror -g test/convert_slow5_test.c -o test/bin/convert_slow5_test src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/convert_slow5_test.c -o test/bin/convert_slow5_test src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/bin/convert_slow5_test; then
         fail
     fi
@@ -124,8 +122,17 @@ else
 fi
 
 echo_test 'unit test two read groups'
-if gcc -Wall -Werror -g test/unit_test_two_rg.c -o test/bin/unit_test_two_rg src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/unit_test_two_rg.c -o test/bin/unit_test_two_rg src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/bin/unit_test_two_rg; then
+        fail
+    fi
+else
+    not_compiled
+fi
+
+echo_test 'unit test loseless'
+if gcc -Wall -g -std=gnu99 test/unit_test_loseless.c -o test/bin/unit_test_loseless src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+    if ! ex test/bin/unit_test_loseless; then
         fail
     fi
 else

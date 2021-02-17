@@ -164,3 +164,6 @@ pyslow5:
 test_prep: $(BINARY)
 	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5idx.c src/misc.c -o test/bin/make_blow5
 	./test/bin/make_blow5
+
+valgrind: $(BINARY)
+	./test/test.sh mem
