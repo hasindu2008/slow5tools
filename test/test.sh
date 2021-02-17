@@ -130,9 +130,9 @@ else
     not_compiled
 fi
 
-echo_test 'unit test loseless'
-if gcc -Wall -Werror -g test/unit_test_loseless.c -o test/bin/unit_test_loseless src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
-    if ! ex test/bin/unit_test_loseless; then
+echo_test 'unit test lossless'
+if gcc -Wall -Werror -g test/unit_test_lossless.c -o test/bin/unit_test_lossless src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+    if ! ex test/bin/unit_test_lossless > test/data/out/unit_test_out_lossless; then
         fail
     fi
 else
@@ -145,6 +145,7 @@ my_diff 'test/data/out/unit_test_out_ascii' 'test/data/exp/unit_test_exp_ascii'
 my_diff 'test/data/out/unit_test_out_fprint' 'test/data/exp/unit_test_exp_fprint'
 my_diff 'test/data/out/unit_test_out_binary' 'test/data/exp/unit_test_exp_binary'
 my_diff 'test/data/out/unit_test_out_press' 'test/data/exp/unit_test_exp_press'
+my_diff 'test/data/out/unit_test_out_lossless' 'test/data/exp/unit_test_exp_lossless'
 # Adding records diffs
 my_diff 'test/data/out/exp_1_default_add_empty.slow5' 'test/data/exp/exp_1_default_add_empty.slow5'
 my_diff 'test/data/out/exp_1_default_add_valid.slow5' 'test/data/exp/exp_1_default_add_valid.slow5'
