@@ -13,13 +13,15 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t
 
 // slow5 header data
 khash_t(s2s) **slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, uint32_t num_rgs, uint32_t *num_attrs, uint32_t *hdr_len);
+char *slow5_hdr_types_to_str(struct slow5_aux_meta *aux_meta, size_t *len);
+char *slow5_hdr_attrs_to_str(struct slow5_aux_meta *aux_meta, size_t *len);
 void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs);
 
 struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uint32_t *hdr_len);
 
 // slow5 record
-int slow5_rec_parse(char *read_mem, const char *read_id, struct slow5_rec *read, enum slow5_fmt format, struct slow5_aux_meta *aux_meta);
-void slow5_read_aux_free(khash_t(s2a) *read_aux);
+int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struct slow5_rec *read, enum slow5_fmt format, struct slow5_aux_meta *aux_meta);
+void slow5_rec_aux_free(struct slow5_rec_aux *read_aux);
 
 // slow5 extension parsing
 enum slow5_fmt name_get_slow5_fmt(const char *name);

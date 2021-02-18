@@ -67,14 +67,22 @@ enum slow5_cols {
 };
 
 // SLOW5 auxiliary attributed data
-struct slow5_rec_aux {
+struct slow5_rec_aux_data {
     char *type;
+    uint8_t size;
     uint64_t len;
     uint8_t *data;
 };
 
 // Header data map: auxiliary attribute string -> auxiliary data
-KHASH_MAP_INIT_STR(s2a, struct slow5_rec_aux)
+KHASH_MAP_INIT_STR(s2a, struct slow5_rec_aux_data)
+
+// SLOW5 auxiliary record data
+struct slow5_rec_aux {
+    uint8_t num_attrs;  // Number of auxiliary attribute names
+    char **attrs;       // Ordered list of auxiliary attribute names
+    khash_t(s2a) *map;  // Auxiliary attribute string -> auxiliary data
+};
 
 // SLOW5 record data
 typedef uint64_t slow5_rec_size_t;
@@ -82,7 +90,7 @@ typedef uint16_t slow5_rid_len_t;
 struct slow5_rec {
     slow5_rid_len_t read_id_len;
     SLOW5_COLS_FOREACH(GENERATE_STRUCT)
-    khash_t(s2a) *read_aux;
+    struct slow5_rec_aux *read_aux;
 };
 
 /* SLOW5 file */
@@ -274,7 +282,7 @@ uint64_t slow5_rec_get_uint64(const struct slow5_rec *read, const char *attr, in
 float slow5_rec_get_float(const struct slow5_rec *read, const char *attr, int *err);
 double slow5_rec_get_double(const struct slow5_rec *read, const char *attr, int *err);
 char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err);
-char *slow5_rec_get_char_array(const struct slow5_rec *read, const char *attr, int *err);
+char *slow5_rec_get_string(const struct slow5_rec *read, const char *attr, int *err);
 // TODO add other array types
 
 /**

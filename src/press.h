@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include "misc.h"
 
 // Compression methods
 enum press_method {
@@ -72,8 +73,8 @@ static inline size_t print_str_compress(struct press *comp, const char *str) {
 }
 
 /* --- Decompress to a ptr from some file --- */
-void *fread_depress(struct press *comp, size_t count, FILE *fp);
-void *pread_depress(struct press *comp, int fd, size_t count, off_t offset);
+void *fread_depress(struct press *comp, size_t count, FILE *fp, size_t *n);
+void *pread_depress(struct press *comp, int fd, size_t count, off_t offset, size_t *n);
 
 /* --- Compress with format string to some file --- */
 int fprintf_compress(struct press *comp, FILE *fp, const char *format, ...);
@@ -81,9 +82,5 @@ int printf_compress(struct press *comp, const char *format, ...);
 
 /* --- Write compression footer on immediate next compression call --- */
 void compress_footer_next(struct press *comp);
-
-// sprintf and vsprintf but dynamically allocates strp memory
-int asprintf_mine(char **strp, const char *fmt, ...);
-int vasprintf_mine(char **strp, const char *fmt, va_list ap);
 
 #endif

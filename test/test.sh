@@ -85,7 +85,7 @@ else
 fi
 
 echo_test 'unit test press'
-if gcc -Wall -g -std=gnu99 test/unit_test_press.c -o test/bin/unit_test_press src/press.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/unit_test_press.c -o test/bin/unit_test_press src/press.c src/misc.c -I src/ -lz; then
     if ! ex test/bin/unit_test_press > test/data/out/unit_test_out_press; then
         fail
     fi
@@ -130,8 +130,8 @@ else
     not_compiled
 fi
 
-echo_test 'unit test loseless'
-if gcc -Wall -g -std=gnu99 test/unit_test_loseless.c -o test/bin/unit_test_loseless src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+echo_test 'unit test lossless'
+if gcc -Wall -g -std=gnu99 test/unit_test_lossless.c -o test/bin/unit_test_lossless src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
     if ! ex test/bin/unit_test_lossless > test/data/out/unit_test_out_lossless; then
         fail
     fi

@@ -23,13 +23,14 @@
 
 // Types to sizes
 
-#define TYPE(name, type) (strcmp(name, # type) == 0)
-#define TYPE_TRUNC(name, type) (strncmp(name, # type, strlen(# type)) == 0)
-#define PTR(name, type) (strcmp(name + strlen(# type), "*") == 0)
+#define IS_TYPE(name, type) (strcmp(name, # type) == 0)
+#define IS_TYPE_TRUNC(name, type) (strncmp(name, # type, strlen(# type)) == 0)
+#define IS_PTR(name) (name[strlen(name) - 1] == '*')
 #define CHECK_TYPE(name, type) \
-    (TYPE_TRUNC(name, type)) { \
-        if (PTR(name, type)) { \
-            size = UINT8_MAX; \
+    (IS_TYPE_TRUNC(name, type)) { \
+        if (strcmp(name + strlen(name) - 2, "**") == 0) {/* TODO this is not right */ \
+            type *x; \
+            size = sizeof (x); \
         } else { \
             size = sizeof (type); \
         } \
@@ -109,6 +110,10 @@ static inline bool is_dir(const char *path) {
     return S_ISDIR(path_stat.st_mode);
 }
 
+// sprintf and vsprintf but dynamically allocates strp memory
+int asprintf_mine(char **strp, const char *fmt, ...);
+int vasprintf_mine(char **strp, const char *fmt, va_list ap);
+
 // From https://code.woboq.org/userspace/glibc/string/strsep.c.html
 char *strsep_mine (char **stringp, const char *delim);
 
@@ -134,9 +139,12 @@ uint64_t ato_uint64(const char *str, int *err);
 double strtod_check(const char *str, int *err);
 
 // Convert double to decimal string without trailing 0s
-char *double_to_str(double x);
+char *double_to_str(double x, size_t *len);
+// Convert float to decimal string without trailing 0s
+char *float_to_str(float x, size_t *len);
 
 uint8_t get_type_size(const char *type);
-int memcpy_type(uint8_t *data, const char *value, const char *type);
+int memcpy_type_from_str(uint8_t *data, const char *value, const char *type);
+char *type_to_str(uint8_t *data, const char *type, size_t len, size_t *str_len);
 
 #endif

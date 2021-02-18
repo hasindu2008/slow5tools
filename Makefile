@@ -161,8 +161,8 @@ pyslow5:
 	cp build/lib.*/*.so  ./
 	python3 < python/example.py
 
-test_prep: $(BINARY)
-	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5idx.c src/misc.c -o test/bin/make_blow5
+test-prep: $(BINARY)
+	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5idx.c src/misc.c -o test/bin/make_blow5 -g
 	./test/bin/make_blow5
 
 valgrind: $(BINARY)
