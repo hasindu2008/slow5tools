@@ -208,7 +208,7 @@ int slow5_duplicate(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_print(s5p, FORMAT_ASCII, COMPRESS_NONE) != -1);
+    ASSERT(slow5_hdr_print(s5p->header, FORMAT_ASCII, COMPRESS_NONE) != -1);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
@@ -224,7 +224,7 @@ int slow5_to_blow5_uncomp(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_print(s5p, FORMAT_BINARY, COMPRESS_NONE) != -1);
+    ASSERT(slow5_hdr_print(s5p->header, FORMAT_BINARY, COMPRESS_NONE) != -1);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);

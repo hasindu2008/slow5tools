@@ -1,5 +1,6 @@
 // Header with slow5 file definitions
 // TODO structure pack to min size
+// TODO fix and add function descriptions
 
 #ifndef SLOW5_H
 #define SLOW5_H
@@ -8,6 +9,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "klib/khash.h"
+#include "klib/kvec.h"
 #include "press.h"
 #include "slow5_defs.h"
 
@@ -39,9 +41,6 @@ struct slow5_version {
     uint8_t patch;
 };
 
-// Header data map: attribute string -> data string
-KHASH_MAP_INIT_STR(s2s, char *)
-
 struct slow5_aux_meta {
     uint8_t num_attrs; // TODO change to uint32_t but change all related buffering to dynamic
     char **attrs;
@@ -49,12 +48,18 @@ struct slow5_aux_meta {
     uint8_t *sizes;
 };
 
+// Header data map: attribute string -> data string
+KHASH_MAP_INIT_STR(s2s, char *)
+// Header data attributes set
+KHASH_SET_INIT_STR(s)
+
 // SLOW5 header
 struct slow5_hdr {
 	struct slow5_version version;
-    uint32_t num_read_groups; // Number of read groups
-    uint32_t num_attrs; // Number of header attributes TODO type ok maybe smaller?
-    khash_t(s2s) **data; // length = num_read_groups
+    uint32_t num_read_groups;       // Number of read groups
+    uint32_t num_data_attrs;	    // Number of data attributes
+    khash_t(s) *data_attrs;         // Set of the data attributes
+    kvec_t(khash_t(s2s) *) data;    // length = num_read_groups
     struct slow5_aux_meta *aux_meta;
 };
 
@@ -331,10 +336,10 @@ void slow5_rec_free(struct slow5_rec *read);
  *
  * @param   attr        attribute name
  * @param   read_group  the read group
- * @param   s5p         slow5 file
+ * @param   header      slow5 header
  * @return  the attribute's value, or NULL on error
  */
-char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_file *s5p);
+char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_hdr *header);
 
 /**
  * Add a new header data attribute.
@@ -345,11 +350,25 @@ char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_fi
  * Returns -2 if the attribute already exists.
  * Returns 0 other.
  *
- * @param   attr        attribute name
- * @param   s5p         slow5 file
+ * @param   attr    attribute name
+ * @param   header  slow5 header
  * @return  0 on success, <0 on error as described above
  */
-int slow5_hdr_add(const char *attr, const struct slow5_file *s5p);
+int slow5_hdr_add_attr(const char *attr, struct slow5_hdr *header);
+
+/**
+ * Add a new header read group.
+ *
+ * All values are set to NULL for the new read group.
+ *
+ * Returns -1 if an input parameter is NULL.
+ * Returns the new read group number otherwise.
+ *
+ * @param   header  slow5 header
+ * @return  < 0 on error as described above
+ */
+// TODO check return type but should be large enough to return -1 and the largest read group
+int64_t slow5_hdr_add_rg(struct slow5_hdr *header);
 
 /**
  * Set a header data attribute for a particular read_group.
@@ -364,10 +383,10 @@ int slow5_hdr_add(const char *attr, const struct slow5_file *s5p);
  * @param   attr        attribute name
  * @param   value       new attribute value
  * @param   read_group  the read group
- * @param   s5p         slow5 file
+ * @param   header      slow5 header
  * @return  0 on success, -1 on error
  */
-int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, const struct slow5_file *s5p);
+int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, struct slow5_hdr *header);
 
 /**
  * Get the header in the specified format.
@@ -376,14 +395,14 @@ int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, cons
  * or format is FORMAT_UNKNOWN
  * or an internal error occurs.
  *
- * @param   s5p     slow5 file
+ * @param   header  slow5 header
  * @param   format  slow5 format to write the entry in
  * @param   comp    compression method
  * @param   written number of bytes written to the returned buffer
  * @return  malloced memory storing the slow5 header representation,
  *          to use free() on afterwards
  */
-void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp, size_t *written);
+void *slow5_hdr_to_mem(struct slow5_hdr *header, enum slow5_fmt format, press_method_t comp, size_t *written);
 
 /**
  * Print the header in the specified format to a file pointer.
@@ -392,13 +411,13 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
  * On error, -1 is returned.
  *
  * @param   fp      output file pointer
- * @param   s5p     slow5_file pointer
+ * @param   header  slow5 header
  * @param   format  slow5 format to write the entry in
  * @return  number of bytes written, -1 on error
  */
-int slow5_hdr_fwrite(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp);
-static inline int slow5_hdr_print(struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp) {
-    return slow5_hdr_fwrite(stdout, s5p, format, comp);
+int slow5_hdr_fwrite(FILE *fp, struct slow5_hdr *header, enum slow5_fmt format, press_method_t comp);
+static inline int slow5_hdr_print(struct slow5_hdr *header, enum slow5_fmt format, press_method_t comp) {
+    return slow5_hdr_fwrite(stdout, header, format, comp);
 }
 
 /**

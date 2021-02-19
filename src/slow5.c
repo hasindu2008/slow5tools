@@ -11,6 +11,8 @@
 #include "error.h"
 #include "misc.h"
 #include "klib/ksort.h"
+#include "klib/kvec.h"
+#include "klib/khash.h"
 
 KSORT_INIT_STR
 
@@ -28,8 +30,10 @@ KSORT_INIT_STR
 #define SLOW5_SIGNAL_BUF_FIXED_CAP (8) // 2^3 since INT16_MAX_LENGTH=6
 // Initial capacity for converting the header to a string
 #define SLOW5_HEADER_STR_INIT_CAP (1024) // 2^10 TODO is this good? Or put to a page length
+// Initial capacity for empty
+#define SLOW5_HEADER_DATA_RG_INIT_CAP (256) // 2^8
 
-inline void slow5_hdr_free(struct slow5_hdr *header);
+static inline void slow5_free(struct slow5_file *s5p);
 inline void slow5_aux_meta_free(struct slow5_aux_meta *aux_meta);
 static inline struct slow5_rec_aux *slow5_rec_aux_init(struct slow5_aux_meta *aux_meta);
 
@@ -127,6 +131,14 @@ int slow5_close(struct slow5_file *s5p) {
         ret = EOF;
     } else {
         ret = fclose(s5p->fp);
+        slow5_free(s5p);
+    }
+
+    return ret;
+}
+
+static inline void slow5_free(struct slow5_file *s5p) {
+    if (s5p != NULL) {
         press_free(s5p->compress);
         slow5_hdr_free(s5p->header);
         if (s5p->index != NULL) {
@@ -140,12 +152,21 @@ int slow5_close(struct slow5_file *s5p) {
 
         free(s5p);
     }
-
-    return ret;
 }
 
 
 // slow5 header
+
+struct slow5_hdr *slow5_hdr_init_empty(void) {
+    struct slow5_hdr *header = (struct slow5_hdr *) calloc(1, sizeof *(header));
+
+    // TODO put in header
+    header->version.major = 0;
+    header->version.minor = 1;
+    header->version.patch = 0;
+
+    return header;
+}
 
 struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t *method) {
 
@@ -233,7 +254,7 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t
             return NULL;
         }
 
-        header->data = slow5_hdr_data_init(fp, buf, &cap, header->num_read_groups, &header->num_attrs, NULL);
+        assert(slow5_hdr_data_init(fp, buf, &cap, header, NULL) == 0);
         header->aux_meta = slow5_aux_meta_init(fp, buf, &cap, NULL);
 
     } else if (format == FORMAT_BINARY) {
@@ -262,7 +283,7 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t
 
         // Header data
         uint32_t header_act_size;
-        header->data = slow5_hdr_data_init(fp, buf, &cap, header->num_read_groups, &header->num_attrs, &header_act_size);
+        assert(slow5_hdr_data_init(fp, buf, &cap, header, &header_act_size) == 0);
         header->aux_meta = slow5_aux_meta_init(fp, buf, &cap, &header_act_size);
         if (header_act_size != header_size) {
             slow5_hdr_free(header);
@@ -290,10 +311,10 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t
  *          to use free() on afterwards
  */
 // TODO don't allow comp of COMPRESS_GZIP for FORMAT_ASCII
-void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp, size_t *n) {
+void *slow5_hdr_to_mem(struct slow5_hdr *header, enum slow5_fmt format, press_method_t comp, size_t *n) {
     char *mem = NULL;
 
-    if (s5p == NULL || format == FORMAT_UNKNOWN) {
+    if (header == NULL || format == FORMAT_UNKNOWN) {
         return mem;
     }
 
@@ -304,7 +325,7 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
 
     if (format == FORMAT_ASCII) {
 
-        struct slow5_version *version = &s5p->header->version;
+        struct slow5_version *version = &header->version;
 
         // Relies on SLOW5_HEADER_DATA_BUF_INIT_CAP being bigger than
         // strlen(ASCII_SLOW5_HEADER) + UINT32_MAX_LENGTH + strlen("\0")
@@ -312,7 +333,7 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
                 version->major,
                 version->minor,
                 version->patch,
-                s5p->header->num_read_groups);
+                header->num_read_groups);
         if (len_ret <= 0) {
             free(mem);
             return NULL;
@@ -321,7 +342,7 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
 
     } else if (format == FORMAT_BINARY) {
 
-        struct slow5_version *version = &s5p->header->version;
+        struct slow5_version *version = &header->version;
 
         // Relies on SLOW5_HEADER_DATA_BUF_INIT_CAP
         // being at least 68 + 1 (for '\0') bytes
@@ -335,9 +356,9 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
         memcpy(mem + len, &version->patch, sizeof version->patch);
         len += sizeof version->patch;
         memcpy(mem + len, &comp, sizeof comp);
-        len += sizeof s5p->compress->method;
-        memcpy(mem + len, &s5p->header->num_read_groups, sizeof s5p->header->num_read_groups);
-        len += sizeof s5p->header->num_read_groups;
+        len += sizeof comp;
+        memcpy(mem + len, &header->num_read_groups, sizeof header->num_read_groups);
+        len += sizeof header->num_read_groups;
 
         memset(mem + len, '\0', BINARY_HEADER_SIZE_OFFSET - len);
         len = BINARY_HEADER_SIZE_OFFSET;
@@ -347,28 +368,22 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
     }
 
     // Get unsorted list of header data attributes.
-    // Relies on header data having at least one hash map
-    // and all maps have the same attributes.
-    // Unless user has manually changed things this should be fine.
-
-    khash_t(s2s) *hdr_data = s5p->header->data[0];
-    const char **header_attrs = (const char **) malloc(s5p->header->num_attrs * sizeof *header_attrs);
-
+    const char **data_attrs = (const char **) malloc(header->num_data_attrs * sizeof *data_attrs);
     uint32_t i = 0;
-    for (khint_t j = kh_begin(hdr_data); j < kh_end(hdr_data); ++ j) {
-        if (kh_exist(hdr_data, j)) {
-            header_attrs[i] = kh_key(hdr_data, j);
-            ++ i;
-        }
-    }
+	for (khint_t j = kh_begin(header->data_attrs); j != kh_end(header->data_attrs); ++ j) {
+		if (kh_exist(header->data_attrs, j)) {
+			data_attrs[i] = kh_key(header->data_attrs, j);
+			++ i;
+		}
+	}
 
     // Sort header data attributes alphabetically
-    ks_mergesort(str, s5p->header->num_attrs, header_attrs, 0);
+    ks_mergesort(str, header->num_data_attrs, data_attrs, 0);
 
     size_t len_to_cp;
     // Write header data attributes to string
-    for (uint64_t j = 0; j < (uint64_t) s5p->header->num_attrs; ++ j) {
-        const char *attr = header_attrs[j];
+    for (size_t i = 0; i < header->num_data_attrs; ++ i) {
+        const char *attr = data_attrs[i];
 
         // Realloc if necessary
         if (len + 1 + strlen(attr) >= cap) { // + 1 for SLOW5_HEADER_DATA_PREFIX_CHAR
@@ -381,8 +396,9 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
         memcpy(mem + len, attr, strlen(attr));
         len += strlen(attr);
 
-        for (uint64_t k = 0; k < (uint64_t) s5p->header->num_read_groups; ++ k) {
-            const khash_t(s2s) *hdr_data = s5p->header->data[k];
+        // TODO handle empty attrs correctly
+        for (uint64_t j = 0; j < (uint64_t) header->num_read_groups; ++ j) {
+            const khash_t(s2s) *hdr_data = header->data.a[j];
             khint_t pos = kh_get(s2s, hdr_data, attr);
 
             if (pos != kh_end(hdr_data)) {
@@ -410,7 +426,14 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
                     len += len_to_cp;
                 }
             } else {
-                // TODO don't think this is possible?
+                // Realloc if necessary
+                if (len + 1 >= cap) { // +1 for SEP_CHAR
+                    cap *= 2;
+                    mem = (char *) realloc(mem, cap * sizeof *mem);
+                }
+
+                mem[len] = SEP_CHAR;
+                ++ len;
             }
         }
 
@@ -423,10 +446,11 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
         mem[len] = '\n';
         ++ len;
     }
-    free(header_attrs);
+
+    free(data_attrs);
 
     // Type header
-    char *str_to_cp = slow5_hdr_types_to_str(s5p->header->aux_meta, &len_to_cp);
+    char *str_to_cp = slow5_hdr_types_to_str(header->aux_meta, &len_to_cp);
     // Realloc if necessary
     if (len + len_to_cp >= cap) {
         cap *= 2;
@@ -437,7 +461,7 @@ void *slow5_hdr_to_mem(struct slow5_file *s5p, enum slow5_fmt format, press_meth
     free(str_to_cp);
 
     // Column header
-    str_to_cp = slow5_hdr_attrs_to_str(s5p->header->aux_meta, &len_to_cp);
+    str_to_cp = slow5_hdr_attrs_to_str(header->aux_meta, &len_to_cp);
     // Realloc if necessary
     if (len + len_to_cp >= cap) {
         cap *= 2;
@@ -569,12 +593,12 @@ char *slow5_hdr_attrs_to_str(struct slow5_aux_meta *aux_meta, size_t *len) {
  * @param   format  slow5 format to write the entry in
  * @return  number of bytes written, -1 on error
  */
-int slow5_hdr_fwrite(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, press_method_t comp) {
+int slow5_hdr_fwrite(FILE *fp, struct slow5_hdr *header, enum slow5_fmt format, press_method_t comp) {
     int ret;
     void *hdr;
     size_t hdr_size;
 
-    if (fp == NULL || s5p == NULL || (hdr = slow5_hdr_to_mem(s5p, format, comp, &hdr_size)) == NULL) {
+    if (fp == NULL || header == NULL || (hdr = slow5_hdr_to_mem(header, format, comp, &hdr_size)) == NULL) {
         return -1;
     }
 
@@ -599,14 +623,14 @@ int slow5_hdr_fwrite(FILE *fp, struct slow5_file *s5p, enum slow5_fmt format, pr
  * @param   s5p     slow5 file
  * @return  the attribute's value, or NULL on error
  */
-char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_file *s5p) {
+char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_hdr *header) {
     char *value;
 
-    if (attr == NULL || s5p == NULL || read_group >= s5p->header->num_read_groups) {
+    if (attr == NULL || header == NULL || read_group >= header->num_read_groups) {
         return NULL;
     }
 
-    khash_t(s2s) *hdr_data = s5p->header->data[read_group];
+    khash_t(s2s) *hdr_data = header->data.a[read_group];
 
     khint_t pos = kh_get(s2s, hdr_data, attr);
     if (pos == kh_end(hdr_data)) {
@@ -625,39 +649,61 @@ char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_fi
  *
  * Returns -1 if an input parameter is NULL.
  * Returns -2 if the attribute already exists.
- * Returns -3 some internal error.
+ * Returns -3 if internal error.
  * Returns 0 other.
  *
  * @param   attr        attribute name
  * @param   s5p         slow5 file
  * @return  0 on success, <0 on error as described above
  */
-int slow5_hdr_add(const char *attr, const struct slow5_file *s5p) {
-    if (attr == NULL || s5p == NULL) {
+int slow5_hdr_add_attr(const char *attr, struct slow5_hdr *header) {
+    if (attr == NULL || header == NULL) {
         return -1;
     }
 
-    // Set key
-    int absent;
-    char *attr_cp = strdup(attr);
-    // TODO cast necessary?
-    for (uint64_t i = 0; i < (uint64_t) s5p->header->num_read_groups; ++ i) {
-        khash_t(s2s) *header_data = s5p->header->data[i];
-
-        khint_t pos = kh_put(s2s, header_data, attr_cp, &absent);
-        if (absent == -1) {
-            free(attr_cp);
-            return -3;
-        } else if (absent == 0) {
-            free(attr_cp);
-            return -2;
-        }
-        kh_value(header_data, pos) = NULL;
+    if (header->data_attrs == NULL) {
+        header->data_attrs = kh_init(s);
     }
 
-    ++ s5p->header->num_attrs;
+    // See if attr already there
+    if (kh_get(s, header->data_attrs, attr) == kh_end(header->data_attrs)) {
+        // Add attr
+        int ret;
+        char *attr_cp = strdup(attr);
+        kh_put(s, header->data_attrs, attr_cp, &ret);
+        if (ret == -1) {
+            free(attr_cp);
+            return -3;
+        }
+        ++ header->num_data_attrs;
+    } else {
+        return -2;
+    }
 
     return 0;
+}
+
+/**
+ * Add a new header read group.
+ *
+ * All values are set to NULL for the new read group.
+ *
+ * Returns -1 if an input parameter is NULL.
+ * Returns the new read group number otherwise.
+ *
+ * @param   header  slow5 header
+ * @return  < 0 on error as described above
+ */
+// TODO check return type but should be large enough to return -1 and the largest read group
+int64_t slow5_hdr_add_rg(struct slow5_hdr *header) {
+    int64_t rg_num = -1;
+
+    if (header != NULL) {
+        rg_num = header->num_read_groups ++;
+        kv_push(khash_t(s2s) *, header->data, kh_init(s2s));
+    }
+
+    return rg_num;
 }
 
 /**
@@ -674,51 +720,62 @@ int slow5_hdr_add(const char *attr, const struct slow5_file *s5p) {
  * @param   s5p         slow5 file
  * @return  0 on success, -1 on error
  */
-int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, const struct slow5_file *s5p) {
+int slow5_hdr_set(const char *attr, const char *value, uint32_t read_group, struct slow5_hdr *header) {
 
-    if (attr == NULL || value == NULL || s5p == NULL || read_group >= s5p->header->num_read_groups) {
+    if (attr == NULL || value == NULL || header == NULL || read_group >= header->num_read_groups) {
         return -1;
     }
 
-    khash_t(s2s) *hdr_data = s5p->header->data[read_group];
+    khint_t pos = kh_get(s, header->data_attrs, attr);
+    if (pos != kh_end(header->data_attrs)) {
+        const char *attr_lib = kh_key(header->data_attrs, pos);
+        khash_t(s2s) *map = header->data.a[read_group];
 
-    khint_t pos = kh_get(s2s, hdr_data, attr);
-    if (pos == kh_end(hdr_data)) {
+        khint_t k = kh_get(s2s, map, attr);
+        if (k != kh_end(map)) {
+            free(kh_value(map, k));
+            kh_value(map, k) = strdup(value);
+        } else {
+            int ret;
+            k = kh_put(s2s, map, attr, &ret);
+            kh_value(map, k) = strdup(value);
+            kh_key(map, k) = attr_lib;
+        }
+    } else { // Attribute doesn't exist
         return -1;
-    } else {
-        free(kh_value(hdr_data, pos));
-        char *value_cp = strdup(value);
-        kh_value(hdr_data, pos) = value_cp;
     }
 
     return 0;
 }
 
 void slow5_hdr_free(struct slow5_hdr *header) {
-    NULL_CHK(header); //TODO needed or not?
+    if (header != NULL) {
+        slow5_hdr_data_free(header);
+        slow5_aux_meta_free(header->aux_meta);
 
-    slow5_hdr_data_free(header->data, header->num_read_groups);
-    slow5_aux_meta_free(header->aux_meta);
-
-    free(header);
+        free(header);
+    }
 }
 
 
 // slow5 header data
 
-khash_t(s2s) **slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, uint32_t num_rgs, uint32_t *num_attrs, uint32_t *hdr_len) {
+int slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, struct slow5_hdr *header, uint32_t *hdr_len) {
+
+    int ret = 0;
 
     char *buf_orig = buf;
     uint32_t hdr_len_tmp = 0;
 
-    khash_t(s2s) **hdr_data = (khash_t(s2s) **) malloc(num_rgs * sizeof *hdr_data);
+    kv_init(header->data);
+    kv_resize(khash_t(s2s) *, header->data, header->num_read_groups);
 
-    // TODO check if cast necessary
-    for (uint64_t i = 0; i < (uint64_t) num_rgs; ++ i) {
-        hdr_data[i] = kh_init(s2s);
-        NULL_CHK(hdr_data[i]);
+    for (uint64_t i = 0; i < (uint64_t) header->num_read_groups; ++ i) {
+        kv_A(header->data, i) = kh_init(s2s);
+        ++ header->data.n;
     }
 
+    khash_t(s) *data_attrs = kh_init(s);
 
     // Parse slow5 header data
 
@@ -731,6 +788,7 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, uint32_t nu
         hdr_len_tmp += buf_len;
     }
 
+    uint32_t num_data_attrs = 0;
     // While the column header hasn't been reached
     while (strncmp(buf, ASCII_TYPE_HEADER_MIN, strlen(ASCII_TYPE_HEADER_MIN)) != 0) {
 
@@ -742,24 +800,27 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, uint32_t nu
         char *attr = strdup(strsep_mine(&shift, SEP));
         char *val;
 
-        ++ *num_attrs;
+        int ret;
+        kh_put(s, data_attrs, attr, &ret);
+        ++ num_data_attrs;
+        assert(!(ret == -1 || ret == 0));
 
         // Iterate through the values
         uint32_t i = 0;
-        while ((val = strsep_mine(&shift, SEP)) != NULL && i <= num_rgs - 1) {
+        while ((val = strsep_mine(&shift, SEP)) != NULL && i <= header->num_read_groups - 1) {
 
             // Set key
             int absent;
-            khint_t pos = kh_put(s2s, hdr_data[i], attr, &absent);
+            khint_t pos = kh_put(s2s, header->data.a[i], attr, &absent);
             assert(absent != -1);
 
             // Set value
-            kh_val(hdr_data[i], pos) = strdup(val);
+            kh_val(header->data.a[i], pos) = strdup(val);
 
             ++ i;
         }
         // Ensure that read group number of entries are read
-        assert(i == num_rgs);
+        assert(i == header->num_read_groups);
 
         // Get next line
         assert((buf_len = getline(&buf, cap, fp)) != -1);
@@ -779,7 +840,12 @@ khash_t(s2s) **slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, uint32_t nu
         free(buf);
     }
 
-    return hdr_data;
+    if (ret == 0) {
+        header->num_data_attrs = num_data_attrs;
+        header->data_attrs = data_attrs;
+    }
+
+    return ret;
 }
 
 struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uint32_t *hdr_len) {
@@ -853,23 +919,37 @@ void slow5_aux_meta_free(struct slow5_aux_meta *aux_meta) {
     }
 }
 
-void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs) {
+void slow5_hdr_data_free(struct slow5_hdr *header) {
 
-    // Free header data map
-    for (uint64_t i = 0; i < (uint64_t) num_rgs; ++ i) {
+    if (header->data_attrs != NULL && header->data.a != NULL) {
 
-        for (khint_t j = kh_begin(hdr_data[i]); j < kh_end(hdr_data[i]); ++ j) {
-            if (kh_exist(hdr_data[i], j)) {
-                if (i == 0) {
-                    free((void *) kh_key(hdr_data[i], j)); // TODO avoid void *
+        for (khint_t i = kh_begin(header->data_attrs); i < kh_end(header->data_attrs); ++ i) {
+            if (kh_exist(header->data_attrs, i)) {
+                char *attr = (char *) kh_key(header->data_attrs, i);
+
+                // Free header data map
+                for (size_t j = 0; j < kv_size(header->data); ++ j) {
+                    khash_t(s2s) *map = header->data.a[j];
+
+                    khint_t pos = kh_get(s2s, map, attr);
+                    if (pos != kh_end(map)) {
+                        free(kh_value(map, pos));
+                        kh_del(s2s, map, pos);
+                    }
                 }
-                free((void *) kh_val(hdr_data[i], j)); // TODO avoid void *
+
+                free(attr);
             }
         }
-        kh_destroy(s2s, hdr_data[i]);
-    }
 
-    free(hdr_data);
+        // Free header data map
+        for (size_t j = 0; j < kv_size(header->data); ++ j) {
+            kh_destroy(s2s, header->data.a[j]);
+        }
+
+        kh_destroy(s, header->data_attrs);
+        kv_destroy(header->data);
+    }
 }
 
 

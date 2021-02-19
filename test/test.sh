@@ -139,6 +139,15 @@ else
     not_compiled
 fi
 
+echo_test 'unit test empty'
+if gcc -Wall -g -std=gnu99 test/unit_test_empty.c -o test/bin/unit_test_empty src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+    if ! ex test/bin/unit_test_empty > test/data/out/unit_test_out_empty; then
+        fail
+    fi
+else
+    not_compiled
+fi
+
 echo_test 'diff test'
 # Unit test output diffs
 my_diff 'test/data/out/unit_test_out_ascii' 'test/data/exp/unit_test_exp_ascii'
@@ -146,6 +155,7 @@ my_diff 'test/data/out/unit_test_out_fprint' 'test/data/exp/unit_test_exp_fprint
 my_diff 'test/data/out/unit_test_out_binary' 'test/data/exp/unit_test_exp_binary'
 my_diff 'test/data/out/unit_test_out_press' 'test/data/exp/unit_test_exp_press'
 my_diff 'test/data/out/unit_test_out_lossless' 'test/data/exp/unit_test_exp_lossless'
+my_diff 'test/data/out/unit_test_out_empty' 'test/data/exp/unit_test_exp_empty'
 # Adding records diffs
 my_diff 'test/data/out/exp_1_default_add_empty.slow5' 'test/data/exp/exp_1_default_add_empty.slow5'
 my_diff 'test/data/out/exp_1_default_add_valid.slow5' 'test/data/exp/exp_1_default_add_valid.slow5'

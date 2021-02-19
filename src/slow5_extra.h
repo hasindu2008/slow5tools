@@ -9,13 +9,15 @@
 struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format);
 
 // slow5 header
+struct slow5_hdr *slow5_hdr_init_empty(void);
 struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t *method);
+void slow5_hdr_free(struct slow5_hdr *header);
 
 // slow5 header data
-khash_t(s2s) **slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, uint32_t num_rgs, uint32_t *num_attrs, uint32_t *hdr_len);
+int slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, struct slow5_hdr *header, uint32_t *hdr_len);
 char *slow5_hdr_types_to_str(struct slow5_aux_meta *aux_meta, size_t *len);
 char *slow5_hdr_attrs_to_str(struct slow5_aux_meta *aux_meta, size_t *len);
-void slow5_hdr_data_free(khash_t(s2s) **hdr_data, uint32_t num_rgs);
+void slow5_hdr_data_free(struct slow5_hdr *header);
 
 struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uint32_t *hdr_len);
 

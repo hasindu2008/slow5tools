@@ -430,13 +430,13 @@ int slow5_hdr_get_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p), "3574887596") == 0);
-    ASSERT(strcmp(slow5_hdr_get("asic_id_eeprom", 0, s5p), "0") == 0);
-    ASSERT(strcmp(slow5_hdr_get("asic_temp", 0, s5p), "29.2145729") == 0);
-    ASSERT(strcmp(slow5_hdr_get("auto_update_source", 0, s5p), "https://mirror.oxfordnanoportal.com/software/MinKNOW/") == 0);
-    ASSERT(strcmp(slow5_hdr_get("bream_core_version", 0, s5p), "1.1.20.1") == 0);
-    ASSERT(strcmp(slow5_hdr_get("usb_config", 0, s5p), "1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto") == 0);
-    ASSERT(strcmp(slow5_hdr_get("version", 0, s5p), "1.1.20") == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p->header), "3574887596") == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id_eeprom", 0, s5p->header), "0") == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_temp", 0, s5p->header), "29.2145729") == 0);
+    ASSERT(strcmp(slow5_hdr_get("auto_update_source", 0, s5p->header), "https://mirror.oxfordnanoportal.com/software/MinKNOW/") == 0);
+    ASSERT(strcmp(slow5_hdr_get("bream_core_version", 0, s5p->header), "1.1.20.1") == 0);
+    ASSERT(strcmp(slow5_hdr_get("usb_config", 0, s5p->header), "1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto") == 0);
+    ASSERT(strcmp(slow5_hdr_get("version", 0, s5p->header), "1.1.20") == 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -446,14 +446,14 @@ int slow5_hdr_get_null(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_get(NULL, 0, s5p) == NULL);
-    ASSERT(slow5_hdr_get("asic_id", -1, s5p) == NULL);
-    ASSERT(slow5_hdr_get("asic_id", 1, s5p) == NULL);
-    ASSERT(slow5_hdr_get("asic_id", 20, s5p) == NULL);
-    ASSERT(slow5_hdr_get("asic_id", UINT32_MAX, s5p) == NULL);
+    ASSERT(slow5_hdr_get(NULL, 0, s5p->header) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", -1, s5p->header) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", 1, s5p->header) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", 20, s5p->header) == NULL);
+    ASSERT(slow5_hdr_get("asic_id", UINT32_MAX, s5p->header) == NULL);
     ASSERT(slow5_hdr_get("asic_id", 0, NULL) == NULL);
     ASSERT(slow5_hdr_get(NULL, 0, NULL) == NULL);
-    ASSERT(slow5_hdr_get(NULL, -1, s5p) == NULL);
+    ASSERT(slow5_hdr_get(NULL, -1, s5p->header) == NULL);
     ASSERT(slow5_hdr_get("auto_update_source", -1, NULL) == NULL);
     ASSERT(slow5_hdr_get(NULL, -200, NULL) == NULL);
 
@@ -465,17 +465,17 @@ int slow5_hdr_get_invalid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p), "3574887597") != 0);
-    ASSERT(strcmp(slow5_hdr_get("asic_id_eeprom", 0, s5p), "100.0") != 0);
-    ASSERT(strcmp(slow5_hdr_get("asic_temp", 0, s5p), "292145729") != 0);
-    ASSERT(strcmp(slow5_hdr_get("auto_update_source", 0, s5p), "ttps://mirror.oxfordnanoportal.com/software/MinKNOW/") != 0);
-    ASSERT(strcmp(slow5_hdr_get("bream_core_version", 0, s5p), "1..20.1") != 0);
-    ASSERT(strcmp(slow5_hdr_get("usb_config", 0, s5p), "1.0.11_ONTMinION_fpga_1.0.1#ctrl#Auto") != 0);
-    ASSERT(strcmp(slow5_hdr_get("version", 0, s5p), "1.1.2") != 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p->header), "3574887597") != 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id_eeprom", 0, s5p->header), "100.0") != 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_temp", 0, s5p->header), "292145729") != 0);
+    ASSERT(strcmp(slow5_hdr_get("auto_update_source", 0, s5p->header), "ttps://mirror.oxfordnanoportal.com/software/MinKNOW/") != 0);
+    ASSERT(strcmp(slow5_hdr_get("bream_core_version", 0, s5p->header), "1..20.1") != 0);
+    ASSERT(strcmp(slow5_hdr_get("usb_config", 0, s5p->header), "1.0.11_ONTMinION_fpga_1.0.1#ctrl#Auto") != 0);
+    ASSERT(strcmp(slow5_hdr_get("version", 0, s5p->header), "1.1.2") != 0);
 
-    ASSERT(slow5_hdr_get("file_format", 0, s5p) == NULL);
-    ASSERT(slow5_hdr_get("num_read_groups", 0, s5p) == NULL);
-    ASSERT(slow5_hdr_get("lol", 0, s5p) == NULL);
+    ASSERT(slow5_hdr_get("file_format", 0, s5p->header) == NULL);
+    ASSERT(slow5_hdr_get("num_read_groups", 0, s5p->header) == NULL);
+    ASSERT(slow5_hdr_get("lol", 0, s5p->header) == NULL);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -485,11 +485,11 @@ int slow5_hdr_get_set(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    char *asic_id = slow5_hdr_get("asic_id", 0, s5p);
+    char *asic_id = slow5_hdr_get("asic_id", 0, s5p->header);
     asic_id[0] = '!';
-    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p), "!574887596") == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p->header), "!574887596") == 0);
     asic_id = "new ptr";
-    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p), "!574887596") == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p->header), "!574887596") == 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -499,9 +499,9 @@ int slow5_hdr_set_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_set("asic_id", "<new asic id>", 0, s5p) == 0);
-    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p), "3574887596") != 0);
-    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p), "<new asic id>") == 0);
+    ASSERT(slow5_hdr_set("asic_id", "<new asic id>", 0, s5p->header) == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p->header), "3574887596") != 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 0, s5p->header), "<new asic id>") == 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -512,14 +512,14 @@ int slow5_hdr_set_null(void) {
     ASSERT(s5p != NULL);
 
     ASSERT(slow5_hdr_set("asic_id", "<new asic id>", 0, NULL) == -1);
-    ASSERT(slow5_hdr_set("asic_id", "<new asic id>", -1, s5p) == -1);
-    ASSERT(slow5_hdr_set("asic_id", NULL, 0, s5p) == -1);
-    ASSERT(slow5_hdr_set(NULL, "<new asic id>", 0, s5p) == -1);
-    ASSERT(slow5_hdr_set(NULL, NULL, 0, s5p) == -1);
-    ASSERT(slow5_hdr_set(NULL, "<new asic id>", -1, s5p) == -1);
+    ASSERT(slow5_hdr_set("asic_id", "<new asic id>", -1, s5p->header) == -1);
+    ASSERT(slow5_hdr_set("asic_id", NULL, 0, s5p->header) == -1);
+    ASSERT(slow5_hdr_set(NULL, "<new asic id>", 0, s5p->header) == -1);
+    ASSERT(slow5_hdr_set(NULL, NULL, 0, s5p->header) == -1);
+    ASSERT(slow5_hdr_set(NULL, "<new asic id>", -1, s5p->header) == -1);
     ASSERT(slow5_hdr_set(NULL, "<new asic id>", 0, NULL) == -1);
     ASSERT(slow5_hdr_set(NULL, NULL, 0, NULL) == -1);
-    ASSERT(slow5_hdr_set(NULL, NULL, -1, s5p) == -1);
+    ASSERT(slow5_hdr_set(NULL, NULL, -1, s5p->header) == -1);
     ASSERT(slow5_hdr_set(NULL, "<new asic id>", -1, NULL) == -1);
     ASSERT(slow5_hdr_set("asic_id", NULL, -1, NULL) == -1);
     ASSERT(slow5_hdr_set(NULL, NULL, -1, NULL) == -1);
@@ -533,9 +533,9 @@ int slow5_hdr_set_invalid(void) {
     ASSERT(s5p != NULL);
 
     // Wrong attribute name
-    ASSERT(slow5_hdr_set("file_format", "x", 0, s5p) == -1);
-    ASSERT(slow5_hdr_set("num_read_groups", "x", 0, s5p) == -1);
-    ASSERT(slow5_hdr_set("lol", "x", 0, s5p) == -1);
+    ASSERT(slow5_hdr_set("file_format", "x", 0, s5p->header) == -1);
+    ASSERT(slow5_hdr_set("num_read_groups", "x", 0, s5p->header) == -1);
+    ASSERT(slow5_hdr_set("lol", "x", 0, s5p->header) == -1);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -551,56 +551,56 @@ int slow5_hdr_set_malloc(void) {
     new_version[2] = '2';
     new_version[3] = '\0';
 
-    ASSERT(slow5_hdr_set("version", new_version, 0, s5p) == 0);
-    ASSERT(strcmp(slow5_hdr_get("version", 0, s5p), new_version) == 0);
+    ASSERT(slow5_hdr_set("version", new_version, 0, s5p->header) == 0);
+    ASSERT(strcmp(slow5_hdr_get("version", 0, s5p->header), new_version) == 0);
 
     free(new_version);
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
-int slow5_hdr_add_valid(void) {
+int slow5_hdr_add_attr_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_add("newkey", s5p) == 0);
-    ASSERT(slow5_hdr_get("newkey", 0, s5p) == NULL);
-    ASSERT(slow5_hdr_set("newkey", "newval", 0, s5p) == 0);
-    ASSERT(strcmp(slow5_hdr_get("newkey", 0, s5p), "newval") == 0);
+    ASSERT(slow5_hdr_add_attr("newkey", s5p->header) == 0);
+    ASSERT(slow5_hdr_get("newkey", 0, s5p->header) == NULL);
+    ASSERT(slow5_hdr_set("newkey", "newval", 0, s5p->header) == 0);
+    ASSERT(strcmp(slow5_hdr_get("newkey", 0, s5p->header), "newval") == 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
-int slow5_hdr_add_invalid(void) {
+int slow5_hdr_add_attr_invalid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_add(NULL, s5p) == -1);
-    ASSERT(slow5_hdr_add("k", NULL) == -1);
-    ASSERT(slow5_hdr_get("k", 0, s5p) == NULL);
-    ASSERT(slow5_hdr_add(NULL, NULL) == -1);
+    ASSERT(slow5_hdr_add_attr(NULL, s5p->header) == -1);
+    ASSERT(slow5_hdr_add_attr("k", NULL) == -1);
+    ASSERT(slow5_hdr_get("k", 0, s5p->header) == NULL);
+    ASSERT(slow5_hdr_add_attr(NULL, NULL) == -1);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
-int slow5_hdr_add_duplicate(void) {
+int slow5_hdr_add_attr_duplicate(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_add("k", s5p) == 0);
-    ASSERT(slow5_hdr_get("k", 0, s5p) == NULL);
-    ASSERT(slow5_hdr_set("k", "v", 0, s5p) == 0);
-    ASSERT(strcmp(slow5_hdr_get("k", 0, s5p), "v") == 0);
+    ASSERT(slow5_hdr_add_attr("k", s5p->header) == 0);
+    ASSERT(slow5_hdr_get("k", 0, s5p->header) == NULL);
+    ASSERT(slow5_hdr_set("k", "v", 0, s5p->header) == 0);
+    ASSERT(strcmp(slow5_hdr_get("k", 0, s5p->header), "v") == 0);
 
-    ASSERT(slow5_hdr_add("k", s5p) == -2);
-    ASSERT(strcmp(slow5_hdr_get("k", 0, s5p), "v") == 0);
-    ASSERT(slow5_hdr_add("k", s5p) == -2);
-    ASSERT(slow5_hdr_add("k", s5p) == -2);
-    ASSERT(strcmp(slow5_hdr_get("k", 0, s5p), "v") == 0);
+    ASSERT(slow5_hdr_add_attr("k", s5p->header) == -2);
+    ASSERT(strcmp(slow5_hdr_get("k", 0, s5p->header), "v") == 0);
+    ASSERT(slow5_hdr_add_attr("k", s5p->header) == -2);
+    ASSERT(slow5_hdr_add_attr("k", s5p->header) == -2);
+    ASSERT(strcmp(slow5_hdr_get("k", 0, s5p->header), "v") == 0);
 
-    ASSERT(slow5_hdr_add("installation_type", s5p) == -2);
+    ASSERT(slow5_hdr_add_attr("installation_type", s5p->header) == -2);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -612,7 +612,7 @@ int slow5_hdr_to_mem_valid(void) {
 
     void *mem;
     size_t len;
-    ASSERT((mem = slow5_hdr_to_mem(s5p, FORMAT_ASCII, COMPRESS_NONE, &len)) != NULL);
+    ASSERT((mem = slow5_hdr_to_mem(s5p->header, FORMAT_ASCII, COMPRESS_NONE, &len)) != NULL);
     fwrite(mem, len, 1, stdout);
     free(mem);
 
@@ -625,10 +625,10 @@ int slow5_hdr_to_mem_null(void) {
     ASSERT(s5p != NULL);
 
     size_t len;
-    ASSERT(slow5_hdr_to_mem(s5p, FORMAT_UNKNOWN, COMPRESS_NONE, &len) == NULL);
+    ASSERT(slow5_hdr_to_mem(s5p->header, FORMAT_UNKNOWN, COMPRESS_NONE, &len) == NULL);
     ASSERT(slow5_hdr_to_mem(NULL, FORMAT_ASCII, COMPRESS_NONE, &len) == NULL);
     ASSERT(slow5_hdr_to_mem(NULL, FORMAT_UNKNOWN, COMPRESS_NONE, &len) == NULL);
-    ASSERT(slow5_hdr_to_mem(s5p, FORMAT_UNKNOWN, COMPRESS_NONE, NULL) == NULL);
+    ASSERT(slow5_hdr_to_mem(s5p->header, FORMAT_UNKNOWN, COMPRESS_NONE, NULL) == NULL);
     ASSERT(slow5_hdr_to_mem(NULL, FORMAT_ASCII, COMPRESS_NONE, NULL) == NULL);
     ASSERT(slow5_hdr_to_mem(NULL, FORMAT_UNKNOWN, COMPRESS_NONE, NULL) == NULL);
 
@@ -644,7 +644,7 @@ int slow5_hdr_to_mem_change_version(void) {
     s5p->header->version.minor = 200;
 
     char *str;
-    ASSERT((str = slow5_hdr_to_mem(s5p, FORMAT_ASCII, COMPRESS_NONE, NULL)) != NULL);
+    ASSERT((str = slow5_hdr_to_mem(s5p->header, FORMAT_ASCII, COMPRESS_NONE, NULL)) != NULL);
     printf("%s", str);
     free(str);
 
@@ -656,11 +656,11 @@ int slow5_hdr_to_mem_change_attr(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_set("filename", "dumbfilename", 0, s5p) == 0);
-    ASSERT(slow5_hdr_set("bream_prod_version", "999", 0, s5p) == 0);
+    ASSERT(slow5_hdr_set("filename", "dumbfilename", 0, s5p->header) == 0);
+    ASSERT(slow5_hdr_set("bream_prod_version", "999", 0, s5p->header) == 0);
 
     char *str;
-    ASSERT((str = slow5_hdr_to_mem(s5p, FORMAT_ASCII, COMPRESS_NONE, NULL)) != NULL);
+    ASSERT((str = slow5_hdr_to_mem(s5p->header, FORMAT_ASCII, COMPRESS_NONE, NULL)) != NULL);
     printf("%s", str);
     free(str);
 
@@ -672,10 +672,10 @@ int slow5_hdr_to_mem_add_empty_attr(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_add("new_attr", s5p) == 0);
+    ASSERT(slow5_hdr_add_attr("new_attr", s5p->header) == 0);
 
     char *str;
-    ASSERT((str = slow5_hdr_to_mem(s5p, FORMAT_ASCII, COMPRESS_NONE, NULL)) != NULL);
+    ASSERT((str = slow5_hdr_to_mem(s5p->header, FORMAT_ASCII, COMPRESS_NONE, NULL)) != NULL);
     printf("%s", str);
     free(str);
 
@@ -687,11 +687,11 @@ int slow5_hdr_to_mem_add_attr(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_add("new_attr", s5p) == 0);
-    ASSERT(slow5_hdr_set("new_attr", "o328409", 0, s5p) == 0);
+    ASSERT(slow5_hdr_add_attr("new_attr", s5p->header) == 0);
+    ASSERT(slow5_hdr_set("new_attr", "o328409", 0, s5p->header) == 0);
 
     char *str;
-    ASSERT((str = slow5_hdr_to_mem(s5p, FORMAT_ASCII, COMPRESS_NONE, NULL)) != NULL);
+    ASSERT((str = slow5_hdr_to_mem(s5p->header, FORMAT_ASCII, COMPRESS_NONE, NULL)) != NULL);
     printf("%s", str);
     free(str);
 
@@ -703,7 +703,7 @@ int slow5_hdr_print_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT((slow5_hdr_print(s5p, FORMAT_ASCII, COMPRESS_NONE)) > 0);
+    ASSERT((slow5_hdr_print(s5p->header, FORMAT_ASCII, COMPRESS_NONE)) > 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -714,7 +714,7 @@ int slow5_hdr_print_null(void) {
     ASSERT(s5p != NULL);
 
     ASSERT(slow5_hdr_print(NULL, FORMAT_ASCII, COMPRESS_NONE) == -1);
-    ASSERT(slow5_hdr_print(s5p, FORMAT_UNKNOWN, COMPRESS_NONE) == -1);
+    ASSERT(slow5_hdr_print(s5p->header, FORMAT_UNKNOWN, COMPRESS_NONE) == -1);
     ASSERT(slow5_hdr_print(NULL, FORMAT_UNKNOWN, COMPRESS_NONE) == -1);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -728,7 +728,7 @@ int slow5_hdr_print_change_version(void) {
     s5p->header->version.major = 10;
     s5p->header->version.minor = 200;
 
-    ASSERT((slow5_hdr_print(s5p, FORMAT_ASCII, COMPRESS_NONE)) > 0);
+    ASSERT((slow5_hdr_print(s5p->header, FORMAT_ASCII, COMPRESS_NONE)) > 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -738,10 +738,10 @@ int slow5_hdr_print_change_attr(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_set("filename", "dumbfilename", 0, s5p) == 0);
-    ASSERT(slow5_hdr_set("bream_prod_version", "999", 0, s5p) == 0);
+    ASSERT(slow5_hdr_set("filename", "dumbfilename", 0, s5p->header) == 0);
+    ASSERT(slow5_hdr_set("bream_prod_version", "999", 0, s5p->header) == 0);
 
-    ASSERT((slow5_hdr_print(s5p, FORMAT_ASCII, COMPRESS_NONE)) > 0);
+    ASSERT((slow5_hdr_print(s5p->header, FORMAT_ASCII, COMPRESS_NONE)) > 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -751,9 +751,9 @@ int slow5_hdr_print_add_empty_attr(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_add("new_attr", s5p) == 0);
+    ASSERT(slow5_hdr_add_attr("new_attr", s5p->header) == 0);
 
-    ASSERT((slow5_hdr_print(s5p, FORMAT_ASCII, COMPRESS_NONE)) > 0);
+    ASSERT((slow5_hdr_print(s5p->header, FORMAT_ASCII, COMPRESS_NONE)) > 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -763,10 +763,10 @@ int slow5_hdr_print_add_attr(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_hdr_add("new_attr", s5p) == 0);
-    ASSERT(slow5_hdr_set("new_attr", "o328409", 0, s5p) == 0);
+    ASSERT(slow5_hdr_add_attr("new_attr", s5p->header) == 0);
+    ASSERT(slow5_hdr_set("new_attr", "o328409", 0, s5p->header) == 0);
 
-    ASSERT((slow5_hdr_print(s5p, FORMAT_ASCII, COMPRESS_NONE)) > 0);
+    ASSERT((slow5_hdr_print(s5p->header, FORMAT_ASCII, COMPRESS_NONE)) > 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -897,9 +897,9 @@ int main(void) {
         CMD(slow5_hdr_set_invalid)
         CMD(slow5_hdr_set_malloc)
 
-        CMD(slow5_hdr_add_valid)
-        CMD(slow5_hdr_add_invalid)
-        CMD(slow5_hdr_add_duplicate)
+        CMD(slow5_hdr_add_attr_valid)
+        CMD(slow5_hdr_add_attr_invalid)
+        CMD(slow5_hdr_add_attr_duplicate)
 
         CMD(slow5_hdr_to_mem_valid)
         CMD(slow5_hdr_to_mem_null)
