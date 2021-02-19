@@ -30,8 +30,6 @@ KSORT_INIT_STR
 #define SLOW5_SIGNAL_BUF_FIXED_CAP (8) // 2^3 since INT16_MAX_LENGTH=6
 // Initial capacity for converting the header to a string
 #define SLOW5_HEADER_STR_INIT_CAP (1024) // 2^10 TODO is this good? Or put to a page length
-// Initial capacity for empty
-#define SLOW5_HEADER_DATA_RG_INIT_CAP (256) // 2^8
 
 static inline void slow5_free(struct slow5_file *s5p);
 inline void slow5_aux_meta_free(struct slow5_aux_meta *aux_meta);
@@ -2171,109 +2169,45 @@ char *get_slow5_idx_path(const char *path) {
     return str;
 }
 
-/*
-struct slow5_file *slow5_open_format(enum slow5_fmt format, const char *pathname, const char *mode) {
-    struct slow5_file *slow5 = NULL;
 
-    if (pathname != NULL && mode != NULL) {
-        FILE *fp = fopen(pathname, mode);
-
-        // Try autodetect using extension if format is FORMAT_NONE
-        if (format == FORMAT_NONE) {
-            format = path_get_slow5_fmt(pathname);
-        }
-
-        slow5 = slow5_init(format, fp);
+// Return
+// 0    success
+// -1   input invalid
+// -2   failure
+int slow5_convert(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, press_method_t to_compress) {
+    if (from == NULL || to_fp == NULL || to_format == FORMAT_UNKNOWN) {
+        return -1;
     }
 
-    return slow5;
-}
-
-struct slow5_file *slow5_open(const char *pathname, const char *mode) {
-    return slow5_open_format(FORMAT_NONE, pathname, mode);
-}
-
-
-// TODO Return type of fclose is int but we want to use a specific size int?
-int slow5_close(struct slow5_file *slow5) {
-    int ret = -1; // TODO choose return code for library
-
-    if (slow5 != NULL) {
-        ret = fclose(slow5->fp);
-        slow5->fp = NULL;
-
-        if (slow5->compress != NULL) {
-            press_destroy(&(slow5->compress));
-        }
-
-        free(slow5);
+    if (slow5_hdr_fwrite(to_fp, from->header, to_format, to_compress) == -1) {
+        return -2;
     }
 
-    return ret;
-}
+    struct slow5_rec *read = NULL;
+    int ret;
+    struct press *press_ptr = press_init(to_compress);
+    while ((ret = slow5_get_next(&read, from)) == 0) {
+        if (slow5_rec_fwrite(to_fp, read, to_format, press_ptr) == -1) {
+            press_free(press_ptr);
+            slow5_rec_free(read);
+            return -2;
+        }
+    }
+    press_free(press_ptr);
+    slow5_rec_free(read);
+    if (ret != -2) {
+        return -2;
+    }
 
-uint8_t slow5_write_hdr(struct slow5_file *slow5) {
-    uint8_t ret = 0;
-
-    if (slow5 != NULL) {
-
-        switch (slow5->format) {
-
-            case FORMAT_ASCII:
-                fprintf(slow5->fp,
-                        ASCII_SLOW5_HEADER,
-                        slow5->num_read_groups);
-
-                //slow5_write_hdr_data();
-
-                fprintf(slow5->fp,
-                        ASCII_COLUMN_HEADER_FULL);
-                break;
-
-            case FORMAT_BINARY: {
-                fprintf_press(slow5->compress, slow5->fp,
-                        BINARY_SLOW5_HEADER,
-                        slow5->num_read_groups);
-
-                //slow5_write_hdr_data();
-
-                press_footer_next(slow5->compress);
-                fprintf_press(slow5->compress, slow5->fp,
-                        ASCII_COLUMN_HEADER_FULL);
-            } break;
-
-            default: // TODO handle error
-                break;
+    if (to_format == FORMAT_BINARY) {
+        if (slow5_eof_fwrite(to_fp) == -1) {
+            return -2;
         }
     }
 
-    return ret;
+    return 0;
 }
 
-void slow5_write_hdr_data_attr(struct slow5_file *slow5, const char *attr, const char *data) {
-
-    if (slow5 != NULL && slow5->header != NULL) {
-        khash_t(s2s) **header_data = slow5->header->header_data;
-    }
-}
-*/
-
-/*
-const uint8_t *str_get_slow5_version(const char *str) {
-    const uint8_t *version = NULL;
-
-    for (size_t i = 0; i < sizeof SLOW5_VERSION_MAP / sizeof SLOW5_VERSION_MAP[0]; ++ i) {
-        const struct SLOW5VersionMap map = SLOW5_VERSION_MAP[i];
-        const char *version_name = map.version_str;
-        if (strcmp(version_name, str) == 0) {
-            version = map.version;
-            break;
-        }
-    }
-
-    return version;
-}
-*/
 
 //int main(void) {
 

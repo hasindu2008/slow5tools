@@ -153,8 +153,11 @@ struct slow5_file *slow5_open(const char *pathname, const char *mode);
  */
 struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum slow5_fmt format);
 
-// Write from a slow5 file to another slow5 file
-int8_t slow5_write(struct slow5_file *s5p_to, struct slow5_file *s5p_from); // TODO decide return type
+// Return
+// 0    success
+// -1   input invalid
+// -2   failure
+int slow5_convert(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, press_method_t to_compress);
 
 // Merge slow5 files to another slow5 file
 // TODO Just a merge for 2 -> 1?
