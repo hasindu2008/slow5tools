@@ -283,7 +283,7 @@ int slow5_rec_to_mem_valid(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    char *str = slow5_rec_to_mem(read, FORMAT_ASCII, s5p->compress, NULL);
+    char *str = slow5_rec_to_mem(read, s5p->header->aux_meta, FORMAT_ASCII, s5p->compress, NULL);
     printf("%s", str);
     free(str);
     slow5_rec_free(read);
@@ -299,12 +299,12 @@ int slow5_rec_to_mem_null(void) {
     struct slow5_rec *read = NULL;
     size_t num_bytes;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_to_mem(NULL, FORMAT_ASCII, s5p->compress, &num_bytes) == NULL);
-    ASSERT(slow5_rec_to_mem(read, FORMAT_UNKNOWN, NULL, &num_bytes) == NULL);
-    ASSERT(slow5_rec_to_mem(NULL, FORMAT_UNKNOWN, s5p->compress, &num_bytes) == NULL);
-    ASSERT(slow5_rec_to_mem(read, FORMAT_UNKNOWN, NULL, NULL) == NULL);
-    ASSERT(slow5_rec_to_mem(NULL, FORMAT_ASCII, NULL, NULL) == NULL);
-    ASSERT(slow5_rec_to_mem(NULL, FORMAT_UNKNOWN, s5p->compress, NULL) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, NULL, FORMAT_ASCII, s5p->compress, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(read, s5p->header->aux_meta, FORMAT_UNKNOWN, NULL, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, NULL, FORMAT_UNKNOWN, s5p->compress, &num_bytes) == NULL);
+    ASSERT(slow5_rec_to_mem(read, s5p->header->aux_meta, FORMAT_UNKNOWN, NULL, NULL) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, NULL, FORMAT_ASCII, NULL, NULL) == NULL);
+    ASSERT(slow5_rec_to_mem(NULL, s5p->header->aux_meta, FORMAT_UNKNOWN, s5p->compress, NULL) == NULL);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -320,7 +320,7 @@ int slow5_rec_to_mem_change(void) {
     free(read->read_id);
     read->read_id = strdup("testing123");
     char *str;
-    ASSERT((str = slow5_rec_to_mem(read, FORMAT_ASCII, NULL, NULL)) != NULL);
+    ASSERT((str = slow5_rec_to_mem(read, s5p->header->aux_meta, FORMAT_ASCII, NULL, NULL)) != NULL);
     printf("%s", str);
     free(str);
     slow5_rec_free(read);
@@ -335,7 +335,7 @@ int slow5_rec_print_valid(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_print(read, FORMAT_ASCII, NULL) == 238771);
+    ASSERT(slow5_rec_print(read, s5p->header->aux_meta, FORMAT_ASCII, NULL) == 238771);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -349,9 +349,9 @@ int slow5_rec_print_null(void) {
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
 
-    ASSERT(slow5_rec_print(NULL, FORMAT_ASCII, NULL) == -1);
-    ASSERT(slow5_rec_print(read, FORMAT_UNKNOWN, NULL) == -1);
-    ASSERT(slow5_rec_print(NULL, FORMAT_UNKNOWN, NULL) == -1);
+    ASSERT(slow5_rec_print(NULL, s5p->header->aux_meta, FORMAT_ASCII, NULL) == -1);
+    ASSERT(slow5_rec_print(read, s5p->header->aux_meta, FORMAT_UNKNOWN, NULL) == -1);
+    ASSERT(slow5_rec_print(NULL, s5p->header->aux_meta, FORMAT_UNKNOWN, NULL) == -1);
 
     slow5_rec_free(read);
 
@@ -370,7 +370,7 @@ int slow5_rec_print_change(void) {
     free(read->read_id);
     read->read_id = strdup("lol");
 
-    ASSERT(slow5_rec_print(read, FORMAT_ASCII, NULL) == 238738);
+    ASSERT(slow5_rec_print(read, s5p->header->aux_meta, FORMAT_ASCII, NULL) == 238738);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -385,7 +385,7 @@ int slow5_rec_fwrite_valid(void) {
     ASSERT(slow5_get_next(&read, s5p) == 0);
     FILE *fp;
     ASSERT((fp = fopen("test/data/out/unit_test_out_fprint", "w")) != NULL);
-    ASSERT(slow5_rec_fwrite(fp, read, FORMAT_ASCII, NULL) == 238771);
+    ASSERT(slow5_rec_fwrite(fp, read, s5p->header->aux_meta, FORMAT_ASCII, NULL) == 238771);
     slow5_rec_free(read);
 
     ASSERT(fclose(fp) == 0);
@@ -399,9 +399,9 @@ int slow5_rec_fwrite_null(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_fwrite(NULL, read, FORMAT_ASCII, s5p->compress) == -1);
-    ASSERT(slow5_rec_fwrite(stdout, NULL, FORMAT_ASCII, NULL) == -1);
-    ASSERT(slow5_rec_fwrite(NULL, NULL, FORMAT_ASCII, NULL) == -1);
+    ASSERT(slow5_rec_fwrite(NULL, read, s5p->header->aux_meta, FORMAT_ASCII, s5p->compress) == -1);
+    ASSERT(slow5_rec_fwrite(stdout, NULL, s5p->header->aux_meta, FORMAT_ASCII, NULL) == -1);
+    ASSERT(slow5_rec_fwrite(NULL, NULL, s5p->header->aux_meta, FORMAT_ASCII, NULL) == -1);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -418,7 +418,7 @@ int slow5_rec_fwrite_change(void) {
     read->read_id = strdup("lol");
     FILE *fp;
     ASSERT((fp = fopen("test/data/out/unit_test_out_fprint", "a")) != NULL);
-    ASSERT(slow5_rec_fwrite(fp, read, FORMAT_ASCII, NULL) == 238738);
+    ASSERT(slow5_rec_fwrite(fp, read, s5p->header->aux_meta, FORMAT_ASCII, NULL) == 238738);
     slow5_rec_free(read);
 
     ASSERT(fclose(fp) == 0);

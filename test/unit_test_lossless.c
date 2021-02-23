@@ -31,7 +31,7 @@ int slow5_rec_get_valid(void) {
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
     int err;
-    char *cn = slow5_rec_get_string(read, "channel_number", &err);
+    char *cn = slow5_rec_get_str(read, "channel_number", &err);
     ASSERT(cn != NULL);
     ASSERT(strcmp(cn, "115") == 0);
     ASSERT(err == 0);
@@ -51,11 +51,11 @@ int slow5_rec_get_valid(void) {
     ASSERT(s5p != NULL);
 
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
-    cn = slow5_rec_get_string(read, "channel_number", &err);
+    cn = slow5_rec_get_str(read, "channel_number", &err);
     ASSERT(cn != NULL);
     ASSERT(strcmp(cn, "115") == 0);
     ASSERT(err == 0);
-    cn = slow5_rec_get_string(read, "channel_number", NULL);
+    cn = slow5_rec_get_str(read, "channel_number", NULL);
     ASSERT(cn != NULL);
     ASSERT(strcmp(cn, "115") == 0);
     mb = slow5_rec_get_double(read, "median_before", &err);
@@ -69,7 +69,7 @@ int slow5_rec_get_valid(void) {
     ASSERT(err == 0);
 
     ASSERT(slow5_get("40aac17d-56a6-44db-934d-c0dbb853e2cd", &read, s5p) == 0);
-    cn = slow5_rec_get_string(read, "channel_number", &err);
+    cn = slow5_rec_get_str(read, "channel_number", &err);
     ASSERT(cn != NULL);
     ASSERT(strcmp(cn, "123") == 0);
     ASSERT(err == 0);
@@ -89,7 +89,7 @@ int slow5_rec_get_valid(void) {
     ASSERT(s5p != NULL);
 
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
-    cn = slow5_rec_get_string(read, "channel_number", &err);
+    cn = slow5_rec_get_str(read, "channel_number", &err);
     ASSERT(cn != NULL);
     ASSERT(strcmp(cn, "115") == 0);
     ASSERT(err == 0);
@@ -109,7 +109,7 @@ int slow5_rec_get_valid(void) {
     ASSERT(s5p != NULL);
 
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
-    cn = slow5_rec_get_string(read, "channel_number", &err);
+    cn = slow5_rec_get_str(read, "channel_number", &err);
     ASSERT(cn != NULL);
     ASSERT(strcmp(cn, "115") == 0);
     ASSERT(err == 0);
@@ -137,7 +137,7 @@ int slow5_rec_get_invalid(void) {
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
 
     int err;
-    char *cn = slow5_rec_get_string(read, "channel_numbe", &err);
+    char *cn = slow5_rec_get_str(read, "channel_numbe", &err);
     ASSERT(cn == NULL);
     ASSERT(err == -1);
     double mb = slow5_rec_get_double(read, "", &err);
@@ -150,11 +150,11 @@ int slow5_rec_get_invalid(void) {
     ASSERT(slow5_rec_get_uint64(read, "start_time", &err) != 2817563);
     ASSERT(err == 0);
 
-    ASSERT(slow5_rec_get_string(read, "start_time", &err) == NULL);
-    ASSERT(slow5_rec_get_string(NULL, "start_time", &err) == NULL);
-    ASSERT(slow5_rec_get_string(NULL, NULL, &err) == NULL);
-    ASSERT(slow5_rec_get_string(read, NULL, &err) == NULL);
-    ASSERT(slow5_rec_get_string(read, NULL, NULL) == NULL);
+    ASSERT(slow5_rec_get_str(read, "start_time", &err) == NULL);
+    ASSERT(slow5_rec_get_str(NULL, "start_time", &err) == NULL);
+    ASSERT(slow5_rec_get_str(NULL, NULL, &err) == NULL);
+    ASSERT(slow5_rec_get_str(read, NULL, &err) == NULL);
+    ASSERT(slow5_rec_get_str(read, NULL, NULL) == NULL);
 
     slow5_rec_free(read);
 
@@ -183,7 +183,7 @@ int blow5_rec_get_valid(void) {
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
     int err;
-    char *cn = slow5_rec_get_string(read, "channel_number", &err);
+    char *cn = slow5_rec_get_str(read, "channel_number", &err);
     ASSERT(cn != NULL);
     ASSERT(strcmp(cn, "115") == 0);
     ASSERT(err == 0);
@@ -212,7 +212,7 @@ int slow5_duplicate(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_print(read, FORMAT_ASCII, NULL) != -1);
+    ASSERT(slow5_rec_print(read, s5p->header->aux_meta, FORMAT_ASCII, NULL) != -1);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -228,7 +228,7 @@ int slow5_to_blow5_uncomp(void) {
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_print(read, FORMAT_BINARY, NULL) != -1);
+    ASSERT(slow5_rec_print(read, s5p->header->aux_meta, FORMAT_BINARY, NULL) != -1);
     slow5_rec_free(read);
 
     slow5_eof_print();

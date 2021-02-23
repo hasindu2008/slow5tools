@@ -23,7 +23,7 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
 
 // slow5 record
 int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struct slow5_rec *read, enum slow5_fmt format, struct slow5_aux_meta *aux_meta);
-void slow5_rec_aux_free(struct slow5_rec_aux *read_aux);
+void slow5_rec_aux_free(khash_t(s2a) *aux_map);
 
 // slow5 extension parsing
 enum slow5_fmt name_get_slow5_fmt(const char *name);

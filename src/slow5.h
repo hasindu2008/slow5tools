@@ -41,11 +41,20 @@ struct slow5_version {
     uint8_t patch;
 };
 
+// Auxiliary attribute map: attribute string -> position
+//KHASH_MAP_INIT_STR(s2i32, int32_t)
+
+// SLOW5 auxiliary attribute metadata
 struct slow5_aux_meta {
-    uint8_t num_attrs; // TODO change to uint32_t but change all related buffering to dynamic
+    uint32_t num;
+    size_t cap;
+
     char **attrs;
     char **types;
+    bool *is_ptr;
     uint8_t *sizes;
+
+    //khash_t(s2i32) *attr_to_pos;
 };
 
 // Header data map: attribute string -> data string
@@ -53,14 +62,19 @@ KHASH_MAP_INIT_STR(s2s, char *)
 // Header data attributes set
 KHASH_SET_INIT_STR(s)
 
+// SLOW5 header data
+struct slow5_hdr_data {
+    uint32_t num_attrs;	            // Number of data attributes
+    khash_t(s) *attrs;              // Set of the data attributes
+    kvec_t(khash_t(s2s) *) maps;    // Dynamic array of maps (attribute string -> data string) length=num_read_groups
+};
+
 // SLOW5 header
 struct slow5_hdr {
 	struct slow5_version version;
-    uint32_t num_read_groups;       // Number of read groups
-    uint32_t num_data_attrs;	    // Number of data attributes
-    khash_t(s) *data_attrs;         // Set of the data attributes
-    kvec_t(khash_t(s2s) *) data;    // length = num_read_groups
-    struct slow5_aux_meta *aux_meta;
+    uint32_t num_read_groups;           // Number of read groups
+    struct slow5_hdr_data data;         // Header data
+    struct slow5_aux_meta *aux_meta;    // Auxiliary field metadata
 };
 
 /* Read Record */
@@ -73,21 +87,14 @@ enum slow5_cols {
 
 // SLOW5 auxiliary attributed data
 struct slow5_rec_aux_data {
-    char *type;
-    uint8_t size;
     uint64_t len;
+    uint64_t bytes;
+    char *type; // TODO decision: remove this and use slow5_aux_meta types but with hash map from attr -> position, or use this
     uint8_t *data;
 };
 
 // Header data map: auxiliary attribute string -> auxiliary data
 KHASH_MAP_INIT_STR(s2a, struct slow5_rec_aux_data)
-
-// SLOW5 auxiliary record data
-struct slow5_rec_aux {
-    uint8_t num_attrs;  // Number of auxiliary attribute names
-    char **attrs;       // Ordered list of auxiliary attribute names
-    khash_t(s2a) *map;  // Auxiliary attribute string -> auxiliary data
-};
 
 // SLOW5 record data
 typedef uint64_t slow5_rec_size_t;
@@ -95,7 +102,7 @@ typedef uint16_t slow5_rid_len_t;
 struct slow5_rec {
     slow5_rid_len_t read_id_len;
     SLOW5_COLS_FOREACH(GENERATE_STRUCT)
-    struct slow5_rec_aux *read_aux;
+    khash_t(s2a) *aux_map;  // Auxiliary attribute string -> auxiliary data
 };
 
 /* SLOW5 file */
@@ -162,12 +169,12 @@ int slow5_convert(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format
 // Merge slow5 files to another slow5 file
 // TODO Just a merge for 2 -> 1?
 // TODO compile time 2 args in ...
-int8_t slow5_merge(struct slow5_file *s5p_to, ...);
-int8_t slow5_vmerge(struct slow5_file *s5p_to, va_list ap);
+int8_t slow5_merge(struct slow5_file *s5p_to, ...); // TODO
+int8_t slow5_vmerge(struct slow5_file *s5p_to, va_list ap); // TODO
 
 // Split a slow5 file to a dir
 // TODO split into multiple slow5 files from same rg
-int8_t slow5_split(const char *dirname_to, struct slow5_file *s5p_from);
+int8_t slow5_split(const char *dirname_to, struct slow5_file *s5p_from); // TODO
 
 /**
  * Close a slow5 file and free its memory.
@@ -277,7 +284,7 @@ int slow5_rec_add(struct slow5_rec *read, struct slow5_file *s5p);
  * @param   s5p     slow5 file
  * @return  error code described above
  */
-int slow5_rec_rm(const char *read_id, struct slow5_file *s5p);
+int slow5_rec_rm(const char *read_id, struct slow5_file *s5p); // TODO
 
 int8_t slow5_rec_get_int8(const struct slow5_rec *read, const char *attr, int *err);
 int16_t slow5_rec_get_int16(const struct slow5_rec *read, const char *attr, int *err);
@@ -290,7 +297,7 @@ uint64_t slow5_rec_get_uint64(const struct slow5_rec *read, const char *attr, in
 float slow5_rec_get_float(const struct slow5_rec *read, const char *attr, int *err);
 double slow5_rec_get_double(const struct slow5_rec *read, const char *attr, int *err);
 char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err);
-char *slow5_rec_get_string(const struct slow5_rec *read, const char *attr, int *err);
+char *slow5_rec_get_str(const struct slow5_rec *read, const char *attr, int *err);
 // TODO add other array types
 
 /**
@@ -306,7 +313,7 @@ char *slow5_rec_get_string(const struct slow5_rec *read, const char *attr, int *
  * @param   compress    compress structure
  * @return  malloced string to use free() on, NULL on error
  */
-void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, struct press *compress, size_t *written);
+void *slow5_rec_to_mem(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, enum slow5_fmt format, struct press *compress, size_t *n);
 
 /**
  * Print a read entry in the specified format to a file pointer.
@@ -320,9 +327,9 @@ void *slow5_rec_to_mem(struct slow5_rec *read, enum slow5_fmt format, struct pre
  * @param   compress
  * @return  number of bytes written, -1 on error
  */
-int slow5_rec_fwrite(FILE *fp, struct slow5_rec *read, enum slow5_fmt format, struct press *compress);
-static inline int slow5_rec_print(struct slow5_rec *read, enum slow5_fmt format, struct press *compress) {
-    return slow5_rec_fwrite(stdout, read, format, compress);
+int slow5_rec_fwrite(FILE *fp, struct slow5_rec *read, struct slow5_aux_meta *aux_meta, enum slow5_fmt format, struct press *compress);
+static inline int slow5_rec_print(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, enum slow5_fmt format, struct press *compress) {
+    return slow5_rec_fwrite(stdout, read, aux_meta, format, compress);
 }
 
 // Free a read entry
