@@ -21,10 +21,13 @@ void slow5_hdr_data_free(struct slow5_hdr *header);
 
 struct slow5_aux_meta *slow5_aux_meta_init_empty(void);
 struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uint32_t *hdr_len);
-int slow5_aux_meta_add(struct slow5_aux_meta *aux_meta, const char *attr, const char *type);
+int slow5_aux_meta_add(struct slow5_aux_meta *aux_meta, const char *attr, enum aux_type type);
 void slow5_aux_meta_free(struct slow5_aux_meta *aux_meta);
 
 // slow5 record
+int slow5_rec_set(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, const char *attr, const void *data);
+int slow5_rec_set_array(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, const char *attr, const void *data, size_t len);
+int slow5_rec_set_string(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, const char *attr, const void *data);
 int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struct slow5_rec *read, enum slow5_fmt format, struct slow5_aux_meta *aux_meta);
 void slow5_rec_aux_free(khash_t(s2a) *aux_map);
 
