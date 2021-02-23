@@ -788,39 +788,39 @@ int slow5_idx_init_valid(void) {
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_add_empty(void) {
+int slow5_add_rec_empty(void) {
     remove("test/data/out/exp_1_default_add_empty.slow5.idx");
     struct slow5_file *s5p = slow5_open("test/data/out/exp_1_default_add_empty.slow5", "r+");
     ASSERT(s5p != NULL);
 
     struct slow5_rec *read = slow5_rec_init();
     read->read_id = strdup("");
-    ASSERT(slow5_rec_add(read, s5p) == 0);
+    ASSERT(slow5_add_rec(read, s5p) == 0);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_add_null(void) {
+int slow5_add_rec_null(void) {
     struct slow5_file *s5p = slow5_open("test/data/out/exp_1_default_add_empty.slow5", "r+");
     ASSERT(s5p != NULL);
 
     struct slow5_rec *read = slow5_rec_init();
     read->read_id = strdup("");
-    ASSERT(slow5_rec_add(read, NULL) == -1);
-    ASSERT(slow5_rec_add(NULL, s5p) == -1);
-    ASSERT(slow5_rec_add(NULL, NULL) == -1);
+    ASSERT(slow5_add_rec(read, NULL) == -1);
+    ASSERT(slow5_add_rec(NULL, s5p) == -1);
+    ASSERT(slow5_add_rec(NULL, NULL) == -1);
     free(read->read_id);
     read->read_id = NULL;
-    ASSERT(slow5_rec_add(read, s5p) == -1);
+    ASSERT(slow5_add_rec(read, s5p) == -1);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_add_valid(void) {
+int slow5_add_rec_valid(void) {
     remove("test/data/out/exp_1_default_add_valid.slow5.idx");
     struct slow5_file *s5p = slow5_open("test/data/out/exp_1_default_add_valid.slow5", "r+");
     ASSERT(s5p != NULL);
@@ -830,21 +830,21 @@ int slow5_rec_add_valid(void) {
 
     read->read_id[strlen(read->read_id) - 1] = '\0';
 
-    ASSERT(slow5_rec_add(read, s5p) == 0);
+    ASSERT(slow5_add_rec(read, s5p) == 0);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
-int slow5_rec_add_duplicate(void) {
+int slow5_add_rec_duplicate(void) {
     remove("test/data/out/exp_1_default_add_duplicate.slow5.idx");
     struct slow5_file *s5p = slow5_open("test/data/out/exp_1_default_add_duplicate.slow5", "r+");
     ASSERT(s5p != NULL);
 
     struct slow5_rec *read = slow5_rec_init();
     ASSERT(slow5_get_next(&read, s5p) == 0);
-    ASSERT(slow5_rec_add(read, s5p) == -3);
+    ASSERT(slow5_add_rec(read, s5p) == -3);
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
@@ -917,10 +917,10 @@ int main(void) {
 
         CMD(slow5_idx_init_valid)
 
-        CMD(slow5_rec_add_empty)
-        CMD(slow5_rec_add_null)
-        CMD(slow5_rec_add_valid)
-        CMD(slow5_rec_add_duplicate)
+        CMD(slow5_add_rec_empty)
+        CMD(slow5_add_rec_null)
+        CMD(slow5_add_rec_valid)
+        CMD(slow5_add_rec_duplicate)
     };
 
     return RUN_TESTS(tests);

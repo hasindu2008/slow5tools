@@ -49,32 +49,47 @@ int slow5_rec_init_empty_valid(void) {
 
 
 int slow5_rec_set_valid(void) {
-    /*
     struct slow5_rec *read = slow5_rec_init();
 
     struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
-    ASSERT(SLOW5_AUX_META_ADD(aux_meta, "channel_number", char*) == 0);
+    //ASSERT(SLOW5_AUX_META_ADD(aux_meta, "channel_number", char*) == 0);
+    ASSERT(slow5_aux_meta_add(aux_meta, "channel_number", "char *") == -2);
+    ASSERT(slow5_aux_meta_add(aux_meta, "channel_number", "char*") == 0);
     ASSERT(slow5_aux_meta_add(aux_meta, "median_before", "double") == 0);
-    ASSERT(SLOW5_AUX_META_ADD(aux_meta, "read_number", int32_t) == 0);
+    //ASSERT(SLOW5_AUX_META_ADD(aux_meta, "read_number", int32_t) == 0);
+    ASSERT(slow5_aux_meta_add(aux_meta, "read_number", "int32_t") == 0);
     ASSERT(slow5_aux_meta_add(aux_meta, "start_mux", "uint8_t") == 0);
     ASSERT(slow5_aux_meta_add(aux_meta, "start_time", "uint64_t") == 0);
 
+    ASSERT(strcmp(aux_meta->attrs[0], "channel_number") == 0);
+    ASSERT(strcmp(aux_meta->attrs[1], "median_before") == 0);
+    ASSERT(strcmp(aux_meta->attrs[2], "read_number") == 0);
+
+    ASSERT(aux_meta->types[0] == STRING);
+    ASSERT(aux_meta->types[1] == DOUBLE);
+    ASSERT(aux_meta->types[2] == INT32_T);
+
+    ASSERT(aux_meta->num == 5);
+
+    /*
     char *cn = "1010";
     double mb = 225.69;
     int32_t rn = 292;
     uint8_t sm = 1;
     uint64_t st = 1019283;
 
-    ASSERT(SLOW5_REC_ADD_ARRAY(read, aux_meta, "channel_number", char*, &cn, strlen(cn) + 1) == 0);
+    //ASSERT(SLOW5_REC_ADD_ARRAY(read, aux_meta, "channel_number", char*, &cn, strlen(cn) + 1) == 0);
     //ASSERT(slow5_rec_add_array(read, "channel_number", "char*", &cn, strlen(cn) + 1) == 0);
     //ASSERT(slow5_rec_add_str(read, "channel_number", cn) == 0);
     ASSERT(slow5_rec_add(read, aux_meta, "start_time", "uint64_t", &st) == 0);
     ASSERT(slow5_rec_add(read, aux_meta, "read_number", "int32_t", &rn) == 0);
     ASSERT(slow5_rec_add(read, aux_meta, "median_before", "double", &mb) == 0);
     ASSERT(slow5_rec_add(read, aux_meta, "start_mux", "uint8_t", &sm) == 0);
-
-    ASSERT(slow5_rec_print(read, FORMAT_ASCII, COMPRESS_NONE) != -1);
     */
+
+    ASSERT(slow5_rec_print(read, aux_meta, FORMAT_ASCII, COMPRESS_NONE) != -1);
+    slow5_aux_meta_free(aux_meta);
+    slow5_rec_free(read);
 
     return EXIT_SUCCESS;
 }
@@ -89,7 +104,7 @@ int main(void) {
         CMD(slow5_hdr_add_set)
 
         CMD(slow5_rec_init_empty_valid)
-        //CMD(slow5_rec_set_valid)
+        CMD(slow5_rec_set_valid)
     };
 
     return RUN_TESTS(tests);

@@ -23,9 +23,9 @@
 
 // Types to sizes
 
-#define IS_TYPE(name, type) (strcmp(name, # type) == 0)
-#define IS_TYPE_TRUNC(name, type) (strncmp(name, # type, strlen(# type)) == 0)
-#define IS_PTR(name) (name[strlen(name) - 1] == '*')
+#define IS_TYPE(str, type) (strcmp(str, # type) == 0)
+#define IS_TYPE_TRUNC(str, type) (strncmp(str, # type, sizeof (# type) - 1) == 0)
+
 #define CHECK_TYPE(name, type) \
     (IS_TYPE_TRUNC(name, type)) { \
         if (strcmp(name + strlen(name) - 2, "**") == 0) {/* TODO this is not right */ \
@@ -133,18 +133,15 @@ uint16_t ato_uint16(const char *str, int *err);
 uint32_t ato_uint32(const char *str, int *err);
 uint64_t ato_uint64(const char *str, int *err);
 
-// Strtod but
+// Strtod and strtof but
 // without any symbols, spaces
 // only in decimal form
 double strtod_check(const char *str, int *err);
+float strtof_check(const char *str, int *err);
 
 // Convert double to decimal string without trailing 0s
 char *double_to_str(double x, size_t *len);
 // Convert float to decimal string without trailing 0s
 char *float_to_str(float x, size_t *len);
-
-uint8_t get_type_size(const char *type);
-int memcpy_type_from_str(uint8_t *data, const char *value, const char *type);
-char *type_to_str(uint8_t *data, const char *type, size_t len, size_t *str_len);
 
 #endif

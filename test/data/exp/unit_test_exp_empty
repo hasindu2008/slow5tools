@@ -8,3 +8,4 @@
 @lol		good meme	haha 2
 #char*	uint32_t	double	double	double	double	uint64_t	int16_t*
 #read_id	read_group	digitisation	offset	range	sampling_rate	len_raw_signal	raw_signal
+	0	0	0	0	0	0	

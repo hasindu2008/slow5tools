@@ -34,7 +34,6 @@ KSORT_INIT_STR
 #define SLOW5_AUX_META_CAP_INIT (32) // 2^5 TODO is this good? Too small?
 
 static inline void slow5_free(struct slow5_file *s5p);
-inline void slow5_aux_meta_free(struct slow5_aux_meta *aux_meta);
 static inline khash_t(s2a) *slow5_rec_aux_init(void);
 
 /* Definitions */
@@ -506,7 +505,7 @@ char *slow5_hdr_types_to_str(struct slow5_aux_meta *aux_meta, size_t *len) {
         types_len += len_to_cp;
 
         for (uint16_t i = 0; i < aux_meta->num; ++ i) {
-            char *str_to_cp = aux_meta->types[i];
+            const char *str_to_cp = AUX_TYPE_META[aux_meta->types[i]].type_str;
             len_to_cp = strlen(str_to_cp);
 
             if (types_len + len_to_cp + 1 >= types_cap) { // +1 for SEP_CHAR
@@ -848,6 +847,17 @@ int slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, struct slow5_hdr *head
     return ret;
 }
 
+struct slow5_aux_meta *slow5_aux_meta_init_empty(void) {
+    struct slow5_aux_meta *aux_meta = (struct slow5_aux_meta *) calloc(1, sizeof *aux_meta);
+
+    aux_meta->cap = SLOW5_AUX_META_CAP_INIT;
+    aux_meta->attrs = (char **) malloc(aux_meta->cap * sizeof *(aux_meta->attrs));
+    aux_meta->types = (enum aux_type *) malloc(aux_meta->cap * sizeof *(aux_meta->types));
+    aux_meta->sizes = (uint8_t *) malloc(aux_meta->cap * sizeof *(aux_meta->sizes));
+
+    return aux_meta;
+}
+
 struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uint32_t *hdr_len) {
 
     struct slow5_aux_meta *aux_meta = NULL;
@@ -863,36 +873,29 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
         assert(strcmp(tok, "") == 0);
 
         aux_meta->cap = SLOW5_AUX_META_CAP_INIT;
-        aux_meta->types = (char **) malloc(aux_meta->cap * sizeof *(aux_meta->types));
-        aux_meta->is_ptr = (bool *) malloc(aux_meta->cap * sizeof *(aux_meta->is_ptr));
+        aux_meta->types = (enum aux_type *) malloc(aux_meta->cap * sizeof *(aux_meta->types));
         aux_meta->sizes = (uint8_t *) malloc(aux_meta->cap * sizeof *(aux_meta->sizes));
 
         aux_meta->num = 0;
         while ((tok = strsep_mine(&shift, SEP)) != NULL) {
-            aux_meta->types[aux_meta->num] = strdup(tok);
-            aux_meta->is_ptr[aux_meta->num] = IS_PTR(tok);
+            int err;
+            enum aux_type type = str_to_aux_type(tok, &err);
 
-            uint8_t size = get_type_size(tok);
-            if (size == 0) {
-                for (uint64_t j = 0; j < aux_meta->num; ++ j) {
-                    free(aux_meta->types[j]);
-                }
+            if (err == -1) {
                 free(aux_meta->types);
-                free(aux_meta->is_ptr);
                 free(aux_meta->sizes);
                 free(aux_meta);
                 return NULL;
             }
 
-            aux_meta->sizes[aux_meta->num] = size;
+            aux_meta->types[aux_meta->num] = type;
+            aux_meta->sizes[aux_meta->num] = AUX_TYPE_META[type].size;
 
             ++ aux_meta->num;
             if (aux_meta->num > aux_meta->cap) {
                 aux_meta->cap = aux_meta->cap << 1; // TODO is this ok?
-                aux_meta->types = (char **) realloc(aux_meta->types, aux_meta->cap * sizeof *(aux_meta->types));
-                aux_meta->is_ptr = (bool *) realloc(aux_meta->is_ptr, aux_meta->cap * sizeof *(aux_meta->is_ptr));
+                aux_meta->types = (enum aux_type *) realloc(aux_meta->types, aux_meta->cap * sizeof *(aux_meta->types));
                 aux_meta->sizes = (uint8_t *) realloc(aux_meta->sizes, aux_meta->cap * sizeof *(aux_meta->sizes));
-
             }
         }
     }
@@ -906,11 +909,7 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
 
     if (strncmp(buf, ASCII_COLUMN_HEADER_MIN, strlen(ASCII_COLUMN_HEADER_MIN)) != 0) {
         if (aux_meta != NULL) {
-            for (uint64_t j = 0; j < aux_meta->num; ++ j) {
-                free(aux_meta->types[j]);
-            }
             free(aux_meta->types);
-            free(aux_meta->is_ptr);
             free(aux_meta->sizes);
             free(aux_meta);
             return NULL;
@@ -932,15 +931,11 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
 
         for (uint64_t i = 0; i < aux_meta->num; ++ i) {
             if ((tok = strsep_mine(&shift, SEP)) == NULL) {
-                for (uint64_t j = 0; j < aux_meta->num; ++ j) {
-                    free(aux_meta->types[j]);
-                }
                 for (uint64_t j = 0; j < i; ++ j) {
                     free(aux_meta->attrs[j]);
                 }
                 free(aux_meta->attrs);
                 free(aux_meta->types);
-                free(aux_meta->is_ptr);
                 free(aux_meta->sizes);
                 free(aux_meta);
                 return NULL;
@@ -957,15 +952,45 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
     return aux_meta;
 }
 
+// Return
+// 0    success
+// -1   null input
+// -2   type invalid
+int slow5_aux_meta_add(struct slow5_aux_meta *aux_meta, const char *attr, const char *type_str) {
+    if (aux_meta == NULL || attr == NULL || type_str == NULL) {
+        return -1;
+    }
+
+    enum aux_type type;
+    int err = 0;
+    type = str_to_aux_type(type_str, &err);
+    if (err == -1) {
+        return -2;
+    }
+
+    if (aux_meta->num == aux_meta->cap) {
+        aux_meta->cap = aux_meta->cap << 1; // TODO is this ok?
+        aux_meta->attrs = (char **) realloc(aux_meta->attrs, aux_meta->cap * sizeof *(aux_meta->attrs));
+        aux_meta->types = (enum aux_type *) realloc(aux_meta->types, aux_meta->cap * sizeof *(aux_meta->types));
+        aux_meta->sizes = (uint8_t *) realloc(aux_meta->sizes, aux_meta->cap * sizeof *(aux_meta->sizes));
+    }
+
+    aux_meta->attrs[aux_meta->num] = strdup(attr);
+    aux_meta->types[aux_meta->num] = type;
+    aux_meta->sizes[aux_meta->num] = AUX_TYPE_META[type].size;
+
+    ++ aux_meta->num;
+
+    return 0;
+}
+
 void slow5_aux_meta_free(struct slow5_aux_meta *aux_meta) {
     if (aux_meta != NULL) {
         for (uint64_t i = 0; i < aux_meta->num; ++ i) {
             free(aux_meta->attrs[i]);
-            free(aux_meta->types[i]);
         }
         free(aux_meta->attrs);
         free(aux_meta->types);
-        free(aux_meta->is_ptr);
         free(aux_meta->sizes);
         free(aux_meta);
     }
@@ -1229,9 +1254,9 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                     uint64_t bytes = 0;
                     uint64_t len = 1;
                     uint8_t *data = NULL;
-                    if (aux_meta->is_ptr[i]) {
+                    if (IS_PTR(aux_meta->types[i])) {
                         // Type is an array
-                        if (IS_TYPE(aux_meta->types[i], char*)) {
+                        if (aux_meta->types[i] == STRING) {
                             len = strlen(tok);
                             data = (uint8_t *) malloc((len + 1) * aux_meta->sizes[i]);
                             memcpy(data, tok, (len + 1) * aux_meta->sizes[i]);
@@ -1242,7 +1267,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                         }
 
                     } else {
-                        data = (uint8_t *) malloc(aux_meta->sizes[i] * sizeof *data);
+                        data = (uint8_t *) malloc(aux_meta->sizes[i]);
                         if (memcpy_type_from_str(data, tok, aux_meta->types[i]) == -1) {
                             free(data);
                             slow5_rec_aux_free(aux_map);
@@ -1373,7 +1398,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 }
 
                 uint64_t len = 1;
-                if (aux_meta->is_ptr[i]) {
+                if (IS_PTR(aux_meta->types[i])) {
                     // Type is an array
                     size = sizeof len;
                     memcpy(&len, read_mem + offset, size);
@@ -1383,7 +1408,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 uint8_t *data;
                 uint64_t bytes = len * aux_meta->sizes[i];
 
-                if (IS_TYPE(aux_meta->types[i], char*)) {
+                if (aux_meta->types[i] == STRING) {
                     data = (uint8_t *) malloc(bytes + 1);
                     memcpy(data, read_mem + offset, bytes);
                     offset += bytes;
@@ -1552,7 +1577,7 @@ int8_t slow5_rec_get_int8(const struct slow5_rec *read, const char *attr, int *e
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, int8_t)) {
+            if (aux_data.type == INT8_T) {
                 val = *((int8_t*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1572,7 +1597,7 @@ int16_t slow5_rec_get_int16(const struct slow5_rec *read, const char *attr, int 
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, int16_t)) {
+            if (aux_data.type == INT16_T) {
                 val = *((int16_t*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1592,7 +1617,7 @@ int32_t slow5_rec_get_int32(const struct slow5_rec *read, const char *attr, int 
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, int32_t)) {
+            if (aux_data.type == INT32_T) {
                 val = *((int32_t*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1612,7 +1637,7 @@ int64_t slow5_rec_get_int64(const struct slow5_rec *read, const char *attr, int 
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, int64_t)) {
+            if (aux_data.type == INT64_T) {
                 val = *((int64_t*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1632,7 +1657,7 @@ uint8_t slow5_rec_get_uint8(const struct slow5_rec *read, const char *attr, int 
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, uint8_t)) {
+            if (aux_data.type == UINT8_T) {
                 val = *((uint8_t*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1652,7 +1677,7 @@ uint16_t slow5_rec_get_uint16(const struct slow5_rec *read, const char *attr, in
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, uint16_t)) {
+            if (aux_data.type == UINT16_T) {
                 val = *((uint16_t*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1672,7 +1697,7 @@ uint32_t slow5_rec_get_uint32(const struct slow5_rec *read, const char *attr, in
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, uint32_t)) {
+            if (aux_data.type == UINT32_T) {
                 val = *((uint32_t*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1692,7 +1717,7 @@ uint64_t slow5_rec_get_uint64(const struct slow5_rec *read, const char *attr, in
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, uint64_t)) {
+            if (aux_data.type == UINT64_T) {
                 val = *((uint64_t*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1712,7 +1737,7 @@ float slow5_rec_get_float(const struct slow5_rec *read, const char *attr, int *e
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, float)) {
+            if (aux_data.type == FLOAT) {
                 val = *((float*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1732,7 +1757,7 @@ double slow5_rec_get_double(const struct slow5_rec *read, const char *attr, int 
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, double)) {
+            if (aux_data.type == DOUBLE) {
                 val = *((double*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1752,7 +1777,7 @@ char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, char)) {
+            if (aux_data.type == CHAR) {
                 val = *((char*) aux_data.data);
                 tmp_err = 0;
             }
@@ -1772,7 +1797,7 @@ char *slow5_rec_get_str(const struct slow5_rec *read, const char *attr, int *err
         khint_t pos = kh_get(s2a, read->aux_map, attr);
         if (pos != kh_end(read->aux_map)) {
             struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-            if (IS_TYPE(aux_data.type, char*)) {
+            if (aux_data.type == STRING) {
                 val = (char*) aux_data.data;
                 tmp_err = 0;
             }
@@ -1784,6 +1809,7 @@ char *slow5_rec_get_str(const struct slow5_rec *read, const char *attr, int *err
     }
     return val;
 }
+// TODO add get other arrays
 
 /**
  * Add a read entry to the slow5 file.
@@ -1799,7 +1825,7 @@ char *slow5_rec_get_str(const struct slow5_rec *read, const char *attr, int *err
  * @param   s5p     slow5 file
  * @return  error code described above
  */
-int slow5_rec_add(struct slow5_rec *read, struct slow5_file *s5p) {
+int slow5_add_rec(struct slow5_rec *read, struct slow5_file *s5p) {
     if (read == NULL || read->read_id == NULL || s5p == NULL) {
         return -1;
     }
@@ -1937,9 +1963,13 @@ void *slow5_rec_to_mem(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, 
         char *offset_str = double_to_str(read->offset, NULL);
         char *range_str = double_to_str(read->range, NULL);
         char *sampling_rate_str = double_to_str(read->sampling_rate, NULL);
+        const char *read_id = read->read_id;
+        if (read->read_id == NULL) {
+            read_id = "";
+        }
         int curr_len_tmp = asprintf_mine(&mem,
                 SLOW5_COLS(GENERATE_FORMAT_STRING_SEP, GENERATE_NULL),
-                read->read_id,
+                read_id,
                 read->read_group,
                 digitisation_str,
                 offset_str,
@@ -1981,13 +2011,13 @@ void *slow5_rec_to_mem(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, 
 
         // Auxiliary fields
         size_t cap = max_len;
-        if (read->aux_map != NULL) {
+        if (read->aux_map != NULL && aux_meta != NULL) {
             for (uint16_t i = 0; i < aux_meta->num; ++ i) {
                 khint_t pos = kh_get(s2a, read->aux_map, aux_meta->attrs[i]);
                 if (pos != kh_end(read->aux_map)) {
                     size_t type_len;
                     struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
-                    char *type_str = type_to_str(aux_data.data, aux_data.type, aux_data.bytes, &type_len);
+                    char *type_str = data_to_str(aux_data.data, aux_data.type, aux_data.len, &type_len);
 
                     // Realloc if necessary
                     if (curr_len + 1 + type_len >= cap) { // +1 for '\t'
@@ -2058,7 +2088,7 @@ void *slow5_rec_to_mem(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, 
                 if (pos != kh_end(read->aux_map)) {
                     struct slow5_rec_aux_data aux_data = kh_value(read->aux_map, pos);
 
-                    if (aux_meta->is_ptr[i]) {
+                    if (IS_PTR(aux_meta->types[i])) {
                         // Realloc if necessary
                         if (curr_len + sizeof aux_data.len + aux_data.bytes >= cap) {
                             cap *= 2;
@@ -2268,6 +2298,144 @@ int slow5_convert(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format
     }
 
     return 0;
+}
+
+#define STR_TO_AUX_TYPE(str, len, raw_type, prim_do, array_do) \
+    (IS_TYPE_TRUNC(str, raw_type)) { \
+        if (len == sizeof (# raw_type) - 1) { \
+            prim_do; \
+        } else if (len == sizeof (# raw_type) && str[len - 1] == '*') { \
+            array_do; \
+        } else { \
+            *err = -1; \
+            return type; \
+        } \
+    }
+
+enum aux_type str_to_aux_type(const char *str, int *err) {
+    enum aux_type type = INT8_T;
+
+    size_t len = strlen(str);
+
+    if STR_TO_AUX_TYPE(str, len, int8_t, type = INT8_T, type = INT8_T_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, int16_t, type = INT16_T, type = INT16_T_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, int32_t, type = INT32_T, type = INT32_T_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, int64_t, type = INT64_T, type = INT64_T_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, uint8_t, type = UINT8_T, type = UINT8_T_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, uint16_t, type = UINT16_T, type = UINT16_T_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, uint32_t, type = UINT32_T, type = UINT32_T_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, uint64_t, type = UINT64_T, type = UINT64_T_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, float, type = FLOAT, type = FLOAT_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, double, type = DOUBLE, type = DOUBLE_ARRAY)
+    else if STR_TO_AUX_TYPE(str, len, char, type = CHAR, type = STRING)
+    else {
+        *err = -1;
+        return type;
+    }
+
+    *err = 0;
+    return type;
+}
+
+int memcpy_type_from_str(uint8_t *data, const char *value, enum aux_type type) {
+    int err = -1;
+
+    // TODO fix this is disgusting :(
+    if (type == INT8_T) {
+        int8_t value_conv = ato_int8(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == UINT8_T) {
+        uint8_t value_conv = ato_uint8(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == INT16_T) {
+        int16_t value_conv = ato_int16(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == UINT16_T) {
+        uint16_t value_conv = ato_uint16(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == INT32_T) {
+        int32_t value_conv = ato_int32(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == UINT32_T) {
+        uint32_t value_conv = ato_uint32(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == INT64_T) {
+        int64_t value_conv = ato_int64(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == UINT64_T) {
+        uint64_t value_conv = ato_uint64(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == FLOAT) {
+        float value_conv = strtof_check(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == DOUBLE) {
+        double value_conv = strtod_check(value, &err);
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    } else if (type == CHAR) {
+        char value_conv = value[0];
+        if (err != -1) {
+            memcpy(data, &value_conv, sizeof value_conv);
+        }
+    }
+
+    return err;
+}
+
+char *data_to_str(uint8_t *data, enum aux_type type, uint64_t len, size_t *str_len) {
+    char *str = NULL;
+
+    if (type == INT8_T) {
+        *str_len = asprintf_mine(&str, "%" PRId8, *(int8_t *) data);
+    } else if (type == UINT8_T) {
+        *str_len = asprintf_mine(&str, "%" PRIu8, *(uint8_t *) data);
+    } else if (type == INT16_T) {
+        *str_len = asprintf_mine(&str, "%" PRId16, *(int16_t *) data);
+    } else if (type == UINT16_T) {
+        *str_len = asprintf_mine(&str, "%" PRIu16, *(uint16_t *) data);
+    } else if (type == INT32_T) {
+        *str_len = asprintf_mine(&str, "%" PRId32, *(int32_t *) data);
+    } else if (type == UINT32_T) {
+        *str_len = asprintf_mine(&str, "%" PRIu32, *(uint32_t *) data);
+    } else if (type == INT64_T) {
+        *str_len = asprintf_mine(&str, "%" PRId64, *(int64_t *) data);
+    } else if (type == UINT64_T) {
+        *str_len = asprintf_mine(&str, "%" PRIu64, *(uint64_t *) data);
+    } else if (type == FLOAT) {
+        str = float_to_str(*(float *) data, str_len);
+    } else if (type == DOUBLE) {
+        str = double_to_str(*(double *) data, str_len);
+    } else if (type == CHAR) {
+        *str_len = sizeof (char);
+        str = (char *) malloc(sizeof (char));
+        str[0] = *(char *) data;
+    } else if (type == STRING) {
+        str = strdup((char *) data);
+        *str_len = strlen(str);
+    }
+
+    // TODO handle arrays
+
+    return str;
 }
 
 

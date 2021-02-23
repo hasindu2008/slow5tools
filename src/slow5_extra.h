@@ -19,7 +19,10 @@ char *slow5_hdr_types_to_str(struct slow5_aux_meta *aux_meta, size_t *len);
 char *slow5_hdr_attrs_to_str(struct slow5_aux_meta *aux_meta, size_t *len);
 void slow5_hdr_data_free(struct slow5_hdr *header);
 
+struct slow5_aux_meta *slow5_aux_meta_init_empty(void);
 struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uint32_t *hdr_len);
+int slow5_aux_meta_add(struct slow5_aux_meta *aux_meta, const char *attr, const char *type);
+void slow5_aux_meta_free(struct slow5_aux_meta *aux_meta);
 
 // slow5 record
 int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struct slow5_rec *read, enum slow5_fmt format, struct slow5_aux_meta *aux_meta);
@@ -31,7 +34,12 @@ enum slow5_fmt path_get_slow5_fmt(const char *path);
 const char *slow5_fmt_get_name(enum slow5_fmt format);
 char *get_slow5_idx_path(const char *path);
 
-
+// auxilary type
+enum aux_type str_to_aux_type(const char *str, int *err);
+int memcpy_type_from_str(uint8_t *data, const char *value, enum aux_type type);
+char *type_to_str(uint8_t *data, const char *type, size_t len, size_t *str_len);
+char *aux_type_to_str(enum aux_type type);
+char *data_to_str(uint8_t *data, enum aux_type type, uint64_t len, size_t *str_len);
 
 
 

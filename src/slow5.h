@@ -41,8 +41,66 @@ struct slow5_version {
     uint8_t patch;
 };
 
-// Auxiliary attribute map: attribute string -> position
-//KHASH_MAP_INIT_STR(s2i32, int32_t)
+// SLOW5 auxiliary types
+enum aux_type {
+    INT8_T = 0,
+    INT16_T,
+    INT32_T,
+    INT64_T,
+    UINT8_T,
+    UINT16_T,
+    UINT32_T,
+    UINT64_T,
+    FLOAT,
+    DOUBLE,
+    CHAR,
+    // All from here onward must be arrays
+    INT8_T_ARRAY,
+    INT16_T_ARRAY,
+    INT32_T_ARRAY,
+    INT64_T_ARRAY,
+    UINT8_T_ARRAY,
+    UINT16_T_ARRAY,
+    UINT32_T_ARRAY,
+    UINT64_T_ARRAY,
+    FLOAT_ARRAY,
+    DOUBLE_ARRAY,
+    STRING
+};
+
+#define IS_PTR(type) (type >= INT8_T_ARRAY)
+
+// Type with corresponding size
+struct aux_type_meta {
+    enum aux_type type;
+    uint8_t size;
+    const char *type_str;
+};
+static const struct aux_type_meta AUX_TYPE_META[] = {
+    // Needs to be the same order as the enum definition
+    { INT8_T,           sizeof (int8_t),        "int8_t"    },
+    { INT16_T,          sizeof (int16_t),       "int16_t"   },
+    { INT32_T,          sizeof (int32_t),       "int32_t"   },
+    { INT64_T,          sizeof (int64_t),       "int64_t"   },
+    { UINT8_T,          sizeof (uint8_t),       "uint8_t"   },
+    { UINT16_T,         sizeof (uint16_t),      "uint16_t"  },
+    { UINT32_T,         sizeof (uint32_t),      "uint32_t"  },
+    { UINT64_T,         sizeof (uint64_t),      "uint64_t"  },
+    { FLOAT,            sizeof (float),         "float"     },
+    { DOUBLE,           sizeof (double),        "double"    },
+    { CHAR,             sizeof (char),          "char"      },
+    { INT8_T_ARRAY,     sizeof (int8_t),        "int8_t*"   },
+    { INT16_T_ARRAY,    sizeof (int16_t),       "int16_t*"  },
+    { INT32_T_ARRAY,    sizeof (int32_t),       "int32_t*"  },
+    { INT64_T_ARRAY,    sizeof (int64_t),       "int64_t*"  },
+    { UINT8_T_ARRAY,    sizeof (uint8_t),       "uint8_t*"  },
+    { UINT16_T_ARRAY,   sizeof (uint16_t),      "uint16_t*" },
+    { UINT32_T_ARRAY,   sizeof (uint32_t),      "uint32_t*" },
+    { UINT64_T_ARRAY,   sizeof (uint64_t),      "uint64_t*" },
+    { FLOAT_ARRAY,      sizeof (float),         "float*"    },
+    { DOUBLE_ARRAY,     sizeof (double),        "double*"   },
+    { STRING,           sizeof (char),          "char*"     }
+};
 
 // SLOW5 auxiliary attribute metadata
 struct slow5_aux_meta {
@@ -50,11 +108,8 @@ struct slow5_aux_meta {
     size_t cap;
 
     char **attrs;
-    char **types;
-    bool *is_ptr;
+    enum aux_type *types;
     uint8_t *sizes;
-
-    //khash_t(s2i32) *attr_to_pos;
 };
 
 // Header data map: attribute string -> data string
@@ -89,7 +144,7 @@ enum slow5_cols {
 struct slow5_rec_aux_data {
     uint64_t len;
     uint64_t bytes;
-    char *type; // TODO decision: remove this and use slow5_aux_meta types but with hash map from attr -> position, or use this
+    enum aux_type type; // TODO decision: remove this and use slow5_aux_meta types but with hash map from attr -> position, or use this
     uint8_t *data;
 };
 
@@ -269,7 +324,7 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p);
  * @param   s5p     slow5 file
  * @return  error code described above
  */
-int slow5_rec_add(struct slow5_rec *read, struct slow5_file *s5p);
+int slow5_add_rec(struct slow5_rec *read, struct slow5_file *s5p);
 
 /**
  * Remove a read entry at a read_id in a slow5 file.
@@ -284,7 +339,7 @@ int slow5_rec_add(struct slow5_rec *read, struct slow5_file *s5p);
  * @param   s5p     slow5 file
  * @return  error code described above
  */
-int slow5_rec_rm(const char *read_id, struct slow5_file *s5p); // TODO
+int slow5_rm_rec(const char *read_id, struct slow5_file *s5p); // TODO
 
 int8_t slow5_rec_get_int8(const struct slow5_rec *read, const char *attr, int *err);
 int16_t slow5_rec_get_int16(const struct slow5_rec *read, const char *attr, int *err);
