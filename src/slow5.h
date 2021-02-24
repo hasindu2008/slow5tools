@@ -40,6 +40,9 @@ struct slow5_version {
     uint8_t minor;
     uint8_t patch;
 };
+// TODO is this ok or put somewhere else or get rid of?
+static const struct slow5_version ASCII_VERSION_STRUCT = { .major = 0, .minor = 1, .patch = 0 };
+static const struct slow5_version BINARY_VERSION_STRUCT = { .major = 0, .minor = 1, .patch = 0 };
 
 // SLOW5 auxiliary types
 enum aux_type {
@@ -54,7 +57,6 @@ enum aux_type {
     FLOAT,
     DOUBLE,
     CHAR,
-    // All from here onward must be arrays
     INT8_T_ARRAY,
     INT16_T_ARRAY,
     INT32_T_ARRAY,
@@ -102,11 +104,14 @@ static const struct aux_type_meta AUX_TYPE_META[] = {
     { STRING,           sizeof (char),          "char*"     }
 };
 
+// Auxiliary attribute to position map: attribute string -> index position
+KHASH_MAP_INIT_STR(s2ui32, uint32_t)
 // SLOW5 auxiliary attribute metadata
 struct slow5_aux_meta {
     uint32_t num;
     size_t cap;
 
+    khash_t(s2ui32) *attr_to_pos;
     char **attrs;
     enum aux_type *types;
     uint8_t *sizes;
@@ -352,7 +357,7 @@ uint64_t slow5_rec_get_uint64(const struct slow5_rec *read, const char *attr, in
 float slow5_rec_get_float(const struct slow5_rec *read, const char *attr, int *err);
 double slow5_rec_get_double(const struct slow5_rec *read, const char *attr, int *err);
 char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err);
-char *slow5_rec_get_str(const struct slow5_rec *read, const char *attr, int *err);
+char *slow5_rec_get_string(const struct slow5_rec *read, const char *attr, int *err);
 // TODO add other array types
 
 /**

@@ -18,7 +18,7 @@ KSORT_INIT_STR
 
 // TODO fail with getline if end of file occurs on a non-empty line
 // TODO (void) cast if ignoring return value
-// TODO strlen of macros at compile time
+// TODO sizeof of macros at compile time rather than strlen
 
 // Initial string buffer capacity for parsing the data header
 #define SLOW5_HEADER_DATA_BUF_INIT_CAP (1024) // 2^10 TODO is this too much? Or put to a page length
@@ -160,11 +160,6 @@ static inline void slow5_free(struct slow5_file *s5p) {
 struct slow5_hdr *slow5_hdr_init_empty(void) {
     struct slow5_hdr *header = (struct slow5_hdr *) calloc(1, sizeof *(header));
 
-    // TODO put in header
-    header->version.major = 0;
-    header->version.minor = 1;
-    header->version.patch = 0;
-
     return header;
 }
 
@@ -203,8 +198,6 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t
         }
         // Parse file version
         tok = strsep_mine(&bufp, SEP);
-        // Parse file version string
-        // TODO necessary to parse it now?
         char *toksub;
         if ((toksub = strsep_mine(&tok, ".")) == NULL) { // Major version
             free(buf);
@@ -260,7 +253,7 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t
     } else if (format == FORMAT_BINARY) {
         const char magic[] = BINARY_MAGIC_NUMBER;
 
-        char buf_magic[sizeof magic]; // TODO is this a vla?
+        char buf_magic[sizeof magic];
         uint32_t header_size;
 
         // TODO pack and do one read
@@ -397,7 +390,6 @@ void *slow5_hdr_to_mem(struct slow5_hdr *header, enum slow5_fmt format, press_me
             memcpy(mem + len, attr, strlen(attr));
             len += strlen(attr);
 
-            // TODO handle empty attrs correctly
             for (uint64_t j = 0; j < (uint64_t) header->num_read_groups; ++ j) {
                 const khash_t(s2s) *hdr_data = header->data.maps.a[j];
                 khint_t pos = kh_get(s2s, hdr_data, attr);
@@ -608,7 +600,7 @@ int slow5_hdr_fwrite(FILE *fp, struct slow5_hdr *header, enum slow5_fmt format, 
     if (n != 1) {
         ret = -1;
     } else {
-        ret = hdr_size; // TODO is this okay
+        ret = hdr_size; // TODO is this okay ie. size_t -> int
     }
 
     free(hdr);
@@ -696,7 +688,6 @@ int slow5_hdr_add_attr(const char *attr, struct slow5_hdr *header) {
  * @param   header  slow5 header
  * @return  < 0 on error as described above
  */
-// TODO check return type but should be large enough to return -1 and the largest read group
 int64_t slow5_hdr_add_rg(struct slow5_hdr *header) {
     int64_t rg_num = -1;
 
@@ -930,6 +921,7 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
         char *tok = strsep_mine(&shift, SEP);
         assert(strcmp(tok, "") == 0);
 
+        aux_meta->attr_to_pos = kh_init(s2ui32);
         aux_meta->attrs = (char **) malloc(aux_meta->cap * sizeof *(aux_meta->attrs));
 
         for (uint64_t i = 0; i < aux_meta->num; ++ i) {
@@ -937,6 +929,7 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
                 for (uint64_t j = 0; j < i; ++ j) {
                     free(aux_meta->attrs[j]);
                 }
+                kh_destroy(s2ui32, aux_meta->attr_to_pos);
                 free(aux_meta->attrs);
                 free(aux_meta->types);
                 free(aux_meta->sizes);
@@ -945,6 +938,21 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
             }
 
             aux_meta->attrs[i] = strdup(tok);
+
+            int absent;
+            khint_t pos = kh_put(s2ui32, aux_meta->attr_to_pos, aux_meta->attrs[i], &absent);
+            if (absent == -1 || absent == -2) {
+                for (uint64_t j = 0; j <= i; ++ j) {
+                    free(aux_meta->attrs[j]);
+                }
+                kh_destroy(s2ui32, aux_meta->attr_to_pos);
+                free(aux_meta->attrs);
+                free(aux_meta->types);
+                free(aux_meta->sizes);
+                free(aux_meta);
+                return NULL;
+            }
+            kh_value(aux_meta->attr_to_pos, pos) = i;
         }
         if ((tok = strsep_mine(&shift, SEP)) != NULL) {
             slow5_aux_meta_free(aux_meta);
@@ -958,9 +966,14 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
 // Return
 // 0    success
 // -1   null input
+// -2   other failure
 int slow5_aux_meta_add(struct slow5_aux_meta *aux_meta, const char *attr, enum aux_type type) {
     if (aux_meta == NULL || attr == NULL) {
         return -1;
+    }
+
+    if (aux_meta->attr_to_pos == NULL) {
+        aux_meta->attr_to_pos = kh_init(s2ui32);
     }
 
     if (aux_meta->num == aux_meta->cap) {
@@ -971,6 +984,15 @@ int slow5_aux_meta_add(struct slow5_aux_meta *aux_meta, const char *attr, enum a
     }
 
     aux_meta->attrs[aux_meta->num] = strdup(attr);
+
+    int absent;
+    khint_t pos = kh_put(s2ui32, aux_meta->attr_to_pos, aux_meta->attrs[aux_meta->num], &absent);
+    if (absent == -1 || absent == -2) {
+        free(aux_meta->attrs[aux_meta->num]);
+        return -2;
+    }
+    kh_value(aux_meta->attr_to_pos, pos) = aux_meta->num;
+
     aux_meta->types[aux_meta->num] = type;
     aux_meta->sizes[aux_meta->num] = AUX_TYPE_META[type].size;
 
@@ -985,6 +1007,7 @@ void slow5_aux_meta_free(struct slow5_aux_meta *aux_meta) {
             free(aux_meta->attrs[i]);
         }
         free(aux_meta->attrs);
+        kh_destroy(s2ui32, aux_meta->attr_to_pos);
         free(aux_meta->types);
         free(aux_meta->sizes);
         free(aux_meta);
@@ -1448,7 +1471,6 @@ void slow5_rec_aux_free(khash_t(s2a) *aux_map) {
     if (aux_map != NULL) {
         for (khint_t i = kh_begin(aux_map); i != kh_end(aux_map); ++ i) {
             if (kh_exist(aux_map, i)) {
-                //free((void *) kh_key(aux_map, i)); // TODO avoid void *
                 kh_del(s2a, aux_map, i);
                 struct slow5_rec_aux_data *aux_data = &kh_value(aux_map, i);
                 free(aux_data->data);
@@ -1570,22 +1592,16 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
 // -2   attr not found
 // -3   type is an array type
 int slow5_rec_set(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, const char *attr, const void *data) {
-    if (read == NULL || aux_meta == NULL || attr == NULL || data == NULL) {
+    if (read == NULL || aux_meta == NULL || aux_meta->num == 0 || attr == NULL || data == NULL) {
         return -1;
     }
 
-    bool found = false;
-    // TODO use a map from attr to index to speed this up
-    int64_t i;
-    for (i = 0; i < aux_meta->num; ++ i) {
-        if (strcmp(aux_meta->attrs[i], attr) == 0) {
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
+    khint_t pos = kh_get(s2ui32, aux_meta->attr_to_pos, attr);
+    if (pos == kh_end(aux_meta->attr_to_pos)) {
         return -2;
     }
+
+    uint32_t i = kh_value(aux_meta->attr_to_pos, pos);
 
     if (IS_PTR(aux_meta->types[i])) {
         return -3;
@@ -1605,22 +1621,16 @@ int slow5_rec_set(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, const
 // -2   attr not found
 // -3   type is not an array type
 int slow5_rec_set_array(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, const char *attr, const void *data, size_t len) {
-    if (read == NULL || aux_meta == NULL || attr == NULL || data == NULL) {
+    if (read == NULL || aux_meta == NULL || aux_meta->num == 0 || attr == NULL || data == NULL) {
         return -1;
     }
 
-    bool found = false;
-    // TODO use a map from attr to index to speed this up
-    int64_t i;
-    for (i = 0; i < aux_meta->num; ++ i) {
-        if (strcmp(aux_meta->attrs[i], attr) == 0) {
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
+    khint_t pos = kh_get(s2ui32, aux_meta->attr_to_pos, attr);
+    if (pos == kh_end(aux_meta->attr_to_pos)) {
         return -2;
     }
+
+    uint32_t i = kh_value(aux_meta->attr_to_pos, pos);
 
     if (!IS_PTR(aux_meta->types[i])) {
         return -3;
@@ -1640,33 +1650,7 @@ int slow5_rec_set_array(struct slow5_rec *read, struct slow5_aux_meta *aux_meta,
 // -2   attr not found
 // -3   type is not a string
 int slow5_rec_set_string(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, const char *attr, const void *data) {
-    if (read == NULL || aux_meta == NULL || attr == NULL || data == NULL) {
-        return -1;
-    }
-
-    bool found = false;
-    // TODO use a map from attr to index to speed this up
-    int64_t i;
-    for (i = 0; i < aux_meta->num; ++ i) {
-        if (strcmp(aux_meta->attrs[i], attr) == 0) {
-            found = true;
-            break;
-        }
-    }
-    if (!found) {
-        return -2;
-    }
-
-    if (aux_meta->types[i] != STRING) {
-        return -3;
-    }
-
-    if (read->aux_map == NULL) {
-        read->aux_map = kh_init(s2a);
-    }
-    slow5_rec_set_aux_map(read->aux_map, attr, (uint8_t *) data, aux_meta->sizes[i] * (strlen((char *) data) + 1), aux_meta->types[i]);
-
-    return 0;
+    return slow5_rec_set_array(read, aux_meta, attr, data, strlen((const char *) data) + 1);
 }
 
 static inline void slow5_rec_set_aux_map(khash_t(s2a) *aux_map, const char *attr, const uint8_t *data, uint64_t bytes, enum aux_type type) {
@@ -1907,7 +1891,7 @@ char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err
     }
     return val;
 }
-char *slow5_rec_get_str(const struct slow5_rec *read, const char *attr, int *err) {
+char *slow5_rec_get_string(const struct slow5_rec *read, const char *attr, int *err) {
     char *val = NULL;
     int tmp_err = -1;
 
