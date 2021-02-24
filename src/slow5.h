@@ -45,6 +45,7 @@ static const struct slow5_version ASCII_VERSION_STRUCT = { .major = 0, .minor = 
 static const struct slow5_version BINARY_VERSION_STRUCT = { .major = 0, .minor = 1, .patch = 0 };
 
 // SLOW5 auxiliary types
+// DO NOT rearrange! See subtracting INT8_T_ARRAY in TO_PRIM_TYPE
 enum aux_type {
     INT8_T = 0,
     INT16_T,
@@ -70,7 +71,8 @@ enum aux_type {
     STRING
 };
 
-#define IS_PTR(type) (type >= INT8_T_ARRAY)
+#define IS_PTR(type)        (type >= INT8_T_ARRAY)
+#define TO_PRIM_TYPE(type)  ((enum aux_type) (type - INT8_T_ARRAY))
 
 // Type with corresponding size
 struct aux_type_meta {
@@ -149,7 +151,7 @@ enum slow5_cols {
 struct slow5_rec_aux_data {
     uint64_t len;
     uint64_t bytes;
-    enum aux_type type; // TODO decision: remove this and use slow5_aux_meta types but with hash map from attr -> position, or use this
+    enum aux_type type;
     uint8_t *data;
 };
 
@@ -357,8 +359,18 @@ uint64_t slow5_rec_get_uint64(const struct slow5_rec *read, const char *attr, in
 float slow5_rec_get_float(const struct slow5_rec *read, const char *attr, int *err);
 double slow5_rec_get_double(const struct slow5_rec *read, const char *attr, int *err);
 char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err);
-char *slow5_rec_get_string(const struct slow5_rec *read, const char *attr, int *err);
-// TODO add other array types
+
+int8_t *slow5_rec_get_int8_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+int16_t *slow5_rec_get_int16_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+int32_t *slow5_rec_get_int32_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+int64_t *slow5_rec_get_int64_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+uint8_t *slow5_rec_get_uint8_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+uint16_t *slow5_rec_get_uint16_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+uint32_t *slow5_rec_get_uint32_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+uint64_t *slow5_rec_get_uint64_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+float *slow5_rec_get_float_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+double *slow5_rec_get_double_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
+char *slow5_rec_get_string(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err);
 
 /**
  * Get the read entry in the specified format.

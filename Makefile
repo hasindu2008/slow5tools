@@ -15,6 +15,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/s2f.o \
       $(BUILD_DIR)/index.o \
       $(BUILD_DIR)/extract.o \
+      $(BUILD_DIR)/view.o \
 	  $(BUILD_DIR)/slow5idx_old.o \
 	  $(BUILD_DIR)/kstring.o \
 	  $(BUILD_DIR)/misc_old.o \
@@ -49,6 +50,9 @@ $(BUILD_DIR)/index.o: src/index.c src/slow5_old.h src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/extract.o: src/extract.c src/slow5_old.h src/error.h
+	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/view.o: src/view.c src/error.h src/misc.c
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 #$(BUILD_DIR)/fastt_main.o: src/fastt_main.c src/slow5_old.h src/fast5lite.h src/slow5misc.h src/error.h

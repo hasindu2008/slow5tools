@@ -1,4 +1,5 @@
 #include "slow5_old.h"
+#include "cmd.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5|BLOW5_FILE]\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
