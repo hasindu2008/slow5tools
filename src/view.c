@@ -6,22 +6,25 @@
 #include "fast5.h"
 #include <getopt.h>
 
-#define USAGE_MSG "Usage: %s [OPTION]... [FROM_FILE]...\n"
+#define USAGE_MSG "Usage: %s [OPTION]... [FILE]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
-    "Convert a fast5 or slow5 file to a specified format.\n" \
+    "View a fast5 or slow5 FILE in another format.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -f, --from=[FROM_FORMAT]   specify the FROM_FILE format\n" \
+    "    -f, --from=[FORMAT]        specify input file format\n" \
+    "    -t, --to=[FORMAT]          specify output file format\n" \
+    "    -c, --compress=[METHOD]    specify output compression method -- gzip (only available for format blow5)\n" \
+    "    -o, --output=[FILE]        output to FILE -- stdout\n" \
     "    -h, --help                 display this message and exit\n" \
-    "    -o, --output=[TO_FILE]     output to TO_FILE -- stdout\n" \
-    "    -t, --to=[TO_FORMAT]       specify the TO_FILE format\n" \
-    "    -p, --compress=[]       specify the TO_FILE format\n" \
     "FORMATS:\n" \
+    "    slow5\n" \
     "    blow5\n" \
     "    fast5  (not implemented yet)\n" \
-    "    slow5\n"
+    "METHODS:\n" \
+    "    none\n" \
+    "    gzip -- default\n"
 
 enum view_fmt {
     // The first formats must match the order of enum slow5_fmt
@@ -80,6 +83,18 @@ enum view_fmt path_to_view_fmt(const char *fname) {
     return fmt;
 }
 
+press_method_t name_to_press_method(const char *name) {
+    press_method_t comp = (press_method_t) -1;
+
+    if (strcmp(name, "none") == 0) {
+        comp = COMPRESS_NONE;
+    } else if (strcmp(name, "gzip") == 0) {
+        comp = COMPRESS_GZIP;
+    }
+
+    return comp;
+}
+
 //static double init_realtime = 0;
 
 int view_main(int argc, char **argv, struct program_meta *meta) {
@@ -114,10 +129,11 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
-        {"from",    required_argument,  NULL, 'f'},
-        {"help",    no_argument,        NULL, 'h'},
-        {"output",  required_argument,  NULL, 'o'},
-        {"to",      required_argument,  NULL, 't'},
+        {"compress",    required_argument,  NULL, 'c'},
+        {"from",        required_argument,  NULL, 'f'},
+        {"help",        no_argument,        NULL, 'h'},
+        {"output",      required_argument,  NULL, 'o'},
+        {"to",          required_argument,  NULL, 't'},
         {NULL, 0, NULL, 0}
     };
 
@@ -125,23 +141,28 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     FILE *f_out = stdout;
     enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
     enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
+    press_method_t press_out = COMPRESS_GZIP;
 
     // Input arguments
     char *arg_fname_in = NULL;
     char *arg_fname_out = NULL;
     char *arg_fmt_in = NULL;
     char *arg_fmt_out = NULL;
+    char *arg_press_out = NULL;
 
     int opt;
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "f:ho:t:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:f:ho:t:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
         switch (opt) {
+            case 'c':
+                arg_press_out = optarg;
+                break;
             case 'f':
                 arg_fmt_in = optarg;
                 break;
@@ -192,6 +213,21 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             MESSAGE(stderr, "invalid output format -- '%s'", arg_fmt_out);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
+        }
+    }
+    if (arg_press_out != NULL) {
+        if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
+            MESSAGE(stderr, "compression only available for output format '%s'", BINARY_NAME);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        } else {
+            press_out = name_to_press_method(arg_press_out);
+
+            if (press_out == (press_method_t) -1) {
+                MESSAGE(stderr, "invalid compression method -- '%s'", arg_press_out);
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
+                return EXIT_FAILURE;
+            }
         }
     }
 
@@ -285,7 +321,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             view_ret = EXIT_FAILURE;
         }
 
-        if (slow5_convert(s5p, f_out, (enum slow5_fmt) fmt_out, COMPRESS_NONE) != 0) { // TODO make a compression option
+        if (slow5_convert(s5p, f_out, (enum slow5_fmt) fmt_out, press_out) != 0) {
             ERROR("Conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
         }
