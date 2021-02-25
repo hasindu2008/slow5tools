@@ -32,7 +32,7 @@ static const struct slow5_fmt_meta SLOW5_FORMAT_META[] = {
     { BINARY_NAME,  FORMAT_BINARY   }
 };
 
-/* Header */
+/******************************* SLOW5 Header ***************************************/
 
 // SLOW5 versioning
 struct slow5_version {
@@ -146,50 +146,70 @@ struct slow5_hdr {
     struct slow5_aux_meta *aux_meta;    // Auxiliary field metadata
 };
 
-/* Read Record */
+/**************************** SLOW5 Read Record ***************************************/
 
-// SLOW5 main record columns
+// SLOW5 primary record columns stored as an enum to keep  the order of the columns
+// TODO: make the first one is set to zero
 enum slow5_cols {
     SLOW5_COLS_FOREACH(GENERATE_ENUM)
     SLOW5_COLS_NUM
 };
 
-// SLOW5 auxiliary attributed data
+// SLOW5 auxiliary attribute data (represents a single SLOW5 auxiliary field of a particular read record)
 struct slow5_rec_aux_data {
-    uint64_t len;
-    uint64_t bytes;
-    enum aux_type type;
-    uint8_t *data;
+    uint64_t len;       //number of elements in a array (if a primitive type this is always 1)
+    uint64_t bytes;     //total number of bytes in data (currently, the allocated size which is equal to the amount of data in it)
+    enum aux_type type; //data type of the auxiliary attribute
+    uint8_t *data;      //raw data
 };
 
 // Header data map: auxiliary attribute string -> auxiliary data
 KHASH_MAP_INIT_STR(s2a, struct slow5_rec_aux_data)
 
-// SLOW5 record data
-typedef uint64_t slow5_rec_size_t;
-typedef uint16_t slow5_rid_len_t;
+typedef uint64_t slow5_rec_size_t; //size of the whole record (in bytes)
+typedef uint16_t slow5_rid_len_t;  //length of the read ID string (does not include null character)
+
+// SLOW5 record data struct (represents a single SLOW5 record)
 struct slow5_rec {
-    slow5_rid_len_t read_id_len;
-    SLOW5_COLS_FOREACH(GENERATE_STRUCT)
-    khash_t(s2a) *aux_map;  // Auxiliary attribute string -> auxiliary data
+    slow5_rid_len_t read_id_len;        // length of the read ID string (does not include null character)
+    SLOW5_COLS_FOREACH(GENERATE_STRUCT) // macro magic that generates the struct fields (see example below)
+    khash_t(s2a) *aux_map;              // Auxiliary attribute string -> auxiliary data
+};
+/*
+e.g.:
+struct slow5_rec {
+    slow5_rid_len_t read_id_len;        // length of the read ID string (does not include null character)
+
+    char* read_id;
+    uint32_t read_group;
+    double digitisation;
+    double offset;
+    double range;
+    double sampling_rate;
+    uint64_t len_raw_signal;
+    int16_t* raw_signal;
+
+    khash_t(s2a) *aux_map;              // Auxiliary attribute string -> auxiliary data
 };
 
-/* SLOW5 file */
+*/
 
-// SLOW5 file meta
+/********************************* SLOW5 file handler **********************/
+
+// SLOW5 file meta data
 struct slow5_file_meta {
     const char *pathname;
     int fd;
-    uint64_t start_rec_offset;
+    uint64_t start_rec_offset;  //offset (in bytes) of the first SLOW5 record (skipping the SLOW5 header; used for indexing)
 };
 
 // SLOW5 file structure
 struct slow5_file {
     FILE *fp;
-    enum slow5_fmt format;
-    struct press *compress; // TODO better name
-    struct slow5_hdr *header;
-    struct slow5_idx *index;
+    enum slow5_fmt format;      //whether SLOW5, BLOW5 etc...
+    struct press *compress;     //compression related metadata
+    struct slow5_hdr *header;   //SLOW5 header
+    struct slow5_idx *index;    //SLOW5 index
     struct slow5_file_meta meta;
 };
 
@@ -354,6 +374,10 @@ int slow5_add_rec(struct slow5_rec *read, struct slow5_file *s5p);
  * @return  error code described above
  */
 int slow5_rm_rec(const char *read_id, struct slow5_file *s5p); // TODO
+
+
+//getting auxiliary fields
+//TODO: change to rec_aux or something
 
 int8_t slow5_rec_get_int8(const struct slow5_rec *read, const char *attr, int *err);
 int16_t slow5_rec_get_int16(const struct slow5_rec *read, const char *attr, int *err);
