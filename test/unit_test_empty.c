@@ -90,7 +90,7 @@ int slow5_rec_set_valid(void) {
     ASSERT(slow5_rec_set(read, aux_meta, "median_before", &mb) == 0);
     ASSERT(slow5_rec_set(read, aux_meta, "start_mux", &sm) == 0);
 
-    ASSERT(slow5_rec_print(read, aux_meta, FORMAT_ASCII, COMPRESS_NONE) != -1);
+    ASSERT(slow5_rec_print(read, aux_meta, FORMAT_ASCII, NULL) != -1);
     slow5_rec_free(read);
     slow5_hdr_free(header);
 

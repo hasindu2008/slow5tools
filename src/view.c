@@ -17,6 +17,7 @@
     "    -h, --help                 display this message and exit\n" \
     "    -o, --output=[TO_FILE]     output to TO_FILE -- stdout\n" \
     "    -t, --to=[TO_FORMAT]       specify the TO_FILE format\n" \
+    "    -p, --compress=[]       specify the TO_FILE format\n" \
     "FORMATS:\n" \
     "    blow5\n" \
     "    fast5  (not implemented yet)\n" \
@@ -219,7 +220,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
         // Error
         if (fmt_in == VIEW_FORMAT_UNKNOWN) {
-            MESSAGE(stderr, "cannot detect file's format -- '%s'", arg_fname_in);
+            MESSAGE(stderr, "cannot detect file format -- '%s'", arg_fname_in);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         }
@@ -241,7 +242,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
         // Error
         if (fmt_out == VIEW_FORMAT_UNKNOWN) {
-            MESSAGE(stderr, "cannot detect file's format -- '%s'", arg_fname_out);
+            MESSAGE(stderr, "cannot detect file format -- '%s'", arg_fname_out);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         }
@@ -279,7 +280,18 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         struct slow5_file *s5p = slow5_open_with(arg_fname_in, "r", (enum slow5_fmt) fmt_in);
 
         if (s5p == NULL) {
-            ERROR("SLOW5 file '%s' could not be opened - %s.",
+            ERROR("File '%s' could not be opened - %s.",
+                  arg_fname_in, strerror(errno));
+            view_ret = EXIT_FAILURE;
+        }
+
+        if (slow5_convert(s5p, f_out, (enum slow5_fmt) fmt_out, COMPRESS_NONE) != 0) { // TODO make a compression option
+            ERROR("Conversion failed.%s", "");
+            view_ret = EXIT_FAILURE;
+        }
+
+        if (slow5_close(s5p) == EOF) {
+            ERROR("File '%s' failed on closing - %s.",
                   arg_fname_in, strerror(errno));
             view_ret = EXIT_FAILURE;
         }
