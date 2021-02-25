@@ -46,6 +46,8 @@ static const struct slow5_version BINARY_VERSION_STRUCT = { .major = 0, .minor =
 
 // SLOW5 auxiliary types
 // DO NOT rearrange! See subtracting INT8_T_ARRAY in TO_PRIM_TYPE
+// if adding more in future, primitive types must be added after CHAR and arrays after STRING
+// both the primitive type and the array type must be simultaneously added
 enum aux_type {
     INT8_T = 0,
     INT16_T,
@@ -58,6 +60,7 @@ enum aux_type {
     FLOAT,
     DOUBLE,
     CHAR,
+
     INT8_T_ARRAY,
     INT16_T_ARRAY,
     INT32_T_ARRAY,
@@ -80,6 +83,9 @@ struct aux_type_meta {
     uint8_t size;
     const char *type_str;
 };
+
+//any modifications to aux_type should follow by appropriate modifications to this.
+//the order should be identical to that in aux_type
 static const struct aux_type_meta AUX_TYPE_META[] = {
     // Needs to be the same order as the enum definition
     { INT8_T,           sizeof (int8_t),        "int8_t"    },
@@ -93,6 +99,7 @@ static const struct aux_type_meta AUX_TYPE_META[] = {
     { FLOAT,            sizeof (float),         "float"     },
     { DOUBLE,           sizeof (double),        "double"    },
     { CHAR,             sizeof (char),          "char"      },
+
     { INT8_T_ARRAY,     sizeof (int8_t),        "int8_t*"   },
     { INT16_T_ARRAY,    sizeof (int16_t),       "int16_t*"  },
     { INT32_T_ARRAY,    sizeof (int32_t),       "int32_t*"  },
@@ -108,15 +115,15 @@ static const struct aux_type_meta AUX_TYPE_META[] = {
 
 // Auxiliary attribute to position map: attribute string -> index position
 KHASH_MAP_INIT_STR(s2ui32, uint32_t)
-// SLOW5 auxiliary attribute metadata
+// SLOW5 auxiliary attribute metadata (related to the header)
 struct slow5_aux_meta {
-    uint32_t num;
-    size_t cap;
+    uint32_t num;   //number of auxiliary attributes
+    size_t cap;     //capacity of the arrays: attrs, types and sizes
 
-    khash_t(s2ui32) *attr_to_pos;
-    char **attrs;
-    enum aux_type *types;
-    uint8_t *sizes;
+    khash_t(s2ui32) *attr_to_pos;   //hashtable that maps attribute string -> index position in the following arrays
+    char **attrs;     //attribute names
+    enum aux_type *types;   //attribute type
+    uint8_t *sizes;     //attribute datatype sizes, for arrays this stores the size of the corresponding primitive type (TODO: this is probably redundant)
 };
 
 // Header data map: attribute string -> data string
@@ -126,9 +133,9 @@ KHASH_SET_INIT_STR(s)
 
 // SLOW5 header data
 struct slow5_hdr_data {
-    uint32_t num_attrs;	            // Number of data attributes
-    khash_t(s) *attrs;              // Set of the data attributes
-    kvec_t(khash_t(s2s) *) maps;    // Dynamic array of maps (attribute string -> data string) length=num_read_groups
+    uint32_t num_attrs;	            // Number of data attributes (related to constant fields in FAST5)
+    khash_t(s) *attrs;              // Set of the data attribute keys (incase of multi read groups, the union of keys from all read groups)
+    kvec_t(khash_t(s2s) *) maps;    // Dynamic array of maps (attribute string -> data string) length=num_read_groups. Index in the vector corresponds to the read group. The keys that are not relevant to a particular read group are not stored in this map.
 };
 
 // SLOW5 header

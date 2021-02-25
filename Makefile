@@ -86,10 +86,10 @@ $(BUILD_DIR)/split_slow5.o: src/split_slow5.c src/slow5_old.h src/error.h
 
 #libslow5
 $(BUILD_DIR)/libslow5.so: $(OBJ_LIB)
-	$(CXX) $(CFLAGS) -shared $<  -o $@
+	$(CXX) $(CFLAGS) -shared $^  -o $@
 
 $(BUILD_DIR)/libslow5.a: $(OBJ_LIB)
-	$(AR) rcs $@ $<
+	$(AR) rcs $@ $^
 
 $(BUILD_DIR)/slow5.o: src/slow5.c src/slow5.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
