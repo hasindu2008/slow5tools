@@ -214,7 +214,7 @@ int main(const int argc, char **argv){
 
                         // Calling command program
                         if (meta.verbose) {
-                            VERBOSE("using command %s", cmds[i].name);
+                            VERBOSE("using command '%s'", cmds[i].name);
                         }
                         ret = cmds[i].main(argc - optind_copy, cmd_argv + optind_copy, &meta);
 

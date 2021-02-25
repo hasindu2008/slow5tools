@@ -1,6 +1,9 @@
 #include "misc.h"
 #include "cmd.h"
 #include "error.h"
+#include "slow5.h"
+#include "slow5_defs.h"
+#include "fast5.h"
 #include <getopt.h>
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FROM_FILE]...\n"
@@ -11,6 +14,7 @@
     "\n" \
     "OPTIONS:\n" \
     "    -f, --from=[FROM_FORMAT]   specify the FROM_FILE format\n" \
+    "    -h, --help                 display this message and exit\n" \
     "    -o, --output=[TO_FILE]     output to TO_FILE -- stdout\n" \
     "    -t, --to=[TO_FORMAT]       specify the TO_FILE format\n" \
     "FORMATS:\n" \
@@ -18,12 +22,69 @@
     "    fast5  (not implemented yet)\n" \
     "    slow5\n"
 
-static double init_realtime = 0;
+enum view_fmt {
+    // The first formats must match the order of enum slow5_fmt
+    VIEW_FORMAT_UNKNOWN,
+    VIEW_FORMAT_SLOW5_ASCII,
+    VIEW_FORMAT_SLOW5_BINARY,
+
+    VIEW_FORMAT_FAST5
+};
+
+struct view_fmt_meta {
+    enum view_fmt format;
+    const char *name;
+    const char *ext;
+};
+static const struct view_fmt_meta VIEW_FORMAT_META[] = {
+    { VIEW_FORMAT_SLOW5_ASCII,  ASCII_NAME,     ASCII_EXTENSION     },
+    { VIEW_FORMAT_SLOW5_BINARY, BINARY_NAME,    BINARY_EXTENSION    },
+    { VIEW_FORMAT_FAST5,        FAST5_NAME,     FAST5_EXTENSION     }
+};
+
+enum view_fmt name_to_view_fmt(const char *fmt_str) {
+    enum view_fmt fmt = VIEW_FORMAT_UNKNOWN;
+
+    for (size_t i = 0; i < sizeof VIEW_FORMAT_META / sizeof VIEW_FORMAT_META[0]; ++ i) {
+        const struct view_fmt_meta meta = VIEW_FORMAT_META[i];
+        if (strcmp(meta.name, fmt_str) == 0) {
+            fmt = meta.format;
+            break;
+        }
+    }
+
+    return fmt;
+}
+
+enum view_fmt path_to_view_fmt(const char *fname) {
+    enum view_fmt fmt = VIEW_FORMAT_UNKNOWN;
+
+    for (int i = strlen(fname) - 1; i >= 0; -- i) {
+        if (fname[i] == '.') {
+            const char *ext = fname + i;
+
+            for (size_t j = 0; j < sizeof VIEW_FORMAT_META / sizeof VIEW_FORMAT_META[0]; ++ j) {
+                const struct view_fmt_meta meta = VIEW_FORMAT_META[j];
+                if (strcmp(ext, meta.ext) == 0) { // TODO comparing the '.' is superfluous
+                    fmt = meta.format;
+                    break;
+                }
+            }
+
+            break;
+        }
+    }
+
+
+    return fmt;
+}
+
+//static double init_realtime = 0;
 
 int view_main(int argc, char **argv, struct program_meta *meta) {
-    init_realtime = realtime();
+    int view_ret = EXIT_SUCCESS;
 
-    //int ret; // For checking return values of functions
+    //init_realtime = realtime();
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
@@ -51,41 +112,37 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    /*
     static struct option long_opts[] = {
-        {"from",    required_argument, NULL, 'f'},
-        {"output",  required_argument, NULL, 'o'},
-        {"to",      required_argument, NULL, 't'},
+        {"from",    required_argument,  NULL, 'f'},
+        {"help",    no_argument,        NULL, 'h'},
+        {"output",  required_argument,  NULL, 'o'},
+        {"to",      required_argument,  NULL, 't'},
         {NULL, 0, NULL, 0}
     };
-    */
 
-    /*
     // Default options
     FILE *f_out = stdout;
-    enum FormatOut format_out = OUT_ASCII;
-    FILE *f_idx = NULL;
+    enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
+    enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
 
     // Input arguments
+    char *arg_fname_in = NULL;
     char *arg_fname_out = NULL;
-    char *arg_dir_out = NULL;
-    char *arg_fname_idx = NULL;
+    char *arg_fmt_in = NULL;
+    char *arg_fmt_out = NULL;
 
     int opt;
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "bchi:o:d:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "f:ho:t:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
         switch (opt) {
-            case 'b':
-                format_out = OUT_BINARY;
-                break;
-            case 'c':
-                format_out = OUT_COMP;
+            case 'f':
+                arg_fmt_in = optarg;
                 break;
             case 'h':
                 if (meta->verbose) {
@@ -94,23 +151,11 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
-            case 'i':
-                arg_fname_idx = optarg;
-                break;
             case 'o':
                 arg_fname_out = optarg;
                 break;
-            case 'd':
-                arg_dir_out = optarg;
-                break;
-            case  0 :
-                if (longindex == 5) {
-                    iop = atoi(optarg);
-                    if (iop < 1) {
-                        ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-                        exit(EXIT_FAILURE);
-                    }
-                }
+            case 't':
+                arg_fmt_out = optarg;
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -119,22 +164,101 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
-    if(iop>1 && !arg_dir_out){
-        ERROR("output directory should be specified when using multiprocessing iop=%d",iop);
-        return EXIT_FAILURE;
+    // Parse format arguments
+    if (arg_fmt_in != NULL) {
+        if (meta != NULL && meta->verbose) {
+            VERBOSE("parsing input format%s","");
+        }
+
+        fmt_in = name_to_view_fmt(arg_fmt_in);
+
+        // An error occured
+        if (fmt_in == VIEW_FORMAT_UNKNOWN) {
+            MESSAGE(stderr, "invalid input format -- '%s'", arg_fmt_in);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
     }
+    if (arg_fmt_out != NULL) {
+        if (meta != NULL && meta->verbose) {
+            VERBOSE("parsing output format%s","");
+        }
+
+        fmt_out = name_to_view_fmt(arg_fmt_out);
+
+        // An error occured
+        if (fmt_out == VIEW_FORMAT_UNKNOWN) {
+            MESSAGE(stderr, "invalid output format -- '%s'", arg_fmt_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+    }
+
+    // Check for an input file to parse
+    if (optind >= argc) { // TODO use stdin if no file given
+        MESSAGE(stderr, "missing input file%s", "");
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    } else if (optind != argc - 1) { // TODO handle more than 1 file?
+        MESSAGE(stderr, ">1 input file%s", "");
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    } else { // Save input filename
+        arg_fname_in = argv[optind];
+    }
+
+    // Autodetect input/output formats
+    if (fmt_in == VIEW_FORMAT_UNKNOWN) {
+        if (meta != NULL && meta->verbose) {
+            VERBOSE("auto detecting input file format%s","");
+        }
+
+        fmt_in = path_to_view_fmt(arg_fname_in);
+
+        // Error
+        if (fmt_in == VIEW_FORMAT_UNKNOWN) {
+            MESSAGE(stderr, "cannot detect file's format -- '%s'", arg_fname_in);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+    }
+    if (fmt_out == VIEW_FORMAT_UNKNOWN) {
+        if (arg_fname_out == NULL) {
+            // Error
+            MESSAGE(stderr, "missing output file or format%s", "");
+            fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+
+        if (meta != NULL && meta->verbose) {
+            VERBOSE("auto detecting output file format%s","");
+        }
+
+        fmt_out = path_to_view_fmt(arg_fname_out);
+
+        // Error
+        if (fmt_out == VIEW_FORMAT_UNKNOWN) {
+            MESSAGE(stderr, "cannot detect file's format -- '%s'", arg_fname_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+    }
+
 
     // Parse output argument
     if (arg_fname_out != NULL) {
         if (meta != NULL && meta->verbose) {
-            VERBOSE("parsing output filename%s","");
+            VERBOSE("opening output file%s","");
         }
         // Create new file or
         // Truncate existing file
         FILE *new_file;
         new_file = fopen(arg_fname_out, "w");
 
-        // An error occured
+        // An error occurred
         if (new_file == NULL) {
             ERROR("File '%s' could not be opened - %s.",
                   arg_fname_out, strerror(errno));
@@ -146,125 +270,43 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
-    // Parse index argument
-    if (arg_fname_idx != NULL) {
-        if (meta != NULL && meta->verbose) {
-            VERBOSE("parsing index filename%s","");
+
+
+    // Do the conversion
+    if ((fmt_in == VIEW_FORMAT_SLOW5_ASCII || fmt_in == VIEW_FORMAT_SLOW5_BINARY) &&
+            (fmt_out == VIEW_FORMAT_SLOW5_ASCII || fmt_out == VIEW_FORMAT_SLOW5_BINARY)) {
+
+        struct slow5_file *s5p = slow5_open_with(arg_fname_in, "r", (enum slow5_fmt) fmt_in);
+
+        if (s5p == NULL) {
+            ERROR("SLOW5 file '%s' could not be opened - %s.",
+                  arg_fname_in, strerror(errno));
+            view_ret = EXIT_FAILURE;
         }
-        // Create new file or
-        // Truncate existing file
-        FILE *new_file;
-        new_file = fopen(arg_fname_idx, "w");
 
-        // An error occured
-        if (new_file == NULL) {
-            ERROR("File '%s' could not be opened - %s.",
-                  arg_fname_idx, strerror(errno));
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        } else {
-            f_idx = new_file;
-        }
+    } else { // TODO support fast5
+        MESSAGE(stderr, "fast5 conversion not implemented%s", "");
+        view_ret = EXIT_FAILURE;
     }
 
-    // Check for remaining files to parse
-    if (optind >= argc) {
-        MESSAGE(stderr, "missing fast5 files or directories%s", "");
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }
 
-    if (format_out == OUT_COMP) {
-    }
-    // Output slow5 header
-    switch (format_out) {
-        case OUT_ASCII:
-//            fprintf(f_out, SLOW5_FILE_FORMAT);
-//            fprintf(f_out, SLOW5_HEADER);
-            break;
-        case OUT_BINARY:
-            fprintf(f_out, BLOW5_FILE_FORMAT);
-            fprintf(f_out, SLOW5_HEADER);
-            break;
-        case OUT_COMP:
-            // Initialise zlib stream structure
-            strm.zalloc = Z_NULL;
-            strm.zfree = Z_NULL;
-            strm.opaque = Z_NULL;
-
-            ret = deflateInit2(&strm,
-                    Z_DEFAULT_COMPRESSION,
-                    Z_DEFLATED,
-                    MAX_WBITS | GZIP_WBITS, // Gzip compatible compression
-                    Z_MEM_DEFAULT,
-                    Z_DEFAULT_STRATEGY);
-            if (ret != Z_OK) {
-                EXIT_MSG(EXIT_FAILURE, argv, meta);
-                return EXIT_FAILURE;
-            }
-
-            char header[] = BLOW5_FILE_FORMAT SLOW5_HEADER;
-            ret = z_deflate_write(&strm, header, strlen(header), f_out, Z_FINISH);
-            if (ret != Z_STREAM_END) {
-                EXIT_MSG(EXIT_FAILURE, argv, meta);
-                return EXIT_FAILURE;
-            }
-            ret = deflateReset(&strm);
-            if (ret != Z_OK) {
-                EXIT_MSG(EXIT_FAILURE, argv, meta);
-                return EXIT_FAILURE;
-            }
-            break;
-    }
-
-    double realtime0 = realtime();
-    reads_count readsCount;
-    std::vector<std::string> fast5_files;
-
-    for (int i = optind; i < argc; ++ i) {
-        if(iop==1){
-            // Recursive way
-            recurse_dir(argv[i], f_out, format_out, &strm, f_idx, &readsCount, arg_dir_out, meta);
-        }else{
-            find_all_5(argv[i], fast5_files, FAST5_EXTENSION);
-        }
-    }
-
-    if(iop==1){
-        MESSAGE(stderr, "total fast5: %lu, bad fast5: %lu", readsCount.total_5, readsCount.bad_5_file);
-    }else{
-        fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), realtime() - realtime0);
-        f2s_iop(f_out, format_out, &strm, f_idx, iop, fast5_files, arg_dir_out, meta, &readsCount);
-    }
-
-    if (format_out == OUT_COMP) {
-        ret = deflateEnd(&strm);
-
-        if (ret != Z_OK) {
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
-    }
 
     // Close output file
-    if (arg_fname_out != NULL && fclose(f_out) == EOF) {
-        ERROR("File '%s' failed on closing - %s.",
-              arg_fname_out, strerror(errno));
+    if (arg_fname_out != NULL) {
+        if (meta != NULL && meta->verbose) {
+            VERBOSE("closing output file%s","");
+        }
 
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
+        if (fclose(f_out) == EOF) {
+            ERROR("File '%s' failed on closing - %s.",
+                  arg_fname_out, strerror(errno));
+
+            view_ret = EXIT_FAILURE;
+        }
     }
 
-    if (arg_fname_idx != NULL && fclose(f_idx) == EOF) {
-        ERROR("File '%s' failed on closing - %s.",
-              arg_fname_idx, strerror(errno));
-
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
+    if (view_ret == EXIT_FAILURE) {
+        EXIT_MSG(EXIT_SUCCESS, argv, meta);
     }
-    */
-
-    EXIT_MSG(EXIT_SUCCESS, argv, meta);
-    return EXIT_SUCCESS;
+    return view_ret;
 }

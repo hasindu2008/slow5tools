@@ -26,6 +26,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/split_slow5.o \
 
 OBJ_LIB = $(BUILD_DIR)/slow5.o \
+		$(BUILD_DIR)/slow5idx.o	\
 		$(BUILD_DIR)/misc.o	\
 		$(BUILD_DIR)/press.o \
 
@@ -91,6 +92,9 @@ $(BUILD_DIR)/libslow5.a: $(OBJ_LIB)
 	$(AR) rcs $@ $<
 
 $(BUILD_DIR)/slow5.o: src/slow5.c src/slow5.h
+	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
+
+$(BUILD_DIR)/slow5idx.o: src/slow5idx.c src/slow5idx.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
 
 $(BUILD_DIR)/misc.o: src/misc.c src/misc.h
