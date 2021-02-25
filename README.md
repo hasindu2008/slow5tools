@@ -5,6 +5,7 @@ A toolset for converting to and from SLOW5 files.
 
 <!--- [![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?token=pN7xnsxgLrRxbAn8WLVQ&branch=master)](https://travis-ci.com/hasindu2008/slow5) -->
 [![SLOW5 C/C++ CI Local](https://github.com/hasindu2008/slow5/workflows/SLOW5%20C/C++%20CI%20Local/badge.svg)](https://github.com/hasindu2008/slow5/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local%22)
+[![SLOW5 C/C++ CI Local OSX](https://github.com/hasindu2008/slow5/workflows/SLOW5%20C/C++%20CI%20Local%20OSX/badge.svg)](https://github.com/hasindu2008/slow5/actions/workflows/c-cpp-selfhosted-mac.yml?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local+OSX%22)
 [![SLOW5 C/C++ CI Github](https://github.com/hasindu2008/slow5/workflows/SLOW5%20C/C++%20CI%20Github/badge.svg)](https://github.com/hasindu2008/slow5/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Github%22)
 
 ## Quick start
