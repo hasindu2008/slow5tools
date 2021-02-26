@@ -145,6 +145,8 @@ static inline void slow5_free(struct slow5_file *s5p) {
     if (s5p != NULL) {
         press_free(s5p->compress);
         slow5_hdr_free(s5p->header);
+        //as long a slow5 index is open, it is always writted back
+        //TODO: fix this to avoid issues with RO systems
         if (s5p->index != NULL) {
             if (s5p->index->fp != NULL) {
                 assert(fclose(s5p->index->fp) == 0);
@@ -308,6 +310,9 @@ struct slow5_hdr *slow5_hdr_init(FILE *fp, enum slow5_fmt format, press_method_t
  *          to use free() on afterwards
  */
 // TODO don't allow comp of COMPRESS_GZIP for FORMAT_ASCII
+
+//  flattened header returned as a void * (incase of BLOW5 magic number is also included)
+
 void *slow5_hdr_to_mem(struct slow5_hdr *header, enum slow5_fmt format, press_method_t comp, size_t *n) {
     char *mem = NULL;
 
@@ -447,7 +452,7 @@ void *slow5_hdr_to_mem(struct slow5_hdr *header, enum slow5_fmt format, press_me
         free(data_attrs);
     }
 
-    // Type header
+    //  data type header
     char *str_to_cp = slow5_hdr_types_to_str(header->aux_meta, &len_to_cp);
     // Realloc if necessary
     if (len + len_to_cp >= cap) {
@@ -477,7 +482,7 @@ void *slow5_hdr_to_mem(struct slow5_hdr *header, enum slow5_fmt format, press_me
         }
 
         mem[len] = '\0';
-    } else if (format == FORMAT_BINARY) {
+    } else if (format == FORMAT_BINARY) { //write the header size in bytes (which was skipped previously)
         header_size = len - (BINARY_HEADER_SIZE_OFFSET + sizeof header_size);
         memcpy(mem + BINARY_HEADER_SIZE_OFFSET, &header_size, sizeof header_size);
     }
@@ -618,7 +623,8 @@ int slow5_hdr_fwrite(FILE *fp, struct slow5_hdr *header, enum slow5_fmt format, 
  * or an input parameter is NULL.
  *
  * @param   attr    attribute name
- * @param   s5p     slow5 file
+ * @param   read_group     read group number
+ * @param   header     pointer to the header
  * @return  the attribute's value, or NULL on error
  */
 char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_hdr *header) {
@@ -651,7 +657,7 @@ char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_hd
  * Returns 0 other.
  *
  * @param   attr        attribute name
- * @param   s5p         slow5 file
+ * @param   header      pointer to the header
  * @return  0 on success, <0 on error as described above
  */
 int slow5_hdr_add_attr(const char *attr, struct slow5_hdr *header) {
@@ -755,8 +761,9 @@ void slow5_hdr_free(struct slow5_hdr *header) {
 }
 
 
-// slow5 header data
+/************************************* slow5 header data *************************************/
 
+//read slow5 header form file
 int slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, struct slow5_hdr *header, uint32_t *hdr_len) {
 
     int ret = 0;
@@ -856,13 +863,14 @@ struct slow5_aux_meta *slow5_aux_meta_init_empty(void) {
     return aux_meta;
 }
 
+//reads the data type row in the header (from file) and populates slow5_aux_meta. note: the buffer should be the one used for slow5_hdr_init
 struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uint32_t *hdr_len) {
 
     struct slow5_aux_meta *aux_meta = NULL;
 
     ssize_t buf_len = strlen(buf);
 
-    // Parse types
+    // Parse data types and deduce the sizes
     if (buf_len != strlen(ASCII_TYPE_HEADER_MIN)) {
         aux_meta = (struct slow5_aux_meta *) calloc(1, sizeof *aux_meta);
         char *shift = buf += strlen(ASCII_TYPE_HEADER_MIN);
@@ -898,7 +906,7 @@ struct slow5_aux_meta *slow5_aux_meta_init(FILE *fp, char *buf, size_t *cap, uin
         }
     }
 
-    // Get header
+    // Get column names
     assert((buf_len = getline(&buf, cap, fp)) != -1);
     if (hdr_len != NULL) {
         *hdr_len += buf_len;
