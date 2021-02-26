@@ -12,9 +12,7 @@ echo_test() {
 
 ex() {
     if [ $mem -eq 1 ]; then
-        if ! valgrind --leak-check=full --error-exitcode=1 "$@"; then
-            fail
-        fi
+        valgrind --leak-check=full --error-exitcode=1 "$@"
     else
         "$@"
     fi
@@ -31,12 +29,12 @@ not_compiled() {
 }
 
 my_diff() {
-    if ! ex diff "$1" "$2" -q; then
+    if ! diff "$1" "$2" -q; then
         fail
     fi
 }
 
-prep() {
+prep_unit() {
     mkdir -p 'test/bin'
     mkdir -p 'test/data/out/one_fast5'
     mkdir -p 'test/data/out/two_rg'
@@ -57,14 +55,13 @@ prep() {
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_duplicate.slow5'
 }
 
+prep_cli() {
+    mkdir -p 'test/data/out/one_fast5'
+
+    rm test/data/out/one_fast5/*
+}
+
 ret=0
-
-prep
-
-echo_test 'cli test'
-if ! ex ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null; then
-    fail
-fi
 
 echo_test 'endian test'
 if gcc -Wall test/endian_test.c -o test/bin/endian_test; then
@@ -72,6 +69,21 @@ if gcc -Wall test/endian_test.c -o test/bin/endian_test; then
 else
     not_compiled
 fi
+
+prep_cli
+
+echo_test 'cli test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/test_cli.sh mem; then
+        fail
+    fi
+else
+    if ! ./test/test_cli.sh; then
+        fail
+    fi
+fi
+
+prep_unit
 
 echo_test 'unit test helpers'
 if gcc -Wall -g -std=gnu99 test/unit_test_helpers.c -o test/bin/unit_test_helpers src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then

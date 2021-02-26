@@ -215,21 +215,6 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             return EXIT_FAILURE;
         }
     }
-    if (arg_press_out != NULL) {
-        if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
-            MESSAGE(stderr, "compression only available for output format '%s'", BINARY_NAME);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        } else {
-            press_out = name_to_press_method(arg_press_out);
-
-            if (press_out == (press_method_t) -1) {
-                MESSAGE(stderr, "invalid compression method -- '%s'", arg_press_out);
-                EXIT_MSG(EXIT_FAILURE, argv, meta);
-                return EXIT_FAILURE;
-            }
-        }
-    }
 
     // Check for an input file to parse
     if (optind >= argc) { // TODO use stdin if no file given
@@ -285,6 +270,23 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
 
+    if (arg_press_out != NULL) {
+        if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
+            MESSAGE(stderr, "compression only available for output format '%s'", BINARY_NAME);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        } else {
+            press_out = name_to_press_method(arg_press_out);
+
+            if (press_out == (press_method_t) -1) {
+                MESSAGE(stderr, "invalid compression method -- '%s'", arg_press_out);
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
+                return EXIT_FAILURE;
+            }
+        }
+    }
+
+
     // Parse output argument
     if (arg_fname_out != NULL) {
         if (meta != NULL && meta->verbose) {
@@ -321,6 +323,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             view_ret = EXIT_FAILURE;
         }
 
+        // TODO if output is the same format just duplicate file
         if (slow5_convert(s5p, f_out, (enum slow5_fmt) fmt_out, press_out) != 0) {
             ERROR("Conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
