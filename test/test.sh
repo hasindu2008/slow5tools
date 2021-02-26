@@ -34,12 +34,14 @@ my_diff() {
     fi
 }
 
-prep_unit() {
+prep() {
     mkdir -p 'test/bin'
     mkdir -p 'test/data/out/one_fast5'
     mkdir -p 'test/data/out/two_rg'
     mkdir -p 'test/data/out/aux_array'
+}
 
+prep_unit() {
     rm test/data/out/*.idx
     rm test/data/out/one_fast5/*
     rm test/data/out/two_rg/*
@@ -56,12 +58,12 @@ prep_unit() {
 }
 
 prep_cli() {
-    mkdir -p 'test/data/out/one_fast5'
-
     rm test/data/out/one_fast5/*
 }
 
 ret=0
+
+prep
 
 echo_test 'endian test'
 if gcc -Wall test/endian_test.c -o test/bin/endian_test; then
