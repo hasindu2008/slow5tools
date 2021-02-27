@@ -39,7 +39,7 @@ KSORT_INIT_STR
 
 static inline void slow5_free(struct slow5_file *s5p);
 static inline khash_t(s2a) *slow5_rec_aux_init(void);
-static inline void slow5_rec_set_aux_map(khash_t(s2a) *aux_map, const char *attr, const uint8_t *data, size_t len, uint64_t bytes, enum aux_type type);
+static inline void slow5_rec_set_aux_map(khash_t(s2a) *aux_map, const char *field, const uint8_t *data, size_t len, uint64_t bytes, enum aux_type type);
 
 /* Definitions */
 
@@ -1698,7 +1698,7 @@ static inline void slow5_rec_set_aux_map(khash_t(s2a) *aux_map, const char *attr
     memcpy(aux_data->data, data, bytes);
 }
 
-int8_t slow5_rec_get_int8(const struct slow5_rec *read, const char *attr, int *err) {
+int8_t slow5_aux_get_int8(const struct slow5_rec *read, const char *attr, int *err) {
     int8_t val = INT8_MAX;
     int tmp_err = -1;
 
@@ -1718,7 +1718,7 @@ int8_t slow5_rec_get_int8(const struct slow5_rec *read, const char *attr, int *e
     }
     return val;
 }
-int16_t slow5_rec_get_int16(const struct slow5_rec *read, const char *attr, int *err) {
+int16_t slow5_aux_get_int16(const struct slow5_rec *read, const char *attr, int *err) {
     int16_t val = INT16_MAX;
     int tmp_err = -1;
 
@@ -1738,7 +1738,7 @@ int16_t slow5_rec_get_int16(const struct slow5_rec *read, const char *attr, int 
     }
     return val;
 }
-int32_t slow5_rec_get_int32(const struct slow5_rec *read, const char *attr, int *err) {
+int32_t slow5_aux_get_int32(const struct slow5_rec *read, const char *attr, int *err) {
     int32_t val = INT32_MAX;
     int tmp_err = -1;
 
@@ -1758,7 +1758,7 @@ int32_t slow5_rec_get_int32(const struct slow5_rec *read, const char *attr, int 
     }
     return val;
 }
-int64_t slow5_rec_get_int64(const struct slow5_rec *read, const char *attr, int *err) {
+int64_t slow5_aux_get_int64(const struct slow5_rec *read, const char *attr, int *err) {
     int64_t val = INT64_MAX;
     int tmp_err = -1;
 
@@ -1778,7 +1778,7 @@ int64_t slow5_rec_get_int64(const struct slow5_rec *read, const char *attr, int 
     }
     return val;
 }
-uint8_t slow5_rec_get_uint8(const struct slow5_rec *read, const char *attr, int *err) {
+uint8_t slow5_aux_get_uint8(const struct slow5_rec *read, const char *attr, int *err) {
     uint8_t val = UINT8_MAX;
     int tmp_err = -1;
 
@@ -1798,7 +1798,7 @@ uint8_t slow5_rec_get_uint8(const struct slow5_rec *read, const char *attr, int 
     }
     return val;
 }
-uint16_t slow5_rec_get_uint16(const struct slow5_rec *read, const char *attr, int *err) {
+uint16_t slow5_aux_get_uint16(const struct slow5_rec *read, const char *attr, int *err) {
     uint16_t val = UINT16_MAX;
     int tmp_err = -1;
 
@@ -1818,7 +1818,7 @@ uint16_t slow5_rec_get_uint16(const struct slow5_rec *read, const char *attr, in
     }
     return val;
 }
-uint32_t slow5_rec_get_uint32(const struct slow5_rec *read, const char *attr, int *err) {
+uint32_t slow5_aux_get_uint32(const struct slow5_rec *read, const char *attr, int *err) {
     uint32_t val = UINT32_MAX;
     int tmp_err = -1;
 
@@ -1838,7 +1838,7 @@ uint32_t slow5_rec_get_uint32(const struct slow5_rec *read, const char *attr, in
     }
     return val;
 }
-uint64_t slow5_rec_get_uint64(const struct slow5_rec *read, const char *attr, int *err) {
+uint64_t slow5_aux_get_uint64(const struct slow5_rec *read, const char *attr, int *err) {
     uint64_t val = UINT64_MAX;
     int tmp_err = -1;
 
@@ -1858,7 +1858,7 @@ uint64_t slow5_rec_get_uint64(const struct slow5_rec *read, const char *attr, in
     }
     return val;
 }
-float slow5_rec_get_float(const struct slow5_rec *read, const char *attr, int *err) {
+float slow5_aux_get_float(const struct slow5_rec *read, const char *attr, int *err) {
     float val = FLT_MAX;
     int tmp_err = -1;
 
@@ -1878,7 +1878,7 @@ float slow5_rec_get_float(const struct slow5_rec *read, const char *attr, int *e
     }
     return val;
 }
-double slow5_rec_get_double(const struct slow5_rec *read, const char *attr, int *err) {
+double slow5_aux_get_double(const struct slow5_rec *read, const char *attr, int *err) {
     double val = DBL_MAX;
     int tmp_err = -1;
 
@@ -1898,7 +1898,7 @@ double slow5_rec_get_double(const struct slow5_rec *read, const char *attr, int 
     }
     return val;
 }
-char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err) {
+char slow5_aux_get_char(const struct slow5_rec *read, const char *attr, int *err) {
     char val = CHAR_MAX;
     int tmp_err = -1;
 
@@ -1918,7 +1918,7 @@ char slow5_rec_get_char(const struct slow5_rec *read, const char *attr, int *err
     }
     return val;
 }
-int8_t *slow5_rec_get_int8_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+int8_t *slow5_aux_get_int8_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     int8_t *val = NULL;
     int tmp_err = -1;
 
@@ -1939,7 +1939,7 @@ int8_t *slow5_rec_get_int8_array(const struct slow5_rec *read, const char *attr,
     }
     return val;
 }
-int16_t *slow5_rec_get_int16_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+int16_t *slow5_aux_get_int16_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     int16_t *val = NULL;
     int tmp_err = -1;
 
@@ -1960,7 +1960,7 @@ int16_t *slow5_rec_get_int16_array(const struct slow5_rec *read, const char *att
     }
     return val;
 }
-int32_t *slow5_rec_get_int32_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+int32_t *slow5_aux_get_int32_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     int32_t *val = NULL;
     int tmp_err = -1;
 
@@ -1981,7 +1981,7 @@ int32_t *slow5_rec_get_int32_array(const struct slow5_rec *read, const char *att
     }
     return val;
 }
-int64_t *slow5_rec_get_int64_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+int64_t *slow5_aux_get_int64_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     int64_t *val = NULL;
     int tmp_err = -1;
 
@@ -2002,7 +2002,7 @@ int64_t *slow5_rec_get_int64_array(const struct slow5_rec *read, const char *att
     }
     return val;
 }
-uint8_t *slow5_rec_get_uint8_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+uint8_t *slow5_aux_get_uint8_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     uint8_t *val = NULL;
     int tmp_err = -1;
 
@@ -2023,7 +2023,7 @@ uint8_t *slow5_rec_get_uint8_array(const struct slow5_rec *read, const char *att
     }
     return val;
 }
-uint16_t *slow5_rec_get_uint16_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+uint16_t *slow5_aux_get_uint16_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     uint16_t *val = NULL;
     int tmp_err = -1;
 
@@ -2044,7 +2044,7 @@ uint16_t *slow5_rec_get_uint16_array(const struct slow5_rec *read, const char *a
     }
     return val;
 }
-uint32_t *slow5_rec_get_uint32_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+uint32_t *slow5_aux_get_uint32_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     uint32_t *val = NULL;
     int tmp_err = -1;
 
@@ -2065,7 +2065,7 @@ uint32_t *slow5_rec_get_uint32_array(const struct slow5_rec *read, const char *a
     }
     return val;
 }
-uint64_t *slow5_rec_get_uint64_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+uint64_t *slow5_aux_get_uint64_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     uint64_t *val = NULL;
     int tmp_err = -1;
 
@@ -2086,7 +2086,7 @@ uint64_t *slow5_rec_get_uint64_array(const struct slow5_rec *read, const char *a
     }
     return val;
 }
-float *slow5_rec_get_float_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+float *slow5_aux_get_float_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     float *val = NULL;
     int tmp_err = -1;
 
@@ -2107,7 +2107,7 @@ float *slow5_rec_get_float_array(const struct slow5_rec *read, const char *attr,
     }
     return val;
 }
-double *slow5_rec_get_double_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+double *slow5_aux_get_double_array(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     double *val = NULL;
     int tmp_err = -1;
 
@@ -2128,7 +2128,7 @@ double *slow5_rec_get_double_array(const struct slow5_rec *read, const char *att
     }
     return val;
 }
-char *slow5_rec_get_string(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
+char *slow5_aux_get_string(const struct slow5_rec *read, const char *attr, uint64_t *len, int *err) {
     char *val = NULL;
     int tmp_err = -1;
 
