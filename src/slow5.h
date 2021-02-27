@@ -53,7 +53,7 @@ static const struct slow5_fmt_meta SLOW5_FORMAT_META[] = {
 
 /**
 * @struct slow5_version
-* SLOW5 file version
+* @brief SLOW5 file version
 */
 struct slow5_version {
     uint8_t major;  ///< major version

@@ -173,12 +173,12 @@ void make_blow5_lossless(void) {
 
     struct slow5_rec *read = NULL;
     slow5_get_next(&read, s5p);
-    char *cn = slow5_rec_get_string(read, "channel_number", NULL, NULL);
+    char *cn = slow5_aux_get_string(read, "channel_number", NULL, NULL);
     uint64_t len_cn = strlen(cn);
-    double mb = slow5_rec_get_double(read, "median_before", NULL);
-    int32_t rn = slow5_rec_get_int32(read, "read_number", NULL);
-    uint8_t sm = slow5_rec_get_uint8(read, "start_mux", NULL);
-    uint64_t st = slow5_rec_get_uint64(read, "start_time", NULL);
+    double mb = slow5_aux_get_double(read, "median_before", NULL);
+    int32_t rn = slow5_aux_get_int32(read, "read_number", NULL);
+    uint8_t sm = slow5_aux_get_uint8(read, "start_mux", NULL);
+    uint64_t st = slow5_aux_get_uint64(read, "start_time", NULL);
 
     slow5_rec_size_t record_size = sizeof read->read_id_len +
         read->read_id_len * sizeof *read->read_id +
@@ -293,14 +293,14 @@ void make_blow5_lossless_aux_array(void) {
 
     struct slow5_rec *read = NULL;
     slow5_get_next(&read, s5p);
-    char *cn = slow5_rec_get_string(read, "channel_number", NULL, NULL);
+    char *cn = slow5_aux_get_string(read, "channel_number", NULL, NULL);
     uint64_t len_cn = strlen(cn);
-    double mb = slow5_rec_get_double(read, "median_before", NULL);
-    int32_t rn = slow5_rec_get_int32(read, "read_number", NULL);
-    uint8_t sm = slow5_rec_get_uint8(read, "start_mux", NULL);
-    uint64_t st = slow5_rec_get_uint64(read, "start_time", NULL);
+    double mb = slow5_aux_get_double(read, "median_before", NULL);
+    int32_t rn = slow5_aux_get_int32(read, "read_number", NULL);
+    uint8_t sm = slow5_aux_get_uint8(read, "start_mux", NULL);
+    uint64_t st = slow5_aux_get_uint64(read, "start_time", NULL);
     uint64_t len_ta;
-    int16_t *ta = slow5_rec_get_int16_array(read, "test_array", &len_ta, NULL);
+    int16_t *ta = slow5_aux_get_int16_array(read, "test_array", &len_ta, NULL);
 
     slow5_rec_size_t record_size = sizeof read->read_id_len +
         read->read_id_len * sizeof *read->read_id +
