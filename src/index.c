@@ -1,3 +1,5 @@
+#include <getopt.h>
+
 #include "slow5.h"
 #include "cmd.h"
 
@@ -87,13 +89,17 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     char *f_in_name = argv[optind];
+    slow5_file_t *file=slow5_open(f_in_name,"r");
+    F_CHK(file,f_in_name);
 
-    if (slow5idx_build(f_in_name) != 0) {
+    if (slow5_idx(file) != 0) {
         fprintf(stderr, "Error running slow5idx_build on %s\n",
                 f_in_name);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
+
+    slow5_close(file);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
