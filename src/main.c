@@ -26,6 +26,7 @@
     "    f2s        convert fast5 file(s) to slow5\n" \
     "    s2f        convert slow5 file(s) to fast5\n" \
     "    merge      merge slow5 files\n" \
+    "    split      split slow5 files\n" \
     "    index      create a slow5 or blow5 index file.\n" \
     "    extract    display the read entry for each specified read id.\n" \
     "\n" \
