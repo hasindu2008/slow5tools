@@ -192,7 +192,7 @@ int slow5_close(SLOW5_FILE *fp){
 /**
  * Open the specified file for reading or writing.
  */
-SLOW5_FILE* slow5_open(const char* path, const char *mode){
+static inline SLOW5_FILE* slow5_open(const char* path, const char *mode){
     SLOW5_FILE *fp = (SLOW5_FILE *) malloc(sizeof *fp);
 
     fp->fp = fopen(path, mode);

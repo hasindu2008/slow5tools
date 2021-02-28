@@ -138,6 +138,8 @@ int strtod_check_valid(void) {
     int err;
     char buf[512];
 
+    errno=0;
+
     ASSERT(strtod_check("0", &err) == (double) 0);
     ASSERT(err == 0);
     ASSERT(strtod_check("1", &err) == (double) 1);

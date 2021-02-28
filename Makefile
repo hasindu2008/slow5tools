@@ -15,6 +15,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/s2f.o \
       $(BUILD_DIR)/index.o \
       $(BUILD_DIR)/extract.o \
+      $(BUILD_DIR)/view.o \
 	  $(BUILD_DIR)/slow5idx_old.o \
 	  $(BUILD_DIR)/kstring.o \
 	  $(BUILD_DIR)/misc_old.o \
@@ -25,6 +26,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/split_slow5.o \
 
 OBJ_LIB = $(BUILD_DIR)/slow5.o \
+		$(BUILD_DIR)/slow5idx.o	\
 		$(BUILD_DIR)/misc.o	\
 		$(BUILD_DIR)/press.o \
 
@@ -49,6 +51,9 @@ $(BUILD_DIR)/index.o: src/index.c src/slow5_old.h src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/extract.o: src/extract.c src/slow5_old.h src/error.h
+	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/view.o: src/view.c src/error.h src/misc.c
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 #$(BUILD_DIR)/fastt_main.o: src/fastt_main.c src/slow5_old.h src/fast5lite.h src/slow5misc.h src/error.h
@@ -81,12 +86,15 @@ $(BUILD_DIR)/split_slow5.o: src/split_slow5.c src/slow5_old.h src/error.h
 
 #libslow5
 $(BUILD_DIR)/libslow5.so: $(OBJ_LIB)
-	$(CXX) $(CFLAGS) -shared $<  -o $@
+	$(CXX) $(CFLAGS) -shared $^  -o $@
 
 $(BUILD_DIR)/libslow5.a: $(OBJ_LIB)
-	$(AR) rcs $@ $<
+	$(AR) rcs $@ $^
 
 $(BUILD_DIR)/slow5.o: src/slow5.c src/slow5.h
+	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
+
+$(BUILD_DIR)/slow5idx.o: src/slow5idx.c src/slow5idx.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
 
 $(BUILD_DIR)/misc.o: src/misc.c src/misc.h
@@ -161,8 +169,8 @@ pyslow5:
 	cp build/lib.*/*.so  ./
 	python3 < python/example.py
 
-test_prep: $(BINARY)
-	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5idx.c src/misc.c -o test/bin/make_blow5
+test-prep: $(BINARY)
+	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5idx.c src/misc.c -o test/bin/make_blow5 -g
 	./test/bin/make_blow5
 
 valgrind: $(BINARY)
