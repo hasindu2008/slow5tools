@@ -12,9 +12,7 @@ echo_test() {
 
 ex() {
     if [ $mem -eq 1 ]; then
-        if ! valgrind --leak-check=full --error-exitcode=1 "$@"; then
-            fail
-        fi
+        valgrind --leak-check=full --error-exitcode=1 "$@"
     else
         "$@"
     fi
@@ -31,7 +29,7 @@ not_compiled() {
 }
 
 my_diff() {
-    if ! ex diff "$1" "$2" -q; then
+    if ! diff "$1" "$2" -q; then
         fail
     fi
 }
@@ -40,33 +38,32 @@ prep() {
     mkdir -p 'test/bin'
     mkdir -p 'test/data/out/one_fast5'
     mkdir -p 'test/data/out/two_rg'
+    mkdir -p 'test/data/out/aux_array'
+}
 
+prep_unit() {
     rm test/data/out/*.idx
+    rm test/data/out/one_fast5/*
+    rm test/data/out/two_rg/*
+    rm test/data/out/aux_array/*
     rm test/data/exp/one_fast5/*.idx
     rm test/data/exp/two_rg/*.idx
+    rm test/data/exp/aux_array/*.idx
     rm test/data/test/*.idx
     rm test/data/err/*.idx
 
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_empty.slow5'
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_valid.slow5'
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_duplicate.slow5'
+}
 
-    rm 'test/data/out/one_fast5/slow5_to_blow5_uncomp.blow5'
-    rm 'test/data/out/one_fast5/slow5_to_blow5_gzip.blow5'
-    rm 'test/data/out/one_fast5/blow5_uncomp_to_slow5.slow5'
-    rm 'test/data/out/one_fast5/blow5_gzip_to_slow5.slow5'
-    rm 'test/data/out/one_fast5/blow5_gzip_to_blow5_uncomp.blow5'
-    rm 'test/data/out/one_fast5/blow5_uncomp_to_blow5_gzip.blow5'
+prep_cli() {
+    rm test/data/out/one_fast5/*
 }
 
 ret=0
 
 prep
-
-echo_test 'cli test'
-if ! ex ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null; then
-    fail
-fi
 
 echo_test 'endian test'
 if gcc -Wall test/endian_test.c -o test/bin/endian_test; then
@@ -74,6 +71,21 @@ if gcc -Wall test/endian_test.c -o test/bin/endian_test; then
 else
     not_compiled
 fi
+
+prep_cli
+
+echo_test 'cli test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/test_cli.sh mem; then
+        fail
+    fi
+else
+    if ! ./test/test_cli.sh; then
+        fail
+    fi
+fi
+
+prep_unit
 
 echo_test 'unit test helpers'
 if gcc -Wall -g -std=gnu99 test/unit_test_helpers.c -o test/bin/unit_test_helpers src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
@@ -85,7 +97,7 @@ else
 fi
 
 echo_test 'unit test press'
-if gcc -Wall -g -std=gnu99 test/unit_test_press.c -o test/bin/unit_test_press src/press.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/unit_test_press.c -o test/bin/unit_test_press src/press.c src/misc.c -I src/ -lz; then
     if ! ex test/bin/unit_test_press > test/data/out/unit_test_out_press; then
         fail
     fi
@@ -130,9 +142,18 @@ else
     not_compiled
 fi
 
-echo_test 'unit test loseless'
-if gcc -Wall -g -std=gnu99 test/unit_test_loseless.c -o test/bin/unit_test_loseless src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
-    if ! ex test/bin/unit_test_loseless; then
+echo_test 'unit test lossless'
+if gcc -Wall -g -std=gnu99 test/unit_test_lossless.c -o test/bin/unit_test_lossless src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+    if ! ex test/bin/unit_test_lossless > test/data/out/unit_test_out_lossless; then
+        fail
+    fi
+else
+    not_compiled
+fi
+
+echo_test 'unit test empty'
+if gcc -Wall -g -std=gnu99 test/unit_test_empty.c -o test/bin/unit_test_empty src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
+    if ! ex test/bin/unit_test_empty > test/data/out/unit_test_out_empty; then
         fail
     fi
 else
@@ -145,17 +166,35 @@ my_diff 'test/data/out/unit_test_out_ascii' 'test/data/exp/unit_test_exp_ascii'
 my_diff 'test/data/out/unit_test_out_fprint' 'test/data/exp/unit_test_exp_fprint'
 my_diff 'test/data/out/unit_test_out_binary' 'test/data/exp/unit_test_exp_binary'
 my_diff 'test/data/out/unit_test_out_press' 'test/data/exp/unit_test_exp_press'
+my_diff 'test/data/out/unit_test_out_lossless' 'test/data/exp/unit_test_exp_lossless'
+my_diff 'test/data/out/unit_test_out_empty' 'test/data/exp/unit_test_exp_empty'
 # Adding records diffs
 my_diff 'test/data/out/exp_1_default_add_empty.slow5' 'test/data/exp/exp_1_default_add_empty.slow5'
 my_diff 'test/data/out/exp_1_default_add_valid.slow5' 'test/data/exp/exp_1_default_add_valid.slow5'
 my_diff 'test/data/out/exp_1_default_add_duplicate.slow5' 'test/data/exp/exp_1_default_add_duplicate.slow5'
-# Conversion diffs
+## Conversion diffs
+# Default
 my_diff 'test/data/out/one_fast5/slow5_to_blow5_uncomp.blow5' 'test/data/exp/one_fast5/exp_1_default.blow5'
 my_diff 'test/data/out/one_fast5/slow5_to_blow5_gzip.blow5' 'test/data/exp/one_fast5/exp_1_default_gzip.blow5'
 my_diff 'test/data/out/one_fast5/blow5_uncomp_to_slow5.slow5' 'test/data/exp/one_fast5/exp_1_default.slow5'
 my_diff 'test/data/out/one_fast5/blow5_gzip_to_slow5.slow5' 'test/data/exp/one_fast5/exp_1_default.slow5'
 my_diff 'test/data/out/one_fast5/blow5_gzip_to_blow5_uncomp.blow5' 'test/data/exp/one_fast5/exp_1_default.blow5'
 my_diff 'test/data/out/one_fast5/blow5_uncomp_to_blow5_gzip.blow5' 'test/data/exp/one_fast5/exp_1_default_gzip.blow5'
+# Lossless
+my_diff 'test/data/out/one_fast5/slow5_to_blow5_uncomp_lossless.blow5' 'test/data/exp/one_fast5/exp_1_lossless.blow5'
+my_diff 'test/data/out/one_fast5/slow5_to_blow5_gzip_lossless.blow5' 'test/data/exp/one_fast5/exp_1_lossless_gzip.blow5'
+my_diff 'test/data/out/one_fast5/blow5_uncomp_to_slow5_lossless.slow5' 'test/data/exp/one_fast5/exp_1_lossless.slow5'
+my_diff 'test/data/out/one_fast5/blow5_gzip_to_slow5_lossless.slow5' 'test/data/exp/one_fast5/exp_1_lossless.slow5'
+my_diff 'test/data/out/one_fast5/blow5_gzip_to_blow5_uncomp_lossless.blow5' 'test/data/exp/one_fast5/exp_1_lossless.blow5'
+my_diff 'test/data/out/one_fast5/blow5_uncomp_to_blow5_gzip_lossless.blow5' 'test/data/exp/one_fast5/exp_1_lossless_gzip.blow5'
+# Lossless with auxiliary array
+my_diff 'test/data/out/aux_array/slow5_to_blow5_uncomp_lossless.blow5' 'test/data/exp/aux_array/exp_lossless.blow5'
+my_diff 'test/data/out/aux_array/slow5_to_blow5_gzip_lossless.blow5' 'test/data/exp/aux_array/exp_lossless_gzip.blow5'
+my_diff 'test/data/out/aux_array/blow5_uncomp_to_slow5_lossless.slow5' 'test/data/exp/aux_array/exp_lossless.slow5'
+my_diff 'test/data/out/aux_array/blow5_gzip_to_slow5_lossless.slow5' 'test/data/exp/aux_array/exp_lossless.slow5'
+my_diff 'test/data/out/aux_array/blow5_gzip_to_blow5_uncomp_lossless.blow5' 'test/data/exp/aux_array/exp_lossless.blow5'
+my_diff 'test/data/out/aux_array/blow5_uncomp_to_blow5_gzip_lossless.blow5' 'test/data/exp/aux_array/exp_lossless_gzip.blow5'
+# Two rg unit test
 my_diff 'test/data/out/two_rg/out_default.blow5' 'test/data/exp/two_rg/exp_default.blow5'
 my_diff 'test/data/out/two_rg/out_default_gzip.blow5' 'test/data/exp/two_rg/exp_default_gzip.blow5'
 

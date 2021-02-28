@@ -6,6 +6,7 @@
 ******************************************************************************/
 
 #include "slow5_old.h"
+#include "cmd.h"
 
 // TODO put all in header file
 
@@ -29,6 +30,7 @@
     "    split      split slow5 files\n" \
     "    index      create a slow5 or blow5 index file.\n" \
     "    extract    display the read entry for each specified read id.\n" \
+    "    view       TODO.\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
 
@@ -45,6 +47,7 @@ int (merge_main)(int, char **, struct program_meta *);
 int (split_main)(int, char **, struct program_meta *);
 int (index_main)(int, char **, struct program_meta *);
 int (extract_main)(int, char **, struct program_meta *);
+int (view_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
 void segv_handler(int sig) {
@@ -98,6 +101,7 @@ int main(const int argc, char **argv){
             {"split", split_main},
             {"index", index_main},
             {"extract", extract_main},
+            {"view", view_main},
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
@@ -211,7 +215,7 @@ int main(const int argc, char **argv){
 
                         // Calling command program
                         if (meta.verbose) {
-                            VERBOSE("using command %s", cmds[i].name);
+                            VERBOSE("using command '%s'", cmds[i].name);
                         }
                         ret = cmds[i].main(argc - optind_copy, cmd_argv + optind_copy, &meta);
 

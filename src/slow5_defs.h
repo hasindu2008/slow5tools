@@ -9,9 +9,10 @@
 #define SLOW5_HEADER_DATA_PREFIX        "@"
 #define SLOW5_HEADER_DATA_PREFIX_CHAR   '@'
 #define COLUMN_HEADER_PREFIX            "#"
-#define SEP                             "\t"
-#define SEP_CHAR                        '\t'
-#define SEP_RAW_SIGNAL                  ","
+#define SEP_COL                         "\t"
+#define SEP_COL_CHAR                    '\t'
+#define SEP_ARRAY                       ","
+#define SEP_ARRAY_CHAR                  ','
 #define HEADER_FILE_VERSION             "slow5_version"
 #define HEADER_NUM_GROUPS               "num_read_groups"
 #define HEADER_NUM_GROUPS_INIT          (1)
@@ -38,11 +39,11 @@
 #define GENERATE_STRUCT(type, fmt, name)            type name;
 #define GENERATE_ENUM(type, fmt, name)              COL_ ## name,
 #define GENERATE_NAME_STRING(type, fmt, name)       #name
-#define GENERATE_NAME_STRING_SEP(type, fmt, name)   GENERATE_NAME_STRING(type, fmt, name) SEP
+#define GENERATE_NAME_STRING_SEP(type, fmt, name)   GENERATE_NAME_STRING(type, fmt, name) SEP_COL
 #define GENERATE_TYPE_STRING(type, fmt, name)       #type
-#define GENERATE_TYPE_STRING_SEP(type, fmt, name)   GENERATE_TYPE_STRING(type, fmt, name) SEP
+#define GENERATE_TYPE_STRING_SEP(type, fmt, name)   GENERATE_TYPE_STRING(type, fmt, name) SEP_COL
 #define GENERATE_FORMAT_STRING(type, fmt, name)     fmt
-#define GENERATE_FORMAT_STRING_SEP(type, fmt, name) GENERATE_FORMAT_STRING(type, fmt, name) SEP
+#define GENERATE_FORMAT_STRING_SEP(type, fmt, name) GENERATE_FORMAT_STRING(type, fmt, name) SEP_COL
 #define GENERATE_NULL(type, fmt, name)
 
 // More SLOW5 specs
@@ -50,7 +51,7 @@
 #define HEADER_FILE_VERSION_ID          SLOW5_HEADER_ID(HEADER_FILE_VERSION)
 #define HEADER_NUM_GROUPS_ID            SLOW5_HEADER_ID(HEADER_NUM_GROUPS)
 
-#define SLOW5_HEADER_ENTRY(header_name, data) SLOW5_HEADER_ID(header_name) SEP data "\n"
+#define SLOW5_HEADER_ENTRY(header_name, data) SLOW5_HEADER_ID(header_name) SEP_COL data "\n"
 
 // ASCII SLOW5 specs
 #define ASCII_NAME                      "slow5"
@@ -75,6 +76,6 @@
 
 // SLOW5 Index specs
 //#define SLOW5_INDEX_HEADER_PREFIX   "#"
-//#define SLOW5_INDEX_HEADER          SLOW5_INDEX_HEADER_PREFIX "read_id" SEP "offset" SEP "length\n"
+#define SLOW5_INDEX_HEADER          SLOW5_INDEX_HEADER_PREFIX "read_id" SEP_COL "offset" SEP_COL "length\n"
 
 #endif

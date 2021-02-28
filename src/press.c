@@ -294,7 +294,7 @@ static size_t fwrite_compress_gzip(struct gzip_stream *gzip, const void *ptr, si
 
 /* --- Decompress to a ptr from some file --- */
 
-void *fread_depress(struct press *comp, size_t count, FILE *fp) {
+void *fread_depress(struct press *comp, size_t count, FILE *fp, size_t *n) {
     void *raw = (void *) malloc(count);
     MALLOC_CHK(raw);
 
@@ -303,13 +303,13 @@ void *fread_depress(struct press *comp, size_t count, FILE *fp) {
         return NULL;
     }
 
-    void *out = ptr_depress(comp, raw, count, NULL);
+    void *out = ptr_depress(comp, raw, count, n);
     free(raw);
 
     return out;
 }
 
-void *pread_depress(struct press *comp, int fd, size_t count, off_t offset) {
+void *pread_depress(struct press *comp, int fd, size_t count, off_t offset, size_t *n) {
     void *raw = (void *) malloc(count);
     MALLOC_CHK(raw);
 
@@ -318,7 +318,7 @@ void *pread_depress(struct press *comp, int fd, size_t count, off_t offset) {
         return NULL;
     }
 
-    void *out = ptr_depress(comp, raw, count, NULL);
+    void *out = ptr_depress(comp, raw, count, n);
     free(raw);
 
     return out;
@@ -396,38 +396,6 @@ void compress_footer_next(struct press *comp) {
             } break;
         }
     }
-}
-
-
-// From https://stackoverflow.com/questions/3774417/sprintf-with-automatic-memory-allocation
-int vasprintf_mine(char **strp, const char *fmt, va_list ap) {
-    va_list ap1;
-    size_t size;
-    char *buffer;
-
-    va_copy(ap1, ap);
-    size = vsnprintf(NULL, 0, fmt, ap1) + 1;
-    va_end(ap1);
-    buffer = (char *) calloc(1, size);
-
-    if (!buffer)
-        return -1;
-
-    *strp = buffer;
-
-    return vsnprintf(buffer, size, fmt, ap);
-}
-
-// From https://stackoverflow.com/questions/3774417/sprintf-with-automatic-memory-allocation
-int asprintf_mine(char **strp, const char *fmt, ...) {
-    int error;
-    va_list ap;
-
-    va_start(ap, fmt);
-    error = vasprintf_mine(strp, fmt, ap);
-    va_end(ap);
-
-    return error;
 }
 
 

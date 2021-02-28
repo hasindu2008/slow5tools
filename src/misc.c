@@ -10,11 +10,13 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 #include "misc.h"
 #include "error.h"
 #include "fast5.h"
 
 #define DBL_STRING_BUF_FIXED_CAP (64) // 2^6
+#define FLT_STRING_BUF_FIXED_CAP (64) // 2^6
 
 int uint_check(const char *str);
 int int_check(const char *str);
@@ -42,6 +44,38 @@ bool has_fast5_ext(const char *f_path) {
 
     return ret;
 }
+
+// From https://stackoverflow.com/questions/3774417/sprintf-with-automatic-memory-allocation
+int vasprintf_mine(char **strp, const char *fmt, va_list ap) {
+    va_list ap1;
+    size_t size;
+    char *buffer;
+
+    va_copy(ap1, ap);
+    size = vsnprintf(NULL, 0, fmt, ap1) + 1;
+    va_end(ap1);
+    buffer = (char *) calloc(1, size);
+
+    if (!buffer)
+        return -1;
+
+    *strp = buffer;
+
+    return vsnprintf(buffer, size, fmt, ap);
+}
+
+// From https://stackoverflow.com/questions/3774417/sprintf-with-automatic-memory-allocation
+int asprintf_mine(char **strp, const char *fmt, ...) {
+    int error;
+    va_list ap;
+
+    va_start(ap, fmt);
+    error = vasprintf_mine(strp, fmt, ap);
+    va_end(ap);
+
+    return error;
+}
+
 
 // From https://code.woboq.org/userspace/glibc/string/strsep.c.html
 char *
@@ -341,14 +375,12 @@ double strtod_check(const char *str, int *err) {
 }
 
 // Convert double to decimal string without trailing 0s
-char *double_to_str(double x) {
-    char *str = (char *) malloc(DBL_STRING_BUF_FIXED_CAP * sizeof *str);
-    MALLOC_CHK(str);
-
-    int len = sprintf(str, "%f", x);
+char *double_to_str(double x, size_t *len) {
+    char *str = NULL;
+    int max_len = asprintf_mine(&str, "%f", x); // TODO Should be lf?
 
     char *ptr = NULL;
-    for (int i = len - 1; i >= 1; -- i) {
+    for (int i = max_len - 1; i >= 1; -- i) {
         if (str[i] == '0') {
             ptr = str + i;
         } else if (str[i] == '.') {
@@ -359,6 +391,36 @@ char *double_to_str(double x) {
             *ptr = '\0';
             break;
         }
+    }
+
+    if (len != NULL) {
+        *len = strlen(str);
+    }
+
+    return str;
+}
+
+// Convert float to decimal string without trailing 0s
+char *float_to_str(float x, size_t *len) {
+    char *str = NULL;
+    int max_len = asprintf_mine(&str, "%f", x);
+
+    char *ptr = NULL;
+    for (int i = max_len - 1; i >= 1; -- i) {
+        if (str[i] == '0') {
+            ptr = str + i;
+        } else if (str[i] == '.') {
+            // Set pointer on decimal point if it was just after it
+            if (ptr == str + i + 1) {
+                ptr = str + i;
+            }
+            *ptr = '\0';
+            break;
+        }
+    }
+
+    if (len != NULL) {
+        *len = strlen(str);
     }
 
     return str;
@@ -380,73 +442,4 @@ uint8_t get_type_size(const char *name) {
     else if CHECK_TYPE(name, char)
 
     return size;
-}
-
-int memcpy_type(uint8_t *data, const char *value, const char *name) {
-    int err = -1;
-
-    // TODO fix this is disgusting :(
-    if (TYPE(name, int8_t)) {
-        int8_t value_conv = ato_int8(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, uint8_t)) {
-        uint8_t value_conv = ato_uint8(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, int16_t)) {
-        int16_t value_conv = ato_int16(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, uint16_t)) {
-        uint16_t value_conv = ato_uint16(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, int32_t)) {
-        int32_t value_conv = ato_int32(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, uint32_t)) {
-        uint32_t value_conv = ato_uint32(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, int64_t)) {
-        int64_t value_conv = ato_int64(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, uint64_t)) {
-        uint64_t value_conv = ato_uint64(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, float)) {
-        float value_conv = strtof_check(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, double)) {
-        double value_conv = strtod_check(value, &err);
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, char)) {
-        char value_conv = value[0];
-        if (err != -1) {
-            memcpy(data, &value_conv, sizeof value_conv);
-        }
-    } else if (TYPE(name, char*)) {
-        err = 0;
-        memcpy(data, value, strlen(value) + 1);
-    }
-
-    // TODO handle arrays
-
-    return err;
 }

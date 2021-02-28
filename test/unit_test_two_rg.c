@@ -11,11 +11,11 @@ int slow5_open_valid(void) {
     ASSERT(s5p->header->version.minor == 1);
     ASSERT(s5p->header->version.patch == 0);
     ASSERT(s5p->header->num_read_groups == 2);
-    ASSERT(s5p->header->num_attrs == 32);
+    ASSERT(s5p->header->data.num_attrs == 32);
 
-    ASSERT(strcmp(slow5_hdr_get("asic_id", 1, s5p), "420170566") == 0);
-    ASSERT(strcmp(slow5_hdr_get("experiment_type", 1, s5p), "") == 0);
-    ASSERT(strcmp(slow5_hdr_get("file_version", 1, s5p), "0.6") == 0);
+    ASSERT(strcmp(slow5_hdr_get("asic_id", 1, s5p->header), "420170566") == 0);
+    ASSERT(strcmp(slow5_hdr_get("experiment_type", 1, s5p->header), "") == 0);
+    ASSERT(strcmp(slow5_hdr_get("file_version", 1, s5p->header), "0.6") == 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -49,12 +49,12 @@ int slow5_to_blow5_uncomp(void) {
     FILE *to = fopen("test/data/out/two_rg/out_default.blow5", "w");
     ASSERT(to != NULL);
 
-    ASSERT(slow5_hdr_fwrite(to, from, FORMAT_BINARY, COMPRESS_NONE) != -1);
+    ASSERT(slow5_hdr_fwrite(to, from->header, FORMAT_BINARY, COMPRESS_NONE) != -1);
 
     struct slow5_rec *read = NULL;
     int ret;
     while ((ret = slow5_get_next(&read, from)) == 0) {
-        ASSERT(slow5_rec_fwrite(to, read, FORMAT_BINARY, NULL) != -1);
+        ASSERT(slow5_rec_fwrite(to, read, from->header->aux_meta, FORMAT_BINARY, NULL) != -1);
     }
     slow5_rec_free(read);
     ASSERT(ret == -2);
@@ -74,14 +74,14 @@ int slow5_to_blow5_gzip(void) {
     FILE *to = fopen("test/data/out/two_rg/out_default_gzip.blow5", "w");
     ASSERT(to != NULL);
 
-    ASSERT(slow5_hdr_fwrite(to, from, FORMAT_BINARY, COMPRESS_GZIP) != -1);
+    ASSERT(slow5_hdr_fwrite(to, from->header, FORMAT_BINARY, COMPRESS_GZIP) != -1);
 
     struct slow5_rec *read = NULL;
     int ret;
     struct press *gzip = press_init(COMPRESS_GZIP);
     ASSERT(gzip != NULL);
     while ((ret = slow5_get_next(&read, from)) == 0) {
-        ASSERT(slow5_rec_fwrite(to, read, FORMAT_BINARY, gzip) != -1);
+        ASSERT(slow5_rec_fwrite(to, read, from->header->aux_meta, FORMAT_BINARY, gzip) != -1);
     }
     slow5_rec_free(read);
     ASSERT(ret == -2);

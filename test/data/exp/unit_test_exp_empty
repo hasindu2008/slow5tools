@@ -1,0 +1,15 @@
+#slow5_version	0.1.0
+#num_read_groups	3
+@lol			
+#char*	uint32_t	double	double	double	double	uint64_t	int16_t*
+#read_id	read_group	digitisation	offset	range	sampling_rate	len_raw_signal	raw_signal
+#slow5_version	0.0.0
+#num_read_groups	3
+@lol		good meme	haha 2
+#char*	uint32_t	double	double	double	double	uint64_t	int16_t*
+#read_id	read_group	digitisation	offset	range	sampling_rate	len_raw_signal	raw_signal
+#slow5_version	0.1.0
+#num_read_groups	1
+#char*	uint32_t	double	double	double	double	uint64_t	int16_t*	char*	double	int32_t	uint8_t	uint64_t
+#read_id	read_group	digitisation	offset	range	sampling_rate	len_raw_signal	raw_signal	channel_number	median_before	read_number	start_mux	start_time
+	0	0	0	0	0	0		1010	225.69	292	1	1019283
