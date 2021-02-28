@@ -1,0 +1,22 @@
+name: SLOW5 C/C++ CI Local ARM32
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  simple_install:
+    name: Linux
+    runs-on: ${{ matrix.runners }}
+    strategy:
+      matrix:
+        runners: [ARM]
+    steps:
+    - uses: actions/checkout@v2
+    - name: build
+      run: autoreconf && ./configure && make -j8
+    - name: test
+      run: make test
+      
