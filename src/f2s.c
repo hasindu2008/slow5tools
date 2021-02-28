@@ -1,6 +1,7 @@
 // Sasha Jenner
 
 #include "slow5_old.h"
+#include "slow5.h"
 #include "error.h"
 #include "cmd.h"
 
@@ -169,7 +170,7 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
 void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
 
     static size_t call_count = 0;
-
+    slow5_file_t slow5File;
     FILE *slow5_file_pointer = NULL;
     std::string slow5_path;
     if(output_dir){

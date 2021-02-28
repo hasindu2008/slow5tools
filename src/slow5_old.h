@@ -6,8 +6,8 @@
 ** @@
 ******************************************************************************/
 
-#ifndef SLOW5_H
-#define SLOW5_H
+#ifndef SLOW5_OLD_H
+#define SLOW5_OLD_H
 
 #include "fast5lite.h"
 #include "slow5misc.h"

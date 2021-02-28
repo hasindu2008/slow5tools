@@ -20,6 +20,7 @@
 #include "klib/khash.h"
 #include "klib/kstring.h"
 #include "misc_old.h"
+#include "press.h"
 
 
 static inline int isspace_c(char c) { return isspace((unsigned char) c); }
