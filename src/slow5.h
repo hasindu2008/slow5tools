@@ -145,11 +145,12 @@ struct slow5_aux_meta {
     uint32_t num;                   ///< number of auxiliary fields
     size_t cap;                     ///< capacity of the arrays: attrs, types and sizes
 
-    khash_t(s2ui32) *attr_to_pos;   ///< hash table that maps field name string -> index position in the following arrays
+    khash_t(s2ui32) *attr_to_pos;   ///< hash table that maps field name string -> index position in the following arrays.
     char **attrs;                   ///< field names
     enum aux_type *types;           ///< field datatype
     uint8_t *sizes;                 ///< field datatype sizes, for arrays this stores the size (in bytes) of the corresponding primitive type (TODO: this is probably redundant)
 };
+typedef struct slow5_aux_meta slow5_aux_meta_t;
 
 // Header data map: attribute string -> data string
 KHASH_MAP_INIT_STR(s2s, char *)
@@ -165,6 +166,7 @@ struct slow5_hdr_data {
     khash_t(s) *attrs;              ///< Set of the data attribute keys (incase of multiple read groups, the union of keys from all read groups)
     kvec_t(khash_t(s2s) *) maps;    ///< Dynamic vector of hash maps (attribute key string -> attribute value string). Length of the vector is requal to  num_read_groups. Index in the vector corresponds to the read group number. The keys that are not relevant to a particular read group are not stored in this hash map.
 };
+typedef struct slow5_hdr_data slow5_hdr_data_t;
 
 /**
 * @struct slow5_hdr
@@ -173,21 +175,24 @@ struct slow5_hdr_data {
 struct slow5_hdr {
 	struct slow5_version version;       ///< SLOW5 file version
     uint32_t num_read_groups;           ///< Number of read groups
-    struct slow5_hdr_data data;         ///< Header data (constant fields in FAST5 files)
-    struct slow5_aux_meta *aux_meta;    ///< Auxiliary field metadata
+    slow5_hdr_data_t data;              ///< Header data (constant fields in FAST5 files). Not to be directly accessed, use provided functions instead.
+    slow5_aux_meta_t *aux_meta;         ///< Auxiliary field metadata. Not to be directly accessed, use provided functions instead.
 };
 typedef struct slow5_hdr slow5_hdr_t;
 
 /*** SLOW5 record *********************************************************************************/
 
-// SLOW5 primary record columns stored as an enum to keep  the order of the columns
+// SLOW5 primary record columns stored as an enum to keep  the order of the columns.
 // TODO: make the first one is set to zero
 enum slow5_cols {
     SLOW5_COLS_FOREACH(GENERATE_ENUM)
     SLOW5_COLS_NUM
 };
 
-// SLOW5 auxiliary attribute data (represents a single SLOW5 auxiliary field of a particular read record)
+/**
+* @struct slow5_rec_aux_data
+* SLOW5 auxiliary field data (represents a single SLOW5 auxiliary field of a particular read record)
+*/
 struct slow5_rec_aux_data {
     uint64_t len;       ///< number of elements in a array (if a primitive type this is always 1)
     uint64_t bytes;     ///< total number of bytes in data (currently, the allocated size which is equal to the amount of data in it)
@@ -200,6 +205,7 @@ KHASH_MAP_INIT_STR(s2a, struct slow5_rec_aux_data)
 
 typedef uint64_t slow5_rec_size_t; //size of the whole record (in bytes)
 typedef uint16_t slow5_rid_len_t;  //length of the read ID string (does not include null character)
+typedef khash_t(s2a) slow5_aux_data_t;  //Auxiliary field name string -> auxiliary field data value
 
 /**
 * @struct slow5_rec
@@ -216,27 +222,36 @@ struct slow5_rec {
                                         ///< double sampling_rate;
                                         ///< uint64_t len_raw_signal;
                                         ///< int16_t* raw_signal;
-    khash_t(s2a) *aux_map;              ///< Auxiliary field name string -> auxiliary field data value
+    slow5_aux_data_t *aux_map;               ///< Auxiliary field name string -> auxiliary field data value. Not to be directly accessed, use provided functions instead.
 };
 typedef struct slow5_rec slow5_rec_t;
 
 /*** SLOW5 file handler ***************************************************************************/
 
-// SLOW5 file meta data
+/**
+* @struct slow5_file
+* SLOW5 file meta data
+*/
 struct slow5_file_meta {
-    const char *pathname;
-    int fd;
-    uint64_t start_rec_offset;  //offset (in bytes) of the first SLOW5 record (skipping the SLOW5 header; used for indexing)
+    const char *pathname;       ///< file path
+    int fd;                     ///< file descriptor
+    uint64_t start_rec_offset;  ///< offset (in bytes) of the first SLOW5 record (skipping the SLOW5 header; used for indexing)
 };
+typedef struct slow5_file_meta slow5_file_meta_t;
 
-// SLOW5 file structure
+typedef struct slow5_idx slow5_idx_t;
+
+/**
+* @struct slow5_file
+* SLOW5 file structure
+*/
 struct slow5_file {
-    FILE *fp;
-    enum slow5_fmt format;      //whether SLOW5, BLOW5 etc...
-    struct press *compress;     //compression related metadata
-    struct slow5_hdr *header;   //SLOW5 header
-    struct slow5_idx *index;    //SLOW5 index
-    struct slow5_file_meta meta;
+    FILE *fp;                   ///< file pointer
+    enum slow5_fmt format;      ///< whether SLOW5, BLOW5 etc...
+    press_t *compress;          ///< compression related metadata
+    slow5_hdr_t *header;        ///< SLOW5 header
+    slow5_idx_t *index;         ///< SLOW5 index (NULL if not applicable)
+    slow5_file_meta_t meta;     ///< file metadata
 };
 typedef struct slow5_file slow5_file_t;
 
@@ -255,6 +270,10 @@ typedef struct slow5_file slow5_file_t;
  *
  * Otherwise, return a slow5 file structure with the header parsed.
  * slow5_close() should be called when finished with the structure.
+ *
+ * TODO: This function at the moment should only be used for opening a file for reading
+ * The user at the moment is expected to give "r" as the mode for ASCII and "rb" for binary
+ * This mode should better be programmatically done inside the function and the function be renamed to slow5_open_r to idicate this is only for reading
  *
  * @param   pathname    relative or absolute path to slow5 file
  * @param   mode        same mode as in fopen()
@@ -408,6 +427,8 @@ char *slow5_aux_get_string(const slow5_rec_t *read, const char *attr, uint64_t *
  * Otherwise, return a slow5 file structure with the header parsed.
  * slow5_close() should be called when finished with the structure.
  *
+ * TODO: same issues as in slow5_open are applicable to this
+ *
  * @param   pathname    relative or absolute path to slow5 file
  * @param   mode        same mode as in fopen()
  * @param   format      format of the slow5 file
@@ -446,7 +467,7 @@ static inline slow5_rec_t *slow5_rec_init(void) {
 
 
 /**
- * Add a read entry to the slow5 file.
+ * Add a read entry to the SLOW5 file while updating the SLOW5 index (not thread safe).
  *
  * Return
  *  0   the read was successfully stored
@@ -462,7 +483,7 @@ static inline slow5_rec_t *slow5_rec_init(void) {
 int slow5_add_rec(slow5_rec_t *read, slow5_file_t *s5p);
 
 /**
- * Remove a read entry at a read_id in a slow5 file.
+ * Remove a read entry at a read_id in a slow5 file while updating the SLOW5 index (not thread safe).
  *
  * Return
  *  0   the read was successfully stored

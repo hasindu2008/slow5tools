@@ -30,7 +30,9 @@ struct slow5_idx {
     uint64_t num_ids;
     uint64_t cap_ids;
     khash_t(s2i) *hash;
+    uint8_t dirty;
 };
+
 
 struct slow5_idx *slow5_idx_init(struct slow5_file *s5p);
 /**
