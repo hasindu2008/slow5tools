@@ -344,6 +344,40 @@ int name_get_slow5_fmt_test(void) {
     return EXIT_SUCCESS;
 }
 
+int asprintf_mine_valid(void) {
+    char *str = NULL;
+
+    double x = 225.69;
+    const char *exp = "225.690000";
+    ASSERT(asprintf_mine(&str, "%f", x) == strlen(exp));
+    ASSERT(strcmp(str, exp) == 0);
+
+    free(str);
+
+    x = 225.691234;
+    exp = "225.691234";
+    ASSERT(asprintf_mine(&str, "%f", x) == strlen(exp));
+    ASSERT(strcmp(str, exp) == 0);
+
+    free(str);
+
+    x = 225.6912345;
+    exp = "225.691235"; // Note that exp is different to x here
+    ASSERT(asprintf_mine(&str, "%f", x) == strlen(exp));
+    ASSERT(strcmp(str, exp) == 0);
+
+    free(str);
+
+    x = 225.69123456789;
+    exp = "225.691235"; // Note that exp is different to x here
+    ASSERT(asprintf_mine(&str, "%f", x) == strlen(exp));
+    ASSERT(strcmp(str, exp) == 0);
+
+    free(str);
+
+    return EXIT_SUCCESS;
+}
+
 
 int main(void) {
 
@@ -363,6 +397,8 @@ int main(void) {
 
         CMD(path_get_slow5_fmt_test)
         CMD(name_get_slow5_fmt_test)
+
+        CMD(asprintf_mine_valid)
     };
 
     return RUN_TESTS(tests);
