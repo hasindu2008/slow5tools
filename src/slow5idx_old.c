@@ -193,7 +193,7 @@ int slow5_close(SLOW5_FILE *fp){
 /**
  * Open the specified file for reading or writing.
  */
-static inline SLOW5_FILE* slow5_open(const char* path, const char *mode){
+static inline SLOW5_FILE* slow5_open_old(const char* path, const char *mode){
     SLOW5_FILE *fp = (SLOW5_FILE *) malloc(sizeof *fp);
 
     fp->fp = fopen(path, mode);
@@ -548,7 +548,7 @@ static int slow5idx_build3_core(const char *fname_s5, const char *fname_s5i, con
     int save_errno, res;
     const char *file_type;
 
-    slow5 = slow5_open(fname_s5, "r");
+    slow5 = slow5_open_old(fname_s5, "r");
 
     if (!slow5) {
         ERROR("Failed to open the file %s", fname_s5);
@@ -667,7 +667,7 @@ static slow5idx_t *slow5idx_load3_core(const char *fname_s5, const char *fname_s
     const char *file_type;
 
     // TODO refactor this
-    SLOW5_FILE *slow5 = slow5_open(fname_s5, "rb");
+    SLOW5_FILE *slow5 = slow5_open_old(fname_s5, "rb");
 
     if (fname_s5i == NULL) {
         if (ksprintf(&slow5idx_kstr, "%s.index", fname_s5) < 0) goto slow5idxl;
@@ -768,7 +768,7 @@ static slow5idx_t *slow5idx_load3_core(const char *fname_s5, const char *fname_s
         goto slow5idxl;
     }
 
-    slow5idx->slow5 = slow5_open(fname_s5, "rb");
+    slow5idx->slow5 = slow5_open_old(fname_s5, "rb");
     if (slow5idx->slow5 == 0) {
         ERROR("Failed to open %s file %s", file_type, fname_s5);
         goto slow5idxl;

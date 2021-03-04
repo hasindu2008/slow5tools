@@ -23,6 +23,7 @@ static double init_realtime = 0;
 void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, unsigned long attr_value, hid_t datatype);
+void add_attribute(hid_t file_id, const char* attr_name, unsigned long long attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype);
@@ -687,6 +688,31 @@ void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t d
 }
 
 void add_attribute(hid_t file_id, const char* attr_name, unsigned long attr_value, hid_t datatype) {
+    /* Create the data space for the attribute. */
+    herr_t  status;
+    hid_t   dataspace_id, attribute_id; /* identifiers */
+    dataspace_id = H5Screate(H5S_SCALAR);
+    /* Create a dataset attribute. */
+    hid_t atype = H5Tcopy(datatype);
+//    H5Tset_size(atype, strlen(attr_value));
+    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
+    /* Write the attribute data. */
+    status = H5Awrite(attribute_id, atype, &attr_value);
+    assert(status>=0);
+    H5Tclose(atype);
+
+    /* Close the attribute. */
+    status = H5Aclose(attribute_id);
+    if(status<0){
+        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
+    }
+    /* Close the dataspace. */
+    status = H5Sclose(dataspace_id);
+    if(status<0){
+        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
+    }
+}
+void add_attribute(hid_t file_id, const char* attr_name, unsigned long long attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
     herr_t  status;
     hid_t   dataspace_id, attribute_id; /* identifiers */

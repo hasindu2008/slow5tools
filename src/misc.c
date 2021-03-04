@@ -379,7 +379,8 @@ char *double_to_str(double x, size_t *len) {
     char *str = NULL;
     int max_len = asprintf_mine(&str, "%f", x); // TODO Should be lf?
 
-    char *ptr = NULL;
+    char *ptr = str + max_len;
+
     for (int i = max_len - 1; i >= 1; -- i) {
         if (str[i] == '0') {
             ptr = str + i;
@@ -392,7 +393,6 @@ char *double_to_str(double x, size_t *len) {
             break;
         }
     }
-
     if (len != NULL) {
         *len = strlen(str);
     }
@@ -405,7 +405,7 @@ char *float_to_str(float x, size_t *len) {
     char *str = NULL;
     int max_len = asprintf_mine(&str, "%f", x);
 
-    char *ptr = NULL;
+    char *ptr = str + max_len;
     for (int i = max_len - 1; i >= 1; -- i) {
         if (str[i] == '0') {
             ptr = str + i;

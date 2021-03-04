@@ -7,8 +7,8 @@
  * adapted from htslib/faidx.h
  */
 
-#ifndef SLOW5IDX_H
-#define SLOW5IDX_H
+#ifndef SLOW5IDX_OLD_H
+#define SLOW5IDX_OLD_H
 
 /**
  * Index SLOW5 files and extract the record for a given read ID.
