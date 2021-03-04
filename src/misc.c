@@ -380,7 +380,6 @@ char *double_to_str(double x, size_t *len) {
     int max_len = asprintf_mine(&str, "%f", x); // TODO Should be lf?
 
     char *ptr = str + max_len;
-
     for (int i = max_len - 1; i >= 1; -- i) {
         if (str[i] == '0') {
             ptr = str + i;

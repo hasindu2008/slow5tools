@@ -44,6 +44,7 @@ struct press {
     press_method_t method;
     union press_stream *stream;
 };
+typedef struct press press_t;
 
 /* --- Init / free press structure --- */
 struct press *press_init(press_method_t method);

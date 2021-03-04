@@ -188,11 +188,15 @@ static inline void slow5_free(struct slow5_file *s5p) {
         //as long a slow5 index is open, it is always writted back
         //TODO: fix this to avoid issues with RO systems
         if (s5p->index != NULL) {
-            if (s5p->index->fp != NULL) {
-                assert(fclose(s5p->index->fp) == 0);
+
+            if(s5p->index->dirty){ //if the index has been changed, write it back
+                if (s5p->index->fp != NULL) {
+                    assert(fclose(s5p->index->fp) == 0);
+                }
+
+                s5p->index->fp = fopen(s5p->index->pathname, "w");
+                slow5_idx_write(s5p->index);
             }
-            s5p->index->fp = fopen(s5p->index->pathname, "w");
-            slow5_idx_write(s5p->index);
             slow5_idx_free(s5p->index);
         }
 
@@ -2241,6 +2245,9 @@ int slow5_add_rec(struct slow5_rec *read, struct slow5_file *s5p) {
 
     // Update index
     slow5_idx_insert(s5p->index, strdup(read->read_id), offset, bytes);
+
+    //after updating mark dirty
+    s5p->index->dirty = 1;
 
     return 0;
 }
