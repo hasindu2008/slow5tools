@@ -85,6 +85,46 @@ struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt for
 
     return s5p;
 }
+struct slow5_file *slow5_init_empty(FILE *fp, const char *pathname, enum slow5_fmt format) {
+    // Pathname cannot be NULL at this point
+    if (fp == NULL) {
+        return NULL;
+    }
+
+    if (format == FORMAT_UNKNOWN) {
+
+        // Attempt to determine format
+        // from pathname
+        if ((format = path_get_slow5_fmt(pathname)) == FORMAT_UNKNOWN) {
+            fclose(fp);
+            return NULL;
+        }
+    }
+
+    struct slow5_file *s5p;
+    press_method_t method;
+    struct slow5_hdr *header = slow5_hdr_init_empty();
+    header->version = ASCII_VERSION_STRUCT;
+    if (header == NULL) {
+        fclose(fp);
+        s5p = NULL;
+    } else {
+        s5p = (struct slow5_file *) calloc(1, sizeof *s5p);
+
+        s5p->fp = fp;
+        s5p->format = format;
+        s5p->header = header;
+        s5p->compress = press_init(method);
+
+        if ((s5p->meta.fd = fileno(fp)) == -1) {
+            slow5_close(s5p);
+            s5p = NULL;
+        }
+        s5p->meta.pathname = pathname;
+        s5p->meta.start_rec_offset = ftello(fp);
+    }
+    return s5p;
+}
 
 /**
  * Open a slow5 file with a specific mode given it's pathname.

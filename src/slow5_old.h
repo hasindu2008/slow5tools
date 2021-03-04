@@ -6,14 +6,15 @@
 ** @@
 ******************************************************************************/
 
-#ifndef SLOW5_H
-#define SLOW5_H
+#ifndef SLOW5_OLD_H
+#define SLOW5_OLD_H
 
 #include "fast5lite.h"
-#include "slow5misc.h"
+#include "misc.h"
 #include "error.h"
 #include <sys/wait.h>
 #include "cmd.h"
+#include "slow5.h"
 
 
 #include <stdlib.h>
@@ -181,12 +182,12 @@ typedef struct{
 
 typedef struct{
     //    RAW
-    unsigned long start_time;
+    unsigned long long start_time;
     unsigned int duration;
     int read_number;
     uint8_t start_mux;
     char* read_id;
-    float median_before;
+    double median_before;
     uint8_t end_reason;
     //    CHANNEL_ID
     float digitisation;
@@ -225,6 +226,7 @@ struct operator_obj {
     int *flag_context_tags;
     int *flag_tracking_id;
     size_t* nreads;
+    slow5_file_t* slow5File;
 };
 
 union attribute_data {
@@ -246,7 +248,7 @@ typedef struct {
 void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, const std::string read_id, const fast5_t f5, const char *fast5_path);
 
 //implemented in read_fast5.c
-int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int write_header_flag, struct program_meta *meta);
+int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File);
 fast5_file_t fast5_open(const char* filename);
 void print_slow5_header(operator_obj* operator_data);
 void free_attributes(group_flags group_flag, operator_obj* operator_data);

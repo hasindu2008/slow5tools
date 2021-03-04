@@ -1,8 +1,10 @@
 // Sasha Jenner
 
 #include "slow5_old.h"
+#include "slow5.h"
 #include "error.h"
 #include "cmd.h"
+#include "slow5_extra.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -169,7 +171,7 @@ void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f
 void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
 
     static size_t call_count = 0;
-
+    slow5_file_t* slow5File;
     FILE *slow5_file_pointer = NULL;
     std::string slow5_path;
     if(output_dir){
@@ -208,10 +210,10 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
                 } else {
                     f_out = slow5_file_pointer;
                 }
-                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count, meta);
+                slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
+                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count, meta, slow5File);
 
             }else{ // single-fast5
-
                 if(!slow5_file_pointer){
                     slow5_path += "/"+std::to_string(args.starti)+".slow5";
                     if(call_count==0){
@@ -228,37 +230,31 @@ void f2s_child_worker(FILE *f_out, enum FormatOut format_out, z_streamp strmp, F
                         f_out = slow5_file_pointer;
                     }
                 }
-                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count++, meta);
+                slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
+                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count++, meta, slow5File);
+
             }
         } else{
+            slow5File = slow5_init_empty(f_out, slow5_path.c_str(), FORMAT_ASCII);
             if (fast5_file.is_multi_fast5) {
-                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count, meta);
+                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count, meta, slow5File);
             }else{
-                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count++, meta);
+                read_fast5(&fast5_file, f_out, format_out, strmp, f_idx, call_count++, meta, slow5File);
             }
         }
-
 
         H5Fclose(fast5_file.hdf5_file);
         if(output_dir && fast5_file.is_multi_fast5){
-            if(fclose(slow5_file_pointer) == EOF) {
-                WARNING("File '%s' failed on closing.", slow5_path.c_str());
-            }
             slow5_path = std::string(output_dir);
-            slow5_file_pointer = NULL;
+            slow5_close(slow5File);
         }
     }
     if(output_dir && !fast5_file.is_multi_fast5) {
-        if(fclose(slow5_file_pointer) == EOF) {
-            WARNING("File '%s' failed on closing.", slow5_path.c_str());
-        }
-        slow5_file_pointer = NULL;
+            slow5_close(slow5File);
     }
-
     if(meta->verbose){
         fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
-
 }
 
 void f2s_iop(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){

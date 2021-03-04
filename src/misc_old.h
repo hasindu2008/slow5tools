@@ -2,8 +2,8 @@
 extern "C" {
 #endif
 
-#ifndef MISC_H
-#define MISC_H
+#ifndef MISC_OLD_H
+#define MISC_OLD_H
 
 #include <zlib.h>
 #include <assert.h>

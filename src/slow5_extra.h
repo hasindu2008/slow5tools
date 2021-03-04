@@ -10,6 +10,7 @@
 
 // slow5 file
 struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format);
+struct slow5_file *slow5_init_empty(FILE *fp, const char *pathname, enum slow5_fmt format);
 
 // slow5 header
 struct slow5_hdr *slow5_hdr_init_empty(void);
