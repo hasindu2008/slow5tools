@@ -91,7 +91,6 @@
 #define Z_MEM_DEFAULT (8)
 #define Z_OUT_CHUNK (16384) // 2^14
 
-#include "slow5idx_old.h" // TODO move?
 
 /// File formats to be dealing with
 enum slow5_format {

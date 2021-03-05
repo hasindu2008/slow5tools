@@ -14,12 +14,9 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/f2s.o \
       $(BUILD_DIR)/s2f.o \
       $(BUILD_DIR)/index.o \
-      $(BUILD_DIR)/extract.o \
       $(BUILD_DIR)/view.o \
-	  $(BUILD_DIR)/slow5idx_old.o \
 	  $(BUILD_DIR)/kstring.o \
 	  $(BUILD_DIR)/misc_old.o \
-	  $(BUILD_DIR)/thread.o \
 	  $(BUILD_DIR)/read_fast5.o \
 	  $(BUILD_DIR)/merge_slow5.o \
 	  $(BUILD_DIR)/read_slow5.o \
@@ -59,8 +56,8 @@ $(BUILD_DIR)/view.o: src/view.c src/error.h src/misc.c
 #$(BUILD_DIR)/fastt_main.o: src/fastt_main.c src/slow5_old.h src/fast5lite.h src/slow5misc.h src/error.h
 #	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/slow5idx_old.o: src/slow5idx_old.c src/slow5idx_old.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+# $(BUILD_DIR)/slow5idx_old.o: src/slow5idx_old.c src/slow5idx_old.h
+# 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/kstring.o: src/klib/kstring.c src/klib/kstring.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
@@ -68,10 +65,10 @@ $(BUILD_DIR)/kstring.o: src/klib/kstring.c src/klib/kstring.h
 $(BUILD_DIR)/misc_old.o: src/misc_old.c
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/thread.o: src/thread.c src/slow5idx_old.h
+$(BUILD_DIR)/thread.o: src/thread.c
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/read_fast5.o: src/read_fast5.c src/slow5idx_old.h
+$(BUILD_DIR)/read_fast5.o: src/read_fast5.c
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/merge_slow5.o: src/merge_slow5.c src/slow5_old.h src/error.h
