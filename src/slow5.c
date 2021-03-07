@@ -45,7 +45,6 @@ static inline void slow5_rec_set_aux_map(khash_t(s2a) *aux_map, const char *fiel
 
 // slow5 file
 
-
 struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format) {
     // Pathname cannot be NULL at this point
     if (fp == NULL) {
@@ -105,7 +104,6 @@ struct slow5_file *slow5_init_empty(FILE *fp, const char *pathname, enum slow5_f
     struct slow5_file *s5p;
     press_method_t method;
     struct slow5_hdr *header = slow5_hdr_init_empty();
-
     header->version = ASCII_VERSION_STRUCT;
     if (header == NULL) {
         fclose(fp);
@@ -127,7 +125,6 @@ struct slow5_file *slow5_init_empty(FILE *fp, const char *pathname, enum slow5_f
     }
     return s5p;
 }
-
 
 /**
  * Open a slow5 file with a specific mode given it's pathname.
