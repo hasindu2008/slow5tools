@@ -213,9 +213,8 @@ struct operator_obj {
     //attributes are useful when writing. They are also passed to the op_func_group function along with the struct
     struct program_meta *meta;
     FILE *f_out;
-    enum FormatOut format_out;
-    z_streamp strmp;
-    FILE *f_idx;
+    enum slow5_fmt format_out;
+    enum press_method pressMethod;
     const char *fast5_path;
     fast5_file_t* fast5_file;
     const char * group_name;
@@ -249,7 +248,7 @@ typedef struct {
 void write_data(FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, const std::string read_id, const fast5_t f5, const char *fast5_path);
 
 //implemented in read_fast5.c
-int read_fast5(fast5_file_t *fast5_file, FILE *f_out, enum FormatOut format_out, z_streamp strmp, FILE *f_idx, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File);
+int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File);
 fast5_file_t fast5_open(const char* filename);
 void print_slow5_header(operator_obj* operator_data);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
