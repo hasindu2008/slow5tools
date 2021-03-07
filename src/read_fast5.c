@@ -381,6 +381,7 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
     tracker.fast5_file = fast5_file;
     tracker.format_out = format_out;
     tracker.pressMethod = pressMethod;
+    tracker.press_ptr = press_init(pressMethod);
     tracker.fast5_path = fast5_file->fast5_path;
     tracker.slow5File = slow5File;
 
@@ -433,6 +434,7 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
         print_record(&tracker);
         slow5_rec_free(tracker.slow5_record);
     }
+    press_free(tracker.press_ptr);
     return 1;
 }
 
@@ -582,9 +584,9 @@ void print_slow5_header(operator_obj* operator_data) {
 }
 
 void print_record(operator_obj* operator_data) {
-//    todo - create struct press and pass to slow5_rec_fwrite()
-    if(slow5_rec_fwrite(operator_data->slow5File->fp, operator_data->slow5_record, operator_data->slow5File->header->aux_meta, operator_data->format_out, NULL) == -1){
+    if(slow5_rec_fwrite(operator_data->slow5File->fp, operator_data->slow5_record, operator_data->slow5File->header->aux_meta, operator_data->format_out, operator_data->press_ptr) == -1){
         fprintf(stderr, "Could not write the record %s\n", operator_data->slow5_record->read_id);
+        exit(EXIT_FAILURE);
     }
 }
 

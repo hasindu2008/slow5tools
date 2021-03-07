@@ -215,6 +215,7 @@ struct operator_obj {
     FILE *f_out;
     enum slow5_fmt format_out;
     enum press_method pressMethod;
+    press_t* press_ptr;
     const char *fast5_path;
     fast5_file_t* fast5_file;
     const char * group_name;
