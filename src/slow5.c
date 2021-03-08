@@ -85,6 +85,8 @@ struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt for
 
     return s5p;
 }
+
+// TODO this needs to be refined: talk to Sasha (he wrote this here)
 struct slow5_file *slow5_init_empty(FILE *fp, const char *pathname, enum slow5_fmt format) {
     // Pathname cannot be NULL at this point
     if (fp == NULL) {
@@ -102,27 +104,21 @@ struct slow5_file *slow5_init_empty(FILE *fp, const char *pathname, enum slow5_f
     }
 
     struct slow5_file *s5p;
-    press_method_t method;
     struct slow5_hdr *header = slow5_hdr_init_empty();
     header->version = ASCII_VERSION_STRUCT;
-    if (header == NULL) {
-        fclose(fp);
+    s5p = (struct slow5_file *) calloc(1, sizeof *s5p);
+
+    s5p->fp = fp;
+    s5p->format = format;
+    s5p->header = header;
+
+    if ((s5p->meta.fd = fileno(fp)) == -1) {
+        slow5_close(s5p);
         s5p = NULL;
-    } else {
-        s5p = (struct slow5_file *) calloc(1, sizeof *s5p);
-
-        s5p->fp = fp;
-        s5p->format = format;
-        s5p->header = header;
-        s5p->compress = press_init(method);
-
-        if ((s5p->meta.fd = fileno(fp)) == -1) {
-            slow5_close(s5p);
-            s5p = NULL;
-        }
-        s5p->meta.pathname = pathname;
-        s5p->meta.start_rec_offset = ftello(fp);
     }
+    s5p->meta.pathname = pathname;
+    s5p->meta.start_rec_offset = ftello(fp);
+
     return s5p;
 }
 
@@ -659,6 +655,24 @@ int slow5_hdr_fwrite(FILE *fp, struct slow5_hdr *header, enum slow5_fmt format, 
     free(hdr);
     return ret;
 }
+
+/**
+ * Get a header data map.
+ *
+ * Returns NULL if an input parameter is NULL.
+ *
+ * @param   read_group     read group number
+ * @param   header     pointer to the header
+ * @return  the header data map for that read_group, or NULL on error
+ */
+khash_t(s2s) *slow5_hdr_get_data(uint32_t read_group, const struct slow5_hdr *header) {
+    if (header == NULL || read_group >= header->num_read_groups) {
+        return NULL;
+    }
+
+    return header->data.maps.a[read_group];
+}
+
 
 /**
  * Get a header data attribute.

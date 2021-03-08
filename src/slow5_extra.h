@@ -19,6 +19,7 @@ void slow5_hdr_free(struct slow5_hdr *header);
 
 // slow5 header data
 int slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, struct slow5_hdr *header, uint32_t *hdr_len);
+khash_t(s2s) *slow5_hdr_get_data(uint32_t read_group, const struct slow5_hdr *header);
 char *slow5_hdr_types_to_str(struct slow5_aux_meta *aux_meta, size_t *len);
 char *slow5_hdr_attrs_to_str(struct slow5_aux_meta *aux_meta, size_t *len);
 void slow5_hdr_data_free(struct slow5_hdr *header);
