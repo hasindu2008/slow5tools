@@ -2,9 +2,17 @@
 // Created by shan on 2020-12-29.
 //
 
-#include "fast5lite.h"
-#include "slow5_old.h"
+#include <getopt.h>
+#include <sys/wait.h>
+
+#include <string>
+#include <vector>
+
 #include "error.h"
+
+#include "slow5_old.h"
+//#include "read_fast5.h"
+
 
 #define USAGE_MSG "Usage: %s [OPTION]... -o [output DIR] [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"

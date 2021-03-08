@@ -1,11 +1,15 @@
 //
 // Created by shan on 2020-12-22.
 //
-#include "slow5_old.h"
+
+#include <string>
+#include <vector>
+
 #include "slow5.h"
 #include <float.h>
 #include "error.h"
 #include "slow5_extra.h"
+#include "read_fast5.h"
 
 // Operator function to be called by H5Aiterate.
 herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *operator_data);

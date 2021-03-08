@@ -1,10 +1,17 @@
 // Sasha Jenner
 
-#include "slow5_old.h"
+#include <getopt.h>
+#include <sys/wait.h>
+
+#include <string>
+#include <vector>
+
 #include "slow5.h"
 #include "error.h"
 #include "cmd.h"
 #include "slow5_extra.h"
+#include "read_fast5.h"
+
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
