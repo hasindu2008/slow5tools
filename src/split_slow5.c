@@ -183,10 +183,10 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 
             create_slow5_files(slow5_files, output_dir, meta, i, &tracker, slow5, metaSplitMethod, 0, 0);
 
-            free_attributes(READ, &tracker);
-            free_attributes(ROOT, &tracker);
-            free_attributes(CONTEXT_TAGS, &tracker);
-            free_attributes(TRACKING_ID, &tracker);
+//            free_attributes(READ, &tracker);
+//            free_attributes(ROOT, &tracker);
+//            free_attributes(CONTEXT_TAGS, &tracker);
+//            free_attributes(TRACKING_ID, &tracker);
             if ((char *) slow5_headers[0].file_format){
                 free((char *) slow5_headers[0].file_format);
             }
@@ -208,10 +208,10 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 //            fprintf(stderr, "#records=%lu #files=%lu limit=%lu\n",number_of_records, metaSplitMethod.n, limit);
             create_slow5_files(slow5_files, output_dir, meta, i, &tracker, slow5, metaSplitMethod, number_of_records, 0);
 
-            free_attributes(READ, &tracker);
-            free_attributes(ROOT, &tracker);
-            free_attributes(CONTEXT_TAGS, &tracker);
-            free_attributes(TRACKING_ID, &tracker);
+//            free_attributes(READ, &tracker);
+//            free_attributes(ROOT, &tracker);
+//            free_attributes(CONTEXT_TAGS, &tracker);
+//            free_attributes(TRACKING_ID, &tracker);
             if ((char *) slow5_headers[0].file_format){
                 free((char *) slow5_headers[0].file_format);
             }
@@ -225,10 +225,10 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 
                 create_slow5_files(slow5_files, output_dir, meta, i, &tracker, slow5, metaSplitMethod, 0, j);
 
-                free_attributes(READ, &tracker);
-                free_attributes(ROOT, &tracker);
-                free_attributes(CONTEXT_TAGS, &tracker);
-                free_attributes(TRACKING_ID, &tracker);
+//                free_attributes(READ, &tracker);
+//                free_attributes(ROOT, &tracker);
+//                free_attributes(CONTEXT_TAGS, &tracker);
+//                free_attributes(TRACKING_ID, &tracker);
                 if ((char *) slow5_headers[j].file_format){
                     free((char *) slow5_headers[j].file_format);
                 }
