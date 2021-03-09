@@ -12,9 +12,9 @@
 
 #include "error.h"
 #include "cmd.h"
-#include "slow5_old.h"
-//#include "read_fast5.h"
-
+#include "slow5.h"
+#include "read_fast5.h"
+#include "slow5_extra.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -31,9 +31,6 @@ static double init_realtime = 0;
 int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count* readsCount);
 
 int compare_headers(slow5_header_t& slow5Header1, slow5_header_t& slow5Header2, int compare_level);
-
-
-
 
 int merge_main(int argc, char **argv, struct program_meta *meta){
     init_realtime = realtime();
@@ -139,12 +136,14 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     std::vector<std::string> slow5_files;
 
     for (int i = optind; i < argc; ++ i) {
-        find_all_5(argv[i], slow5_files, SLOW5_EXTENSION);
+        find_all_5(argv[i], slow5_files, ASCII_EXTENSION);
     }
     fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, slow5_files.size(), realtime() - realtime0);
 
-    if(merge_slow5(f_out, slow5_files, &readsCount)==-1){
-        return EXIT_FAILURE;
+    if(slow5_files.size()){
+        if(merge_slow5(f_out, slow5_files, &readsCount)==-1){
+            return EXIT_FAILURE;
+        }
     }
     MESSAGE(stderr, "total slow5: %lu, bad slow5: %lu multi-group slow5: %lu", readsCount.total_5, readsCount.bad_5_file, readsCount.multi_group_slow5);
 
@@ -162,179 +161,83 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 }
 
 int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count* readsCount) {
+    fprintf(stderr,"merging...\n");
     size_t read_group_count = 0;
     size_t slow5_files_count = slow5_files.size();
     readsCount->total_5 = slow5_files_count;
 
-    std::vector<FILE*>slow_files_pointers(slow5_files_count);
-    std::vector<slow5_header_t> slow5_headers;
-    std::vector<std::vector<size_t>> list; //always use list to access slow5_headers. slow5_headers has invalid files' headers too.
-    std::vector<std::string> run_ids;
-    std::vector<size_t> run_id_indices;
-    std::vector<size_t> file_id_tracker;
+    std::string slow5_path = "merged.slow5";
+    FILE *slow5_file_pointer = NULL;
+    slow5_file_pointer = fopen(slow5_path.c_str(), "w");
 
-    for(size_t i =0; i<slow5_files_count; i++) {
-        slow_files_pointers[i] = fopen(slow5_files[i].c_str(), "r"); // read mode
+    // An error occured
+    if (!slow5_file_pointer) {
+        ERROR("File '%s' could not be opened - %s.", slow5_path.c_str(), strerror(errno));
+    }
+    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
+    slow5_hdr_initialize(slow5File->header);
+    slow5File->header->num_read_groups = 0;
 
-        if (slow_files_pointers[i] == NULL) {
-            WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
+    if(!slow5File){
+        fprintf(stderr, "cannot open %s. skipping...\n",slow5_files[0].c_str());
+        return EXIT_FAILURE;
+    }
+    for(size_t i=0; i<slow5_files_count; i++) {
+        slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+        if(!slow5File_i){
+            fprintf(stderr, "cannot open %s. skipping...\n",slow5_files[i].c_str());
             continue;
         }
-
-        hsize_t num_read_group;
-        if(find_num_read_group(slow_files_pointers[i], &num_read_group)==-1){
-            WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
-            continue;
-        }
-        for(size_t j=0; j<num_read_group; j++){
-            file_id_tracker.push_back(i);
-            slow5_header_t slow5_header;
-            slow5_headers.push_back(slow5_header);
-        }
-
-        if (read_slow5_header(slow_files_pointers[i], slow5_headers, num_read_group) == -1) {
-            WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
-            readsCount->bad_5_file++;
-            continue;
-        }
-
-        if (num_read_group > 1) {
-            readsCount->multi_group_slow5++;
-        }
-
-        size_t slow5_headers_count = slow5_headers.size();
-        std::vector<size_t> flags_run_id_exist(num_read_group, 0);
-        size_t start_idx = slow5_headers_count - num_read_group;
-
-        //check if run_id is already in the list
-        for(size_t k=start_idx; k<slow5_headers_count; k++){
-            for (size_t j = 0; j < list.size(); j++) {
-                if (strcmp(slow5_headers[list[j][0]].run_id, slow5_headers[k].run_id) == 0) {
-                    list[j].push_back(k);
-                    flags_run_id_exist[slow5_headers_count-k-1] = 1;
+        int64_t read_group_count_i = slow5File_i->header->num_read_groups;
+        fprintf(stderr,"reading slow5 file '%s' it has %u read groups\n", slow5_files[i].c_str(), read_group_count_i);
+        size_t read_group_tracker [read_group_count_i];
+        for(int64_t j=0; j<read_group_count_i; j++){
+            char* run_id_j = slow5_hdr_get("run_id", j, slow5File_i->header);
+            fprintf(stderr, "run_id = %s\n",run_id_j);
+            int64_t read_group_count = slow5File->header->num_read_groups;
+            size_t flag_run_id_found = 0;
+            for(int64_t k=0; k<read_group_count; k++){
+                char* run_id_k = slow5_hdr_get("run_id", k, slow5File->header);
+                if(strcmp(run_id_j,run_id_k) == 0){
+                    flag_run_id_found = 1;
+                    read_group_tracker[j] = k;
                     break;
                 }
             }
-        }
-
-        //if run_id is new, add it
-        for(size_t j=0; j<num_read_group; j++){
-            if (flags_run_id_exist[j] == 0){
-                list.push_back(std::vector<size_t>{start_idx+j});
-                run_ids.push_back(slow5_headers[start_idx+j].run_id);
-                run_id_indices.push_back(read_group_count);
-                read_group_count++;
+            if(flag_run_id_found == 0){
+                int64_t new_read_group = slow5_hdr_add_rg(slow5File->header);
+                fprintf(stderr, "new read_group = %ld\n", (long)new_read_group);
+                if(new_read_group != read_group_count){ //sanity check
+                    fprintf(stderr, "something's wrong\n");
+                }
+                read_group_tracker[j] = new_read_group;
+                slow5_hdr_set("run_id", run_id_j, new_read_group, slow5File->header);
             }
         }
 
-    }
-
-    //debug
-    if(readsCount->total_5 == readsCount->bad_5_file){
-        return 1;
-    }
-
-    // compare headers
-    for(size_t j=0; j<list.size(); j++){
-        for(size_t k=0; k<list[j].size(); k++){
-            if(compare_headers(slow5_headers[list[0][0]],slow5_headers[list[j][k]],0)==-1){
-                ERROR("%s and %s are different. Cannot merge. Exiting..\n",slow5_files[list[0][0]].c_str(),slow5_files[list[j][k]].c_str());
-                return -1;
+        struct slow5_rec *read = NULL;
+        int ret;
+//        struct press *press_ptr = press_init(to_compress);
+        while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+            fprintf(stderr,"before read_group = %u\n",read->read_group);
+            read->read_group = read_group_tracker[read->read_group];
+            fprintf(stderr,"after read_group = %u\n",read->read_group);
+            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, FORMAT_ASCII, NULL) == -1) {
+                slow5_rec_free(read);
+                return -2;
             }
-            if(compare_headers(slow5_headers[list[j][0]],slow5_headers[list[j][k]],1)==-1){
-                WARNING("%s and %s files have same run_id but different headers",slow5_files[list[j][0]].c_str(),slow5_files[list[j][k]].c_str());
-            }
+//            slow5_add_rec(read, slow5File);
         }
+//        press_free(press_ptr);
+        slow5_rec_free(read);
+        slow5_close(slow5File_i);
     }
-
-    // sort run_ids lexicographically
-    // Use Bubble Sort to arrange run_ids todo: use an efficient sort
-    for (size_t i = 0; i < read_group_count-1; ++i){
-        for (size_t j = 0; j < read_group_count-1 - i; ++j){
-            if (run_ids[j] > run_ids[j + 1]){
-
-                std::string temp = run_ids[j];
-                run_ids[j] = run_ids[j + 1];
-                run_ids[j + 1] = temp;
-
-                size_t temp_index = run_id_indices[j];
-                run_id_indices[j] = run_id_indices[j+1];
-                run_id_indices[j+1] = temp_index;
-            }
-        }
+    fseek(slow5_file_pointer, 0, SEEK_SET);
+    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, FORMAT_ASCII, COMPRESS_NONE) == -1){
+        fprintf(stderr, "Could not write the header\n");
+        exit(EXIT_FAILURE);
     }
-
-    print_multi_group_header(f_out, slow5_headers, run_id_indices, list, read_group_count);
-    print_multi_group_records(f_out, slow_files_pointers, run_id_indices, list, read_group_count, file_id_tracker);
-
-    //free slow5 files
-    for(size_t i =0; i<slow5_files_count; i++) {
-        if (slow_files_pointers[i]) {
-            fclose(slow_files_pointers[i]);
-        }
-    }
-    //free slow5 headers
-    for(size_t i=0; i<slow5_headers.size(); i++){
-        //context tags
-        if(slow5_headers[i].sample_frequency)free(slow5_headers[i].sample_frequency);
-        //additional attributes in 2.2
-        if(slow5_headers[i].barcoding_enabled)free(slow5_headers[i].barcoding_enabled);
-        if(slow5_headers[i].experiment_duration_set)free(slow5_headers[i].experiment_duration_set);
-        if(slow5_headers[i].experiment_type)free(slow5_headers[i].experiment_type);
-        if(slow5_headers[i].local_basecalling)free(slow5_headers[i].local_basecalling);
-        if(slow5_headers[i].package)free(slow5_headers[i].package);
-        if(slow5_headers[i].package_version)free(slow5_headers[i].package_version);
-        if(slow5_headers[i].sequencing_kit)free(slow5_headers[i].sequencing_kit);
-        //additional attributes in 2.0
-        if(slow5_headers[i].filename)free(slow5_headers[i].filename);
-        if(slow5_headers[i].experiment_kit)free(slow5_headers[i].experiment_kit);
-        if(slow5_headers[i].user_filename_input)free(slow5_headers[i].user_filename_input);
-        //tracking_id
-        if(slow5_headers[i].asic_id)free(slow5_headers[i].asic_id);
-        if(slow5_headers[i].asic_id_eeprom)free(slow5_headers[i].asic_id_eeprom);
-        if(slow5_headers[i].asic_temp)free(slow5_headers[i].asic_temp);
-        if(slow5_headers[i].auto_update)free(slow5_headers[i].auto_update);
-        if(slow5_headers[i].auto_update_source)free(slow5_headers[i].auto_update_source);
-        if(slow5_headers[i].bream_is_standard)free(slow5_headers[i].bream_is_standard);
-        if(slow5_headers[i].device_id)free(slow5_headers[i].device_id);
-        if(slow5_headers[i].exp_script_name)free(slow5_headers[i].exp_script_name);
-        if(slow5_headers[i].exp_script_purpose)free(slow5_headers[i].exp_script_purpose);
-        if(slow5_headers[i].exp_start_time)free(slow5_headers[i].exp_start_time);
-        if(slow5_headers[i].flow_cell_id)free(slow5_headers[i].flow_cell_id);
-        if(slow5_headers[i].heatsink_temp)free(slow5_headers[i].heatsink_temp);
-        if(slow5_headers[i].hostname)free(slow5_headers[i].hostname);
-        if(slow5_headers[i].installation_type)free(slow5_headers[i].installation_type);
-        if(slow5_headers[i].local_firmware_file)free(slow5_headers[i].local_firmware_file);
-        if(slow5_headers[i].operating_system)free(slow5_headers[i].operating_system);
-        if(slow5_headers[i].protocol_run_id)free(slow5_headers[i].protocol_run_id);
-        if(slow5_headers[i].protocols_version)free(slow5_headers[i].protocols_version);
-        if(slow5_headers[i].tracking_id_run_id)free(slow5_headers[i].tracking_id_run_id);
-        if(slow5_headers[i].usb_config)free(slow5_headers[i].usb_config);
-        if(slow5_headers[i].version)free(slow5_headers[i].version);
-        if(slow5_headers[i].asic_version)free(slow5_headers[i].asic_version);
-        //2.2
-        if(slow5_headers[i].configuration_version)free(slow5_headers[i].configuration_version);
-        if(slow5_headers[i].device_type)free(slow5_headers[i].device_type);
-        if(slow5_headers[i].distribution_status)free(slow5_headers[i].distribution_status);
-        if(slow5_headers[i].distribution_version)free(slow5_headers[i].distribution_version);
-        if(slow5_headers[i].flow_cell_product_code)free(slow5_headers[i].flow_cell_product_code);
-        if(slow5_headers[i].guppy_version)free(slow5_headers[i].guppy_version);
-        if(slow5_headers[i].protocol_group_id)free(slow5_headers[i].protocol_group_id);
-        if(slow5_headers[i].sample_id)free(slow5_headers[i].sample_id);
-        //2.0
-        if(slow5_headers[i].bream_core_version)free(slow5_headers[i].bream_core_version);
-        if(slow5_headers[i].bream_ont_version)free(slow5_headers[i].bream_ont_version);
-        if(slow5_headers[i].bream_prod_version)free(slow5_headers[i].bream_prod_version);
-        if(slow5_headers[i].bream_rnd_version)free(slow5_headers[i].bream_rnd_version);
-
-        //other
-        if((char*)slow5_headers[i].file_format)free((char*)slow5_headers[i].file_format);
-        if(slow5_headers[i].file_version)free(slow5_headers[i].file_version);
-        if(slow5_headers[i].file_type)free(slow5_headers[i].file_type);
-        if(slow5_headers[i].pore_type)free(slow5_headers[i].pore_type);
-        if(slow5_headers[i].run_id)free(slow5_headers[i].run_id);
-    }
-
+    slow5_close(slow5File);
     return 1;
 }
 

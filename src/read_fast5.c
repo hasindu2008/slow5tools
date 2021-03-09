@@ -653,3 +653,78 @@ void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, 
         }
     }
 }
+
+void slow5_hdr_initialize(slow5_hdr *header){
+    slow5_hdr_add_rg(header);
+    header->num_read_groups = 1;
+
+    struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
+    slow5_aux_meta_add(aux_meta, "channel_number", STRING);
+    slow5_aux_meta_add(aux_meta, "median_before", DOUBLE);
+    slow5_aux_meta_add(aux_meta, "read_number", INT32_T);
+    slow5_aux_meta_add(aux_meta, "start_mux", UINT8_T);
+    slow5_aux_meta_add(aux_meta, "start_time", UINT64_T);
+//    todo - add end_reason enum
+
+    header->aux_meta = aux_meta;
+
+    //  main stuff
+    slow5_hdr_add_attr("file_format", header);
+    slow5_hdr_add_attr("file_version", header);
+    slow5_hdr_add_attr("file_type", header);
+    //    READ
+    slow5_hdr_add_attr("pore_type", header);
+    slow5_hdr_add_attr("run_id", header);
+    //    CONTEXT_TAGS
+    slow5_hdr_add_attr("sample_frequency", header);
+    //additional attributes in 2.0
+    slow5_hdr_add_attr("filename", header);
+    slow5_hdr_add_attr("experiment_kit", header);
+    slow5_hdr_add_attr("user_filename_input", header);
+    //additional attributes in 2.2
+    slow5_hdr_add_attr("barcoding_enabled", header);
+    slow5_hdr_add_attr("experiment_duration_set", header);
+    slow5_hdr_add_attr("experiment_type", header);
+    slow5_hdr_add_attr("local_basecalling", header);
+    slow5_hdr_add_attr("package", header);
+    slow5_hdr_add_attr("package_version", header);
+    slow5_hdr_add_attr("sequencing_kit", header);
+    //    TRACKING_ID
+    slow5_hdr_add_attr("asic_id", header);
+    slow5_hdr_add_attr("asic_id_eeprom", header);
+    slow5_hdr_add_attr("asic_temp", header);
+    slow5_hdr_add_attr("auto_update", header);
+    slow5_hdr_add_attr("auto_update_source", header);
+    slow5_hdr_add_attr("bream_is_standard", header);
+    slow5_hdr_add_attr("device_id", header);
+    slow5_hdr_add_attr("distribution_version", header);
+    slow5_hdr_add_attr("exp_script_name", header);
+    slow5_hdr_add_attr("exp_script_purpose", header);
+    slow5_hdr_add_attr("exp_start_time", header);
+    slow5_hdr_add_attr("flow_cell_id", header);
+    slow5_hdr_add_attr("heatsink_temp", header);
+    slow5_hdr_add_attr("hostname", header);
+    slow5_hdr_add_attr("installation_type", header);
+    slow5_hdr_add_attr("local_firmware_file", header);
+    slow5_hdr_add_attr("operating_system", header);
+    slow5_hdr_add_attr("protocol_run_id", header);
+    slow5_hdr_add_attr("protocols_version", header);
+    slow5_hdr_add_attr("tracking_id_run_id", header);
+    slow5_hdr_add_attr("usb_config", header);
+    slow5_hdr_add_attr("version", header);
+    //additional attributes in 2.0
+    slow5_hdr_add_attr("bream_core_version", header);
+    slow5_hdr_add_attr("bream_ont_version", header);
+    slow5_hdr_add_attr("bream_prod_version", header);
+    slow5_hdr_add_attr("bream_rnd_version", header);
+    //additional attributes in 2.2
+    slow5_hdr_add_attr("asic_version", header);
+    slow5_hdr_add_attr("configuration_version", header);
+    slow5_hdr_add_attr("device_type", header);
+    slow5_hdr_add_attr("distribution_status", header);
+    slow5_hdr_add_attr("flow_cell_product_code", header);
+    slow5_hdr_add_attr("guppy_version", header);
+    slow5_hdr_add_attr("protocol_group_id", header);
+    slow5_hdr_add_attr("sample_id", header);
+
+}

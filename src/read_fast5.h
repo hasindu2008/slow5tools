@@ -158,8 +158,7 @@ void print_slow5_header(operator_obj* operator_data);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 void print_slow5_header(operator_obj* operator_data);
 void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension);
-
-
+void slow5_hdr_initialize(slow5_hdr *header);
 
 // args for processes
 typedef struct {
@@ -176,7 +175,6 @@ union attribute_data {
     uint8_t attr_uint8_t;
     char* attr_string;
 };
-
 
 // from nanopolish_fast5_io.cpp
 static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std::string& group_name, const std::string& attribute_name)
