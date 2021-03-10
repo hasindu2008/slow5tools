@@ -1,0 +1,36 @@
+#slow5_version	0.1.0
+#num_read_groups	2
+@asic_id	3574887596	420170566
+@asic_id_eeprom	0	2043896
+@asic_temp	29.2145729	30.1846237
+@auto_update	1	1
+@auto_update_source	https://mirror.oxfordnanoportal.com/software/MinKNOW/	https://mirror.oxfordnanoportal.com/software/MinKNOW/
+@bream_core_version	1.1.20.1	1.1.21.1
+@bream_is_standard	1	1
+@bream_map_version	1.1.20.1	1.1.21.1
+@bream_ont_version	1.1.20.1	1.1.21.1
+@bream_prod_version	1.1.20.1	1.1.21.1
+@bream_rnd_version	0.1.1	0.1.1
+@device_id	MN16450	MN16303
+@exp_script_name	python/recipes/nc/NC_48Hr_Sequencing_Run_FLO-MIN106_SQK-LSK108.py	python/recipes/nc/NC_48Hr_Sequencing_Run_FLO-MIN106_SQK-LSK108.py
+@exp_script_purpose	sequencing_run	sequencing_run
+@exp_start_time	1479433093	1481657610
+@experiment_kit	genomic_dna	genomic_dna
+@experiment_type	customer_qc	
+@file_version	1	0.6
+@filename	deamernanopore_20161117_fnfab43577_mn16450_sequencing_run_ma_821_r9_4_na12878_11_17_16_88738	odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395
+@flow_cell_id	FAB43577	
+@heatsink_temp	33.9921875	33.9765625
+@hostname	DEAMERNANOPORE	odw-genlab4209
+@installation_type	map	map
+@local_firmware_file	0	0
+@operating_system	Windows 6.2	Windows 6.1
+@protocol_run_id	a4429838-103c-497f-a824-7dffa72cfd81	3eecebf6-325f-4ac5-b896-a7588f2b2324
+@protocols_version	1.1.20	1.1.21
+@run_id	d6e473a6d513ec6bfc150c60fd4556d72f0e6d18	0cc960b63c07619b4bf2917507d447479a21da66
+@sample_frequency	4000	4000
+@usb_config	1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto	1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto
+@user_filename_input	ma_821_r9.4_na12878_11_17_16	sample_id
+@version	1.1.20	1.1.21
+#char*	uint32_t	double	double	double	double	uint64_t	int16_t*
+#read_id	read_group	digitisation	offset	range	sampling_rate	len_raw_signal	raw_signal

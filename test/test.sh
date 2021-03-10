@@ -135,7 +135,7 @@ fi
 
 echo_test 'unit test two read groups'
 if gcc -Wall -g -std=gnu99 test/unit_test_two_rg.c -o test/bin/unit_test_two_rg src/slow5.c src/misc.c src/slow5idx.c src/press.c -I src/ -lz; then
-    if ! ex test/bin/unit_test_two_rg; then
+    if ! ex test/bin/unit_test_two_rg > test/data/out/unit_test_out_two_rg; then
         fail
     fi
 else
@@ -168,6 +168,7 @@ my_diff 'test/data/out/unit_test_out_binary' 'test/data/exp/unit_test_exp_binary
 my_diff 'test/data/out/unit_test_out_press' 'test/data/exp/unit_test_exp_press'
 my_diff 'test/data/out/unit_test_out_lossless' 'test/data/exp/unit_test_exp_lossless'
 my_diff 'test/data/out/unit_test_out_empty' 'test/data/exp/unit_test_exp_empty'
+my_diff 'test/data/out/unit_test_out_two_rg' 'test/data/exp/unit_test_exp_two_rg'
 # Adding records diffs
 my_diff 'test/data/out/exp_1_default_add_empty.slow5' 'test/data/exp/exp_1_default_add_empty.slow5'
 my_diff 'test/data/out/exp_1_default_add_valid.slow5' 'test/data/exp/exp_1_default_add_valid.slow5'

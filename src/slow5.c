@@ -707,8 +707,6 @@ char *slow5_hdr_get(const char *attr, uint32_t read_group, const struct slow5_hd
 /**
  * Add a new header data attribute.
  *
- * All values are set to NULL for each read group.
- *
  * Returns -1 if an input parameter is NULL.
  * Returns -2 if the attribute already exists.
  * Returns -3 if internal error.
@@ -762,6 +760,36 @@ int64_t slow5_hdr_add_rg(struct slow5_hdr *header) {
     if (header != NULL) {
         rg_num = header->num_read_groups ++;
         kv_push(khash_t(s2s) *, header->data.maps, kh_init(s2s));
+    }
+
+    return rg_num;
+}
+
+/**
+ * Add a new header read group with its data.
+ *
+ * Returns -1 if an input parameter is NULL.
+ * Returns the new read group number otherwise.
+ *
+ * @param   header      slow5 header
+ * @param   new_data    khash map of the new read group
+ * @return  < 0 on error as described above
+ */
+int64_t slow5_hdr_add_rg_data(struct slow5_hdr *header, khash_t(s2s) *new_data) {
+    if (header == NULL || new_data == NULL) {
+        return -1;
+    }
+
+    int64_t rg_num = slow5_hdr_add_rg(header);
+
+    for (khint_t i = kh_begin(new_data); i != kh_end(new_data); ++ i) {
+        if (kh_exist(new_data, i)) {
+            const char *attr = kh_key(new_data, i);
+            char *value = kh_value(new_data, i);
+
+            assert(slow5_hdr_add_attr(attr, header) != -3);
+            (void) slow5_hdr_set(attr, value, rg_num, header);
+        }
     }
 
     return rg_num;

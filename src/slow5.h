@@ -535,8 +535,6 @@ static inline int slow5_rec_print(slow5_rec_t *read, struct slow5_aux_meta *aux_
 /**
  * Add a new header data attribute.
  *
- * All values are set to NULL for each read group.
- *
  * Returns -1 if an input parameter is NULL.
  * Returns -2 if the attribute already exists.
  * Returns 0 other.

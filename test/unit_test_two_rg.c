@@ -1,5 +1,6 @@
 #include "unit_test.h"
 #include "slow5.h"
+#include "slow5_extra.h"
 
 int slow5_open_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/two_rg/exp_default.slow5", "r");
@@ -95,6 +96,26 @@ int slow5_to_blow5_gzip(void) {
     return EXIT_SUCCESS;
 }
 
+int slow5_add_rg_data_valid(void) {
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
+    ASSERT(s5p != NULL);
+
+    struct slow5_file *s5p_two = slow5_open("test/data/exp/two_rg/exp_default.slow5", "r");
+    ASSERT(s5p_two != NULL);
+
+    khash_t(s2s) *rg_two = slow5_hdr_get_data(1, s5p_two->header);
+    ASSERT(rg_two != NULL);
+    ASSERT(slow5_hdr_add_rg_data(s5p->header, rg_two) == 1);
+
+    ASSERT(s5p->header->num_read_groups == 2);
+
+    slow5_hdr_print(s5p->header, FORMAT_ASCII, COMPRESS_NONE);
+
+    ASSERT(slow5_close(s5p) == 0);
+    ASSERT(slow5_close(s5p_two) == 0);
+    return EXIT_SUCCESS;
+}
+
 int main(void) {
 
     struct command tests[] = {
@@ -104,6 +125,8 @@ int main(void) {
 
         CMD(slow5_to_blow5_uncomp)
         CMD(slow5_to_blow5_gzip)
+
+        CMD(slow5_add_rg_data_valid)
     };
 
     return RUN_TESTS(tests);
