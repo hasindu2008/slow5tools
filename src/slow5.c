@@ -190,7 +190,7 @@ static inline void slow5_free(struct slow5_file *s5p) {
                     assert(fclose(s5p->index->fp) == 0);
                 }
 
-                s5p->index->fp = fopen(s5p->index->pathname, "w");
+                s5p->index->fp = fopen(s5p->index->pathname, "wb");
                 slow5_idx_write(s5p->index);
             }
             slow5_idx_free(s5p->index);
