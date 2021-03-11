@@ -16,6 +16,8 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/index.o \
       $(BUILD_DIR)/view.o \
 	  $(BUILD_DIR)/kstring.o \
+	  $(BUILD_DIR)/extract.o \
+	  $(BUILD_DIR)/thread.o \
 	  $(BUILD_DIR)/read_fast5.o \
 	  $(BUILD_DIR)/merge_slow5.o \
 	  $(BUILD_DIR)/read_slow5.o \

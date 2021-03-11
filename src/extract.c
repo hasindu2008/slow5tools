@@ -1,6 +1,13 @@
-#include "slow5_old.h"
+#include <getopt.h>
+
+#include "slow5.h"
 #include "thread.h"
 #include "cmd.h"
+
+#define DEFAULT_NUM_THREADS (4)
+
+#define READ_ID_INIT_CAPACITY (128)
+#define READ_ID_BATCH_CAPACITY (4096)
 
 #define USAGE_MSG "Usage: %s [OPTION]... SLOW5|BLOW5_FILE [READ_ID]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
@@ -19,7 +26,9 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
 
     int len = 0;
     //fprintf(stderr, "Fetching %s\n", id); // TODO print here or during ordered loop later?
-    char *record = slow5idx_fetch(core->index_f, id, &len);
+    slow5_rec_t *record;
+
+    len = slow5_get(id,&record,core->fp);
 
     if (record == NULL || len < 0) {
         fprintf(stderr, "Error locating %s\n", id);
@@ -32,14 +41,16 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
     free(id);
 }
 
-bool fetch_record(slow5idx_t *index_f, const char *read_id,
+bool fetch_record(slow5_file_t *fp, const char *read_id,
         char **argv, struct program_meta *meta) {
 
     bool success = true;
 
     int len = 0;
     fprintf(stderr, "Fetching %s\n", read_id);
-    char *record = slow5idx_fetch(index_f, read_id, &len);
+    slow5_rec_t *record;
+
+    len = slow5_get(read_id, &record,fp);
 
     if (record == NULL || len < 0) {
         fprintf(stderr, "Error locating %s\n", read_id);
@@ -152,9 +163,11 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     char *f_in_name = argv[optind];
-    slow5idx_t *index_f = slow5idx_load(f_in_name); // TODO add blow5 capabilities
 
-    if (index_f == NULL) {
+    slow5_file_t *fp = slow5_open(f_in_name, "r");
+    int ret_idx = slow5_idx(fp);
+
+    if (ret_idx == -1) {
         // TODO change these to MESSAGE?
         fprintf(stderr, "Error loading index file for %s\n",
                 f_in_name);
@@ -174,7 +187,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
 
         core_t core;
         core.num_thread = num_threads;
-        core.index_f = index_f;
+        core.fp = fp;
 
         db_t db = { 0 };
         size_t cap_ids = READ_ID_INIT_CAPACITY;
@@ -228,14 +241,14 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
 
             // Print records
             for (size_t i = 0; i < num_ids; ++ i) {
-                char *record = db.read_record[i].buf;
+                slow5_rec_t *record = db.read_record[i].buf;
                 int len = db.read_record[i].len;
 
                 if (record == NULL || len < 0) {
                     ret = EXIT_FAILURE;
                 } else {
-                    fwrite(record, len, 1, stdout);
-                    free(record);
+                    slow5_rec_fwrite(stdout,record,fp->header->aux_meta,FORMAT_ASCII,NULL);
+                    slow5_rec_free(record);
                 }
             }
 
@@ -251,14 +264,14 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     } else {
 
         for (int i = optind + 1; i < argc; ++ i){
-            bool success = fetch_record(index_f, argv[i], argv, meta);
+            bool success = fetch_record(fp, argv[i], argv, meta);
             if (!success) {
                 ret = EXIT_FAILURE;
             }
         }
     }
 
-    slow5idx_destroy(index_f);
+    slow5_close(fp);
 
     EXIT_MSG(ret, argv, meta);
     return ret;

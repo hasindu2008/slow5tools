@@ -100,7 +100,7 @@ int main(const int argc, char **argv){
             {"merge", merge_main},
             {"split", split_main},
             {"index", index_main},
-            //{"extract", extract_main},
+            {"extract", extract_main},
             {"view", view_main},
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
