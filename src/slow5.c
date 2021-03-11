@@ -1190,10 +1190,12 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
     } else if (s5p->format == FORMAT_BINARY) {
 
         // Read into the string and miss the preceding size
+        size_t bytes_to_read_sizet;
         read_mem = (char *) pread_depress(s5p->compress, s5p->meta.fd,
                 read_index.size - sizeof (slow5_rec_size_t),
                 read_index.offset + sizeof (slow5_rec_size_t),
-                (size_t *) &bytes_to_read);
+                &bytes_to_read_sizet);
+        bytes_to_read = bytes_to_read_sizet;
         if (read_mem == NULL) {
             // reading error
             return -4;
@@ -2556,9 +2558,9 @@ void *slow5_rec_to_mem(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, 
         compress_footer_next(compress);
         slow5_rec_size_t record_size;
 
-        size_t record_size2;
-        void *comp_mem = ptr_compress(compress, mem, curr_len, &record_size2);
-        record_size = record_size2;
+        size_t record_sizet;
+        void *comp_mem = ptr_compress(compress, mem, curr_len, &record_sizet);
+        record_size = record_sizet;
         free(mem);
 
         if (comp_mem != NULL) {
