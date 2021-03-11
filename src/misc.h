@@ -40,7 +40,7 @@
 // Timing
 
 // From minimap2/misc
-static inline double realtime(void) {
+static inline double slow5_realtime(void) {
     struct timeval tp;
     struct timezone tzp;
     gettimeofday(&tp, &tzp);
@@ -48,7 +48,7 @@ static inline double realtime(void) {
 }
 
 // From minimap2/misc
-static inline double cputime(void) {
+static inline double slow5_cputime(void) {
     struct rusage r;
     getrusage(RUSAGE_SELF, &r);
     return r.ru_utime.tv_sec + r.ru_stime.tv_sec +
@@ -56,7 +56,7 @@ static inline double cputime(void) {
 }
 
 // From minimap2
-static inline long peakrss(void) {
+static inline long slow5_peakrss(void) {
 	struct rusage r;
 	getrusage(RUSAGE_SELF, &r);
 #ifdef __linux__

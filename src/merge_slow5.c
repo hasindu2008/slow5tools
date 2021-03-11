@@ -36,7 +36,7 @@ int compare_headers(slow5_header_t& slow5Header1, slow5_header_t& slow5Header2, 
 
 
 int merge_main(int argc, char **argv, struct program_meta *meta){
-    init_realtime = realtime();
+    init_realtime = slow5_realtime();
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
@@ -134,14 +134,14 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    double realtime0 = realtime();
+    double realtime0 = slow5_realtime();
     reads_count readsCount;
     std::vector<std::string> slow5_files;
 
     for (int i = optind; i < argc; ++ i) {
         find_all_5(argv[i], slow5_files, SLOW5_EXTENSION);
     }
-    fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, slow5_files.size(), realtime() - realtime0);
+    fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
 
     if(merge_slow5(f_out, slow5_files, &readsCount)==-1){
         return EXIT_FAILURE;

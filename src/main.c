@@ -72,7 +72,7 @@ void segv_handler(int sig) {
 int main(const int argc, char **argv){
 
     // Initial time
-    double init_realtime = realtime();
+    double init_realtime = slow5_realtime();
 
     // Assume success
     int ret = EXIT_SUCCESS;
@@ -263,7 +263,7 @@ int main(const int argc, char **argv){
         VERBOSE("printing resource use%s", "");
     }
     MESSAGE(stderr, "real time = %.3f sec | CPU time = %.3f sec | peak RAM = %.3f GB",
-            realtime() - init_realtime, cputime(), peakrss() / 1024.0 / 1024.0 / 1024.0);
+            slow5_realtime() - init_realtime, slow5_cputime(), slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
 
     EXIT_MSG(ret, argv, &meta);
     return ret;

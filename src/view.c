@@ -100,7 +100,7 @@ press_method_t name_to_press_method(const char *name) {
 int view_main(int argc, char **argv, struct program_meta *meta) {
     int view_ret = EXIT_SUCCESS;
 
-    //init_realtime = realtime();
+    //init_realtime = slow5_realtime();
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {

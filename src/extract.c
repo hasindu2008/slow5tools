@@ -1,6 +1,8 @@
 #include <getopt.h>
+#include <stdio.h>
 
 #include "slow5.h"
+#include "slow5idx.h"
 #include "thread.h"
 #include "cmd.h"
 
@@ -26,7 +28,7 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
 
     int len = 0;
     //fprintf(stderr, "Fetching %s\n", id); // TODO print here or during ordered loop later?
-    slow5_rec_t *record;
+    slow5_rec_t *record=NULL;
 
     len = slow5_get(id,&record,core->fp);
 
@@ -48,7 +50,7 @@ bool fetch_record(slow5_file_t *fp, const char *read_id,
 
     int len = 0;
     fprintf(stderr, "Fetching %s\n", read_id);
-    slow5_rec_t *record;
+    slow5_rec_t *record=NULL;
 
     len = slow5_get(read_id, &record,fp);
 
@@ -57,8 +59,8 @@ bool fetch_record(slow5_file_t *fp, const char *read_id,
         success = false;
 
     } else {
-        fwrite(record, len, 1, stdout);
-        free(record);
+        slow5_rec_fwrite(stdout,record,fp->header->aux_meta,FORMAT_ASCII,NULL);
+        slow5_rec_free(record);
     }
 
     return success;
@@ -165,9 +167,10 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     char *f_in_name = argv[optind];
 
     slow5_file_t *fp = slow5_open(f_in_name, "r");
-    int ret_idx = slow5_idx(fp);
+    slow5_idx_t *s5i=slow5_idx_init(fp);
+    fp->index = s5i;
 
-    if (ret_idx == -1) {
+    if (fp->index == NULL == NULL) {
         // TODO change these to MESSAGE?
         fprintf(stderr, "Error loading index file for %s\n",
                 f_in_name);
@@ -228,12 +231,12 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
             db.n_batch = num_ids;
 
             // Measure reading time
-            double start = realtime();
+            double start = slow5_realtime();
 
             // Fetch records for read ids in the batch
             work_db(&core, &db);
 
-            double end = realtime();
+            double end = slow5_realtime();
             read_time += end - start;
 
             MESSAGE(stderr, "Fetched %ld reads - %ld failed",
