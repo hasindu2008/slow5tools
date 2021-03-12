@@ -291,7 +291,16 @@ int slow5_close(slow5_file_t *s5p);
 
 /**
  * Create the index file for slow5 file.
- * Overrides if already exists.
+ * Overwrites if already exists.
+ *
+ * @param   s5p slow5 file structure
+ * @return  0 if successful,  <-1> on error
+ */
+int slow5_idx_create(slow5_file_t *s5p);
+
+/**
+ * Loads the index file for slow5 file.
+ * Creates the index if not found.
  *
  * Return -1 on error,
  * 0 on success.
@@ -299,7 +308,8 @@ int slow5_close(slow5_file_t *s5p);
  * @param   s5p slow5 file structure
  * @return  error codes described above
  */
-int slow5_idx(slow5_file_t *s5p);
+int slow5_idx_load(slow5_file_t *s5p);
+
 
 /**
  * Get a header data attribute for a particular read_group.
@@ -322,13 +332,13 @@ char *slow5_hdr_get(const char *attr, uint32_t read_group, const slow5_hdr_t *he
  * Otherwise, the data in *read is freed and overwritten.
  * slow5_rec_free() should always be called when finished with the structure.
  *
- * Creates the index if not already there
+ * Require the slow5 index to be loaded using slow5_idx_load
  *
  * Return
  * TODO are these error codes too much?
  *  0   the read was successfully found and stored
  * -1   read_id, read or s5p is NULL
- * -2   the index was not previously init and failed to init
+ * -2   the index has not been loaded
  * -3   read_id was not found in the index
  * -4   reading error when reading the slow5 file
  * -5   parsing error

@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "slow5.h"
-#include "slow5idx.h"
 #include "thread.h"
 #include "cmd.h"
 
@@ -167,10 +166,9 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     char *f_in_name = argv[optind];
 
     slow5_file_t *fp = slow5_open(f_in_name, "r");
-    slow5_idx_t *s5i=slow5_idx_init(fp);
-    fp->index = s5i;
+    int ret_idx = slow5_idx_load(fp);
 
-    if (fp->index == NULL == NULL) {
+    if (ret_idx < 0) {
         // TODO change these to MESSAGE?
         fprintf(stderr, "Error loading index file for %s\n",
                 f_in_name);

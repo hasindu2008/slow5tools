@@ -76,7 +76,7 @@ bool has_fast5_ext(const char *f_path);
 
 // Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
 // From https://www.mbeckler.org/blog/?p=114
-static inline void print_size(const char* name, uint64_t bytes)
+static inline void slow5_print_size(const char* name, uint64_t bytes)
 {
     const char* suffixes[7];
     suffixes[0] = "B";

@@ -1158,8 +1158,8 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
     ssize_t bytes_to_read = -1;
 
     // Create index if NULL
-    if (s5p->index == NULL && (s5p->index = slow5_idx_init(s5p)) == NULL) {
-        // index failed to init
+    if (s5p->index == NULL) {
+        // index not loaded
         return -2;
     }
 
@@ -2603,7 +2603,7 @@ void slow5_rec_free(struct slow5_rec *read) {
 
 /**
  * Create the index file for slow5 file.
- * Overrides if already exists.
+ * Overwrites if already exists.
  *
  * Return -1 on error,
  * 0 on success.
@@ -2611,7 +2611,7 @@ void slow5_rec_free(struct slow5_rec *read) {
  * @param   s5p slow5 file structure
  * @return  error codes described above
  */
-int slow5_idx(struct slow5_file *s5p) {
+int slow5_idx_create(struct slow5_file *s5p) {
     char *index_pathname;
     if (s5p == NULL || s5p->meta.pathname == NULL ||
             (index_pathname = get_slow5_idx_path(s5p->meta.pathname)) == NULL) {
@@ -2624,6 +2624,27 @@ int slow5_idx(struct slow5_file *s5p) {
     free(index_pathname);
     return 0;
 }
+
+/**
+ * Loads the index file for slow5 file.
+ * Creates the index if not found.
+ *
+ * Return -1 on error,
+ * 0 on success.
+ *
+ * @param   s5p slow5 file structure
+ * @return  error codes described above
+ */
+int slow5_idx_load(struct slow5_file *s5p) {
+    s5p->index = slow5_idx_init(s5p);
+    if (s5p->index){
+        return 0;
+    }
+    else{
+        return -1;
+    }
+}
+
 
 
 /**

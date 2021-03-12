@@ -102,6 +102,7 @@ int slow5_open_with_invalid(void) {
 int slow5_get_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -115,6 +116,7 @@ int slow5_get_valid(void) {
 int slow5_get_null(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get(NULL, &read, s5p) == -1);
@@ -134,7 +136,7 @@ int slow5_get_null(void) {
 int slow5_get_invalid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
-
+    ASSERT(slow5_idx_load(s5p) == 0);
     // TODO simulate -2 error
 
     struct slow5_rec *read = NULL;
@@ -149,6 +151,7 @@ int slow5_get_invalid(void) {
 
     s5p = slow5_open("test/data/err/parse_bad.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == -5);
     ASSERT(slow5_get("1", &read, s5p) == -5);
@@ -168,6 +171,7 @@ int slow5_get_invalid(void) {
 int slow5_get_many_same(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -187,6 +191,7 @@ int slow5_get_many_same(void) {
 int slow5_get_many_different(void) {
     struct slow5_file *s5p = slow5_open("test/data/test/same_diff_ids.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("1", &read, s5p) == 0);

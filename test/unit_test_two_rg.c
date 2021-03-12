@@ -25,6 +25,7 @@ int slow5_open_valid(void) {
 int slow5_get_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/two_rg/exp_default.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("40aac17d-56a6-44db-934d-c0dbb853e2cd", &read, s5p) == 0);

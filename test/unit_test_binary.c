@@ -42,14 +42,14 @@ int slow5_idx_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.blow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_idx(s5p) == 0);
+    ASSERT(slow5_idx_create(s5p) == 0);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
 }
 
 int slow5_idx_null(void) {
-    ASSERT(slow5_idx(NULL) == -1);
+    ASSERT(slow5_idx_create(NULL) == -1);
     return EXIT_SUCCESS;
 }
 
@@ -57,7 +57,7 @@ int slow5_idx_invalid(void) {
     struct slow5_file *s5p = slow5_open("test/data/err/no_eof.blow5", "r");
     ASSERT(s5p != NULL);
 
-    ASSERT(slow5_idx(s5p) == -1);
+    ASSERT(slow5_idx_create(s5p) == -1);
 
     ASSERT(slow5_close(s5p) == 0);
     return EXIT_SUCCESS;
@@ -222,6 +222,7 @@ int slow5_rec_print_valid(void) {
 int slow5_get_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -245,18 +246,15 @@ int slow5_get_invalid(void) {
     // No blow5 eof
     struct slow5_file *s5p = slow5_open("test/data/err/no_eof.blow5", "r");
     ASSERT(s5p != NULL);
-
-    struct slow5_rec *read = NULL;
-    ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == -2);
-    slow5_rec_free(read);
-
+    ASSERT(slow5_idx_load(s5p) == -1);
     ASSERT(slow5_close(s5p) == 0);
 
     // Bad read id
     s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
-    read = NULL;
+     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("badreadid", &read, s5p) == -3);
     ASSERT(slow5_get("", &read, s5p) == -3);
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be", &read, s5p) == -3);
@@ -293,6 +291,7 @@ int slow5_open_gzip(void) {
 int slow5_rec_to_mem_gzip(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default_gzip.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
