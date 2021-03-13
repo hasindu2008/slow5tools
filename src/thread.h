@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include "slow5idx_old.h"
+#include "slow5.h"
 #include "error.h"
 
 /**********************************
@@ -27,11 +27,11 @@
 /* core data structure that has information that are global to all the threads */
 typedef struct {
     int32_t num_thread;
-    slow5idx_t *index_f;
+    slow5_file_t *fp;
 } core_t;
 
 struct Record {
-    char *buf;
+    slow5_rec_t *buf;
     int len;
 };
 

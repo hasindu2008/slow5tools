@@ -150,7 +150,7 @@ int fast5_to_fastt(std::string fast5_path_str){
 void recurse_dir(const std::string& path)
 {
     fprintf(stderr, "[%s::%.3f*%.2f] Extracting fast5 from %s\n", __func__,
-                realtime() - realtime0, cputime() / (realtime() - realtime0),path.c_str());
+                slow5_realtime() - realtime0, slow5_cputime() / (slow5_realtime() - realtime0),path.c_str());
 
     if (is_directory(path)) {
         auto dir_list = list_directory(path);
@@ -175,7 +175,7 @@ void recurse_dir(const std::string& path)
 int fastt_main(int argc, char** argv, struct program_meta *meta){
 
 
-    realtime0 = realtime();
+    realtime0 = slow5_realtime();
     FILE *fp_help = stderr;
     char *tsvfile=NULL;
 

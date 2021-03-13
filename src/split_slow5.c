@@ -246,7 +246,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 
 void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
         meta_split_method metaSplitMethod) {
-    double realtime0 = realtime();
+    double realtime0 = slow5_realtime();
     int64_t num_slow5_files = slow5_files.size();
 
     //create processes
@@ -332,7 +332,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     }
 //    skip_forking:
 
-    fprintf(stderr, "[%s] Parallel splitting slow5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
+    fprintf(stderr, "[%s] Parallel splitting slow5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
 }
 
 
@@ -361,7 +361,7 @@ void recurse_slow5_dir(const char *f_path, reads_count *readsCount, char *output
 
     } else {
         fprintf(stderr, "[%s::%.3f*%.2f] Extracting slow5 from %s\n", __func__,
-                realtime() - init_realtime, cputime() / (realtime() - init_realtime), f_path);
+                slow5_realtime() - init_realtime, slow5_cputime() / (slow5_realtime() - init_realtime), f_path);
 
         // Iterate through sub files
         while ((ent = readdir(dir)) != NULL) {
@@ -389,7 +389,7 @@ void recurse_slow5_dir(const char *f_path, reads_count *readsCount, char *output
 
 
 int split_main(int argc, char **argv, struct program_meta *meta){
-    init_realtime = realtime();
+    init_realtime = slow5_realtime();
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
@@ -492,7 +492,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    double realtime0 = realtime();
+    double realtime0 = slow5_realtime();
     reads_count readsCount;
     std::vector<std::string> slow5_files;
 
@@ -518,7 +518,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     if(iop==1){
         MESSAGE(stderr, "total slow5: %lu, bad slow5: %lu multi-group slow5: %lu", readsCount.total_5, readsCount.bad_5_file, readsCount.multi_group_slow5);
     }else{
-        fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), realtime() - realtime0);
+        fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
         s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod);
     }
 

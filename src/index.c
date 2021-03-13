@@ -92,7 +92,7 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
     slow5_file_t *file=slow5_open(f_in_name,"r");
     F_CHK(file,f_in_name);
 
-    if (slow5_idx(file) != 0) {
+    if (slow5_idx_create(file) != 0) {
         fprintf(stderr, "Error running slow5idx_build on %s\n",
                 f_in_name);
         EXIT_MSG(EXIT_FAILURE, argv, meta);

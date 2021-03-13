@@ -333,7 +333,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char* FAST5_FI
 
         i++;
         //to check if peak RAM increase over time
-        //fprintf(stderr, "peak RAM = %.3f GB\n", peakrss() / 1024.0 / 1024.0 / 1024.0);
+        //fprintf(stderr, "peak RAM = %.3f GB\n", slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
     }
 
     H5Tclose(end_reason_enum_id);
@@ -389,7 +389,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 }
 
 void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
-    double realtime0 = realtime();
+    double realtime0 = slow5_realtime();
     int64_t num_slow5_files = slow5_files.size();
 
     //create processes
@@ -475,7 +475,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     }
 //    skip_forking:
 
-    fprintf(stderr, "[%s] Parallel converting to fast5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
+    fprintf(stderr, "[%s] Parallel converting to fast5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
 }
 
 void recurse_slow5_dir(const char *f_path, reads_count *readsCount, char *output_dir, program_meta *meta) {
@@ -502,7 +502,7 @@ void recurse_slow5_dir(const char *f_path, reads_count *readsCount, char *output
 
     } else {
         fprintf(stderr, "[%s::%.3f*%.2f] Extracting slow5 from %s\n", __func__,
-                realtime() - init_realtime, cputime() / (realtime() - init_realtime), f_path);
+                slow5_realtime() - init_realtime, slow5_cputime() / (slow5_realtime() - init_realtime), f_path);
 
         // Iterate through sub files
         while ((ent = readdir(dir)) != NULL) {
@@ -530,7 +530,7 @@ void recurse_slow5_dir(const char *f_path, reads_count *readsCount, char *output
 
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
-    init_realtime = realtime();
+    init_realtime = slow5_realtime();
 
     // Debug: print arguments
     if (meta != NULL && meta->debug) {
@@ -610,7 +610,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    double realtime0 = realtime();
+    double realtime0 = slow5_realtime();
     reads_count readsCount;
     std::vector<std::string> slow5_files;
 
@@ -627,7 +627,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     if(iop==1){
         MESSAGE(stderr, "total slow5: %lu, bad slow5: %lu", readsCount.total_5, readsCount.bad_5_file);
     }else{
-        fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), realtime() - realtime0);
+        fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
         s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
     }
 

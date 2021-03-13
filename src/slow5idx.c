@@ -29,10 +29,15 @@ struct slow5_idx *slow5_idx_init(struct slow5_file *s5p) {
     struct slow5_idx *index = slow5_idx_init_empty();
     index->pathname = get_slow5_idx_path(s5p->meta.pathname);
 
+    if(index==NULL || index->pathname==NULL ){
+        //TODO fix mem leak
+        return NULL;
+    }
+
     FILE *index_fp;
 
     // If file doesn't exist
-    if ((index_fp = fopen(index->pathname, "r")) == NULL) {
+    if ((index_fp = fopen(index->pathname, "rb")) == NULL) {
         if (slow5_idx_build(index, s5p) != 0) {
             slow5_idx_free(index);
             return NULL;
@@ -61,7 +66,7 @@ int slow5_idx_to(struct slow5_file *s5p, const char *pathname) {
         return -1;
     }
 
-    index->fp = fopen(pathname, "w");
+    index->fp = fopen(pathname, "wb");
     slow5_idx_write(index);
 
     slow5_idx_free(index);

@@ -119,7 +119,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
 }
 
 void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
-    double realtime0 = realtime();
+    double realtime0 = slow5_realtime();
     int64_t num_fast5_files = fast5_files.size();
 
     //create processes
@@ -205,7 +205,7 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int iop, 
     }
 //    skip_forking:
 
-    fprintf(stderr, "[%s] Parallel converting to slow5 is done - took %.3fs\n", __func__,  realtime() - realtime0);
+    fprintf(stderr, "[%s] Parallel converting to slow5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
 
 }
 
@@ -232,7 +232,7 @@ void recurse_dir(const char *f_path, enum slow5_fmt format_out, enum press_metho
 
     } else {
         fprintf(stderr, "[%s::%.3f*%.2f] Extracting fast5 from %s\n", __func__,
-                realtime() - init_realtime, cputime() / (realtime() - init_realtime), f_path);
+                slow5_realtime() - init_realtime, slow5_cputime() / (slow5_realtime() - init_realtime), f_path);
 
         // Iterate through sub files
         while ((ent = readdir(dir)) != NULL) {
@@ -365,7 +365,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     reads_count readsCount;
     std::vector<std::string> fast5_files;
-    init_realtime = realtime();
+    init_realtime = slow5_realtime();
 
     for (int i = optind; i < argc; ++ i) {
         if(iop==1){
@@ -379,7 +379,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     if(iop==1){
         MESSAGE(stderr, "total fast5: %lu, bad fast5: %lu", readsCount.total_5, readsCount.bad_5_file);
     }else{
-        fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), realtime() - init_realtime);
+        fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
         f2s_iop(format_out, pressMethod, iop, fast5_files, arg_dir_out, meta, &readsCount);
     }
 

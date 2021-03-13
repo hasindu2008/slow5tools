@@ -40,7 +40,7 @@
 // Timing
 
 // From minimap2/misc
-static inline double realtime(void) {
+static inline double slow5_realtime(void) {
     struct timeval tp;
     struct timezone tzp;
     gettimeofday(&tp, &tzp);
@@ -48,7 +48,7 @@ static inline double realtime(void) {
 }
 
 // From minimap2/misc
-static inline double cputime(void) {
+static inline double slow5_cputime(void) {
     struct rusage r;
     getrusage(RUSAGE_SELF, &r);
     return r.ru_utime.tv_sec + r.ru_stime.tv_sec +
@@ -56,7 +56,7 @@ static inline double cputime(void) {
 }
 
 // From minimap2
-static inline long peakrss(void) {
+static inline long slow5_peakrss(void) {
 	struct rusage r;
 	getrusage(RUSAGE_SELF, &r);
 #ifdef __linux__
@@ -76,7 +76,7 @@ bool has_fast5_ext(const char *f_path);
 
 // Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
 // From https://www.mbeckler.org/blog/?p=114
-static inline void print_size(const char* name, uint64_t bytes)
+static inline void slow5_print_size(const char* name, uint64_t bytes)
 {
     const char* suffixes[7];
     suffixes[0] = "B";

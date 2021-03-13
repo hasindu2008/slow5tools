@@ -14,6 +14,7 @@ int slow5_open_valid(void) {
 int slow5_get_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -27,6 +28,7 @@ int slow5_get_valid(void) {
 int slow5_aux_get_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -49,6 +51,7 @@ int slow5_aux_get_valid(void) {
 
     s5p = slow5_open("test/data/exp/two_rg/exp_lossless.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
     uint64_t len;
@@ -89,6 +92,7 @@ int slow5_aux_get_valid(void) {
 
     s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
     cn = slow5_aux_get_string(read, "channel_number", NULL, &err);
@@ -109,6 +113,7 @@ int slow5_aux_get_valid(void) {
 
     s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless_gzip.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
     cn = slow5_aux_get_string(read, "channel_number", NULL, &err);
@@ -134,6 +139,7 @@ int slow5_aux_get_valid(void) {
 int slow5_aux_get_invalid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -168,6 +174,7 @@ int slow5_aux_get_invalid(void) {
 int blow5_get_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -181,6 +188,7 @@ int blow5_get_valid(void) {
 int blow5_rec_get_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -244,6 +252,7 @@ int slow5_get_aux_array(void) {
 
     struct slow5_file *s5p = slow5_open("test/data/exp/aux_array/exp_lossless.slow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -271,6 +280,7 @@ int blow5_get_aux_array(void) {
 
     struct slow5_file *s5p = slow5_open("test/data/exp/aux_array/exp_lossless.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
@@ -297,6 +307,7 @@ int blow5_gzip_get_aux_array(void) {
 
     struct slow5_file *s5p = slow5_open("test/data/exp/aux_array/exp_lossless_gzip.blow5", "r");
     ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0);
 
     struct slow5_rec *read = NULL;
     ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);

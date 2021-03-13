@@ -196,7 +196,12 @@ static void *ptr_depress_gzip(struct gzip_stream *gzip, const void *ptr, size_t 
     uint8_t *out = NULL;
 
     size_t n_cur = 0;
-    z_stream *strm = &(gzip->strm_inflate);
+    //z_stream *strm = &(gzip->strm_inflate);
+
+    //we need independent streams for thread safety
+    //TODO fix this hack properly
+    struct press *gzip_local = press_init(COMPRESS_GZIP);
+    z_stream *strm = &(gzip_local->stream->gzip->strm_inflate);
 
     strm->avail_in = count;
     strm->next_in = (Bytef *) ptr;
@@ -221,6 +226,8 @@ static void *ptr_depress_gzip(struct gzip_stream *gzip, const void *ptr, size_t 
 
     *n = n_cur;
     inflateReset(strm);
+
+    press_free(gzip_local);
 
     return out;
 }
