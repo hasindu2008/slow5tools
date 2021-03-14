@@ -56,10 +56,11 @@ static inline void *str_compress(struct press *comp, const char *str, size_t *n)
     return ptr_compress(comp, str, strlen(str) + 1, n); // Include '\0'
 }
 void *ptr_depress(struct press *comp, const void *ptr, size_t count, size_t *n);
+void *ptr_depress_multi(press_method_t method, const void *ptr, size_t count, size_t *n);
 
 /* --- Compress / decompress a ptr to some file --- */
 size_t fwrite_compress(struct press *comp, const void *ptr, size_t size, size_t nmemb, FILE *fp);
-size_t fwrite_depress(struct press *comp, const void *ptr, size_t size, size_t nmemb, FILE *fp);
+size_t fwrite_depress(struct press *comp, const void *ptr, size_t size, size_t nmemb, FILE *fp); // TODO
 static inline size_t print_compress(struct press *comp, const void *ptr, size_t size, size_t nmemb) {
     return fwrite_compress(comp, ptr, size, nmemb, stdout);
 }
@@ -76,6 +77,7 @@ static inline size_t print_str_compress(struct press *comp, const char *str) {
 /* --- Decompress to a ptr from some file --- */
 void *fread_depress(struct press *comp, size_t count, FILE *fp, size_t *n);
 void *pread_depress(struct press *comp, int fd, size_t count, off_t offset, size_t *n);
+void *pread_depress_multi(press_method_t method, int fd, size_t count, off_t offset, size_t *n);
 
 /* --- Compress with format string to some file --- */
 int fprintf_compress(struct press *comp, FILE *fp, const char *format, ...);
