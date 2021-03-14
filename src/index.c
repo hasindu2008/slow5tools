@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <getopt.h>
 
 #include "slow5.h"
