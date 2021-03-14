@@ -23,9 +23,8 @@
     "    -b, --binary               convert to blow5\n" \
     "    -c, --compress             convert to compressed blow5\n" \
     "    -h, --help                 display this message and exit\n" \
-    "    -i, --index=[FILE]         index converted file to FILE -- not default\n" \
     "    --iop INT                  number of I/O processes to read fast5 files\n" \
-    "    -d, --output_dir=[dir]     output directory where slow5files are written to when iop>1\n" \
+    "    -d, --output_dir=[dir]     output directory where slow5files are written to\n" \
 
 static double init_realtime = 0;
 
@@ -107,11 +106,17 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
         H5Fclose(fast5_file.hdf5_file);
         if(output_dir && fast5_file.is_multi_fast5){
             slow5_path = std::string(output_dir);
+            if(format_out == FORMAT_BINARY){
+                slow5_eof_fwrite(slow5File->fp);
+            }
             slow5_close(slow5File);
         }
     }
     if(output_dir && !fast5_file.is_multi_fast5) {
-            slow5_close(slow5File);
+        if(format_out == FORMAT_BINARY){
+            slow5_eof_fwrite(slow5File->fp);
+        }
+        slow5_close(slow5File);
     }
     if(meta->verbose){
         fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
@@ -291,10 +296,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         {"binary", no_argument, NULL, 'b'},    //0
         {"compress", no_argument, NULL, 'c'},  //1
         {"help", no_argument, NULL, 'h'},  //2
-        {"index", required_argument, NULL, 'i'},    //3
-        {"output", required_argument, NULL, 'o'},   //4
-        { "iop", required_argument, NULL, 0}, //5
-        { "output_dir", required_argument, NULL, 'd'}, //6
+        {"output", required_argument, NULL, 'o'},   //3
+        { "iop", required_argument, NULL, 0}, //4
+        { "output_dir", required_argument, NULL, 'd'}, //5
         {NULL, 0, NULL, 0 }
     };
 
@@ -304,7 +308,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Input arguments
     char *arg_dir_out = NULL;
-    char *arg_fname_idx = NULL;
 
     int opt;
     int longindex = 0;
@@ -328,14 +331,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
-            case 'i':
-                arg_fname_idx = optarg;
-                break;
             case 'd':
                 arg_dir_out = optarg;
                 break;
             case  0 :
-                if (longindex == 5) {
+                if (longindex == 4) {
                     iop = atoi(optarg);
                     if (iop < 1) {
                         ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);

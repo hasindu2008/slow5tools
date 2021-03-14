@@ -24,13 +24,95 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help                 display this message and exit\n" \
+    "    -b, --binary               convert to blow5\n" \
+    "    -c, --compress             convert to compressed blow5\n"   \
     "    -o, --output=[FILE]        output converted contents to FILE -- stdout\n" \
 
 static double init_realtime = 0;
 
-int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count* readsCount);
+int merge_slow5(const char* output_path, enum slow5_fmt format_out, enum press_method pressMethod, std::vector<std::string> &slow5_files, reads_count* readsCount) {
+    size_t read_group_count = 0;
+    size_t slow5_files_count = slow5_files.size();
+    readsCount->total_5 = slow5_files_count;
 
-int compare_headers(slow5_header_t& slow5Header1, slow5_header_t& slow5Header2, int compare_level);
+    FILE* slow5_file_pointer = stdout;
+    if(output_path){
+        slow5_file_pointer = NULL;
+        slow5_file_pointer = fopen(output_path, "w");
+        if (!slow5_file_pointer) {
+            ERROR("Output file %s could not be opened - %s.", output_path, strerror(errno));
+        }
+    }
+    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, format_out);
+    slow5_hdr_initialize(slow5File->header);
+    slow5File->header->num_read_groups = 0;
+    std::vector<std::vector<size_t>> list;
+    for(size_t i=0; i<slow5_files_count; i++) { //iterate over slow5files
+        slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+        if(!slow5File_i){
+            ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+            continue;
+        }
+        int64_t read_group_count_i = slow5File_i->header->num_read_groups; // number of read_groups in ith slow5file
+        std::vector<size_t> read_group_tracker(read_group_count_i); //this array will store the new group_numbers (of the slow5File) to where the jth read_group info should be written
+        list.push_back(read_group_tracker);
+        for(int64_t j=0; j<read_group_count_i; j++){
+            char* run_id_j = slow5_hdr_get("run_id", j, slow5File_i->header); // run_id of the jth read_group of the ith slow5file
+            int64_t read_group_count = slow5File->header->num_read_groups; //since this might change during iterating; cannot know beforehand
+            size_t flag_run_id_found = 0;
+            for(int64_t k=0; k<read_group_count; k++){
+                char* run_id_k = slow5_hdr_get("run_id", k, slow5File->header);
+                if(strcmp(run_id_j,run_id_k) == 0){
+                    flag_run_id_found = 1;
+                    list[i][j] = k; //assumption: run_ids are similar. Hence, the rest of the header attribute values of jth read_group are same as kth read_group's.
+                    break;
+                }
+            }
+            if(flag_run_id_found == 0){ // time to add a new read_group
+                khash_t(s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
+                int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg); //assumption:
+                if(new_read_group != read_group_count){ //sanity check
+                    WARNING("New read group number is not equal to number of groups; something's wrong\n%s", "");
+                }
+                list[i][j] = new_read_group;
+            }
+        }
+        slow5_close(slow5File_i);
+    }
+
+    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
+        ERROR("Could not write the header to %s\n","merge.slow5");
+        exit(EXIT_FAILURE);
+    }
+
+    for(size_t i=0; i<slow5_files_count; i++) { //iterate over slow5files
+        slow5_file_t *slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+        if (!slow5File_i) {
+            ERROR("cannot open %s. skipping...\n", slow5_files[i].c_str());
+            continue;
+        }
+        struct slow5_rec *read = NULL;
+        int ret;
+        struct press *press_ptr = press_init(pressMethod);
+        while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+            read->read_group = list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value to the temporary file
+            if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
+                slow5_rec_free(read);
+                return -2;
+            }
+        }
+        press_free(press_ptr);
+        slow5_rec_free(read);
+        slow5_close(slow5File_i);
+    }
+
+    if(format_out == FORMAT_BINARY){
+        slow5_eof_fwrite(slow5File->fp);
+    }
+    slow5_close(slow5File);
+
+    return 1;
+}
 
 int merge_main(int argc, char **argv, struct program_meta *meta){
     init_realtime = slow5_realtime();
@@ -63,13 +145,17 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h'},  //0
-            {"output", required_argument, NULL, 'o'},   //1
+            {"binary", no_argument, NULL, 'b'},    //1
+            {"compress", no_argument, NULL, 'c'},  //2
+            {"output", required_argument, NULL, 'o'},   //3
             {NULL, 0, NULL, 0 }
     };
 
     // Default options
     FILE *f_out = stdout;
-    //enum FormatOut format_out = OUT_ASCII;
+    // Default options
+    enum slow5_fmt format_out = FORMAT_ASCII;
+    enum press_method pressMethod = COMPRESS_NONE;
 
     // Input arguments
     char *arg_fname_out = NULL;
@@ -78,7 +164,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "ho:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "bcho:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -91,6 +177,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
+            case 'b':
+                format_out = FORMAT_BINARY;
+                break;
+            case 'c':
+                pressMethod = COMPRESS_GZIP;
+                break;
             case 'o':
                 arg_fname_out = optarg;
                 break;
@@ -98,28 +190,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
-        }
-    }
-
-    // Parse output argument
-    if (arg_fname_out != NULL) {
-        if (meta != NULL && meta->verbose) {
-            VERBOSE("parsing output filename%s","");
-        }
-        // Create new file or
-        // Truncate existing file
-        FILE *new_file;
-        new_file = fopen(arg_fname_out, "w");
-
-        // An error occured
-        if (new_file == NULL) {
-            ERROR("File '%s' could not be opened - %s.",
-                  arg_fname_out, strerror(errno));
-
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        } else {
-            f_out = new_file;
         }
     }
 
@@ -141,7 +211,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
 
     if(slow5_files.size()){
-        if(merge_slow5(f_out, slow5_files, &readsCount)==-1){
+        if(merge_slow5(arg_fname_out, format_out, pressMethod, slow5_files, &readsCount)==-1){
             return EXIT_FAILURE;
         }
     }
@@ -160,116 +230,3 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     return EXIT_SUCCESS;
 }
 
-int merge_slow5(FILE *f_out, std::vector<std::string> &slow5_files, reads_count* readsCount) {
-    fprintf(stderr,"merging...\n");
-    size_t read_group_count = 0;
-    size_t slow5_files_count = slow5_files.size();
-    readsCount->total_5 = slow5_files_count;
-
-    std::string slow5_path = "merged.slow5";
-    FILE *slow5_file_pointer = NULL;
-    slow5_file_pointer = fopen(slow5_path.c_str(), "w");
-
-    // An error occured
-    if (!slow5_file_pointer) {
-        ERROR("File '%s' could not be opened - %s.", slow5_path.c_str(), strerror(errno));
-    }
-    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
-    slow5_hdr_initialize(slow5File->header);
-    slow5File->header->num_read_groups = 0;
-
-    if(!slow5File){
-        fprintf(stderr, "cannot open %s. skipping...\n",slow5_files[0].c_str());
-        return EXIT_FAILURE;
-    }
-    for(size_t i=0; i<slow5_files_count; i++) {
-        slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
-        if(!slow5File_i){
-            fprintf(stderr, "cannot open %s. skipping...\n",slow5_files[i].c_str());
-            continue;
-        }
-        int64_t read_group_count_i = slow5File_i->header->num_read_groups;
-        fprintf(stderr,"reading slow5 file '%s' it has %u read groups\n", slow5_files[i].c_str(), read_group_count_i);
-        size_t read_group_tracker [read_group_count_i];
-        for(int64_t j=0; j<read_group_count_i; j++){
-            char* run_id_j = slow5_hdr_get("run_id", j, slow5File_i->header);
-            fprintf(stderr, "run_id = %s\n",run_id_j);
-            int64_t read_group_count = slow5File->header->num_read_groups;
-            size_t flag_run_id_found = 0;
-            for(int64_t k=0; k<read_group_count; k++){
-                char* run_id_k = slow5_hdr_get("run_id", k, slow5File->header);
-                if(strcmp(run_id_j,run_id_k) == 0){
-                    flag_run_id_found = 1;
-                    read_group_tracker[j] = k;
-                    break;
-                }
-            }
-            if(flag_run_id_found == 0){
-                int64_t new_read_group = slow5_hdr_add_rg(slow5File->header);
-                fprintf(stderr, "new read_group = %ld\n", (long)new_read_group);
-                if(new_read_group != read_group_count){ //sanity check
-                    fprintf(stderr, "something's wrong\n");
-                }
-                read_group_tracker[j] = new_read_group;
-                slow5_hdr_set("run_id", run_id_j, new_read_group, slow5File->header);
-            }
-        }
-
-        struct slow5_rec *read = NULL;
-        int ret;
-//        struct press *press_ptr = press_init(to_compress);
-        while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
-            fprintf(stderr,"before read_group = %u\n",read->read_group);
-            read->read_group = read_group_tracker[read->read_group];
-            fprintf(stderr,"after read_group = %u\n",read->read_group);
-            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, FORMAT_ASCII, NULL) == -1) {
-                slow5_rec_free(read);
-                return -2;
-            }
-//            slow5_add_rec(read, slow5File);
-        }
-//        press_free(press_ptr);
-        slow5_rec_free(read);
-        slow5_close(slow5File_i);
-    }
-    fseek(slow5_file_pointer, 0, SEEK_SET);
-    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, FORMAT_ASCII, COMPRESS_NONE) == -1){
-        fprintf(stderr, "Could not write the header\n");
-        exit(EXIT_FAILURE);
-    }
-    slow5_close(slow5File);
-    return 1;
-}
-
-int compare_headers(slow5_header_t& slow5Header1, slow5_header_t& slow5Header2, int compare_level) {
-    switch (compare_level) {
-        case 0:
-            if(strcmp(slow5Header1.file_format,slow5Header2.file_format)!=0){
-                fprintf(stderr,"file_format mismatch:%s %s\n",slow5Header1.file_format,slow5Header2.file_format);
-                return -1;
-            }
-            if(strcmp(slow5Header1.file_version,slow5Header2.file_version)!=0){
-                fprintf(stderr,"file_version mismatch:%s %s\n",slow5Header1.file_version,slow5Header2.file_version);
-                return -1;
-            }
-            return 1;
-            break;
-        case 1:
-            if(strcmp(slow5Header1.run_id,slow5Header2.run_id)!=0){
-                fprintf(stderr,"run_id mismatch:%s %s\n",slow5Header1.run_id,slow5Header2.run_id);
-                return -1;
-            }
-            if(strcmp(slow5Header1.sample_frequency,slow5Header2.sample_frequency)!=0){
-                fprintf(stderr,"sample_frequency mismatch:%s %s\n",slow5Header1.sample_frequency,slow5Header2.sample_frequency);
-                return -1;
-            }
-            //todo: implement more comparisons...
-
-            break;
-        default:
-            fprintf(stderr,"internal error\n");
-            break;
-    }
-    return 0;
-
-}
