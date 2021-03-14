@@ -119,55 +119,77 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
 
 
     if(strcmp("file_type",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("file_type", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("file_type", value.attr_string, 0, operator_data->slow5File->header) ==-1){
+            WARNING("file_type attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("file_version",name)==0){
         if (H5Tclass == H5T_STRING) {
-            slow5_hdr_set("file_version", "value.attr_string", 0, operator_data->slow5File->header);
+            if(slow5_hdr_set("file_version", "value.attr_string", 0, operator_data->slow5File->header) == -1){
+                WARNING("file_version attribute value could not be set in the slow5 header %s", "");
+            }
         } else if (H5Tclass == H5T_FLOAT) {
             char buf[50];
             sprintf(buf,"%.1f", value.attr_double);
             WARNING("Converting the attribute %s/%s from H5T_FLOAT to string ",operator_data->group_name,name);
 //            operator_data->slow5_header->file_version = buf);
-           slow5_hdr_set("file_version", buf, 0, operator_data->slow5File->header);
+            if(slow5_hdr_set("file_version", buf, 0, operator_data->slow5File->header) == -1){
+                WARNING("file_version attribute value could not be set in the slow5 header %s", "");
+            }
         }
     }
 //            READ
     else if(strcmp("run_id",name)==0 && H5Tclass==H5T_STRING){
         *(operator_data->flag_run_id) = 1;
 
-        slow5_hdr_set("run_id", value.attr_string, 0, operator_data->slow5File->header);
-        slow5_hdr_set("tracking_id_run_id", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("run_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("run_id attribute value could not be set in the slow5 header %s", "");
+        }
+        if(slow5_hdr_set("tracking_id_run_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("tracking_id_run_id attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("pore_type", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("pore_type", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("pore_type attribute value could not be set in the slow5 header %s", "");
+        }
     }
 //            RAW
-    else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER){
-        slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_time", &value.attr_int);
+    else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
+        if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_time", &value.attr_int) != 0){
+            WARNING("start_time auxiliary attribute value could not be set in the slow5 record %s", "");
+        }
     }
     else if(strcmp("duration",name)==0 && H5Tclass==H5T_INTEGER){
         operator_data->slow5_record->len_raw_signal = value.attr_int;
     }
-    else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER){
-        slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "read_number", &value.attr_int);
+    else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
+        if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "read_number", &value.attr_int) != 0){
+            WARNING("read_number auxiliary attribute value could not be set in the slow5 record %s", "");
+        }
     }
-    else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER){
-        slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_mux", &value.attr_int);
+    else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
+        if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_mux", &value.attr_int) != 0){
+            WARNING("start_mux auxiliary attribute value could not be set in the slow5 record %s", "");
+        }
     }
     else if(strcmp("read_id",name)==0 && H5Tclass==H5T_STRING){
         operator_data->slow5_record->read_id_len = strlen(value.attr_string);
         operator_data->slow5_record->read_id = strdup(value.attr_string);
     }
-    else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT){
-        slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "median_before", &value.attr_double);
+    else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT && *(operator_data->flag_lossy) == 0){
+        if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "median_before", &value.attr_double) != 0){
+            WARNING("median_before auxiliary attribute value could not be set in the slow5 record %s", "");
+        }
     }
 //    else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
 //        operator_data->slow5_record->end_reason = value.attr_uint8_t;
 //    }
 //            CHANNEL_ID
-    else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING){
-        slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "channel_number", value.attr_string);
+    else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING && *(operator_data->flag_lossy) == 0){
+        if(slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "channel_number", value.attr_string) != 0){
+            WARNING("channel_number auxiliary attribute value could not be set in the slow5 record %s", "");
+        }
     }
     else if(strcmp("digitisation",name)==0 && H5Tclass==H5T_FLOAT){
         operator_data->slow5_record->digitisation = value.attr_double;
@@ -183,141 +205,229 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
     }
 //            CONTEXT_TAGS
     else if(strcmp("sample_frequency",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("sample_frequency", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("sample_frequency", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("sample_frequency attribute value could not be set in the slow5 header %s", "");
+        }
     }
         //additional attributes in 2.2
     else if(strcmp("barcoding_enabled",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("barcoding_enabled", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("barcoding_enabled", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("barcoding_enabled attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("experiment_duration_set",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("experiment_duration_set", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("experiment_duration_set", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("experiment_duration_set attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("experiment_type",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("experiment_type", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("experiment_type", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("experiment_type attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("local_basecalling",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("local_basecalling", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("local_basecalling", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("local_basecalling attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("package",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("package", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("package", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("package attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("package_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("package_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("package_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("package_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("sequencing_kit",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("sequencing_kit", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("sequencing_kit", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("sequencing_kit attribute value could not be set in the slow5 header %s", "");
+        }
     }
         //additional attributes in 2.0
     else if(strcmp("filename",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("filename", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("filename", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("filename attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("experiment_kit",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("experiment_kit", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("experiment_kit", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("experiment_kit attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("user_filename_input",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("user_filename_input", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("user_filename_input", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("user_filename_input attribute value could not be set in the slow5 header %s", "");
+        }
     }
 //            TRACKING_ID
     else if(strcmp("asic_id",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("asic_id", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("asic_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("asic_id attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("asic_id_eeprom",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("asic_id_eeprom", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("asic_id_eeprom", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("asic_id_eeprom attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("asic_temp",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("asic_temp", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("asic_temp", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("asic_temp attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("auto_update",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("auto_update", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("auto_update", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("auto_update attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("auto_update_source",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("auto_update_source", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("auto_update_source", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("auto_update_source attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("bream_is_standard",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("bream_is_standard", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("bream_is_standard", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("bream_is_standard attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("device_id",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("device_id", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("device_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("device_id attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("exp_script_name",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("exp_script_name", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("exp_script_name", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("exp_script_name attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("exp_script_purpose",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("exp_script_purpose", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("exp_script_purpose", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("exp_script_purpose attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("exp_start_time",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("exp_start_time", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("exp_start_time", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("exp_start_time attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("flow_cell_id",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("flow_cell_id", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("flow_cell_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("flow_cell_id attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("heatsink_temp",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("heatsink_temp", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("heatsink_temp", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("heatsink_temp attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("hostname",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("hostname", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("hostname", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("hostname attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("installation_type",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("installation_type", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("installation_type", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("installation_type attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("local_firmware_file",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("local_firmware_file", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("local_firmware_file", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("local_firmware_file attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("operating_system",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("operating_system", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("operating_system", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("operating_system attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("protocol_run_id",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("protocol_run_id", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("protocol_run_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("protocol_run_id attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("protocols_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("protocols_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("protocols_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("protocols_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("usb_config",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("usb_config", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("usb_config", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("usb_config attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("version attribute value could not be set in the slow5 header %s", "");
+        }
     }
         //additional attributes in 2.0
     else if(strcmp("bream_core_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("bream_core_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("bream_core_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("bream_core_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("bream_ont_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("bream_ont_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("bream_ont_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("bream_ont_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("bream_prod_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("bream_prod_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("bream_prod_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("bream_prod_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("bream_rnd_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("bream_rnd_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("bream_rnd_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("bream_rnd_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
         //additional attributes in 2.2
     else if(strcmp("asic_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("asic_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("asic_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("asic_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("configuration_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("configuration_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("configuration_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("configuration_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("device_type",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("device_type", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("device_type", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("device_type attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("distribution_status",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("distribution_status", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("distribution_status", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("distribution_status attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("distribution_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("distribution_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("distribution_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("distribution_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("flow_cell_product_code",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("flow_cell_product_code", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("flow_cell_product_code", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("flow_cell_product_code attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("guppy_version",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("guppy_version", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("guppy_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("guppy_version attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("protocol_group_id",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("protocol_group_id", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("protocol_group_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("protocol_group_id attribute value could not be set in the slow5 header %s", "");
+        }
     }
     else if(strcmp("sample_id",name)==0 && H5Tclass==H5T_STRING){
-        slow5_hdr_set("sample_id", value.attr_string, 0, operator_data->slow5File->header);
+        if(slow5_hdr_set("sample_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+            WARNING("sample_id attribute value could not be set in the slow5 header %s", "");
+        }
     }else{
         WARNING("The attribute %s/%s is not stored ", operator_data->group_name, name);
     }
@@ -372,7 +482,7 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
     return 0;
 }
 
-int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int call_count, struct program_meta *meta, slow5_file_t* slow5File){
+int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File){
 
     struct operator_obj tracker;
     tracker.group_level = ROOT;
@@ -396,6 +506,7 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
     int flag_context_tags = 0;
     int flag_tracking_id = 0;
     int flag_run_id = 0;
+    int flag_lossy = lossy;
     size_t zero = 0;
 
 //    tracker.slow5_header = &slow5_header;
@@ -403,6 +514,7 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
     tracker.flag_run_id = &flag_run_id;
+    tracker.flag_lossy = &flag_lossy;
     tracker.nreads = &zero;
     tracker.slow5_record = slow5_rec_init();
 
@@ -428,7 +540,7 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
         //now iterate over read groups. loading records and writing them are done inside op_func_group
         H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
         //        todo: compare header values with the previous singlefast5
-        if(call_count==0){
+        if(write_header_flag==0){
             if(*(tracker.flag_run_id) != 1){
                 fprintf(stderr, "run_id is not set%s\n", "");
                 exit(EXIT_FAILURE);
@@ -654,17 +766,19 @@ void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, 
     }
 }
 
-void slow5_hdr_initialize(slow5_hdr *header){
+void slow5_hdr_initialize(slow5_hdr *header, int lossy){
     slow5_hdr_add_rg(header);
     header->num_read_groups = 1;
 
     struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
-    slow5_aux_meta_add(aux_meta, "channel_number", STRING);
-    slow5_aux_meta_add(aux_meta, "median_before", DOUBLE);
-    slow5_aux_meta_add(aux_meta, "read_number", INT32_T);
-    slow5_aux_meta_add(aux_meta, "start_mux", UINT8_T);
-    slow5_aux_meta_add(aux_meta, "start_time", UINT64_T);
-//    todo - add end_reason enum
+    if(lossy == 0) {
+        slow5_aux_meta_add(aux_meta, "channel_number", STRING);
+        slow5_aux_meta_add(aux_meta, "median_before", DOUBLE);
+        slow5_aux_meta_add(aux_meta, "read_number", INT32_T);
+        slow5_aux_meta_add(aux_meta, "start_mux", UINT8_T);
+        slow5_aux_meta_add(aux_meta, "start_time", UINT64_T);
+        //    todo - add end_reason enum
+    }
 
     header->aux_meta = aux_meta;
 
