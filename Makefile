@@ -36,7 +36,7 @@ VERSION = `git describe --tags`
 $(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN) $(BUILD_DIR)/libslow5.a
 	$(CXX) $(CFLAGS) $(OBJ_BIN) $(BUILD_DIR)/libslow5.a $(LDFLAGS) -o $@
 
-$(BUILD_DIR)/main.o: src/main.c src/slow5misc.h src/error.h
+$(BUILD_DIR)/main.o: src/main.c src/misc.h src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/f2s.o: src/f2s.c src/slow5_old.h src/error.h

@@ -1191,7 +1191,7 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
 
         // Read into the string and miss the preceding size
         size_t bytes_to_read_sizet;
-        read_mem = (char *) pread_depress(s5p->compress, s5p->meta.fd,
+        read_mem = (char *) pread_depress_multi(s5p->compress->method, s5p->meta.fd,
                 read_index.size - sizeof (slow5_rec_size_t),
                 read_index.offset + sizeof (slow5_rec_size_t),
                 &bytes_to_read_sizet);

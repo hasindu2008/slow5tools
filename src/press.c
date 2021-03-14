@@ -5,8 +5,12 @@
 #include "press.h"
 #include "error.h"
 
+int gzip_init_deflate(z_stream *strm);
+int gzip_init_inflate(z_stream *strm);
+
 static void *ptr_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t count, size_t *n);
 static void *ptr_depress_gzip(struct gzip_stream *gzip, const void *ptr, size_t count, size_t *n);
+static void *ptr_depress_gzip_multi(const void *ptr, size_t count, size_t *n);
 static size_t fwrite_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t size, size_t nmemb, FILE *fp);
 static int vfprintf_compress(struct press *comp, FILE *fp, const char *format, va_list ap);
 
@@ -29,31 +33,15 @@ struct press *press_init(press_method_t method) {
             struct gzip_stream *gzip;
 
             gzip = (struct gzip_stream *) malloc(sizeof *gzip);
-
-            gzip->strm_deflate.zalloc = Z_NULL;
-            gzip->strm_deflate.zfree = Z_NULL;
-            gzip->strm_deflate.opaque = Z_NULL;
-
-            gzip->strm_inflate.zalloc = Z_NULL;
-            gzip->strm_inflate.zfree = Z_NULL;
-            gzip->strm_inflate.opaque = Z_NULL;
-
-            gzip->flush = Z_NO_FLUSH;
-
-            // TODO free deflate stream if inflate stream ends
-            if (deflateInit2(&(gzip->strm_deflate),
-                        Z_DEFAULT_COMPRESSION,
-                        Z_DEFLATED,
-                        MAX_WBITS,
-                        Z_MEM_DEFAULT,
-                        Z_DEFAULT_STRATEGY) != Z_OK ||
-                    inflateInit2(&(gzip->strm_inflate), MAX_WBITS) != Z_OK) {
-
-                // Error occurred
+            if (gzip_init_deflate(&(gzip->strm_deflate)) != Z_OK) {
                 free(gzip);
                 comp->stream = NULL;
-
+            } else if (gzip_init_inflate(&(gzip->strm_inflate)) != Z_OK) {
+                (void) deflateEnd(&(gzip->strm_deflate));
+                free(gzip);
+                comp->stream = NULL;
             } else {
+                gzip->flush = Z_NO_FLUSH;
                 comp->stream = (union press_stream *) malloc(sizeof *comp->stream);
                 comp->stream->gzip = gzip;
             }
@@ -62,6 +50,27 @@ struct press *press_init(press_method_t method) {
     }
 
     return comp;
+}
+
+int gzip_init_deflate(z_stream *strm) {
+    strm->zalloc = Z_NULL;
+    strm->zfree = Z_NULL;
+    strm->opaque = Z_NULL;
+
+    return deflateInit2(strm,
+            Z_DEFAULT_COMPRESSION,
+            Z_DEFLATED,
+            MAX_WBITS,
+            Z_MEM_DEFAULT,
+            Z_DEFAULT_STRATEGY);
+}
+
+int gzip_init_inflate(z_stream *strm) {
+    strm->zalloc = Z_NULL;
+    strm->zfree = Z_NULL;
+    strm->opaque = Z_NULL;
+
+    return inflateInit2(strm, MAX_WBITS);
 }
 
 void press_free(struct press *comp) {
@@ -159,6 +168,37 @@ static void *ptr_compress_gzip(struct gzip_stream *gzip, const void *ptr, size_t
     return out;
 }
 
+void *ptr_depress_multi(press_method_t method, const void *ptr, size_t count, size_t *n) {
+    void *out = NULL;
+    size_t n_tmp = 0;
+
+    if (ptr != NULL) {
+
+        switch (method) {
+
+            case COMPRESS_NONE:
+                out = (void *) malloc(count);
+                if (out == NULL) {
+                    // Malloc failed
+                    return out;
+                }
+                memcpy(out, ptr, count);
+                n_tmp = count;
+                break;
+
+            case COMPRESS_GZIP:
+                out = ptr_depress_gzip_multi(ptr, count, &n_tmp);
+                break;
+        }
+    }
+
+    if (n != NULL) {
+        *n = n_tmp;
+    }
+
+    return out;
+}
+
 void *ptr_depress(struct press *comp, const void *ptr, size_t count, size_t *n) {
     void *out = NULL;
     size_t n_tmp = 0;
@@ -196,12 +236,7 @@ static void *ptr_depress_gzip(struct gzip_stream *gzip, const void *ptr, size_t 
     uint8_t *out = NULL;
 
     size_t n_cur = 0;
-    //z_stream *strm = &(gzip->strm_inflate);
-
-    //we need independent streams for thread safety
-    //TODO fix this hack properly
-    struct press *gzip_local = press_init(COMPRESS_GZIP);
-    z_stream *strm = &(gzip_local->stream->gzip->strm_inflate);
+    z_stream *strm = &(gzip->strm_inflate);
 
     strm->avail_in = count;
     strm->next_in = (Bytef *) ptr;
@@ -227,7 +262,42 @@ static void *ptr_depress_gzip(struct gzip_stream *gzip, const void *ptr, size_t 
     *n = n_cur;
     inflateReset(strm);
 
-    press_free(gzip_local);
+    return out;
+}
+
+static void *ptr_depress_gzip_multi(const void *ptr, size_t count, size_t *n) {
+    uint8_t *out = NULL;
+
+    size_t n_cur = 0;
+
+    z_stream strm_local;
+    gzip_init_inflate(&strm_local);
+    z_stream *strm = &strm_local;
+
+    strm->avail_in = count;
+    strm->next_in = (Bytef *) ptr;
+
+    do {
+        out = (uint8_t *) realloc(out, n_cur + Z_OUT_CHUNK);
+
+        strm->avail_out = Z_OUT_CHUNK;
+        strm->next_out = out + n_cur;
+
+        int ret = inflate(strm, Z_NO_FLUSH);
+        if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR) {
+            free(out);
+            out = NULL;
+            n_cur = 0;
+            break;
+        }
+
+        n_cur += Z_OUT_CHUNK - strm->avail_out;
+
+    } while (strm->avail_out == 0);
+
+    *n = n_cur;
+
+    (void) inflateEnd(strm);
 
     return out;
 }
@@ -316,6 +386,21 @@ void *fread_depress(struct press *comp, size_t count, FILE *fp, size_t *n) {
     return out;
 }
 
+void *fread_depress_multi(press_method_t method, size_t count, FILE *fp, size_t *n) {
+    void *raw = (void *) malloc(count);
+    MALLOC_CHK(raw);
+
+    if (fread(raw, count, 1, fp) != 1) {
+        free(raw);
+        return NULL;
+    }
+
+    void *out = ptr_depress_multi(method, raw, count, n);
+    free(raw);
+
+    return out;
+}
+
 void *pread_depress(struct press *comp, int fd, size_t count, off_t offset, size_t *n) {
     void *raw = (void *) malloc(count);
     MALLOC_CHK(raw);
@@ -326,6 +411,21 @@ void *pread_depress(struct press *comp, int fd, size_t count, off_t offset, size
     }
 
     void *out = ptr_depress(comp, raw, count, n);
+    free(raw);
+
+    return out;
+}
+
+void *pread_depress_multi(press_method_t method, int fd, size_t count, off_t offset, size_t *n) {
+    void *raw = (void *) malloc(count);
+    MALLOC_CHK(raw);
+
+    if (pread(fd, raw, count, offset) == -1) {
+        free(raw);
+        return NULL;
+    }
+
+    void *out = ptr_depress_multi(method, raw, count, n);
     free(raw);
 
     return out;
