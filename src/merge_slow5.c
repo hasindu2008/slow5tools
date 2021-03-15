@@ -41,6 +41,7 @@ int merge_slow5(const char* output_path, enum slow5_fmt format_out, enum press_m
         slow5_file_pointer = fopen(output_path, "w");
         if (!slow5_file_pointer) {
             ERROR("Output file %s could not be opened - %s.", output_path, strerror(errno));
+            return -1;
         }
     }
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, format_out);
@@ -64,13 +65,13 @@ int merge_slow5(const char* output_path, enum slow5_fmt format_out, enum press_m
                 char* run_id_k = slow5_hdr_get("run_id", k, slow5File->header);
                 if(strcmp(run_id_j,run_id_k) == 0){
                     flag_run_id_found = 1;
-                    list[i][j] = k; //assumption: run_ids are similar. Hence, the rest of the header attribute values of jth read_group are same as kth read_group's.
+                    list[i][j] = k; //assumption0: run_ids are similar. Hence, the rest of the header attribute values of jth read_group are same as kth read_group's.
                     break;
                 }
             }
             if(flag_run_id_found == 0){ // time to add a new read_group
                 khash_t(s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
-                int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg); //assumption:
+                int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg); //assumption0
                 if(new_read_group != read_group_count){ //sanity check
                     WARNING("New read group number is not equal to number of groups; something's wrong\n%s", "");
                 }
@@ -98,7 +99,7 @@ int merge_slow5(const char* output_path, enum slow5_fmt format_out, enum press_m
             read->read_group = list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
             if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                 slow5_rec_free(read);
-                return -2;
+                return -1;
             }
         }
         press_free(press_ptr);
