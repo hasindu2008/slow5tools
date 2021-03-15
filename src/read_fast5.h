@@ -103,8 +103,6 @@ typedef struct{
     char* sample_id;
 }slow5_header_t;
 
-
-
 typedef struct{
     //    RAW
     unsigned long long start_time;
@@ -124,7 +122,6 @@ typedef struct{
     int16_t *raw_signal;
 
 }slow5_record_t;
-
 
 struct operator_obj {
     //attributes to track hdf5 hierarchy
@@ -146,19 +143,20 @@ struct operator_obj {
     int *flag_context_tags;
     int *flag_tracking_id;
     int *flag_run_id;
+    int *flag_lossy;
     hsize_t* num_read_groups;
     size_t* nreads;
     slow5_file_t* slow5File;
 };
 
 //implemented in read_fast5.c
-int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File);
+int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File);
 fast5_file_t fast5_open(const char* filename);
 void print_slow5_header(operator_obj* operator_data);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 void print_slow5_header(operator_obj* operator_data);
 void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension);
-void slow5_hdr_initialize(slow5_hdr *header);
+void slow5_hdr_initialize(slow5_hdr *header, int lossy);
 
 // args for processes
 typedef struct {
@@ -167,7 +165,6 @@ typedef struct {
     int32_t proc_index;
     std::string slow5_file;
 }proc_arg_t;
-
 
 union attribute_data {
     int attr_int;
