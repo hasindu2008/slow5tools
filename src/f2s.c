@@ -376,6 +376,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     for (int i = optind; i < argc; ++ i) {
         if(iop==1){
             // Recursive way
+            if(!arg_dir_out){
+                WARNING("When converting multi-fast5 files with --iop=1 and -d=NULL, multiple headers will be written to stdout. It is recommended to set -d%s", ".");
+            }
             recurse_dir(argv[i], format_out, pressMethod, lossy, &readsCount, arg_dir_out, meta);
         }else{
             find_all_5(argv[i], fast5_files, FAST5_EXTENSION);

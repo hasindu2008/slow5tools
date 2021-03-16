@@ -11,8 +11,6 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 
-
-
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
@@ -74,23 +72,138 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 
         //READ_SPLIT
         if(metaSplitMethod.splitMethod==READS_SPLIT) {
+            slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+            if(!slow5File_i){
+                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                return;
+            }
+            size_t file_count = 0;
+            while(1){
+                std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),slow5_files[i].length() - slow5_files[i].find_last_of('/') - 6) + "_" + std::to_string(file_count) + ".slow5";
+                std::string slow5_path = std::string(output_dir);
+                slow5_path += slow5file;
 
-//            create_slow5_files(slow5_files, output_dir, meta, i, &tracker, slow5, metaSplitMethod, 0, 0);
+                FILE* slow5_file_pointer =  NULL;
+                slow5_file_pointer = fopen(slow5_path.c_str(), "w");
+                if (!slow5_file_pointer) {
+                    ERROR("Output file %s could not be opened - %s.", slow5_path.c_str(), strerror(errno));
+                    return;
+                }
+                slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
+                slow5_hdr_initialize(slow5File->header, 0);
+                slow5File->header->num_read_groups = 0;
 
+                khash_t(s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
+                int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg);
+
+                if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
+                    ERROR("Could not write the header to %s\n", slow5_path.c_str());
+                    exit(EXIT_FAILURE);
+                }
+
+                size_t record_count = 0;
+                struct slow5_rec *read = NULL;
+                int ret;
+                struct press *press_ptr = press_init(pressMethod);
+                while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+                    if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
+                        slow5_rec_free(read);
+                        ERROR("Could not write the record to %s\n", slow5_path.c_str());
+                        exit(EXIT_FAILURE);
+                    }
+                    record_count++;
+                    if(record_count == metaSplitMethod.n){
+                        break;
+                    }
+                }
+                press_free(press_ptr);
+                slow5_rec_free(read);
+
+                if(format_out == FORMAT_BINARY){
+                    slow5_eof_fwrite(slow5File->fp);
+                }
+                slow5_close(slow5File);
+                if(ret != 0){
+                    break;
+                }
+                file_count++;
+            }
+            slow5_close(slow5File_i);
 
         }else if(metaSplitMethod.splitMethod==FILE_SPLIT){ //FILE_SPLIT
+            slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+            if(!slow5File_i){
+                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                return;
+            }
+            int number_of_records = 0;
+            struct slow5_rec *read = NULL;
+            int ret;
+            while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+                number_of_records++;
+            }
+            slow5_rec_free(read);
+            slow5_close(slow5File_i);
 
-//
-//            size_t number_of_records = 0;
-//            size_t checkpoint = ftell(slow5);
-//            char *buffer = NULL;
-//            while(read_line(slow5, &buffer) != -1){
-//                number_of_records++;
-//            }
-//            fseek(slow5, checkpoint, SEEK_SET);
-//
-//            create_slow5_files(slow5_files, output_dir, meta, i, &tracker, slow5, metaSplitMethod, number_of_records, 0);
+            int limit = number_of_records/metaSplitMethod.n;
+            int rem = number_of_records%metaSplitMethod.n;
+            size_t file_count = 0;
 
+            slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+            if(!slow5File_i){
+                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                return;
+            }
+
+            while(number_of_records > 0) {
+                int number_of_records_per_file = (rem > 0) ? 1 : 0;
+                number_of_records_per_file += limit;
+//                fprintf(stderr, "file_count = %d, number_of_records_per_file = %d, number_of_records = %d\n", file_count, number_of_records_per_file, number_of_records);
+                number_of_records -= number_of_records_per_file;
+                rem--;
+                std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),slow5_files[i].length() - slow5_files[i].find_last_of('/') - 6) + "_" + std::to_string(file_count) + ".slow5";
+                std::string slow5_path = std::string(output_dir);
+                slow5_path += slow5file;
+
+                FILE* slow5_file_pointer =  NULL;
+                slow5_file_pointer = fopen(slow5_path.c_str(), "w");
+                if (!slow5_file_pointer) {
+                    ERROR("Output file %s could not be opened - %s.", slow5_path.c_str(), strerror(errno));
+                    return;
+                }
+                slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
+                slow5_hdr_initialize(slow5File->header, 0);
+                slow5File->header->num_read_groups = 0;
+
+                khash_t(s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
+                int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg);
+
+                if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
+                    ERROR("Could not write the header to %s\n", slow5_path.c_str());
+                    exit(EXIT_FAILURE);
+                }
+
+                struct slow5_rec *read = NULL;
+                int ret;
+                struct press *press_ptr = press_init(pressMethod);
+                while ((number_of_records_per_file > 0) && (ret = slow5_get_next(&read, slow5File_i)) == 0) {
+                    if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
+                        slow5_rec_free(read);
+                        ERROR("Could not write the record to %s\n", slow5_path.c_str());
+                        exit(EXIT_FAILURE);
+                    }
+                    number_of_records_per_file--;
+                }
+                press_free(press_ptr);
+                slow5_rec_free(read);
+
+                if(format_out == FORMAT_BINARY){
+                    slow5_eof_fwrite(slow5File->fp);
+                }
+                slow5_close(slow5File);
+                file_count++;
+            }
+            slow5_close(slow5File_i);
 
         }else if(metaSplitMethod.splitMethod == GROUP_SPLIT){ // GROUP_SPLIT
 
