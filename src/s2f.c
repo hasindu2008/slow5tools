@@ -40,134 +40,87 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_header_t*
 
 void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FILE);
 
-void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_header_t* slow5_header, slow5_record_t* slow5_record, hid_t* end_reason_enum_id) {
+void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *header, slow5_rec_t* slow5_record, hid_t* end_reason_enum_id) {
+//    todo- check return values
+    int err;
     switch (group_flag) {
         case ROOT:
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"file_type",slow5_header->file_type,H5T_C_S1);
-            add_attribute(group_id,"file_version",slow5_header->file_version,H5T_C_S1);
+            add_attribute(group_id,"file_type",slow5_hdr_get("file_type",0,header),H5T_C_S1);
+            add_attribute(group_id,"file_version", slow5_hdr_get("file_version",0,header), H5T_C_S1);
             break;
         case READ:
             // add read attributes
-            add_attribute(group_id,"run_id",slow5_header->run_id,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"pore_type",slow5_header->pore_type,H5T_C_S1);
+            add_attribute(group_id,"run_id",slow5_hdr_get("run_id",0,header),H5T_C_S1);
+            add_attribute(group_id,"pore_type",slow5_hdr_get("pore_type",0,header),H5T_C_S1);
             break;
         case RAW:
             // add Raw attributes
-            add_attribute(group_id,"start_time",slow5_record->start_time,H5T_STD_U64LE);
-            add_attribute(group_id,"duration",slow5_record->duration,H5T_STD_U32LE);
-            add_attribute(group_id,"read_number",slow5_record->read_number,H5T_STD_I32LE);
-            add_attribute(group_id,"start_mux",slow5_record->start_mux,H5T_STD_U8LE);
+            add_attribute(group_id,"start_time",slow5_aux_get_uint64(slow5_record, "start_time", &err),H5T_STD_U64LE);
+            add_attribute(group_id,"duration",slow5_aux_get_uint32(slow5_record, "duration", &err),H5T_STD_U32LE);
+            add_attribute(group_id,"read_number",slow5_aux_get_int32(slow5_record, "read_number", &err),H5T_STD_I32LE);
+            add_attribute(group_id,"start_mux",slow5_aux_get_uint8(slow5_record, "start_mux", &err),H5T_STD_U8LE);
             add_attribute(group_id,"read_id",slow5_record->read_id,H5T_C_S1);
-            add_attribute(group_id,"median_before",slow5_record->median_before,H5T_IEEE_F64LE);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"end_reason",slow5_record->end_reason,*end_reason_enum_id);
+            add_attribute(group_id,"median_before",slow5_aux_get_double(slow5_record, "median_before", &err),H5T_IEEE_F64LE);
+//            add_attribute(group_id,"end_reason",slow5_record->end_reason,*end_reason_enum_id);
             break;
         case CHANNEL_ID:
             // add channel_id attributes
-            add_attribute(group_id,"channel_number",slow5_record->channel_number,H5T_C_S1);
+            add_attribute(group_id,"channel_number",slow5_aux_get_string(slow5_record, "channel_number", NULL, &err),H5T_C_S1);
             add_attribute(group_id,"digitisation",slow5_record->digitisation,H5T_IEEE_F64LE);
             add_attribute(group_id,"offset",slow5_record->offset,H5T_IEEE_F64LE);
             add_attribute(group_id,"range",slow5_record->range,H5T_IEEE_F64LE);
             add_attribute(group_id,"sampling_rate",slow5_record->sampling_rate,H5T_IEEE_F64LE);
-            free(slow5_record->channel_number);
             break;
         case CONTEXT_TAGS:
             // add context_tags attributes
-            add_attribute(group_id,"sample_frequency",slow5_header->sample_frequency,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"barcoding_enabled",slow5_header->barcoding_enabled,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"experiment_duration_set",slow5_header->experiment_duration_set,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"experiment_type",slow5_header->experiment_type,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"local_basecalling",slow5_header->local_basecalling,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"package",slow5_header->package,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"package_version",slow5_header->package_version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"sequencing_kit",slow5_header->sequencing_kit,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.0"))add_attribute(group_id,"filename",slow5_header->filename,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.0"))add_attribute(group_id,"experiment_kit",slow5_header->experiment_kit,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.0"))add_attribute(group_id,"user_filename_input",slow5_header->user_filename_input,H5T_C_S1);
-            free(slow5_header->sample_frequency);
-            free(slow5_header->barcoding_enabled);
-            free(slow5_header->experiment_duration_set);
-            free(slow5_header->experiment_type);
-            free(slow5_header->local_basecalling);
-            free(slow5_header->package);
-            free(slow5_header->package_version);
-            free(slow5_header->sequencing_kit);
-            free(slow5_header->filename);
-            free(slow5_header->experiment_kit);
-            free(slow5_header->user_filename_input);
+            add_attribute(group_id,"sample_frequency",slow5_hdr_get("sample_frequency",0,header),H5T_C_S1);
+            add_attribute(group_id,"barcoding_enabled",slow5_hdr_get("barcoding_enabled",0,header),H5T_C_S1);
+            add_attribute(group_id,"experiment_duration_set",slow5_hdr_get("experiment_duration_set",0,header),H5T_C_S1);
+            add_attribute(group_id,"experiment_type",slow5_hdr_get("experiment_type",0,header),H5T_C_S1);
+            add_attribute(group_id,"local_basecalling",slow5_hdr_get("local_basecalling",0,header),H5T_C_S1);
+            add_attribute(group_id,"package",slow5_hdr_get("package",0,header),H5T_C_S1);
+            add_attribute(group_id,"package_version",slow5_hdr_get("package_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"sequencing_kit",slow5_hdr_get("sequencing_kit",0,header),H5T_C_S1);
+            add_attribute(group_id,"filename",slow5_hdr_get("filename",0,header),H5T_C_S1);
+            add_attribute(group_id,"experiment_kit",slow5_hdr_get("experiment_kit",0,header),H5T_C_S1);
+            add_attribute(group_id,"user_filename_input",slow5_hdr_get("user_filename_input",0,header),H5T_C_S1);
             break;
         case TRACKING_ID:
             // add tracking_id attributes
-            add_attribute(group_id,"asic_id",slow5_header->asic_id,H5T_C_S1);
-            add_attribute(group_id,"asic_id_eeprom",slow5_header->asic_id_eeprom,H5T_C_S1);
-            add_attribute(group_id,"asic_temp",slow5_header->asic_temp,H5T_C_S1);
-            add_attribute(group_id,"auto_update",slow5_header->auto_update,H5T_C_S1);
-            add_attribute(group_id,"auto_update_source",slow5_header->auto_update_source,H5T_C_S1);
-            add_attribute(group_id,"bream_is_standard",slow5_header->bream_is_standard,H5T_C_S1);
-            add_attribute(group_id,"device_id",slow5_header->device_id,H5T_C_S1);
-            add_attribute(group_id,"exp_script_name",slow5_header->exp_script_name,H5T_C_S1);
-            add_attribute(group_id,"exp_script_purpose",slow5_header->exp_script_purpose,H5T_C_S1);
-            add_attribute(group_id,"exp_start_time",slow5_header->exp_start_time,H5T_C_S1);
-            add_attribute(group_id,"flow_cell_id",slow5_header->flow_cell_id,H5T_C_S1);
-            add_attribute(group_id,"heatsink_temp",slow5_header->heatsink_temp,H5T_C_S1);
-            add_attribute(group_id,"hostname",slow5_header->hostname,H5T_C_S1);
-            add_attribute(group_id,"installation_type",slow5_header->installation_type,H5T_C_S1);
-            add_attribute(group_id,"local_firmware_file",slow5_header->local_firmware_file,H5T_C_S1);
-            add_attribute(group_id,"operating_system",slow5_header->operating_system,H5T_C_S1);
-            add_attribute(group_id,"protocol_run_id",slow5_header->protocol_run_id,H5T_C_S1);
-            add_attribute(group_id,"protocols_version",slow5_header->protocols_version,H5T_C_S1);
-            add_attribute(group_id,"run_id",slow5_header->tracking_id_run_id,H5T_C_S1);
-            add_attribute(group_id,"usb_config",slow5_header->usb_config,H5T_C_S1);
-            add_attribute(group_id,"version",slow5_header->version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"asic_version",slow5_header->asic_version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"configuration_version",slow5_header->configuration_version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"device_type",slow5_header->device_type,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"distribution_status",slow5_header->distribution_status,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"distribution_version",slow5_header->distribution_version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"flow_cell_product_code",slow5_header->flow_cell_product_code,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"guppy_version",slow5_header->guppy_version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"protocol_group_id",slow5_header->protocol_group_id,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.2"))add_attribute(group_id,"sample_id",slow5_header->sample_id,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.0"))add_attribute(group_id,"bream_core_version",slow5_header->bream_core_version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.0"))add_attribute(group_id,"bream_ont_version",slow5_header->bream_ont_version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.0"))add_attribute(group_id,"bream_prod_version",slow5_header->bream_prod_version,H5T_C_S1);
-            if(!strcmp(slow5_header->file_version,"2.0"))add_attribute(group_id,"bream_rnd_version",slow5_header->bream_rnd_version,H5T_C_S1);
-
-            free(slow5_header->asic_id);
-            free(slow5_header->asic_id_eeprom);
-            free(slow5_header->asic_temp);
-            free(slow5_header->auto_update);
-            free(slow5_header->auto_update_source);
-            free(slow5_header->bream_is_standard);
-            free(slow5_header->device_id);
-            free(slow5_header->exp_script_name);
-            free(slow5_header->exp_script_purpose);
-            free(slow5_header->exp_start_time);
-            free(slow5_header->flow_cell_id);
-            free(slow5_header->heatsink_temp);
-            free(slow5_header->hostname);
-            free(slow5_header->installation_type);
-            free(slow5_header->local_firmware_file);
-            free(slow5_header->operating_system);
-            free(slow5_header->protocol_run_id);
-            free(slow5_header->protocols_version);
-            free(slow5_header->tracking_id_run_id);
-            free(slow5_header->usb_config);
-            free(slow5_header->version);
-            free(slow5_header->asic_version);
-            //2.2
-            free(slow5_header->configuration_version);
-            free(slow5_header->device_type);
-            free(slow5_header->distribution_status);
-            free(slow5_header->distribution_version);
-            free(slow5_header->flow_cell_product_code);
-            free(slow5_header->guppy_version);
-            free(slow5_header->protocol_group_id);
-            free(slow5_header->sample_id);
-            //2.0
-            free(slow5_header->bream_core_version);
-            free(slow5_header->bream_ont_version);
-            free(slow5_header->bream_prod_version);
-            free(slow5_header->bream_rnd_version);
+            add_attribute(group_id,"asic_id",slow5_hdr_get("asic_id",0,header),H5T_C_S1);
+            add_attribute(group_id,"asic_id_eeprom",slow5_hdr_get("asic_id_eeprom",0,header),H5T_C_S1);
+            add_attribute(group_id,"asic_temp",slow5_hdr_get("asic_temp",0,header),H5T_C_S1);
+            add_attribute(group_id,"auto_update",slow5_hdr_get("auto_update",0,header),H5T_C_S1);
+            add_attribute(group_id,"auto_update_source",slow5_hdr_get("auto_update_source",0,header),H5T_C_S1);
+            add_attribute(group_id,"bream_is_standard",slow5_hdr_get("bream_is_standard",0,header),H5T_C_S1);
+            add_attribute(group_id,"device_id",slow5_hdr_get("device_id",0,header),H5T_C_S1);
+            add_attribute(group_id,"exp_script_name",slow5_hdr_get("exp_script_name",0,header),H5T_C_S1);
+            add_attribute(group_id,"exp_script_purpose",slow5_hdr_get("exp_script_purpose",0,header),H5T_C_S1);
+            add_attribute(group_id,"exp_start_time",slow5_hdr_get("exp_start_time",0,header),H5T_C_S1);
+            add_attribute(group_id,"flow_cell_id",slow5_hdr_get("flow_cell_id",0,header),H5T_C_S1);
+            add_attribute(group_id,"heatsink_temp",slow5_hdr_get("heatsink_temp",0,header),H5T_C_S1);
+            add_attribute(group_id,"hostname",slow5_hdr_get("hostname",0,header),H5T_C_S1);
+            add_attribute(group_id,"installation_type",slow5_hdr_get("installation_type",0,header),H5T_C_S1);
+            add_attribute(group_id,"local_firmware_file",slow5_hdr_get("local_firmware_file",0,header),H5T_C_S1);
+            add_attribute(group_id,"operating_system",slow5_hdr_get("operating_system",0,header),H5T_C_S1);
+            add_attribute(group_id,"protocol_run_id",slow5_hdr_get("protocol_run_id",0,header),H5T_C_S1);
+            add_attribute(group_id,"protocols_version",slow5_hdr_get("protocols_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"run_id",slow5_hdr_get("run_id",0,header),H5T_C_S1);
+            add_attribute(group_id,"usb_config",slow5_hdr_get("usb_config",0,header),H5T_C_S1);
+            add_attribute(group_id,"version",slow5_hdr_get("version",0,header),H5T_C_S1);
+            add_attribute(group_id,"asic_version",slow5_hdr_get("asic_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"configuration_version",slow5_hdr_get("configuration_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"device_type",slow5_hdr_get("device_type",0,header),H5T_C_S1);
+            add_attribute(group_id,"distribution_status",slow5_hdr_get("distribution_status",0,header),H5T_C_S1);
+            add_attribute(group_id,"distribution_version",slow5_hdr_get("distribution_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"flow_cell_product_code",slow5_hdr_get("flow_cell_product_code",0,header),H5T_C_S1);
+            add_attribute(group_id,"guppy_version",slow5_hdr_get("guppy_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"protocol_group_id",slow5_hdr_get("protocol_group_id",0,header),H5T_C_S1);
+            add_attribute(group_id,"sample_id",slow5_hdr_get("sample_id",0,header),H5T_C_S1);
+            add_attribute(group_id,"bream_core_version",slow5_hdr_get("bream_core_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"bream_ont_version",slow5_hdr_get("bream_ont_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"bream_prod_version",slow5_hdr_get("bream_prod_version",0,header),H5T_C_S1);
+            add_attribute(group_id,"bream_rnd_version",slow5_hdr_get("bream_rnd_version",0,header),H5T_C_S1);
             break;
     }
 }
@@ -186,37 +139,35 @@ void initialize_end_reason(hid_t* end_reason_enum_id) {
     H5Tenum_insert(*end_reason_enum_id, "signal_negative", (val=5,&val));
 }
 
-void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char* FAST5_FILE) {
-
-    slow5_record_t slow5_record;
+void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
 
     hid_t   file_id;
     hid_t group_read, group_raw, group_channel_id, group_tracking_id, group_context_tags;
     herr_t  status;
     hid_t end_reason_enum_id;
     initialize_end_reason(&end_reason_enum_id);
+    struct slow5_rec *slow5_record = NULL;
 
-//    fprintf(stderr, "%s\n", FAST5_FILE);
     /* Create a new file using default properties. */
     file_id = H5Fcreate(FAST5_FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    set_hdf5_attributes(file_id, ROOT, slow5_header, &slow5_record, &end_reason_enum_id);
+    set_hdf5_attributes(file_id, ROOT, slow5File->header, slow5_record, &end_reason_enum_id);
 
-    char * buffer = NULL;
-    char* attribute_value;
-    read_line(slow5, &buffer);    //read first read
-    attribute_value = strtok(buffer, "\t");
-    slow5_record.read_id = strdup(attribute_value);
+    int ret;
+    if(ret = slow5_get_next(&slow5_record, slow5File) != 0) {
+        ERROR("Could not read the slow5 records. exiting... %s", "");
+        exit(EXIT_FAILURE);
+    }
 
     // create first read group
     const char* read_tag = "read_";
-    char read_name[strlen(read_tag)+strlen(slow5_record.read_id)];
+    char read_name[strlen(read_tag)+strlen(slow5_record->read_id)];
     strcpy(read_name,read_tag);
-    group_read = H5Gcreate (file_id, strcat(read_name,slow5_record.read_id), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    group_read = H5Gcreate (file_id, strcat(read_name,slow5_record->read_id), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     hid_t group_read_first = group_read;
 
     // create context_tags group
     group_context_tags = H5Gcreate (group_read, "context_tags", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    set_hdf5_attributes(group_context_tags, CONTEXT_TAGS, slow5_header, &slow5_record, &end_reason_enum_id);
+    set_hdf5_attributes(group_context_tags, CONTEXT_TAGS, slow5File->header, slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_context_tags);
     if(status<0){
         WARNING("Closing context_tags group failed. Possible memory leak. status=%d",(int)status);
@@ -224,7 +175,7 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char* FAST5_FI
 
     // creat tracking_id group
     group_tracking_id = H5Gcreate (group_read, "tracking_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-    set_hdf5_attributes(group_tracking_id, TRACKING_ID, slow5_header, &slow5_record, &end_reason_enum_id);
+    set_hdf5_attributes(group_tracking_id, TRACKING_ID, slow5File->header, slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_tracking_id);
     if(status<0){
         WARNING("Closing tracking_id group failed. Possible memory leak. status=%d",(int)status);
@@ -233,36 +184,26 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char* FAST5_FI
     size_t i = 0;
     while(1){
         if(i){
-            if(read_line(slow5, &buffer)==-1){
+            ret = slow5_get_next(&slow5_record, slow5File);
+            if(ret == -1 || ret == -3) {
+                ERROR("Could not read the slow5 records. exiting... %s", "");
+                exit(EXIT_FAILURE);
+            }
+            if(ret == -2) { //end of file -2 ????
                 break;
-            };
-            attribute_value = strtok(buffer, "\t");
-            slow5_record.read_id = strdup(attribute_value);
+            }
 
             // create read group
-            char read_name[strlen(read_tag)+strlen(slow5_record.read_id)];
+            char read_name[strlen(read_tag)+strlen(slow5_record->read_id)];
             strcpy(read_name,read_tag);
-            group_read = H5Gcreate (file_id, strcat(read_name,slow5_record.read_id), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            group_read = H5Gcreate (file_id, strcat(read_name,slow5_record->read_id), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             if(group_read<1){
-                WARNING("A read group with read_id %s already exists, hence skipping.. \n",slow5_record.read_id);
+                WARNING("A read group with read_id %s already exists, hence skipping.. \n",slow5_record->read_id);
                 continue;
             }
         }
-        attribute_value = strtok(NULL, ",\t"); //read group
-        attribute_value = strtok(NULL, ",\t");
-        slow5_record.channel_number = strdup(attribute_value);
-        attribute_value = strtok(NULL, ",\t");
-        slow5_record.digitisation = atof(attribute_value);
-        attribute_value = strtok(NULL, ",\t");
-        slow5_record.offset = atof(attribute_value);
-        attribute_value = strtok(NULL, "\t");
-        slow5_record.range = atof(attribute_value);
-        attribute_value = strtok(NULL, "\t");
-        slow5_record.sampling_rate = atof(attribute_value);
-        attribute_value = strtok(NULL, ",\t");
-        slow5_record.duration = atoi(attribute_value);
 
-        set_hdf5_attributes(group_read, READ, slow5_header, &slow5_record, &end_reason_enum_id);
+        set_hdf5_attributes(group_read, READ, slow5File->header, slow5_record, &end_reason_enum_id);
         // creat Raw group
         group_raw = H5Gcreate (group_read, "Raw", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         if(i>0){
@@ -273,20 +214,8 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char* FAST5_FI
         }
 
         // signal
-        int16_t* rawptr = (int16_t*)calloc(slow5_record.duration, sizeof(int16_t));
-        int16_t* temp_rawptr = rawptr;
-        for(size_t j=0; j<slow5_record.duration-1; j++){
-            attribute_value = strtok(NULL, ",");
-            int16_t temp_value = atoi(attribute_value);
-            *temp_rawptr = temp_value;
-            temp_rawptr++;
-        }
-        attribute_value = strtok(NULL, "\t");
-        int16_t temp_value = atoi(attribute_value);
-        *temp_rawptr = temp_value;
-
         // Create the data space for the dataset
-        hsize_t nsample = slow5_record.duration;
+        hsize_t nsample = slow5_record->len_raw_signal;
         hsize_t dims[]      = {nsample};
         hsize_t maxdims[] = {H5S_UNLIMITED};
         hid_t dataspace_id = H5Screate_simple(1, dims, maxdims);
@@ -300,36 +229,23 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char* FAST5_FI
         // Create the dataset.
         hid_t dataset_id = H5Dcreate2(group_raw, "Signal", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, dcpl, H5P_DEFAULT);
         // Write the data to the dataset.
-        status = H5Dwrite (dataset_id, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, rawptr);
+        status = H5Dwrite (dataset_id, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, slow5_record->raw_signal);
         // Close and release resources.
         status = H5Pclose (dcpl);
         status = H5Dclose(dataset_id);
         status = H5Sclose(dataspace_id);
 
-        attribute_value = strtok(NULL, "\t");
-        slow5_record.read_number = atoi(attribute_value);
-        attribute_value = strtok(NULL, "\t");
-        slow5_record.start_time = strtoul(attribute_value,NULL,10);
-        attribute_value = strtok(NULL, "\t");
-        slow5_record.start_mux = atoi(attribute_value);
-        attribute_value = strtok(NULL, "\t");
-        slow5_record.median_before = atof(attribute_value);
-        attribute_value = strtok(NULL, "\n");
-        slow5_record.end_reason = attribute_value[0] - '0';
-
-        set_hdf5_attributes(group_raw, RAW, slow5_header, &slow5_record, &end_reason_enum_id);
+        set_hdf5_attributes(group_raw, RAW, slow5File->header, slow5_record, &end_reason_enum_id);
         status = H5Gclose (group_raw);
 
         // creat channel_id group
         group_channel_id = H5Gcreate (group_read, "channel_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        set_hdf5_attributes(group_channel_id, CHANNEL_ID, slow5_header, &slow5_record, &end_reason_enum_id);
+        set_hdf5_attributes(group_channel_id, CHANNEL_ID, slow5File->header, slow5_record, &end_reason_enum_id);
         status = H5Gclose (group_channel_id);
 
         if(i>0){
             status = H5Gclose (group_read);
         }
-        free(rawptr);
-        free(slow5_record.read_id);
 
         i++;
         //to check if peak RAM increase over time
@@ -338,43 +254,25 @@ void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char* FAST5_FI
 
     H5Tclose(end_reason_enum_id);
     status = H5Gclose (group_read_first);
-    free((char*)slow5_header->file_format);
-    free(slow5_header->file_version);
-    free(slow5_header->file_type);
-    free(slow5_header->pore_type);
-    free(slow5_header->run_id);
+    slow5_rec_free(slow5_record);
     status = H5Fclose(file_id);
 }
 
 void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
 
     for (int i = args.starti; i < args.endi; i++) {
+
+        slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+        if(!slow5File_i){
+            ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+            continue;
+        }
         readsCount->total_5++;
-        slow5_header_t slow5_header;
-        std::vector<slow5_header_t> slow5headers;
-        slow5headers.push_back(slow5_header);
-        FILE *slow5;
-        slow5 = fopen(slow5_files[i].c_str(), "r"); // read mode
-//        fprintf(stderr,"%s\n",slow5_files[i].c_str());
-        if (slow5 == NULL) {
-            WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
-            readsCount->bad_5_file++;
-            continue;
-        }
 
-        hsize_t num_read_group;
-        if(find_num_read_group(slow5, &num_read_group)==-1){
-            WARNING("slow5 file [%s] is unreadable and will be skipped", slow5_files[i].c_str());
+        if(slow5File_i->header->num_read_groups > 1){
+            ERROR("The file %s has %lu read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), slow5File_i->header->num_read_groups);
             continue;
         }
-        if(num_read_group>1){
-            ERROR("The file %s has %lu read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), (int64_t)num_read_group);
-            continue;
-        }
-
-        char *buffer = NULL;
-        read_header(slow5headers, slow5, &buffer, 1); // fill slow5_header values
-        if (buffer)free(buffer);
 
         std::string fast5_path = std::string(output_dir);
         std::string fast5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),
@@ -382,9 +280,9 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
                                                       slow5_files[i].find_last_of('/') - 6) + ".fast5";
         fast5_path += fast5file;
 
-        write_fast5(&slow5headers[0], slow5, fast5_path.c_str());
+        write_fast5(slow5File_i, fast5_path.c_str());
         //  Close the slow5 file.
-        fclose(slow5);
+        slow5_close(slow5File_i);
     }
 }
 
@@ -667,7 +565,6 @@ void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t
         WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
     }
 }
-
 void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
     herr_t  status;
@@ -694,7 +591,6 @@ void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t d
         WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
     }
 }
-
 void add_attribute(hid_t file_id, const char* attr_name, unsigned long attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
     herr_t  status;
@@ -745,7 +641,6 @@ void add_attribute(hid_t file_id, const char* attr_name, unsigned long long attr
         WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
     }
 }
-
 void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
     herr_t  status;
@@ -771,7 +666,6 @@ void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value
         WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
     }
 }
-
 void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
     herr_t  status;
@@ -798,7 +692,6 @@ void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_
     }
 
 }
-
 void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
     herr_t  status;
