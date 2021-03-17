@@ -125,7 +125,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
     }
     else if(strcmp("file_version",name)==0){
         if (H5Tclass == H5T_STRING) {
-            if(slow5_hdr_set("file_version", "value.attr_string", 0, operator_data->slow5File->header) == -1){
+            if(slow5_hdr_set("file_version", value.attr_string, 0, operator_data->slow5File->header) == -1){
                 WARNING("file_version attribute value could not be set in the slow5 header %s", "");
             }
         } else if (H5Tclass == H5T_FLOAT) {
