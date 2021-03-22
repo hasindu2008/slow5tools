@@ -9,9 +9,10 @@
 #include <vector>
 
 #include "error.h"
-
-#include "slow5_old.h"
-//#include "read_fast5.h"
+#include "cmd.h"
+#include "slow5.h"
+#include "slow5_extra.h"
+#include "read_fast5.h"
 
 
 #define USAGE_MSG "Usage: %s [OPTION]... -o [output DIR] [SLOW5_FILE/DIR]...\n"
@@ -35,10 +36,6 @@ void add_attribute(hid_t file_id, const char* attr_name, unsigned long long attr
 void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype);
-
-void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_header_t* slow5_header, slow5_record_t* slow5_record, hid_t* end_reason_enum_id);
-
-void write_fast5(slow5_header_t *slow5_header, FILE *slow5, const char *SLOW5_FILE);
 
 void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *header, slow5_rec_t* slow5_record, hid_t* end_reason_enum_id) {
 //    todo- check return values

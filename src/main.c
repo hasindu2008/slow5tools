@@ -5,13 +5,16 @@
 ** @@
 ******************************************************************************/
 
-#include "slow5_old.h"
+#include <getopt.h>
+#include <signal.h>
+#include "misc.h"
+#include "error.h"
 #include "cmd.h"
 
 // TODO put all in header file
 
 #define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
-#define VERSION_MSG "%s " VERSION "\n" // TODO change
+#define SLOW5TOOLS_VERSION "%s " "0.1" "\n" // TODO change
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
@@ -163,7 +166,7 @@ int main(const int argc, char **argv){
                     if (meta.verbose) {
                         VERBOSE("displaying version information%s","");
                     }
-                    fprintf(stdout, VERSION_MSG, argv[0]);
+                    fprintf(stdout, SLOW5TOOLS_VERSION, argv[0]);
 
                     ret = EXIT_SUCCESS;
                     break_flag = true;

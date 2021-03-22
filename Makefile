@@ -20,7 +20,6 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/thread.o \
 	  $(BUILD_DIR)/read_fast5.o \
 	  $(BUILD_DIR)/merge_slow5.o \
-	  $(BUILD_DIR)/read_slow5.o \
 	  $(BUILD_DIR)/split_slow5.o \
 
 OBJ_LIB = $(BUILD_DIR)/slow5.o \
@@ -39,32 +38,23 @@ $(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN) $(BUILD_DIR)/libslow5.a
 $(BUILD_DIR)/main.o: src/main.c src/misc.h src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/f2s.o: src/f2s.c src/slow5_old.h src/error.h
+$(BUILD_DIR)/f2s.o: src/f2s.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/s2f.o: src/s2f.c src/slow5_old.h src/error.h
+$(BUILD_DIR)/s2f.o: src/s2f.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/index.o: src/index.c src/slow5_old.h src/error.h
+$(BUILD_DIR)/index.o: src/index.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/extract.o: src/extract.c src/slow5_old.h src/error.h
+$(BUILD_DIR)/extract.o: src/extract.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/view.o: src/view.c src/error.h src/misc.c
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-#$(BUILD_DIR)/fastt_main.o: src/fastt_main.c src/slow5_old.h src/fast5lite.h src/slow5misc.h src/error.h
-#	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
-
-# $(BUILD_DIR)/slow5idx_old.o: src/slow5idx_old.c src/slow5idx_old.h
-# 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
-
 $(BUILD_DIR)/kstring.o: src/klib/kstring.c src/klib/kstring.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
-
-# $(BUILD_DIR)/misc_old.o: src/misc_old.c
-# 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/thread.o: src/thread.c
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
@@ -72,13 +62,10 @@ $(BUILD_DIR)/thread.o: src/thread.c
 $(BUILD_DIR)/read_fast5.o: src/read_fast5.c
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/merge_slow5.o: src/merge_slow5.c src/slow5_old.h src/error.h
+$(BUILD_DIR)/merge_slow5.o: src/merge_slow5.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/read_slow5.o: src/read_slow5.c src/slow5_old.h src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
-
-$(BUILD_DIR)/split_slow5.o: src/split_slow5.c src/slow5_old.h src/error.h
+$(BUILD_DIR)/split_slow5.o: src/split_slow5.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 

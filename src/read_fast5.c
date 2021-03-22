@@ -16,13 +16,22 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
 // Operator function to be called by H5Literate.
 herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, void *operator_data);
 
-// function to read signal data
-int read_dataset(hid_t dset, const char *name, slow5_record_t* slow5_record);
 //other functions
 int group_check(struct operator_obj *od, haddr_t target_addr);
 
-//remove this later; added for the sake of slow5 format completeness
-void print_record(operator_obj* operator_data);
+void print_slow5_header(operator_obj* operator_data) {
+    if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
+        fprintf(stderr, "Could not write the header\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void print_record(operator_obj* operator_data) {
+    if(slow5_rec_fwrite(operator_data->slow5File->fp, operator_data->slow5_record, operator_data->slow5File->header->aux_meta, operator_data->format_out, operator_data->press_ptr) == -1){
+        fprintf(stderr, "Could not write the record %s\n", operator_data->slow5_record->read_id);
+        exit(EXIT_FAILURE);
+    }
+}
 
 // from nanopolish_fast5_io.cpp
 fast5_file_t fast5_open(const char* filename) {
@@ -499,18 +508,12 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
     tracker.fast5_path = fast5_file->fast5_path;
     tracker.slow5File = slow5File;
 
-    slow5_header_t slow5_header;
-//    struct slow5_rec *read = slow5_rec_init();
-
-
     int flag_context_tags = 0;
     int flag_tracking_id = 0;
     int flag_run_id = 0;
     int flag_lossy = lossy;
     size_t zero = 0;
 
-//    tracker.slow5_header = &slow5_header;
-//    tracker.slow5_record = &slow5_record;
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
     tracker.flag_run_id = &flag_run_id;
@@ -692,20 +695,6 @@ int group_check(struct operator_obj *od, haddr_t target_addr){
     /* Recursively examine the next node */
 }
 
-void print_slow5_header(operator_obj* operator_data) {
-    if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
-        fprintf(stderr, "Could not write the header\n");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void print_record(operator_obj* operator_data) {
-    if(slow5_rec_fwrite(operator_data->slow5File->fp, operator_data->slow5_record, operator_data->slow5File->header->aux_meta, operator_data->format_out, operator_data->press_ptr) == -1){
-        fprintf(stderr, "Could not write the record %s\n", operator_data->slow5_record->read_id);
-        exit(EXIT_FAILURE);
-    }
-}
-
 // from nanopolish
 // ref: http://stackoverflow.com/a/612176/717706
 // return true if the given name is a directory
@@ -841,4 +830,110 @@ void slow5_hdr_initialize(slow5_hdr *header, int lossy){
     slow5_hdr_add_attr("protocol_group_id", header);
     slow5_hdr_add_attr("sample_id", header);
 
+}
+
+
+// from nanopolish_fast5_io.cpp
+static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std::string& group_name, const std::string& attribute_name)
+{
+    hid_t group, attribute, attribute_type, native_type;
+    std::string out;
+
+    // according to http://hdf-forum.184993.n3.nabble.com/check-if-dataset-exists-td194725.html
+    // we should use H5Lexists to check for the existence of a group/dataset using an arbitrary path
+    // HDF5 1.8 returns 0 on the root group, so we explicitly check for it
+    int ret = group_name == "/" ? 1 : H5Lexists(fh.hdf5_file, group_name.c_str(), H5P_DEFAULT);
+    if(ret <= 0) {
+        return "";
+    }
+
+    // Open the group containing the attribute we want
+    group = H5Gopen(fh.hdf5_file, group_name.c_str(), H5P_DEFAULT);
+    if(group < 0) {
+#ifdef DEBUG_FAST5_IO
+        fprintf(stderr, "could not open group %s\n", group_name.c_str());
+#endif
+        goto close_group;
+    }
+
+    // Ensure attribute exists
+    ret = H5Aexists(group, attribute_name.c_str());
+    if(ret <= 0) {
+        goto close_group;
+    }
+
+    // Open the attribute
+    attribute = H5Aopen(group, attribute_name.c_str(), H5P_DEFAULT);
+    if(attribute < 0) {
+#ifdef DEBUG_FAST5_IO
+        fprintf(stderr, "could not open attribute: %s\n", attribute_name.c_str());
+#endif
+        goto close_attr;
+    }
+
+    // Get data type and check it is a fixed-length string
+    attribute_type = H5Aget_type(attribute);
+    if(attribute_type < 0) {
+#ifdef DEBUG_FAST5_IO
+        fprintf(stderr, "failed to get attribute type %s\n", attribute_name.c_str());
+#endif
+        goto close_type;
+    }
+
+    if(H5Tget_class(attribute_type) != H5T_STRING) {
+#ifdef DEBUG_FAST5_IO
+        fprintf(stderr, "attribute %s is not a string\n", attribute_name.c_str());
+#endif
+        goto close_type;
+    }
+
+    native_type = H5Tget_native_type(attribute_type, H5T_DIR_ASCEND);
+    if(native_type < 0) {
+#ifdef DEBUG_FAST5_IO
+        fprintf(stderr, "failed to get native type for %s\n", attribute_name.c_str());
+#endif
+        goto close_native_type;
+    }
+
+    if(H5Tis_variable_str(attribute_type) > 0) {
+        // variable length string
+        char* buffer;
+        ret = H5Aread(attribute, native_type, &buffer);
+        if(ret < 0) {
+            fprintf(stderr, "error reading attribute %s\n", attribute_name.c_str());
+            exit(EXIT_FAILURE);
+        }
+        out = buffer;
+        free(buffer);
+        buffer = NULL;
+
+    } else {
+        // fixed length string
+        size_t storage_size;
+        char* buffer;
+
+        // Get the storage size and allocate
+        storage_size = H5Aget_storage_size(attribute);
+        buffer = (char*)calloc(storage_size + 1, sizeof(char));
+
+        // finally read the attribute
+        ret = H5Aread(attribute, attribute_type, buffer);
+        if(ret >= 0) {
+            out = buffer;
+        }
+
+        // clean up
+        free(buffer);
+    }
+
+    close_native_type:
+    H5Tclose(native_type);
+    close_type:
+    H5Tclose(attribute_type);
+    close_attr:
+    H5Aclose(attribute);
+    close_group:
+    H5Gclose(group);
+
+    return out;
 }
