@@ -56,7 +56,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
         case RAW:
             // add Raw attributes
             add_attribute(group_id,"start_time",slow5_aux_get_uint64(slow5_record, "start_time", &err),H5T_STD_U64LE);
-            add_attribute(group_id,"duration",slow5_aux_get_uint32(slow5_record, "duration", &err),H5T_STD_U32LE);
+            add_attribute(group_id,"duration",slow5_record->len_raw_signal,H5T_STD_U32LE);
             add_attribute(group_id,"read_number",slow5_aux_get_int32(slow5_record, "read_number", &err),H5T_STD_I32LE);
             add_attribute(group_id,"start_mux",slow5_aux_get_uint8(slow5_record, "start_mux", &err),H5T_STD_U8LE);
             add_attribute(group_id,"read_id",slow5_record->read_id,H5T_C_S1);
@@ -153,7 +153,7 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
     set_hdf5_attributes(file_id, ROOT, slow5File->header, slow5_record, &end_reason_enum_id);
 
     int ret;
-    if(ret = slow5_get_next(&slow5_record, slow5File) != 0) {
+    if((ret = slow5_get_next(&slow5_record, slow5File)) != 0) {
         ERROR("Could not read the slow5 records. exiting... %s", "");
         exit(EXIT_FAILURE);
     }
@@ -270,7 +270,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
         readsCount->total_5++;
 
         if(slow5File_i->header->num_read_groups > 1){
-            ERROR("The file %s has %lu read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), slow5File_i->header->num_read_groups);
+            ERROR("The file %s has %u read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), slow5File_i->header->num_read_groups);
             continue;
         }
 
@@ -541,8 +541,6 @@ void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t
     hid_t atype = H5Tcopy(datatype);
     size_t attr_length = strlen(attr_value);
     if(strcmp(attr_value,".")==0 && attr_length==1){
-        WARNING("Attribute with empty value '%s' %s", attr_name, attr_value);
-//        fprintf(stderr,"warning empty value %s %s\n", attr_name, attr_value);
         attr_value = (char*)"";
         attr_length--;
     }
