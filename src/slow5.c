@@ -1560,12 +1560,19 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
             ++ i;
         }
 
-        if (offset > read_size || // Read too much
-                (aux_meta == NULL && offset < read_size) || // More to read but no auxiliary meta
-                (aux_meta != NULL && offset == read_size)) { // No more to read but auxiliary meta expected
-            SLOW5_WARNING("%s","Recording parse errror");
+        if (offset > read_size){// Read too much
+            SLOW5_WARNING("Corrupted record. offset %ld, read_size %ld",(long)offset, (long)read_size);
             ret = -1;
-        } else if (aux_meta != NULL) {
+        }
+        else if(aux_meta == NULL && offset < read_size){ // More to read but no auxiliary meta
+            SLOW5_WARNING("More to read but no auxiliary meta. offset %ld, read_size %ld",(long)offset, (long)read_size);
+            ret = -1;
+        }
+        else if (aux_meta != NULL && offset == read_size) { // No more to read but auxiliary meta expected
+            SLOW5_WARNING("No more to read but auxiliary meta expected. offset %ld, read_size %ld",(long)offset, (long)read_size);
+            ret = -1;
+        }
+        else if (aux_meta != NULL) {
             // Parse auxiliary data
 
             khash_t(s2a) *aux_map = slow5_rec_aux_init();
