@@ -97,7 +97,7 @@ else
 fi
 
 echo_test 'unit test press'
-if gcc -Wall -g -std=gnu99 test/unit_test_press.c -o test/bin/unit_test_press src/press.c src/misc.c -I src/ -lz; then
+if gcc -Wall -g -std=gnu99 test/unit_test_press.c -o test/bin/unit_test_press src/press.c src/misc.c src/slow5.c  src/slow5idx.c -I src/ -lz; then
     if ! ex test/bin/unit_test_press > test/data/out/unit_test_out_press; then
         fail
     fi
