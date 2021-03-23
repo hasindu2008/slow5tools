@@ -1241,7 +1241,7 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
     }
 
     if (slow5_rec_parse(read_mem, bytes_to_read, read_id, *read, s5p->format, s5p->header->aux_meta) == -1) {
-        SLOW5_WARNING("%s","pread_depress_multi failed.");
+        SLOW5_WARNING("%s","SLOW5 record parsing failed.");
         ret = -5;
     }
     free(read_mem);
@@ -1258,6 +1258,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
 
         char *tok;
         if ((tok = strsep_mine(&read_mem, SEP_COL)) == NULL) {
+            SLOW5_WARNING("%s","Error when parsing readID.");
             return -1;
         }
 
@@ -1271,6 +1272,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                     if (read_id != NULL) {
                         if (strcmp(tok, read_id) != 0) {
                             ret = -1;
+                            SLOW5_WARNING("Requested read ID [%s] does not match the read ID in fetched record [%s].",read_id,tok);
                             break;
                         }
                     }
@@ -1281,6 +1283,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 case COL_read_group:
                     read->read_group = ato_uint32(tok, &err);
                     if (err == -1) {
+                        SLOW5_WARNING("%s","Error parsing read group.");
                         ret = -1;
                     }
                     break;
@@ -1288,6 +1291,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 case COL_digitisation:
                     read->digitisation = strtod_check(tok, &err);
                     if (err == -1) {
+                        SLOW5_WARNING("%s","Error parsing digitisation.");
                         ret = -1;
                     }
                     break;
@@ -1295,6 +1299,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 case COL_offset:
                     read->offset = strtod_check(tok, &err);
                     if (err == -1) {
+                        SLOW5_WARNING("%s","Error parsing offset.");
                         ret = -1;
                     }
                     break;
@@ -1302,6 +1307,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 case COL_range:
                     read->range = strtod_check(tok, &err);
                     if (err == -1) {
+                        SLOW5_WARNING("%s","Error parsing range.");
                         ret = -1;
                     }
                     break;
@@ -1309,6 +1315,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 case COL_sampling_rate:
                     read->sampling_rate = strtod_check(tok, &err);
                     if (err == -1) {
+                        SLOW5_WARNING("%s","Error parsing sampling rate.");
                         ret = -1;
                     }
                     break;
@@ -1319,6 +1326,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                     }
                     read->len_raw_signal = ato_uint64(tok, &err);
                     if (err == -1) {
+                        SLOW5_WARNING("%s","Error parsing raw signal length.");
                         ret = -1;
                     }
                     break;
@@ -1333,6 +1341,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                     char *signal_tok;
                     if ((signal_tok = strsep_mine(&tok, SEP_ARRAY)) == NULL) {
                         // 0 signals
+                        SLOW5_WARNING("%s","Error locating the raw signal.");
                         ret = -1;
                         break;
                     }
@@ -1343,12 +1352,14 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                     do {
                         (read->raw_signal)[j] = ato_int16(signal_tok, &err);
                         if (err == -1) {
+                            SLOW5_WARNING("%s","Error parsing the raw signal.");
                             ret = -1;
                             break;
                         }
                         ++ j;
                     } while ((signal_tok = strsep_mine(&tok, SEP_ARRAY)) != NULL);
                     if (ret != -1 && j != read->len_raw_signal) {
+                        SLOW5_WARNING("%s","Raw signal is potentially truncated.");
                         ret = -1;
                     }
 
@@ -1368,10 +1379,12 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
 
         if (i < SLOW5_COLS_NUM) {
             // Not all main columns parsed
+            SLOW5_WARNING("%s","All SLOW5 main columns were not parsed.");
             ret = -1;
         } else if (more_to_parse) {
             // Main columns parsed and more to parse
             if (aux_meta == NULL) {
+                SLOW5_WARNING("%s","Auxiliary fields are missing.");
                 ret = -1;
             } else {
 
@@ -1380,6 +1393,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
 
                 for (i = 0; i < aux_meta->num; ++ i) {
                     if (tok == NULL) {
+                        SLOW5_WARNING("Auxiliary field [%s] is missing.",aux_meta->attrs[i]);
                         slow5_rec_aux_free(aux_map);
                         return -1;
                     }
@@ -1408,6 +1422,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                                 if (memcpy_type_from_str(data + (aux_meta->sizes[i] * array_i), tok_sep, TO_PRIM_TYPE(aux_meta->types[i])) == -1) {
                                     free(data);
                                     slow5_rec_aux_free(aux_map);
+                                    SLOW5_WARNING("Auxiliary fields [%s] parsing failed.",aux_meta->attrs[i]);
                                     return -1;
                                 }
 
@@ -1428,6 +1443,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                         if (memcpy_type_from_str(data, tok, aux_meta->types[i]) == -1) {
                             free(data);
                             slow5_rec_aux_free(aux_map);
+                            SLOW5_WARNING("Auxiliary fields [%s] parsing failed.",aux_meta->attrs[i]);
                             return -1;
                         }
                         bytes = aux_meta->sizes[i];
@@ -1437,6 +1453,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                     khint_t pos = kh_put(s2a, aux_map, aux_meta->attrs[i], &absent);
                     if (absent == -1 || absent == -2) {
                         slow5_rec_aux_free(aux_map);
+                        SLOW5_WARNING("Auxiliary fields [%s] is duplicated.",aux_meta->attrs[i]);
                         return -1;
                     }
                     struct slow5_rec_aux_data *aux_data = &kh_value(aux_map, pos);
@@ -1450,6 +1467,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 // Ensure line ends
                 if (tok != NULL) {
                     kh_destroy(s2a, aux_map);
+                    SLOW5_WARNING("%s","The parsing prematurely ended while some more data remaining");
                     return -1;
                 } else {
                     read->aux_map = aux_map;
@@ -1479,9 +1497,12 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                     // Ensure line matches requested id
                     if (read_id != NULL) {
                         if (strcmp(read->read_id, read_id) != 0) {
+                            SLOW5_WARNING("Requested read ID [%s] does not match the read ID in fetched record [%s].",read_id,read->read_id);
                             ret = -1;
                             break;
                         }
+                    } else{
+                        SLOW5_WARNING("%s","Null readID in record");
                     }
                     offset += size;
                     break;
@@ -1542,6 +1563,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
         if (offset > read_size || // Read too much
                 (aux_meta == NULL && offset < read_size) || // More to read but no auxiliary meta
                 (aux_meta != NULL && offset == read_size)) { // No more to read but auxiliary meta expected
+            SLOW5_WARNING("%s","Recording parse errror");
             ret = -1;
         } else if (aux_meta != NULL) {
             // Parse auxiliary data
@@ -1551,6 +1573,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
             for (i = 0; i < aux_meta->num; ++ i) {
                 if (offset >= read_size) {
                     slow5_rec_aux_free(aux_map);
+                    SLOW5_WARNING("Parsing auxiliary field [%s] failed",aux_meta->attrs[i]);
                     return -1;
                 }
 
@@ -1580,6 +1603,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 khint_t pos = kh_put(s2a, aux_map, aux_meta->attrs[i], &absent);
                 if (absent == -1 || absent == -2) {
                     slow5_rec_aux_free(aux_map);
+                    SLOW5_WARNING("Auxiliary fields [%s] is duplicated.",aux_meta->attrs[i]);
                     return -1;
                 }
                 struct slow5_rec_aux_data *aux_data = &kh_value(aux_map, pos);
@@ -1591,6 +1615,7 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
 
             if (offset != read_size) {
                 slow5_rec_aux_free(aux_map);
+                SLOW5_WARNING("Corrupted record. offset %ld, read_size %ld",(long)offset, (long)read_size);
                 return -1;
             } else {
                 read->aux_map = aux_map;
