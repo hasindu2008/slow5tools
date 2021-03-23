@@ -7,8 +7,8 @@
 #include "slow5.h"
 #include "slow5_extra.h"
 #include "slow5idx.h"
+#include "slow5_err.h"
 #include "press.h"
-#include "error.h"
 #include "misc.h"
 #include "klib/ksort.h"
 #include "klib/kvec.h"
@@ -41,6 +41,12 @@ static inline void slow5_free(struct slow5_file *s5p);
 static inline khash_t(s2a) *slow5_rec_aux_init(void);
 static inline void slow5_rec_set_aux_map(khash_t(s2a) *aux_map, const char *field, const uint8_t *data, size_t len, uint64_t bytes, enum aux_type type);
 
+
+enum slow5_log_level_opt  slow5_log_level = SLOW5_LOG_WARN;
+enum slow5_exit_condition_opt  slow5_exit_condition = SLOW5_EXIT_ON_ERR;
+
+
+
 /* Definitions */
 
 // slow5 file
@@ -48,6 +54,7 @@ static inline void slow5_rec_set_aux_map(khash_t(s2a) *aux_map, const char *fiel
 struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt format) {
     // Pathname cannot be NULL at this point
     if (fp == NULL) {
+        SLOW5_WARNING("%s","Cannot initialise with NULL file pointer.");
         return NULL;
     }
 
@@ -57,6 +64,7 @@ struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt for
         // from pathname
         if ((format = path_get_slow5_fmt(pathname)) == FORMAT_UNKNOWN) {
             fclose(fp);
+            SLOW5_WARNING("%s","Could not determine SLOW5 file format.");
             return NULL;
         }
     }
@@ -66,6 +74,7 @@ struct slow5_file *slow5_init(FILE *fp, const char *pathname, enum slow5_fmt for
     struct slow5_hdr *header = slow5_hdr_init(fp, format, &method);
     if (header == NULL) {
         fclose(fp);
+        SLOW5_WARNING("%s","Could not initialise SLOW5 header.");
         s5p = NULL;
     } else {
         s5p = (struct slow5_file *) calloc(1, sizeof *s5p);
@@ -157,6 +166,7 @@ struct slow5_file *slow5_open(const char *pathname, const char *mode) {
  */
 struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum slow5_fmt format) {
     if (pathname == NULL || mode == NULL) {
+        SLOW5_WARNING("%s","pathname and mode cannot be NULL.");
         return NULL;
     } else {
         return slow5_init(fopen(pathname, mode), pathname, format);
@@ -1150,6 +1160,7 @@ void slow5_hdr_data_free(struct slow5_hdr *header) {
 
 int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s5p) {
     if (read_id == NULL || read == NULL || s5p == NULL) {
+        SLOW5_WARNING("%s","read_id, read and s5p cannot be NULL.");
         return -1;
     }
 
@@ -1157,9 +1168,10 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
     char *read_mem = NULL;
     ssize_t bytes_to_read = -1;
 
-    // Create index if NULL
+    // index must be loaded
     if (s5p->index == NULL) {
         // index not loaded
+        SLOW5_ERROR("%s","SLOW5 index should have been loaded using slow5_idx_load() before calling slow5_get().");
         return -2;
     }
 
@@ -1181,6 +1193,7 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
         if (pread(s5p->meta.fd, read_mem, bytes_to_read, read_index.offset) != bytes_to_read) {
             free(read_mem);
             // reading error
+            SLOW5_WARNING("pread could not read %ld bytes as expected.",(long)bytes_to_read);
             return -4;
         }
 
@@ -1197,6 +1210,7 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
                 &bytes_to_read_sizet);
         bytes_to_read = bytes_to_read_sizet;
         if (read_mem == NULL) {
+            SLOW5_WARNING("%s","pread_depress_multi failed.");
             // reading error
             return -4;
         }
@@ -1227,6 +1241,7 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
     }
 
     if (slow5_rec_parse(read_mem, bytes_to_read, read_id, *read, s5p->format, s5p->header->aux_meta) == -1) {
+        SLOW5_WARNING("%s","pread_depress_multi failed.");
         ret = -5;
     }
     free(read_mem);

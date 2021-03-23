@@ -2,8 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include "slow5_err.h"
 #include "press.h"
-#include "error.h"
+
+
+extern enum slow5_log_level_opt  slow5_log_level;
+extern enum slow5_exit_condition_opt  slow5_exit_condition;
 
 int gzip_init_deflate(z_stream *strm);
 int gzip_init_inflate(z_stream *strm);
@@ -421,6 +425,7 @@ void *pread_depress_multi(press_method_t method, int fd, size_t count, off_t off
     MALLOC_CHK(raw);
 
     if (pread(fd, raw, count, offset) == -1) {
+        SLOW5_WARNING("pread could not read %ld bytes as expected.",(long)count);
         free(raw);
         return NULL;
     }
