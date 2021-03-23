@@ -2,7 +2,6 @@
 #define SLOW5MISC_H
 
 #include "error.h"
-#include "slow5_old.h"
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <stdint.h>

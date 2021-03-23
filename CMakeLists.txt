@@ -21,7 +21,6 @@ set_source_files_properties(src/misc_old.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/thread.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/read_fast5.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/merge_slow5.c PROPERTIES LANGUAGE CXX)
-set_source_files_properties(src/read_slow5.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/split_slow5.c PROPERTIES LANGUAGE CXX)
 
 set_source_files_properties(src/slow5idx.c PROPERTIES LANGUAGE CXX)
@@ -39,7 +38,6 @@ set(extract src/extract.c)
 set(thread src/thread.c)
 set(read_fast5 src/read_fast5.c)
 set(merge_slow5 src/merge_slow5.c)
-set(read_slow5 src/read_slow5.c)
 set(split_slow5 src/split_slow5.c)
 
 set(slow5idx src/slow5idx.c)
@@ -49,6 +47,6 @@ set(press src/press.c)
 
 set (hdf5-static "${PROJECT_SOURCE_DIR}/hdf5/lib/libhdf5.a")
 
-add_executable(slow5tools ${main} ${f2s} ${s2f} ${index} ${view} ${kstring} ${extract} ${thread} ${read_fast5} ${merge_slow5} ${read_slow5} ${split_slow5} ${misc} ${slow5} ${press} ${slow5idx})
+add_executable(slow5tools ${main} ${f2s} ${s2f} ${index} ${view} ${kstring} ${extract} ${thread} ${read_fast5} ${merge_slow5} ${split_slow5} ${misc} ${slow5} ${press} ${slow5idx})
 
 target_link_libraries(slow5tools ${hdf5-static} -lz -ldl -lm -lpthread -lrt)
