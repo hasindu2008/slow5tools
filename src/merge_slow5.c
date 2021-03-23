@@ -45,7 +45,7 @@ int merge_slow5(const char* output_path, enum slow5_fmt format_out, enum press_m
         }
     }
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, format_out);
-    slow5_hdr_initialize(slow5File->header, 0);
+    slow5_hdr_initialize(slow5File->header, 1);
     slow5File->header->num_read_groups = 0;
     std::vector<std::vector<size_t>> list;
     for(size_t i=0; i<slow5_files_count; i++) { //iterate over slow5files
@@ -97,7 +97,7 @@ int merge_slow5(const char* output_path, enum slow5_fmt format_out, enum press_m
         struct press *press_ptr = press_init(pressMethod);
         while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
             read->read_group = list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
-            if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
+            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, format_out, press_ptr) == -1) {
                 slow5_rec_free(read);
                 return -1;
             }
