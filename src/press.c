@@ -6,6 +6,9 @@
 #include "press.h"
 
 
+extern enum slow5_log_level_opt  slow5_log_level;
+extern enum slow5_exit_condition_opt  slow5_exit_condition;
+
 int gzip_init_deflate(z_stream *strm);
 int gzip_init_inflate(z_stream *strm);
 
@@ -192,6 +195,9 @@ void *ptr_depress_multi(press_method_t method, const void *ptr, size_t count, si
                 break;
         }
     }
+    else{
+        SLOW5_WARNING("%s","ptr_depress_multi got a NULL ptr");
+    }
 
     if (n != NULL) {
         *n = n_tmp;
@@ -280,12 +286,14 @@ static void *ptr_depress_gzip_multi(const void *ptr, size_t count, size_t *n) {
 
     do {
         out = (uint8_t *) realloc(out, n_cur + Z_OUT_CHUNK);
+        assert(out);
 
         strm->avail_out = Z_OUT_CHUNK;
         strm->next_out = out + n_cur;
 
         int ret = inflate(strm, Z_NO_FLUSH);
         if (ret == Z_STREAM_ERROR || ret == Z_DATA_ERROR) {
+            SLOW5_WARNING("%s","inflate failed");
             free(out);
             out = NULL;
             n_cur = 0;
@@ -422,7 +430,7 @@ void *pread_depress_multi(press_method_t method, int fd, size_t count, off_t off
     MALLOC_CHK(raw);
 
     if (pread(fd, raw, count, offset) == -1) {
-        //SLOW5_WARNING("pread could not read %ld bytes as expected.",(long)count);
+        SLOW5_WARNING("pread could not read %ld bytes as expected.",(long)count);
         free(raw);
         return NULL;
     }
