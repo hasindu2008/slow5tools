@@ -1381,10 +1381,13 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
             // Not all main columns parsed
             SLOW5_WARNING("%s","All SLOW5 main columns were not parsed.");
             ret = -1;
+        } else if (!more_to_parse && aux_meta != NULL){
+            SLOW5_WARNING("%s","Header contained auxiliary feilds but the record does not.");
+            ret = -1;
         } else if (more_to_parse) {
             // Main columns parsed and more to parse
             if (aux_meta == NULL) {
-                SLOW5_WARNING("%s","Auxiliary fields are missing.");
+                SLOW5_WARNING("%s","Auxiliary fields are missing in header, but present in record.");
                 ret = -1;
             } else {
 
