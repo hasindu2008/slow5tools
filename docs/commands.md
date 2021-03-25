@@ -2,9 +2,9 @@
 
 ## COMMANDS
 
-* `fast2slow`:
+* `fast5-to-slow5`:
          Converts from FAST5 to SLOW5/BLOW5.
-* `slow2fast`:
+* `slow5-to-fast5`:
          Converts from SLOW5/BLOW5 to FAST5.
 * `index`:
          Indexes a SLOW5/BLOW5 file.
@@ -19,10 +19,11 @@
 * `stats`:
          Generates Statistics from a SLOW5/BLOW5 file.
 
+## OPTIONS
+
 *  `--version`:
     Print the version number to the standard out.
 
-## OPTIONS
 
 ### fast2slow
 
