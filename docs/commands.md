@@ -2,9 +2,9 @@
 
 ## COMMANDS
 
-* `fast2slow`:
+* `f2s5`:
          Converts from FAST5 to SLOW5/BLOW5.
-* `slow2fast`:
+* `s2f`:
          Converts from SLOW5/BLOW5 to FAST5.
 * `index`:
          Indexes a SLOW5/BLOW5 file.
@@ -19,12 +19,13 @@
 * `stats`:
          Generates Statistics from a SLOW5/BLOW5 file.
 
+## OPTIONS
+
 *  `--version`:
     Print the version number to the standard out.
 
-## OPTIONS
 
-### fast2slow
+### f2s
 
 `slow5tools fast2slow [OPTIONS] fast5_dir1/file1.fast5 ... >  out.slow5`
 
@@ -33,7 +34,7 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
 *  `-s, --slow5`:
    Outputs in text-based SLOW5 format.
 *  `-b, --blow5 compression_type`:
-   Outputs in BLOW5 format. `compression_type` can be `bin` for uncompressed binary, `gzip` or gzip-based compression.
+   Outputs in BLOW5 format. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression.
 *  `-c INT`, `--compress INT`:
    Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
 *  `-h, --help`:
@@ -57,7 +58,7 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
 
 
 
-### slow2fast
+### s2f
 
 `slow5tools slow2fast [OPTIONS] file1.slow5/file1.blow5/dir1 ... -o fast5_dir`
 
