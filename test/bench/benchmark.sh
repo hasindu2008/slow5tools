@@ -42,7 +42,7 @@ if [ ! -e "$BLOW5_FILE" ]; then
 fi
 if [ ! -e "$CLOW5_FILE" ]; then
     echo 'Creating clow5'
-    command time -v "$SLOW5TOOLS_PATH" view "$SLOW5_FILE" --to blow5 -c gzip > "$CLOW5_FILE" -c 2> f2s.clow5.stderr
+    command time -v "$SLOW5TOOLS_PATH" view "$SLOW5_FILE" --to blow5 -c gzip > "$CLOW5_FILE" 2> f2s.clow5.stderr
 fi
 
 # Create index files if not already there
