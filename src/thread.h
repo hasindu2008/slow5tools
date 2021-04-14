@@ -38,7 +38,7 @@ struct Record {
 /* data structure for a batch of reads*/
 typedef struct {
     int64_t n_batch;    // number of records in this batch
-    int64_t n_err;      // number of records in this batch
+    int64_t n_err;      // number of errors in this batch
     char **read_id;     // the list of read ids (input)
     struct Record *read_record; // the list of read records (output) //change to whatever the data type
 } db_t;
