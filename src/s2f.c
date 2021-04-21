@@ -256,7 +256,6 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
 }
 
 void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
-
     for (int i = args.starti; i < args.endi; i++) {
         fprintf(stderr, "Converting %s to fast5\n", slow5_files[i].c_str());
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
