@@ -219,55 +219,6 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
 
 }
 
-void recurse_dir(const char *f_path, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, reads_count* readsCount, char* output_dir, struct program_meta *meta) {
-
-    DIR *dir;
-    struct dirent *ent;
-
-    dir = opendir(f_path);
-
-    if (dir == NULL) {
-        if (errno == ENOTDIR) {
-            // If it has the fast5 extension
-            if (std::string(f_path).find(FAST5_EXTENSION)!= std::string::npos){
-                std::vector<std::string> fast5_files;
-                fast5_files.push_back(f_path);
-                f2s_iop(format_out, pressMethod, lossy, 1, fast5_files, output_dir, meta, readsCount);
-            }
-
-        } else {
-            WARNING("File '%s' failed to open - %s.",
-                    f_path, strerror(errno));
-        }
-
-    } else {
-        fprintf(stderr, "[%s::%.3f*%.2f] Extracting fast5 from %s\n", __func__,
-                slow5_realtime() - init_realtime, slow5_cputime() / (slow5_realtime() - init_realtime), f_path);
-
-        // Iterate through sub files
-        while ((ent = readdir(dir)) != NULL) {
-            if (strcmp(ent->d_name, ".") != 0 &&
-                strcmp(ent->d_name, "..") != 0) {
-
-                // Make sub path string
-                // f_path + '/' + ent->d_name + '\0'
-                size_t sub_f_path_len = strlen(f_path) + 1 + strlen(ent->d_name) + 1;
-                char *sub_f_path = (char *) malloc(sizeof *sub_f_path * sub_f_path_len);
-                MALLOC_CHK(sub_f_path);
-                snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
-
-                // Recurse
-                recurse_dir(sub_f_path, format_out, pressMethod, lossy, readsCount, output_dir, meta);
-
-                free(sub_f_path);
-                sub_f_path = NULL;
-            }
-        }
-
-        closedir(dir);
-    }
-}
-
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int ret; // For checking return values of functions
     int iop = 1;
@@ -377,25 +328,16 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     std::vector<std::string> fast5_files;
     init_realtime = slow5_realtime();
 
+    // Recursive way
+    if(iop==1 && !arg_dir_out){
+        WARNING("When converting multi-fast5 files with --iop=1 and -d=NULL, multiple headers will be written to stdout. It is recommended to set -d%s", ".");
+    }
     for (int i = optind; i < argc; ++ i) {
-        if(iop==1){
-            // Recursive way
-            if(!arg_dir_out){
-                WARNING("When converting multi-fast5 files with --iop=1 and -d=NULL, multiple headers will be written to stdout. It is recommended to set -d%s", ".");
-            }
-            recurse_dir(argv[i], format_out, pressMethod, lossy, &readsCount, arg_dir_out, meta);
-        }else{
-            find_all_5(argv[i], fast5_files, FAST5_EXTENSION);
-        }
+        list_all_items(argv[i], fast5_files, 0, FAST5_EXTENSION);
     }
 
-    if(iop==1){
-        MESSAGE(stderr, "total fast5: %lu, bad fast5: %lu", readsCount.total_5, readsCount.bad_5_file);
-    }else{
-        fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
-        f2s_iop(format_out, pressMethod, lossy, iop, fast5_files, arg_dir_out, meta, &readsCount);
-    }
-
+    fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
+    f2s_iop(format_out, pressMethod, lossy, iop, fast5_files, arg_dir_out, meta, &readsCount);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;

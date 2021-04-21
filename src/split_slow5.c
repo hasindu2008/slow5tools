@@ -349,59 +349,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
         }
     }
 //    skip_forking:
-
     fprintf(stderr, "[%s] Parallel splitting slow5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
-}
-
-void recurse_slow5_dir(const char *f_path, reads_count *readsCount, char *output_dir, program_meta *meta,
-                       meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod) {
-
-    DIR *dir;
-    struct dirent *ent;
-
-    dir = opendir(f_path);
-
-    if (dir == NULL) {
-        if (errno == ENOTDIR) {
-            // If it has the fast5 extension
-            if (std::string(f_path).find(ASCII_EXTENSION)!= std::string::npos) {
-                // Open FAST5 and convert to SLOW5 into f_out
-                std::vector<std::string> slow5_files;
-                slow5_files.push_back(f_path);
-                s2f_iop(1, slow5_files, output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod);
-            }
-
-        } else {
-            WARNING("File '%s' failed to open - %s.",
-                    f_path, strerror(errno));
-        }
-
-    } else {
-        fprintf(stderr, "[%s::%.3f*%.2f] Extracting slow5 from %s\n", __func__,
-                slow5_realtime() - init_realtime, slow5_cputime() / (slow5_realtime() - init_realtime), f_path);
-
-        // Iterate through sub files
-        while ((ent = readdir(dir)) != NULL) {
-            if (strcmp(ent->d_name, ".") != 0 &&
-                strcmp(ent->d_name, "..") != 0) {
-
-                // Make sub path string
-                // f_path + '/' + ent->d_name + '\0'
-                size_t sub_f_path_len = strlen(f_path) + 1 + strlen(ent->d_name) + 1;
-                char *sub_f_path = (char *) malloc(sizeof *sub_f_path * sub_f_path_len);
-                MALLOC_CHK(sub_f_path);
-                snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
-
-                // Recurse
-                recurse_slow5_dir(sub_f_path, readsCount, output_dir, meta, metaSplitMethod, format_out, pressMethod);
-
-                free(sub_f_path);
-                sub_f_path = NULL;
-            }
-        }
-
-        closedir(dir);
-    }
 }
 
 int split_main(int argc, char **argv, struct program_meta *meta){
@@ -531,23 +479,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         MESSAGE(stderr, "an input multi read group slow5 files will be split into single read group slow5 files %s","");
     }
 
-
     for (int i = optind; i < argc; ++ i) {
-//        fprintf(stderr,"%s",argv[i]);
-        if(iop==1) {
-            // Recursive way
-            recurse_slow5_dir(argv[i], &readsCount, arg_dir_out, meta, metaSplitMethod, format_out, pressMethod);
-        }else{
-            find_all_5(argv[i], slow5_files, ASCII_EXTENSION);
-        }
+        list_all_items(argv[i], slow5_files, 0, ASCII_EXTENSION);
     }
-
-    if(iop==1){
-        MESSAGE(stderr, "total slow5: %lu, bad slow5: %lu multi-group slow5: %lu", readsCount.total_5, readsCount.bad_5_file, readsCount.multi_group_slow5);
-    }else{
-        fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
-        s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod);
-    }
-
+    fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
+    s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod);
     return EXIT_SUCCESS;
 }

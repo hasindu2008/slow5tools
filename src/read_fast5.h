@@ -73,8 +73,7 @@ struct operator_obj {
 int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File);
 fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
-void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension);
-void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir);
+void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
 void slow5_hdr_initialize(slow5_hdr *header, int lossy);
 
 // args for processes

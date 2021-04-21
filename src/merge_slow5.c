@@ -35,8 +35,6 @@ static double init_realtime = 0;
 /* core data structure that has information that are global to all the threads */
 typedef struct {
     int32_t num_thread;
-    enum slow5_fmt format_out;
-    enum press_method press_method;
     std::string output_dir;
 } global_thread;
 
@@ -133,7 +131,6 @@ void merge_slow5(pthread_arg* pthreadArg) {
         slow5_rec_free(read);
         slow5_close(slow5File_i);
     }
-
     slow5_eof_fwrite(slow5File->fp);
     slow5_close(slow5File);
 
@@ -342,7 +339,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     double realtime0 = slow5_realtime();
     std::vector<std::string> slow5_files;
     for (int i = optind; i < argc; ++i) {
-        list_all_items(argv[i], slow5_files, 0);
+        list_all_items(argv[i], slow5_files, 0, NULL);
     }
     fprintf(stderr, "[%s] %ld slow5/blow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
     while(num_threads) {
@@ -355,8 +352,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         // Setup multithreading structures
         global_thread core;
         core.num_thread = num_threads;
-        core.format_out = format_out;
-        core.press_method = pressMethod;
         core.output_dir = output_dir+"/"+std::to_string(num_threads);
 
         data_thread db = {0};
@@ -366,7 +361,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         // Fetch records for read ids in the batch
         work_data(&core, &db);
         slow5_files.clear();
-        list_all_items(output_dir + "/" + std::to_string(num_threads), slow5_files, 0);
+        list_all_items(output_dir + "/" + std::to_string(num_threads), slow5_files, 0, NULL);
         num_threads = num_threads/2;
     }
 
@@ -389,7 +384,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     //delete temp dir
     slow5_files.clear();
-    list_all_items(output_dir, slow5_files, 1);
+    list_all_items(output_dir, slow5_files, 1, NULL);
     for(size_t i=0; i<slow5_files.size(); i++){
         int del = remove(slow5_files[i].c_str());
         if (del){
