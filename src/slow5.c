@@ -1251,6 +1251,7 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
 
 // Return -1 on failure to parse
 int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struct slow5_rec *read, enum slow5_fmt format, struct slow5_aux_meta *aux_meta) {
+
     int ret = 0;
     uint64_t prev_len_raw_signal = 0;
 

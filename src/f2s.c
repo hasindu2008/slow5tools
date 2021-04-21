@@ -107,7 +107,6 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, meta, slow5File);
             }
         }
-
         H5Fclose(fast5_file.hdf5_file);
         if(output_dir && fast5_file.is_multi_fast5){
             slow5_path = std::string(output_dir);
@@ -331,6 +330,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     // Recursive way
     if(iop==1 && !arg_dir_out){
         WARNING("When converting multi-fast5 files with --iop=1 and -d=NULL, multiple headers will be written to stdout. It is recommended to set -d%s", ".");
+    }
+    if(arg_dir_out){
+        struct stat st = {0};
+        if (stat(arg_dir_out, &st) == -1) {
+            mkdir(arg_dir_out, 0700);
+        }
     }
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], fast5_files, 0, FAST5_EXTENSION);

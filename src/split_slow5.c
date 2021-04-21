@@ -461,7 +461,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-
     if(!arg_dir_out){
         ERROR("The output directory must be specified %s","");
         return EXIT_FAILURE;

@@ -342,6 +342,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         list_all_items(argv[i], slow5_files, 0, NULL);
     }
     fprintf(stderr, "[%s] %ld slow5/blow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
+    if(num_threads > slow5_files.size()){
+        num_threads = num_threads/2;
+    }
     while(num_threads) {
         int check_dir = mkdir((output_dir+"/"+std::to_string(num_threads)).c_str(),0777);
         // check if directory is created or not
