@@ -755,6 +755,35 @@ void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, 
     }
 }
 
+// given a directory path, recursively find all files
+void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir){
+    STDERR("Looking for files in %s", path.c_str());
+    if (is_directory(path)) {
+        std::vector< std::string > dir_list = list_directory(path);
+        for (const auto& fn : dir_list) {
+            if(fn == "." or fn == "..") {
+                continue;
+            }
+            std::string full_fn = path + "/" + fn;
+            // JTS 04/19: is_directory is painfully slow
+            if(is_directory(full_fn)){
+                // recurse
+                list_all_items(full_fn, files, count_dir);
+            }else{
+                //add to the list
+                files.push_back(full_fn);
+            }
+        }
+    }else{
+        files.push_back(path);
+    }
+
+    if(is_directory(path) && count_dir){
+        files.push_back(path);
+    }
+}
+
+
 void slow5_hdr_initialize(slow5_hdr *header, int lossy){
     slow5_hdr_add_rg(header);
     header->num_read_groups = 1;

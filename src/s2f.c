@@ -23,7 +23,7 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help             display this message and exit\n" \
-    "    --iop INT                  number of I/O processes to read slow5 files\n" \
+    "    --iop INT              number of I/O processes to read slow5 files\n" \
 
 
 static double init_realtime = 0;

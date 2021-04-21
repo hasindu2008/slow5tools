@@ -25,8 +25,8 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help                 display this message and exit\n" \
-    "    -@, --threads=[INT]    number of threads -- 4\n" \
-    "    -b, --binary               convert to blow5\n" \
+    "    -@, --threads=[INT]        number of threads -- 4\n" \
+    "    -s, --slow5                convert to slow5\n" \
     "    -c, --compress             convert to compressed blow5\n"   \
     "    -o, --output=[FILE]        output converted contents to FILE -- stdout\n" \
 
@@ -59,7 +59,7 @@ typedef struct {
 void merge_slow5(pthread_arg* pthreadArg) {
     fprintf(stderr, "thread index = %d\n", pthreadArg->thread_index);
     std::string out = pthreadArg->core->output_dir;
-    out += "/" + std::to_string(pthreadArg->thread_index) + ".slow5";
+    out += "/" + std::to_string(pthreadArg->thread_index) + ".blow5";
     const char* output_path = out.c_str();
 
     FILE* slow5_file_pointer = stdout;
@@ -71,7 +71,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
             return;
         }
     }
-    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, pthreadArg->core->format_out);
+    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, FORMAT_BINARY);
     slow5_hdr_initialize(slow5File->header, 1);
     slow5File->header->num_read_groups = 0;
     std::vector<std::vector<size_t>> list;
@@ -110,7 +110,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
         slow5_close(slow5File_i);
     }
 
-    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, pthreadArg->core->format_out, pthreadArg->core->press_method) == -1){ //now write the header to the slow5File
+    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, FORMAT_BINARY, NULL) == -1){ //now write the header to the slow5File
         ERROR("Could not write the header to %s\n","merge.slow5");
         exit(EXIT_FAILURE);
     }
@@ -123,22 +123,18 @@ void merge_slow5(pthread_arg* pthreadArg) {
         }
         struct slow5_rec *read = NULL;
         int ret;
-        struct press *press_ptr = press_init(pthreadArg->core->press_method);
         while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
             read->read_group = list[i-pthreadArg->starti][read->read_group]; //write records of the ith slow5file with the updated read_group value
-            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, pthreadArg->core->format_out, press_ptr) == -1) {
+            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, FORMAT_BINARY, NULL) == -1) {
                 slow5_rec_free(read);
                 return;
             }
         }
-        press_free(press_ptr);
         slow5_rec_free(read);
         slow5_close(slow5File_i);
     }
 
-    if(pthreadArg->core->format_out == FORMAT_BINARY){
-        slow5_eof_fwrite(slow5File->fp);
-    }
+    slow5_eof_fwrite(slow5File->fp);
     slow5_close(slow5File);
 
     return;
@@ -246,7 +242,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h'},  //0
             {"threads", required_argument, NULL, '@' }, //1
-            {"binary", no_argument, NULL, 'b'},    //2
+            {"slow5", no_argument, NULL, 's'},    //2
             {"compress", no_argument, NULL, 'c'},  //3
             {"output", required_argument, NULL, 'o'}, //4
             {NULL, 0, NULL, 0 }
@@ -255,21 +251,20 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     // Default options
     FILE *f_out = stdout;
     // Default options
-    enum slow5_fmt format_out = FORMAT_ASCII;
+    enum slow5_fmt format_out = FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_NONE;
 
     // Input arguments
     char *arg_fname_out = NULL;
     char *arg_num_threads = NULL;
 
-    int32_t num_threads = 1;
-
+    int32_t num_threads = DEFAULT_NUM_THREADS;
 
     int opt;
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "bch@:o:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "sch@:o:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -285,8 +280,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case '@':
                 arg_num_threads = optarg;
                 break;
-            case 'b':
-                format_out = FORMAT_BINARY;
+            case 's':
+                format_out = FORMAT_ASCII;
                 break;
             case 'c':
                 pressMethod = COMPRESS_GZIP;
@@ -299,6 +294,18 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
+    }
+
+    std::string output_file = std::string(arg_fname_out);
+    std::string output_dir = output_file.substr(0,output_file.find_last_of('/')) + "/temp";
+    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
+
+    std::string extension = output_file.substr(output_file.length()-6, output_file.length());
+    if(extension==".blow5" && format_out==FORMAT_ASCII){
+        MESSAGE(stderr, "Output file extension '%s' does not match with the output format", extension.c_str());
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
 
     // Parse num threads argument
@@ -325,35 +332,23 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    std::string output_file = std::string(arg_fname_out);
-
-    std::string output_dir = output_file.substr(0,output_file.find_last_of('/')) + "/temp";
-    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
-
     int check_dir = mkdir(output_dir.c_str(),0777);
     // check if directory is created or not
-    if (!check_dir) {
-        printf("Temporary directory created\n");
-    }
-    else {
+    if (check_dir) {
         printf("Unable to create a temporary directory\n");
         exit(1);
     }
 
     double realtime0 = slow5_realtime();
-    reads_count readsCount;
     std::vector<std::string> slow5_files;
     for (int i = optind; i < argc; ++i) {
-        find_all_5(argv[i], slow5_files, ASCII_EXTENSION);
+        list_all_items(argv[i], slow5_files, 0);
     }
-    fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
+    fprintf(stderr, "[%s] %ld slow5/blow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
     while(num_threads) {
         int check_dir = mkdir((output_dir+"/"+std::to_string(num_threads)).c_str(),0777);
         // check if directory is created or not
-        if (!check_dir) {
-            printf("Temporary directory %s created\n", (output_dir+"/"+std::to_string(num_threads)).c_str());
-        }
-        else {
+        if (check_dir) {
             printf("Unable to create a temporary directory\n");
             exit(1);
         }
@@ -371,34 +366,46 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         // Fetch records for read ids in the batch
         work_data(&core, &db);
         slow5_files.clear();
-        find_all_5(output_dir+"/"+std::to_string(num_threads), slow5_files, ASCII_EXTENSION);
-        fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
+        list_all_items(output_dir + "/" + std::to_string(num_threads), slow5_files, 0);
         num_threads = num_threads/2;
     }
 
-    // rename the merged file with user given output file name
-    if (rename((output_dir+"/1/0.slow5").c_str(), arg_fname_out) == 0)
-    {
-        printf("File renamed successfully.\n");
-    }
-    else
-    {
-        printf("Unable to rename files. Please check files exist and you have permissions to modify files.\n");
+    if(arg_fname_out){
+        FILE* out = fopen(arg_fname_out, "w");
+        slow5_file_t* slow5File_out = slow5_open((output_dir+"/1/0.blow5").c_str(), "r");
+        if(!slow5File_out){
+            ERROR("cannot open %s. skipping...\n",(output_dir+"/1/0.blow5").c_str());
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+        int ret = slow5_convert(slow5File_out, out, format_out, pressMethod);
+        if(ret == -1){
+            fprintf(stderr, "Slow5 conversion failed. Input is invalid.\n");
+        } else if(ret == -2){
+            fprintf(stderr, "Slow5 conversion failed.\n");
+        }
+        slow5_close(slow5File_out);
     }
 
-    if(remove(output_dir.c_str()) == 0){ //todo check
-        printf("Temporary directory deleted\n");
+    //delete temp dir
+    slow5_files.clear();
+    list_all_items(output_dir, slow5_files, 1);
+    for(size_t i=0; i<slow5_files.size(); i++){
+        int del = remove(slow5_files[i].c_str());
+        if (del){
+            del = rmdir(slow5_files[i].c_str());
+            if (del) {
+                fprintf(stderr, "Deleting temp directory failed");
+                perror("failed");
+                break;
+            }
+        }
     }
-    else {
-        printf("Unable to delete temporary directory\n");
-    }
-
-    MESSAGE(stderr, "total slow5: %lu, bad slow5: %lu multi-group slow5: %lu", readsCount.total_5, readsCount.bad_5_file, readsCount.multi_group_slow5);
 
     // Close output file
     if (arg_fname_out != NULL && fclose(f_out) == EOF) {
         ERROR("File '%s' failed on closing - %s.",
-              arg_fname_out, strerror(errno));
+                  arg_fname_out, strerror(errno));
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
