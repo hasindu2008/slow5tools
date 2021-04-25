@@ -1,14 +1,12 @@
 //
 // Created by Hiruna on 2021-01-16.
 //
-//#include "slow5_old.h"
-
-
 #include <getopt.h>
 #include <sys/wait.h>
 
 #include <string>
 #include <vector>
+#include <pthread.h>
 
 #include "error.h"
 #include "cmd.h"
@@ -25,10 +23,11 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help                 display this message and exit\n" \
-    "    -@, --threads=[INT]        number of threads -- 4\n" \
+    "    -t, --threads=[INT]        number of threads -- 4\n"        \
     "    -s, --slow5                convert to slow5\n" \
     "    -c, --compress             convert to compressed blow5\n"   \
     "    -o, --output=[FILE]        output converted contents to FILE -- stdout\n" \
+    "    -f, --temp=[DIR]           path to crete a directory to write temporary files"                   \
 
 static double init_realtime = 0;
 
@@ -207,6 +206,23 @@ void work_data(global_thread* core, data_thread* db){
     }
 }
 
+void delete_temp(std::string dir) {
+    std::vector<std::string>slow5_files;
+    list_all_items(dir, slow5_files, 1, NULL);
+    for(size_t i=0; i<slow5_files.size(); i++){
+        int del = remove(slow5_files[i].c_str());
+        if (del){
+            del = rmdir(slow5_files[i].c_str());
+            if (del) {
+                fprintf(stderr, "Deleting temp directory failed");
+                perror("failed");
+                break;
+            }
+        }
+    }
+
+}
+
 int merge_main(int argc, char **argv, struct program_meta *meta){
     init_realtime = slow5_realtime();
 
@@ -238,10 +254,11 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h'},  //0
-            {"threads", required_argument, NULL, '@' }, //1
+            {"threads", required_argument, NULL, 't' }, //1
             {"slow5", no_argument, NULL, 's'},    //2
             {"compress", no_argument, NULL, 'c'},  //3
             {"output", required_argument, NULL, 'o'}, //4
+            {"temp", required_argument, NULL, 'f'}, //5
             {NULL, 0, NULL, 0 }
     };
 
@@ -254,6 +271,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     // Input arguments
     char *arg_fname_out = NULL;
     char *arg_num_threads = NULL;
+    char *arg_temp_dir = NULL;
 
     int32_t num_threads = DEFAULT_NUM_THREADS;
 
@@ -261,7 +279,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "sch@:o:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "scht:o:f:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -274,7 +292,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 return EXIT_SUCCESS;
-            case '@':
+            case 't':
                 arg_num_threads = optarg;
                 break;
             case 's':
@@ -286,6 +304,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 'o':
                 arg_fname_out = optarg;
                 break;
+            case 'f':
+                arg_temp_dir = optarg;
+                break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -295,6 +316,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     std::string output_file = std::string(arg_fname_out);
     std::string output_dir = output_file.substr(0,output_file.find_last_of('/')) + "/temp";
+    if(arg_temp_dir){
+        output_dir = std::string(arg_temp_dir) + "/temp";
+    }
     fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
 
     std::string extension = output_file.substr(output_file.length()-6, output_file.length());
@@ -332,7 +356,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int check_dir = mkdir(output_dir.c_str(),0777);
     // check if directory is created or not
     if (check_dir) {
-        printf("Unable to create a temporary directory\n");
+        printf("Cannot create temporary directory. Exiting...\n");
         exit(1);
     }
 
@@ -349,7 +373,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         int check_dir = mkdir((output_dir+"/"+std::to_string(num_threads)).c_str(),0777);
         // check if directory is created or not
         if (check_dir) {
-            printf("Unable to create a temporary directory\n");
+            printf("Cannot create temporary sub-directory. Exiting...\n");
             exit(1);
         }
         // Setup multithreading structures
@@ -365,6 +389,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         work_data(&core, &db);
         slow5_files.clear();
         list_all_items(output_dir + "/" + std::to_string(num_threads), slow5_files, 0, NULL);
+        delete_temp((output_dir + "/" + std::to_string(num_threads*2)));
         num_threads = num_threads/2;
     }
 
@@ -384,22 +409,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
         slow5_close(slow5File_out);
     }
-
     //delete temp dir
-    slow5_files.clear();
-    list_all_items(output_dir, slow5_files, 1, NULL);
-    for(size_t i=0; i<slow5_files.size(); i++){
-        int del = remove(slow5_files[i].c_str());
-        if (del){
-            del = rmdir(slow5_files[i].c_str());
-            if (del) {
-                fprintf(stderr, "Deleting temp directory failed");
-                perror("failed");
-                break;
-            }
-        }
-    }
-
+    delete_temp(output_dir);
     // Close output file
     if (arg_fname_out != NULL && fclose(f_out) == EOF) {
         ERROR("File '%s' failed on closing - %s.",
@@ -412,4 +423,3 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
 }
-
