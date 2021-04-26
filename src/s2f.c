@@ -23,7 +23,7 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help             display this message and exit\n" \
-    "    --iop INT                  number of I/O processes to read slow5 files\n" \
+    "    --iop INT              number of I/O processes to read slow5 files\n" \
 
 
 static double init_realtime = 0;
@@ -256,27 +256,23 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
 }
 
 void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
-
     for (int i = args.starti; i < args.endi; i++) {
-
+        fprintf(stderr, "Converting %s to fast5\n", slow5_files[i].c_str());
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
             ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
             continue;
         }
         readsCount->total_5++;
-
         if(slow5File_i->header->num_read_groups > 1){
             ERROR("The file %s has %u read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), slow5File_i->header->num_read_groups);
             continue;
         }
-
         std::string fast5_path = std::string(output_dir);
         std::string fast5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),
                                                       slow5_files[i].length() -
                                                       slow5_files[i].find_last_of('/') - 6) + ".fast5";
         fast5_path += fast5file;
-
         write_fast5(slow5File_i, fast5_path.c_str());
         //  Close the slow5 file.
         slow5_close(slow5File_i);
@@ -373,56 +369,6 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     fprintf(stderr, "[%s] Parallel converting to fast5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
 }
 
-void recurse_slow5_dir(const char *f_path, reads_count *readsCount, char *output_dir, program_meta *meta) {
-
-    DIR *dir;
-    struct dirent *ent;
-
-    dir = opendir(f_path);
-
-    if (dir == NULL) {
-        if (errno == ENOTDIR) {
-            // If it has the fast5 extension
-            if (std::string(f_path).find(SLOW5_EXTENSION)!= std::string::npos) {
-                // Open FAST5 and convert to SLOW5 into f_out
-                std::vector<std::string> slow5_files;
-                slow5_files.push_back(f_path);
-                s2f_iop(1, slow5_files, output_dir, meta, readsCount);
-            }
-
-        } else {
-            WARNING("File '%s' failed to open - %s.",
-                    f_path, strerror(errno));
-        }
-
-    } else {
-        fprintf(stderr, "[%s::%.3f*%.2f] Extracting slow5 from %s\n", __func__,
-                slow5_realtime() - init_realtime, slow5_cputime() / (slow5_realtime() - init_realtime), f_path);
-
-        // Iterate through sub files
-        while ((ent = readdir(dir)) != NULL) {
-            if (strcmp(ent->d_name, ".") != 0 &&
-                strcmp(ent->d_name, "..") != 0) {
-
-                // Make sub path string
-                // f_path + '/' + ent->d_name + '\0'
-                size_t sub_f_path_len = strlen(f_path) + 1 + strlen(ent->d_name) + 1;
-                char *sub_f_path = (char *) malloc(sizeof *sub_f_path * sub_f_path_len);
-                MALLOC_CHK(sub_f_path);
-                snprintf(sub_f_path, sub_f_path_len, "%s/%s", f_path, ent->d_name);
-
-                // Recurse
-                recurse_slow5_dir(sub_f_path, readsCount, output_dir, meta);
-
-                free(sub_f_path);
-                sub_f_path = NULL;
-            }
-        }
-
-        closedir(dir);
-    }
-}
-
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
     init_realtime = slow5_realtime();
@@ -504,27 +450,23 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         ERROR("The output directory must be specified %s","");
         return EXIT_FAILURE;
     }
+    if(arg_dir_out){
+        struct stat st = {0};
+        if (stat(arg_dir_out, &st) == -1) {
+            mkdir(arg_dir_out, 0700);
+        }
+    }
 
     double realtime0 = slow5_realtime();
     reads_count readsCount;
     std::vector<std::string> slow5_files;
 
     for (int i = optind; i < argc; ++ i) {
-//        fprintf(stderr,"%s",argv[i]);
-        if(iop==1) {
-            // Recursive way
-            recurse_slow5_dir(argv[i], &readsCount, arg_dir_out, meta);
-        }else{
-            find_all_5(argv[i], slow5_files, SLOW5_EXTENSION);
-        }
+        list_all_items(argv[i], slow5_files, 0, NULL);
     }
 
-    if(iop==1){
-        MESSAGE(stderr, "total slow5: %lu, bad slow5: %lu", readsCount.total_5, readsCount.bad_5_file);
-    }else{
-        fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
-        s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
-    }
+    fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
+    s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
 
     return EXIT_SUCCESS;
 }

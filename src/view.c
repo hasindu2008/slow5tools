@@ -309,8 +309,6 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
-
-
     // Do the conversion
     if ((fmt_in == VIEW_FORMAT_SLOW5_ASCII || fmt_in == VIEW_FORMAT_SLOW5_BINARY) &&
             (fmt_out == VIEW_FORMAT_SLOW5_ASCII || fmt_out == VIEW_FORMAT_SLOW5_BINARY)) {
@@ -339,8 +337,6 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         MESSAGE(stderr, "fast5 conversion not implemented%s", "");
         view_ret = EXIT_FAILURE;
     }
-
-
 
     // Close output file
     if (arg_fname_out != NULL) {

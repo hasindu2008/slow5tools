@@ -18,7 +18,7 @@
     "With no READ_ID, read from standard input newline separated read ids.\n" \
     "\n" \
     "OPTIONS:\n" \
-    "    -@, --threads=[INT]    number of threads -- 4\n" \
+    "    -t, --threads=[INT]    number of threads -- 4\n" \
     "    -h, --help             display this message and exit.\n" \
 
 void work_per_single_read(core_t *core, db_t *db, int32_t i) {
@@ -94,7 +94,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
-        {"threads", required_argument, NULL, '@' },
+        {"threads", required_argument, NULL, 't' },
         {"help", no_argument, NULL, 'h' },
         {NULL, 0, NULL, 0 }
     };
@@ -109,7 +109,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
 
     int opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "@:h", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "t:h", long_opts, NULL)) != -1) {
 
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
@@ -117,7 +117,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         switch (opt) {
-            case '@':
+            case 't':
                 arg_num_threads = optarg;
                 break;
             case 'h':

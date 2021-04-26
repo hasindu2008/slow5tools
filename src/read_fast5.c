@@ -526,7 +526,6 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
 //    slow5_rec_free(read);
 
     if (fast5_file->is_multi_fast5) {
-        fprintf(stderr,"multi\n");
         hsize_t number_of_groups = 0;
         H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
         tracker.num_read_groups = &number_of_groups; //todo:check if the assumption is valid
@@ -725,35 +724,48 @@ std::vector< std::string > list_directory(const std::string& file_name)
     return res;
 }
 
-// given a directory path, recursively find all fast5 files
-void find_all_5(const std::string& path, std::vector<std::string>& fast5_files, const char* extension)
-{
-    STDERR("Looking for %s files in %s", extension, path.c_str());
+// given a directory path, recursively find all files
+void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
+    if(extension){
+        STDERR("Looking for '%s' files in %s", extension, path.c_str());
+    }
     if (is_directory(path)) {
         std::vector< std::string > dir_list = list_directory(path);
         for (const auto& fn : dir_list) {
             if(fn == "." or fn == "..") {
                 continue;
             }
-
             std::string full_fn = path + "/" + fn;
-            bool is_fast5 = full_fn.find(extension) != std::string::npos;
             // JTS 04/19: is_directory is painfully slow
-            if(is_directory(full_fn)) {
+            if(is_directory(full_fn)){
                 // recurse
-                find_all_5(full_fn, fast5_files, extension);
-            } else if (is_fast5) {
-                fast5_files.push_back(full_fn);
+                list_all_items(full_fn, files, count_dir, extension);
+            }else{
                 //add to the list
+                if(extension){
+                  if(full_fn.find(extension) != std::string::npos){
+                      files.push_back(full_fn);
+                  }
+                }else{
+                    files.push_back(full_fn);
+                }
             }
         }
     }else{
-        bool is_fast5 = path.find(extension) != std::string::npos;
-        if(is_fast5){
-            fast5_files.push_back(path);
+        if(extension){
+            if(path.find(extension) != std::string::npos){
+                files.push_back(path);
+            }
+        }else{
+            files.push_back(path);
         }
     }
+
+    if(is_directory(path) && count_dir){
+        files.push_back(path);
+    }
 }
+
 
 void slow5_hdr_initialize(slow5_hdr *header, int lossy){
     slow5_hdr_add_rg(header);
