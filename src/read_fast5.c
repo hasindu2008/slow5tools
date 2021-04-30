@@ -538,6 +538,7 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
     tracker.flag_lossy = &flag_lossy;
     tracker.nreads = &zero;
     tracker.slow5_record = slow5_rec_init();
+    tracker.group_name = "";
 
     slow5_hdr_set("file_format", SLOW5_FILE_FORMAT_SHORT, 0, tracker.slow5File->header);
 
@@ -553,7 +554,6 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
         H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
     }else{ // single-fast5
         //obtain the root group attributes
-        tracker.group_name = "";
         H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
         hsize_t number_of_groups = 1;
         tracker.num_read_groups = &number_of_groups;
