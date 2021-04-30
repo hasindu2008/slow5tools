@@ -164,7 +164,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
             while(number_of_records > 0) {
                 int number_of_records_per_file = (rem > 0) ? 1 : 0;
                 number_of_records_per_file += limit;
-//                fprintf(stderr, "file_count = %d, number_of_records_per_file = %d, number_of_records = %d\n", file_count, number_of_records_per_file, number_of_records);
+                // fprintf(stderr, "file_count = %d, number_of_records_per_file = %d, number_of_records = %d\n", file_count, number_of_records_per_file, number_of_records);
                 number_of_records -= number_of_records_per_file;
                 rem--;
                 std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),slow5_files[i].length() - slow5_files[i].find_last_of('/') - 6) + "_" + std::to_string(file_count) + extension;
@@ -274,7 +274,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 }
 
 void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
-             meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod) {
+        meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod) {
     double realtime0 = slow5_realtime();
     int64_t num_slow5_files = slow5_files.size();
 

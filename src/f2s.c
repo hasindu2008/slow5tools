@@ -268,14 +268,14 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
-            {"slow5", no_argument, NULL, 's'},    //0
-            {"compress", no_argument, NULL, 'c'},  //1
-            {"help", no_argument, NULL, 'h'},  //2
-            {"output", required_argument, NULL, 'o'},   //3
-            { "iop", required_argument, NULL, 0}, //4
-            { "lossy", no_argument, NULL, 'l'}, //4
-            { "output_dir", required_argument, NULL, 'd'}, //5
-            {NULL, 0, NULL, 0 }
+        {"slow5", no_argument, NULL, 's'},    //0
+        {"compress", no_argument, NULL, 'c'},  //1
+        {"help", no_argument, NULL, 'h'},  //2
+        {"output", required_argument, NULL, 'o'},   //3
+        { "iop", required_argument, NULL, 0}, //4
+        { "lossy", no_argument, NULL, 'l'}, //4
+        { "output_dir", required_argument, NULL, 'd'}, //5
+        {NULL, 0, NULL, 0 }
     };
 
     // Default options
