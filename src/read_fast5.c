@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "slow5.h"
-#include <float.h>
 #include "error.h"
 #include "slow5_extra.h"
 #include "read_fast5.h"
@@ -15,6 +14,9 @@
 herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *operator_data);
 // Operator function to be called by H5Literate.
 herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, void *operator_data);
+
+// from nanopolish_fast5_io.cpp
+static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std::string& group_name, const std::string& attribute_name);
 
 //other functions
 int group_check(struct operator_obj *od, haddr_t target_addr);
@@ -65,7 +67,8 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
     // Ensure attribute exists
     ret = H5Aexists(loc_id, name);
     if(ret <= 0) {
-        fprintf(stdout,"attribute %s not found\n",name);
+        WARNING("attribute %s not found\n", name);
+        return -1;
     }
 
     attribute = H5Aopen(loc_id, name, H5P_DEFAULT);
@@ -82,7 +85,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
                 // variable length string
                 ret = H5Aread(attribute, native_type, &value.attr_string);
                 if(ret < 0) {
-                    fprintf(stderr, "error reading attribute %s\n", name);
+                    ERROR("error reading attribute %s", name);
                     exit(EXIT_FAILURE);
                 }
 
@@ -97,7 +100,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
                 ret = H5Aread(attribute, attribute_type, value.attr_string);
 
                 if(ret < 0) {
-                    fprintf(stderr, "error reading attribute %s\n", name);
+                    ERROR("error reading attribute %s", name);
                     exit(EXIT_FAILURE);
                 }
             }
@@ -120,12 +123,23 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
             H5Aread(attribute, native_type, &(value.attr_uint8_t));
             break;
         default:
-            fprintf (stderr,"Unknown: %s\n", name);
+            WARNING("Unknown: %s\n", name);
     }
     H5Tclose(native_type);
     H5Tclose(attribute_type);
     H5Aclose(attribute);
 
+    if(H5Tclass==H5T_STRING){
+        size_t index = 0;
+        while(value.attr_string[index]){
+            int result = isspace(value.attr_string[index]);
+            if (result && value.attr_string[index]!=' '){
+                ERROR("Attribute '%s' has a value '%s' with white spaces", name, value.attr_string);
+                exit(EXIT_FAILURE);
+            }
+            index++;
+        }
+    }
 
     if(strcmp("file_type",name)==0 && H5Tclass==H5T_STRING){
         if(slow5_hdr_set("file_type", value.attr_string, 0, operator_data->slow5File->header) ==-1){
@@ -183,8 +197,14 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
         }
     }
     else if(strcmp("read_id",name)==0 && H5Tclass==H5T_STRING){
-        operator_data->slow5_record->read_id_len = strlen(value.attr_string);
-        operator_data->slow5_record->read_id = strdup(value.attr_string);
+        //make sure read_id has a proper starting character
+        if(isalpha(value.attr_string[0]) || isdigit(value.attr_string[0])){
+            operator_data->slow5_record->read_id_len = strlen(value.attr_string);
+            operator_data->slow5_record->read_id = strdup(value.attr_string);
+        }else{
+            ERROR("read_id of this format is not supported [%s]", value.attr_string);
+            exit(EXIT_FAILURE);
+        }
     }
     else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT && *(operator_data->flag_lossy) == 0){
         if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "median_before", &value.attr_double) != 0){
@@ -438,15 +458,13 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
             WARNING("sample_id attribute value could not be set in the slow5 header %s", "");
         }
     }else{
-        WARNING("The attribute %s/%s is not stored ", operator_data->group_name, name);
+        WARNING("The attribute %s/%s is not stored in the slow5/blow5 format ", operator_data->group_name, name);
     }
 
     if(flag_value_string){
         free(value.attr_string);
     }
     return return_val;
-
-
 }
 
 int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
@@ -544,7 +562,7 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
         //        todo: compare header values with the previous singlefast5
         if(write_header_flag==0){
             if(*(tracker.flag_run_id) != 1){
-                fprintf(stderr, "run_id is not set%s\n", "");
+                ERROR("run_id is not set%s", ".");
                 exit(EXIT_FAILURE);
             }
             print_slow5_header(&tracker);
@@ -640,15 +658,15 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                     if (operator_data->group_level == ROOT) {
                         if (*(operator_data->nreads) == 0) {
                             if (*(operator_data->flag_context_tags) != 1) {
-                                fprintf(stderr, "The first read does not have context_tags information\n");
+                                ERROR("The first read does not have context_tags information%s", ".");
                                 exit(EXIT_FAILURE);
                             }
                             if (*(operator_data->flag_tracking_id) != 1) {
-                                fprintf(stderr, "The first read does not have tracking_id information\n");
+                                ERROR("The first read does not have tracking_id information%s", ".");
                                 exit(EXIT_FAILURE);
                             }
                             if(*(operator_data->flag_run_id) != 1){
-                                fprintf(stderr, "run_id is not set%s\n", "");
+                                ERROR("run_id is not set%s", ".");
                                 exit(EXIT_FAILURE);
                             }
                             print_slow5_header(operator_data);//remove this later; added for the sake of slow5 format completeness
@@ -743,9 +761,9 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
             }else{
                 //add to the list
                 if(extension){
-                  if(full_fn.find(extension) != std::string::npos){
-                      files.push_back(full_fn);
-                  }
+                    if(full_fn.find(extension) != std::string::npos){
+                        files.push_back(full_fn);
+                    }
                 }else{
                     files.push_back(full_fn);
                 }

@@ -1,5 +1,7 @@
+//
 // Sasha Jenner
-
+// Hiruna Samarakoon
+//
 #include <getopt.h>
 #include <sys/wait.h>
 
@@ -33,19 +35,21 @@ static double init_realtime = 0;
 void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
 
     static size_t call_count = 0;
-    slow5_file_t* slow5File;
+    slow5_file_t* slow5File = NULL;
     FILE *slow5_file_pointer = NULL;
     std::string slow5_path;
     std::string extension = ".blow5";
+    int stdout_copy = -1;
     if(format_out==FORMAT_ASCII){
         extension = ".slow5";
     }
     if(output_dir){
         slow5_path = std::string(output_dir);
+    }else{ //duplicate stdout file descriptor
+        stdout_copy = dup(1);
     }
     fast5_file_t fast5_file;
 
-//    fprintf(stderr,"starti %d\n",args.starti);
     for (int i = args.starti; i < args.endi; i++) {
         readsCount->total_5++;
         fast5_file = fast5_open(fast5_files[i].c_str());
@@ -67,7 +71,6 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 //fprintf(stderr,"slow5path = %s\n fast5_path = %s\nslow5file = %s\n",slow5_path.c_str(), fast5_files[i].c_str(),slow5file.c_str());
 
                 slow5_file_pointer = fopen(slow5_path.c_str(), "w");
-
                 // An error occured
                 if (!slow5_file_pointer) {
                     ERROR("File '%s' could not be opened - %s.",
@@ -98,8 +101,14 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, meta, slow5File);
 
             }
-        } else{
-            slow5File = slow5_init_empty(stdout, slow5_path.c_str(), FORMAT_BINARY);
+        } else{ // output dir not set hence, writing to stdout
+            slow5_file_pointer = fdopen(1,"w");  //obtain a pointer to stdout file stream
+            // An error occured
+            if (!slow5_file_pointer) {
+                ERROR("Could not open stdout file stream - %s.", strerror(errno));
+                return;
+            }
+            slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_BINARY);
             slow5_hdr_initialize(slow5File->header, lossy);
             if (fast5_file.is_multi_fast5) {
                 read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count, meta, slow5File);
@@ -108,19 +117,30 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
             }
         }
         H5Fclose(fast5_file.hdf5_file);
-        if(output_dir && fast5_file.is_multi_fast5){
-            slow5_path = std::string(output_dir);
+        if(fast5_file.is_multi_fast5){
             if(format_out == FORMAT_BINARY){
                 slow5_eof_fwrite(slow5File->fp);
             }
             slow5_close(slow5File);
+            if(output_dir){
+                slow5_path = std::string(output_dir);
+            }
+            else{
+                dup2(stdout_copy, 1);
+            }
         }
     }
-    if(output_dir && !fast5_file.is_multi_fast5) {
+    if(!fast5_file.is_multi_fast5) {
         if(format_out == FORMAT_BINARY){
             slow5_eof_fwrite(slow5File->fp);
         }
         slow5_close(slow5File);
+        if(!output_dir){
+            dup2(stdout_copy, 1);
+        }
+    }
+    if(stdout_copy>0){
+        close(stdout_copy);
     }
     if(meta->verbose){
         fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
@@ -219,7 +239,6 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
-    int ret; // For checking return values of functions
     int iop = 1;
     int lossy = 0;
 
@@ -249,14 +268,14 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
-        {"slow5", no_argument, NULL, 's'},    //0
-        {"compress", no_argument, NULL, 'c'},  //1
-        {"help", no_argument, NULL, 'h'},  //2
-        {"output", required_argument, NULL, 'o'},   //3
-        { "iop", required_argument, NULL, 0}, //4
-        { "lossy", no_argument, NULL, 'l'}, //4
-        { "output_dir", required_argument, NULL, 'd'}, //5
-        {NULL, 0, NULL, 0 }
+            {"slow5", no_argument, NULL, 's'},    //0
+            {"compress", no_argument, NULL, 'c'},  //1
+            {"help", no_argument, NULL, 'h'},  //2
+            {"output", required_argument, NULL, 'o'},   //3
+            { "iop", required_argument, NULL, 0}, //4
+            { "lossy", no_argument, NULL, 'l'}, //4
+            { "output_dir", required_argument, NULL, 'd'}, //5
+            {NULL, 0, NULL, 0 }
     };
 
     // Default options
