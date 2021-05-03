@@ -468,13 +468,23 @@ void *slow5_hdr_to_mem(struct slow5_hdr *header, enum slow5_fmt format, press_me
                     if (value != NULL) {
                         len_to_cp = strlen(value);
 
+                        //special case for "."
+                        if(strlen(value)==0){
+                            len_to_cp++;
+                        }
+
                         // Realloc if necessary
                         if (len + len_to_cp >= cap) {
                             cap *= 2;
                             mem = (char *) realloc(mem, cap * sizeof *mem);
                         }
 
-                        memcpy(mem + len, value, len_to_cp);
+                        if(strlen(value)==0){ //special case for "."
+                            memcpy(mem + len, ".", len_to_cp);
+                        }
+                        else {
+                            memcpy(mem + len, value, len_to_cp);
+                        }
                         len += len_to_cp;
                     }
                 } else {
@@ -914,8 +924,15 @@ int slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, struct slow5_hdr *head
             khint_t pos = kh_put(s2s, header->data.maps.a[i], attr, &absent);
             assert(absent != -1);
 
+            //if the value is ".", we store an empty string
+            char *val_dup = strdup(val);
+            if(strcmp(val_dup,".") == 0 ){
+                val_dup[0]='\0';
+                fprintf(stderr,"here\n");
+            }
+
             // Set value
-            kh_val(header->data.maps.a[i], pos) = strdup(val);
+            kh_val(header->data.maps.a[i], pos) = val_dup;
 
             ++ i;
         }
@@ -1251,7 +1268,6 @@ int slow5_get(const char *read_id, struct slow5_rec **read, struct slow5_file *s
 
 // Return -1 on failure to parse
 int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struct slow5_rec *read, enum slow5_fmt format, struct slow5_aux_meta *aux_meta) {
-
     int ret = 0;
     uint64_t prev_len_raw_signal = 0;
 
@@ -1408,9 +1424,15 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                     if (IS_PTR(aux_meta->types[i])) {
                         // Type is an array
                         if (aux_meta->types[i] == STRING) {
-                            len = strlen(tok);
-                            data = (uint8_t *) malloc((len + 1) * aux_meta->sizes[i]);
-                            memcpy(data, tok, (len + 1) * aux_meta->sizes[i]);
+                            if(strcmp(tok,".")==0){
+                                len = 0;
+                                data = 0;
+                            }
+                            else{
+                                len = strlen(tok);
+                                data = (uint8_t *) malloc((len + 1) * aux_meta->sizes[i]);
+                                memcpy(data, tok, (len + 1) * aux_meta->sizes[i]);
+                            }
                         } else {
                             // Split tok by SEP_ARRAY
                             char *tok_sep;

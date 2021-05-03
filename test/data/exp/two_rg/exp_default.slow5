@@ -16,10 +16,10 @@
 @exp_script_purpose	sequencing_run	sequencing_run
 @exp_start_time	1479433093	1481657610
 @experiment_kit	genomic_dna	genomic_dna
-@experiment_type	customer_qc	
+@experiment_type	customer_qc	.
 @file_version	1	0.6
 @filename	deamernanopore_20161117_fnfab43577_mn16450_sequencing_run_ma_821_r9_4_na12878_11_17_16_88738	odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395
-@flow_cell_id	FAB43577	
+@flow_cell_id	FAB43577	.
 @heatsink_temp	33.9921875	33.9765625
 @hostname	DEAMERNANOPORE	odw-genlab4209
 @installation_type	map	map
