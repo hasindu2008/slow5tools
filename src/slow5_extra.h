@@ -48,6 +48,7 @@ char *get_slow5_idx_path(const char *path);
 // auxilary type
 enum aux_type str_to_aux_type(const char *str, int *err);
 int memcpy_type_from_str(uint8_t *data, const char *value, enum aux_type type);
+void memcpy_type_from_null_str(uint8_t *data, enum aux_type type);
 char *type_to_str(uint8_t *data, const char *type, size_t len, size_t *str_len);
 char *aux_type_to_str(enum aux_type type);
 char *data_to_str(uint8_t *data, enum aux_type type, uint64_t len, size_t *str_len);

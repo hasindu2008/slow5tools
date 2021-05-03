@@ -928,7 +928,6 @@ int slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, struct slow5_hdr *head
             char *val_dup = strdup(val);
             if(strcmp(val_dup,".") == 0 ){
                 val_dup[0]='\0';
-                fprintf(stderr,"here\n");
             }
 
             // Set value
@@ -1434,6 +1433,11 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                                 memcpy(data, tok, (len + 1) * aux_meta->sizes[i]);
                             }
                         } else {
+                            if(strcmp(tok,".")==0){
+                                len = 0;
+                                data = 0;
+                            }
+                            else{
                             // Split tok by SEP_ARRAY
                             char *tok_sep;
                             uint64_t array_cap = SLOW5_AUX_ARRAY_CAP_INIT;
@@ -1461,16 +1465,23 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                             }
 
                             len = array_i;
+
+                            }
                         }
                         bytes = len * aux_meta->sizes[i];
 
                     } else {
                         data = (uint8_t *) malloc(aux_meta->sizes[i]);
-                        if (memcpy_type_from_str(data, tok, aux_meta->types[i]) == -1) {
-                            free(data);
-                            slow5_rec_aux_free(aux_map);
-                            SLOW5_WARNING("Auxiliary fields [%s] parsing failed.",aux_meta->attrs[i]);
-                            return -1;
+                        if(strcmp(tok,".")==0){
+                            memcpy_type_from_null_str(data, aux_meta->types[i]);
+                        }
+                        else{
+                            if (memcpy_type_from_str(data, tok, aux_meta->types[i]) == -1) {
+                                free(data);
+                                slow5_rec_aux_free(aux_map);
+                                SLOW5_WARNING("Auxiliary fields [%s] parsing failed.",aux_meta->attrs[i]);
+                                return -1;
+                            }
                         }
                         bytes = aux_meta->sizes[i];
                     }
@@ -1527,8 +1538,6 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                             ret = -1;
                             break;
                         }
-                    } else{
-                        SLOW5_WARNING("%s","Null readID in record");
                     }
                     offset += size;
                     break;
@@ -1621,15 +1630,20 @@ int slow5_rec_parse(char *read_mem, size_t read_size, const char *read_id, struc
                 uint8_t *data;
                 uint64_t bytes = len * aux_meta->sizes[i];
 
-                if (aux_meta->types[i] == STRING) {
-                    data = (uint8_t *) malloc(bytes + 1);
-                    memcpy(data, read_mem + offset, bytes);
-                    offset += bytes;
-                    data[bytes] = '\0';
-                } else {
-                    data = (uint8_t *) malloc(bytes);
-                    memcpy(data, read_mem + offset, bytes);
-                    offset += bytes;
+                if (len==0){
+                    data = NULL;
+                }
+                else{
+                    if (aux_meta->types[i] == STRING) {
+                        data = (uint8_t *) malloc(bytes + 1);
+                        memcpy(data, read_mem + offset, bytes);
+                        offset += bytes;
+                        data[bytes] = '\0';
+                    } else {
+                        data = (uint8_t *) malloc(bytes);
+                        memcpy(data, read_mem + offset, bytes);
+                        offset += bytes;
+                    }
                 }
 
                 int absent;
@@ -2621,8 +2635,9 @@ void *slow5_rec_to_mem(struct slow5_rec *read, struct slow5_aux_meta *aux_meta, 
                             mem = (char *) realloc(mem, cap);
                         }
                     }
-
-                    memcpy(mem + curr_len, aux_data.data, aux_data.bytes);
+                    if(aux_data.len != 0 ){
+                        memcpy(mem + curr_len, aux_data.data, aux_data.bytes);
+                    }
                     curr_len += aux_data.bytes;
                 }
             }
@@ -2941,72 +2956,183 @@ int memcpy_type_from_str(uint8_t *data, const char *value, enum aux_type type) {
     return err;
 }
 
+//if a .
+void memcpy_type_from_null_str(uint8_t *data, enum aux_type type) {
+
+    // TODO fix this is disgusting :(
+    if (type == INT8_T) {
+        int8_t value_conv = INT8_T_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == UINT8_T) {
+        uint8_t value_conv = UINT8_T_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == INT16_T) {
+        int16_t value_conv = INT16_T_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == UINT16_T) {
+        uint16_t value_conv = UINT16_T_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == INT32_T) {
+        int32_t value_conv = INT32_T_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == UINT32_T) {
+        uint32_t value_conv = UINT32_T_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == INT64_T) {
+        int64_t value_conv = INT64_T_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == UINT64_T) {
+        uint64_t value_conv = UINT64_T_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == FLOAT) {
+        float value_conv = FLOAT_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == DOUBLE) {
+        double value_conv = DOUBLE_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    } else if (type == CHAR) {
+        char value_conv = CHAR_NULL;
+        memcpy(data, &value_conv, sizeof value_conv);
+    }
+
+    return;
+}
+
+
+
 char *data_to_str(uint8_t *data, enum aux_type type, uint64_t len, size_t *str_len) {
     char *str = NULL;
 
     if (type == INT8_T) {
-        *str_len = asprintf_mine(&str, "%" PRId8, *(int8_t *) data);
+        if(*(int8_t *) data == INT8_T_NULL){
+            *str_len = asprintf_mine(&str, ".");
+            fprintf(stderr,"|%s|\n",str);
+        }
+        else {
+            *str_len = asprintf_mine(&str, "%" PRId8, *(int8_t *) data);
+        }
     } else if (type == UINT8_T) {
-        *str_len = asprintf_mine(&str, "%" PRIu8, *(uint8_t *) data);
+        if(*(uint8_t *) data == UINT8_T_NULL){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            *str_len = asprintf_mine(&str, "%" PRIu8, *(uint8_t *) data);
+        }
     } else if (type == INT16_T) {
-        *str_len = asprintf_mine(&str, "%" PRId16, *(int16_t *) data);
+        if(*(int16_t *) data == INT16_T_NULL){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            *str_len = asprintf_mine(&str, "%" PRId16, *(int16_t *) data);
+        }
     } else if (type == UINT16_T) {
-        *str_len = asprintf_mine(&str, "%" PRIu16, *(uint16_t *) data);
+        if(*(uint16_t *) data == UINT16_T_NULL){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            *str_len = asprintf_mine(&str, "%" PRIu16, *(uint16_t *) data);
+        }
     } else if (type == INT32_T) {
-        *str_len = asprintf_mine(&str, "%" PRId32, *(int32_t *) data);
+        if(*(int32_t *) data == INT32_T_NULL){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            *str_len = asprintf_mine(&str, "%" PRId32, *(int32_t *) data);
+        }
     } else if (type == UINT32_T) {
-        *str_len = asprintf_mine(&str, "%" PRIu32, *(uint32_t *) data);
+        if(*(uint32_t *) data == UINT32_T_NULL){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            *str_len = asprintf_mine(&str, "%" PRIu32, *(uint32_t *) data);
+        }
     } else if (type == INT64_T) {
-        *str_len = asprintf_mine(&str, "%" PRId64, *(int64_t *) data);
+        if(*(int64_t *) data == INT64_T_NULL){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            *str_len = asprintf_mine(&str, "%" PRId64, *(int64_t *) data);
+        }
     } else if (type == UINT64_T) {
-        *str_len = asprintf_mine(&str, "%" PRIu64, *(uint64_t *) data);
+        if(*(uint64_t *) data == UINT64_T_NULL){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            *str_len = asprintf_mine(&str, "%" PRIu64, *(uint64_t *) data);
+        }
     } else if (type == FLOAT) {
-        str = float_to_str(*(float *) data, str_len);
+        if(isnanf(*(float *) data)){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            str = float_to_str(*(float *) data, str_len);
+        }
     } else if (type == DOUBLE) {
-        str = double_to_str(*(double *) data, str_len);
+        if(isnan(*(double *) data)){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            str = double_to_str(*(double *) data, str_len);
+        }
     } else if (type == CHAR) {
-        *str_len = sizeof (char);
-        str = (char *) malloc(sizeof (char));
-        str[0] = *(char *) data;
+        if(*(char *) data == CHAR_NULL){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else {
+            *str_len = sizeof (char);
+            str = (char *) malloc(sizeof (char));
+            str[0] = *(char *) data;
+        }
     } else if (type == STRING) {
-        str = strdup((char *) data);
-        *str_len = strlen(str);
+        if(len==0){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else{
+            str = strdup((char *) data);
+            *str_len = strlen(str);
+        }
     } else if (IS_PTR(type)) {
-        size_t str_cap = SLOW5_AUX_ARRAY_STR_CAP_INIT;
-        str = (char *) malloc(str_cap * sizeof *str);
 
-        size_t str_cur = 0;
-        uint64_t i;
-        for (i = 0; i < len - 1; ++ i) {
+        if(len==0){
+            *str_len = asprintf_mine(&str, ".");
+        }
+        else{
+            size_t str_cap = SLOW5_AUX_ARRAY_STR_CAP_INIT;
+            str = (char *) malloc(str_cap * sizeof *str);
+
+            size_t str_cur = 0;
+            uint64_t i;
+            for (i = 0; i < len - 1; ++ i) {
+                size_t str_len_sep;
+                char *str_sep = data_to_str(data + i * AUX_TYPE_META[type].size, TO_PRIM_TYPE(type), 1, &str_len_sep);
+
+                if (str_cur + str_len_sep + 1 > str_cap) { // +1 for SEP_ARRAY_CHAR
+                    // Realloc
+                    str_cap = str_cap << 1;
+                    str = (char *) realloc(str, str_cap * sizeof *str);
+                }
+
+                memcpy(str + str_cur, str_sep, str_len_sep);
+                str[str_cur + str_len_sep] = SEP_ARRAY_CHAR;
+                str_cur += str_len_sep + 1;
+
+                free(str_sep);
+            }
             size_t str_len_sep;
             char *str_sep = data_to_str(data + i * AUX_TYPE_META[type].size, TO_PRIM_TYPE(type), 1, &str_len_sep);
 
-            if (str_cur + str_len_sep + 1 > str_cap) { // +1 for SEP_ARRAY_CHAR
+            if (str_cur + str_len_sep + 1 > str_cap) { // +1 for '\0'
                 // Realloc
                 str_cap = str_cap << 1;
                 str = (char *) realloc(str, str_cap * sizeof *str);
             }
 
             memcpy(str + str_cur, str_sep, str_len_sep);
-            str[str_cur + str_len_sep] = SEP_ARRAY_CHAR;
-            str_cur += str_len_sep + 1;
+            str[str_cur + str_len_sep] = '\0';
 
+            *str_len = str_cur + str_len_sep;
             free(str_sep);
         }
-        size_t str_len_sep;
-        char *str_sep = data_to_str(data + i * AUX_TYPE_META[type].size, TO_PRIM_TYPE(type), 1, &str_len_sep);
-
-        if (str_cur + str_len_sep + 1 > str_cap) { // +1 for '\0'
-            // Realloc
-            str_cap = str_cap << 1;
-            str = (char *) realloc(str, str_cap * sizeof *str);
-        }
-
-        memcpy(str + str_cur, str_sep, str_len_sep);
-        str[str_cur + str_len_sep] = '\0';
-
-        *str_len = str_cur + str_len_sep;
-        free(str_sep);
     }
 
     return str;

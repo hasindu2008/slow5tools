@@ -98,6 +98,20 @@ enum aux_type {
 #define IS_PTR(type)        (type >= INT8_T_ARRAY)
 #define TO_PRIM_TYPE(type)  ((enum aux_type) (type - INT8_T_ARRAY))
 
+//NULL (missing value) representation
+#define INT8_T_NULL     INT8_MAX
+#define INT16_T_NULL    INT16_MAX
+#define INT32_T_NULL    INT32_MAX
+#define INT64_T_NULL    INT64_MAX
+#define UINT8_T_NULL    UINT8_MAX
+#define UINT16_T_NULL   UINT16_MAX
+#define UINT32_T_NULL   UINT32_MAX
+#define UINT64_T_NULL   UINT64_MAX
+#define FLOAT_NULL      nanf("")
+#define DOUBLE_NULL     nan("")
+#define CHAR_NULL       0
+
+
 // Type with corresponding size
 struct aux_type_meta {
     enum aux_type type;
