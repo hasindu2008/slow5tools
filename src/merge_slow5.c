@@ -1,5 +1,5 @@
 //
-// Created by Hiruna on 2021-01-16.
+// Created by Hiruna Samarakoon on 2021-01-16.
 //
 #include <getopt.h>
 #include <sys/wait.h>

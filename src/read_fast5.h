@@ -90,6 +90,3 @@ union attribute_data {
     uint8_t attr_uint8_t;
     char* attr_string;
 };
-
-// from nanopolish_fast5_io.cpp
-static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std::string& group_name, const std::string& attribute_name);

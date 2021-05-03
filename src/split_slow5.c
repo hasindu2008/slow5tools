@@ -1,5 +1,5 @@
 //
-// Created by Hiruna on 2021-01-20.
+// Created by Hiruna Samarkoon on 2021-01-20.
 //
 
 #include <getopt.h>
@@ -40,7 +40,7 @@ typedef struct {
     size_t n;
 }meta_split_method;
 
-void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount, meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod) {
+void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount, meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod) {
 
     readsCount->total_5 = args.endi-args.starti - 1;
     std::string extension = ".blow5";
@@ -57,7 +57,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
             continue;
         }
 
-        int64_t read_group_count_i = slow5File_i->header->num_read_groups;
+        uint32_t read_group_count_i = slow5File_i->header->num_read_groups;
 
         if (read_group_count_i > 1) {
             readsCount->multi_group_slow5++;
@@ -97,7 +97,10 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
-                int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg);
+                if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
+                    ERROR("Could not add read group to %s\n", slow5_path.c_str());
+                    exit(EXIT_FAILURE);
+                }
 
                 if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
                     ERROR("Could not write the header to %s\n", slow5_path.c_str());
@@ -161,7 +164,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
             while(number_of_records > 0) {
                 int number_of_records_per_file = (rem > 0) ? 1 : 0;
                 number_of_records_per_file += limit;
-//                fprintf(stderr, "file_count = %d, number_of_records_per_file = %d, number_of_records = %d\n", file_count, number_of_records_per_file, number_of_records);
+                // fprintf(stderr, "file_count = %d, number_of_records_per_file = %d, number_of_records = %d\n", file_count, number_of_records_per_file, number_of_records);
                 number_of_records -= number_of_records_per_file;
                 rem--;
                 std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),slow5_files[i].length() - slow5_files[i].find_last_of('/') - 6) + "_" + std::to_string(file_count) + extension;
@@ -179,8 +182,10 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
-                int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg);
-
+                if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
+                    ERROR("Could not add read group to %s\n", slow5_path.c_str());
+                    exit(EXIT_FAILURE);
+                }
                 if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
                     ERROR("Could not write the header to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
@@ -210,7 +215,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 
         }else if(metaSplitMethod.splitMethod == GROUP_SPLIT){ // GROUP_SPLIT
 
-            for(size_t j=0; j<read_group_count_i; j++){
+            for(uint32_t j=0; j<read_group_count_i; j++){
                 slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
                 if(!slow5File_i){
                     ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
@@ -232,7 +237,10 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
-                int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg);
+                if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
+                    ERROR("Could not add read group to %s\n", slow5_path.c_str());
+                    exit(EXIT_FAILURE);
+                }
 
                 if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
                     ERROR("Could not write the header to %s\n", slow5_path.c_str());
@@ -265,7 +273,7 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
     }
 }
 
-void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
+void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
         meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod) {
     double realtime0 = slow5_realtime();
     int64_t num_slow5_files = slow5_files.size();
@@ -295,7 +303,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     }
 
     if(iop==1){
-        s2f_child_worker(proc_args[0], slow5_files, output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod);
+        split_child_worker(proc_args[0], slow5_files, output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod);
 //        goto skip_forking;
         return;
     }
@@ -311,7 +319,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
             exit(EXIT_FAILURE);
         }
         if(pids[t]==0){ //child
-            s2f_child_worker(proc_args[t],slow5_files,output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod);
+            split_child_worker(proc_args[t],slow5_files,output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod);
             exit(EXIT_SUCCESS);
         }
         if(pids[t]>0){ //parent
@@ -487,6 +495,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         list_all_items(argv[i], slow5_files, 0, NULL);
     }
     fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
-    s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod);
+    split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod);
     return EXIT_SUCCESS;
 }

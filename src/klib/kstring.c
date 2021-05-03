@@ -151,7 +151,8 @@ int kvsprintf(kstring_t *s, const char *fmt, va_list ap)
 
 	l = vsnprintf(s->s + s->l, s->m - s->l, fmt, args); // This line does not work with glibc 2.0. See `man snprintf'.
 	va_end(args);
-	if (l + 1 > s->m - s->l) {
+	size_t ltemp = l + 1;
+	if (ltemp > s->m - s->l) {
 		if (ks_resize(s, s->l + l + 2) < 0)
 			return -1;
 		va_copy(args, ap);
