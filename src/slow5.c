@@ -869,7 +869,7 @@ void slow5_hdr_free(struct slow5_hdr *header) {
 
 /************************************* slow5 header data *************************************/
 
-//read slow5 header form file
+//read slow5 header from file
 int slow5_hdr_data_init(FILE *fp, char *buf, size_t *cap, struct slow5_hdr *header, uint32_t *hdr_len) {
 
     int ret = 0;

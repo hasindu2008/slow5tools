@@ -48,7 +48,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
         case READ:
             // add read attributes
             add_attribute(group_id,"run_id",slow5_hdr_get("run_id",0,header),H5T_C_S1);
-            add_attribute(group_id,"pore_type",slow5_hdr_get("pore_type",0,header),H5T_C_S1);
+//            add_attribute(group_id,"pore_type",slow5_hdr_get("pore_type",0,header),H5T_C_S1);
             break;
         case RAW:
             // add Raw attributes
@@ -243,7 +243,6 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
         if(i>0){
             status = H5Gclose (group_read);
         }
-
         i++;
         //to check if peak RAM increase over time
         //fprintf(stderr, "peak RAM = %.3f GB\n", slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
