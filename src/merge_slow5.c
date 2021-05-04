@@ -26,6 +26,7 @@
     "    -t, --threads=[INT]        number of threads -- 4\n"        \
     "    -s, --slow5                convert to slow5\n" \
     "    -c, --compress             convert to compressed blow5\n"   \
+    "    -l, --lossy                do not store auxiliary fields\n" \
     "    -o, --output=[FILE]        output converted contents to FILE -- stdout\n" \
     "    -f, --temp=[DIR]           path to crete a directory to write temporary files"                   \
 
@@ -36,19 +37,14 @@ typedef struct {
     int32_t num_thread;
     std::string output_dir;
     std::vector<std::vector<size_t>> list;
-} global_thread;
-
-/* data structure for a batch of reads*/
-typedef struct {
-    int64_t n_batch;    // number of records in this batch
-    int64_t n_err;      // number of errors in this batch
+    int lossy;
     std::vector<std::string> slow5_files;
-} data_thread;
+    int64_t n_batch;    // number of files
+} global_thread;
 
 /* argument wrapper for the multithreaded framework used for data processing */
 typedef struct {
     global_thread * core;
-    data_thread * db;
     int32_t starti;
     int32_t endi;
     int32_t thread_index;
@@ -71,7 +67,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
         }
     }
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, FORMAT_BINARY);
-    slow5_hdr_initialize(slow5File->header, 1);
+    slow5_hdr_initialize(slow5File->header, pthreadArg->core->lossy);
 
     if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, FORMAT_BINARY, COMPRESS_NONE) == -1){
         ERROR("Could not write the header to temp file %s\n", output_path);
@@ -79,16 +75,16 @@ void merge_slow5(pthread_arg* pthreadArg) {
     }
 
     for(int32_t i=pthreadArg->starti; i<pthreadArg->endi; i++) { //iterate over slow5files
-        slow5_file_t *slow5File_i = slow5_open(pthreadArg->db->slow5_files[i].c_str(), "r");
+        slow5_file_t *slow5File_i = slow5_open(pthreadArg->core->slow5_files[i].c_str(), "r");
         if (!slow5File_i) {
-            ERROR("cannot open %s. skipping...\n", pthreadArg->db->slow5_files[i].c_str());
+            ERROR("cannot open %s. skipping...\n", pthreadArg->core->slow5_files[i].c_str());
             continue;
         }
         struct slow5_rec *read = NULL;
         struct press* compress = press_init(COMPRESS_NONE);
         int ret;
         while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
-            read->read_group = pthreadArg->core->list[i-pthreadArg->starti][read->read_group]; //write records of the ith slow5file with the updated read_group value
+            read->read_group = pthreadArg->core->list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
             if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, FORMAT_BINARY, compress) == -1) {
                 slow5_rec_free(read);
                 ERROR("Could not write records to temp file %s\n", output_path);
@@ -111,25 +107,24 @@ void* pthread_single_merge(void* voidargs) {
     pthread_exit(0);
 }
 
-void pthread_data(global_thread * core, data_thread * db){
+void pthread_data(global_thread * core){
     //create threads
     pthread_t tids[core->num_thread];
     pthread_arg pt_args[core->num_thread];
     int32_t t, ret;
     int32_t i = 0;
     int32_t num_thread = core->num_thread;
-    int32_t step = (db->n_batch + num_thread - 1) / num_thread;
+    int32_t step = (core->n_batch + num_thread - 1) / num_thread;
     //todo : check for higher num of threads than the data
     //current works but many threads are created despite
 
     //set the data structures
     for (t = 0; t < num_thread; t++) {
         pt_args[t].core = core;
-        pt_args[t].db = db;
         pt_args[t].starti = i;
         i += step;
-        if (i > db->n_batch) {
-            pt_args[t].endi = db->n_batch;
+        if (i > core->n_batch) {
+            pt_args[t].endi = core->n_batch;
         } else {
             pt_args[t].endi = i;
         }
@@ -151,18 +146,17 @@ void pthread_data(global_thread * core, data_thread * db){
 }
 
 /* process all reads in the given batch db */
-void work_data(global_thread* core, data_thread* db){
+void work_data(global_thread* core){
     if (core->num_thread == 1) {
         pthread_arg pt_args;
         pt_args.core = core;
         pt_args.thread_index = 0;
-        pt_args.db = db;
         pt_args.starti = 0;
-        pt_args.endi = db->slow5_files.size();
+        pt_args.endi = core->slow5_files.size();
         merge_slow5(&pt_args);
     }
     else {
-        pthread_data(core,db);
+        pthread_data(core);
     }
 }
 
@@ -200,8 +194,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {"threads", required_argument, NULL, 't' }, //1
             {"slow5", no_argument, NULL, 's'},    //2
             {"compress", no_argument, NULL, 'c'},  //3
-            {"output", required_argument, NULL, 'o'}, //4
-            {"temp", required_argument, NULL, 'f'}, //5
+            { "lossy", no_argument, NULL, 'l'}, //4
+            {"output", required_argument, NULL, 'o'}, //5
+            {"temp", required_argument, NULL, 'f'}, //6
             {NULL, 0, NULL, 0 }
     };
 
@@ -213,6 +208,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     char *arg_fname_out = NULL;
     char *arg_num_threads = NULL;
     char *arg_temp_dir = NULL;
+    int lossy = 0;
 
     size_t num_threads = DEFAULT_NUM_THREADS;
 
@@ -220,7 +216,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "scht:o:f:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "schlt:o:f:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -241,6 +237,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 'c':
                 pressMethod = COMPRESS_GZIP;
+                break;
+            case 'l':
+                lossy = 1;
                 break;
             case 'o':
                 arg_fname_out = optarg;
@@ -308,7 +307,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int check_dir = mkdir(output_dir.c_str(),0777);
     // check if directory is created or not
     if (check_dir) {
-        printf("Cannot create temporary directory. Exiting...\n");
+        ERROR("Cannot create temporary directory. Exiting...%s\n", "");
         exit(1);
     }
 
@@ -336,8 +335,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         arg_fname_out = &stdout_s[0];
     }
 
+
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, arg_fname_out, format_out);
-    slow5_hdr_initialize(slow5File->header, 1);
+    slow5_hdr_initialize(slow5File->header, lossy);
     slow5File->header->num_read_groups = 0;
     std::vector<std::vector<size_t>> list;
 
@@ -387,16 +387,17 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     core.num_thread = num_threads;
     core.output_dir = output_dir;
     core.list = list;
-
-    data_thread db = {0};
-    db.slow5_files = slow5_files;
-    db.n_batch = slow5_files.size();
+    core.lossy = lossy;
+    core.slow5_files = slow5_files;
+    core.n_batch = slow5_files.size();
 
     // Fetch records for read ids in the batch
-    work_data(&core, &db);
+    work_data(&core);
 
     slow5_files.clear();
     list_all_items(output_dir, slow5_files, 0, NULL);
+
+    fprintf(stderr, "merging\n");
     for(size_t i=0; i<slow5_files.size(); i++){
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
@@ -406,7 +407,10 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         struct slow5_rec *read = NULL;
         struct press* compress = press_init(pressMethod);
         int ret;
+        int count =0;
         while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+            count++;
+//            if(count==3)break;
             if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, format_out, compress) == -1) {
                 slow5_rec_free(read);
                 ERROR("Could not write records to %s\n", arg_fname_out);
@@ -417,12 +421,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         press_free(compress);
         slow5_close(slow5File_i);
 
-        int del = remove(slow5_files[i].c_str());
-        if (del) {
-            fprintf(stderr, "Deleting temporary file %s failed\n", slow5_files[i].c_str());
-            perror("");
-            exit(EXIT_FAILURE);
-        }
+//        int del = remove(slow5_files[i].c_str());
+//        if (del) {
+//            ERROR("Deleting temporary file %s failed\n", slow5_files[i].c_str());
+//            perror("");
+//            exit(EXIT_FAILURE);
+//        }
     }
 
     if(format_out == FORMAT_BINARY){
@@ -430,12 +434,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
     slow5_close(slow5File);
 
-    int del = rmdir(output_dir.c_str());
-    if (del) {
-        fprintf(stderr, "Deleting temp directory failed\n");
-        perror("");
-        exit(EXIT_FAILURE);
-    }
+//    int del = rmdir(output_dir.c_str());
+//    if (del) {
+//        ERROR("Deleting temp directory failed%s\n", "");
+//        perror("");
+//        exit(EXIT_FAILURE);
+//    }
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
