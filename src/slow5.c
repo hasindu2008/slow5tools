@@ -3061,7 +3061,7 @@ char *data_to_str(uint8_t *data, enum aux_type type, uint64_t len, size_t *str_l
             *str_len = asprintf_mine(&str, "%" PRIu64, *(uint64_t *) data);
         }
     } else if (type == FLOAT) {
-        if(isnanf(*(float *) data)){
+        if(isnan(*(float *) data)){
             *str_len = asprintf_mine(&str, ".");
         }
         else {
