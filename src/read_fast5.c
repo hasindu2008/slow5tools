@@ -112,7 +112,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
                     free(value.attr_string);
                     flag_value_string = 0;
                 }
-                value.attr_string = (char*)".";
+                value.attr_string = (char*)"";
             }
             break;
         case H5T_FLOAT:
@@ -811,170 +811,234 @@ void slow5_hdr_initialize(slow5_hdr *header, int lossy){
 
     struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
     if(lossy == 0) {
-        slow5_aux_meta_add(aux_meta, "channel_number", STRING);
-        slow5_aux_meta_add(aux_meta, "median_before", DOUBLE);
-        slow5_aux_meta_add(aux_meta, "read_number", INT32_T);
-        slow5_aux_meta_add(aux_meta, "start_mux", UINT8_T);
-        slow5_aux_meta_add(aux_meta, "start_time", UINT64_T);
+        if(slow5_aux_meta_add(aux_meta, "channel_number", STRING)){
+            ERROR("Could not initialize the record attribute '%s'", "channel_number");
+            exit(EXIT_FAILURE);
+        }
+        if(slow5_aux_meta_add(aux_meta, "median_before", DOUBLE)){
+            ERROR("Could not initialize the record attribute '%s'", "median_before");
+            exit(EXIT_FAILURE);
+        }
+        if(slow5_aux_meta_add(aux_meta, "read_number", INT32_T)){
+            ERROR("Could not initialize the record attribute '%s'", "read_number");
+            exit(EXIT_FAILURE);
+        }
+        if(slow5_aux_meta_add(aux_meta, "start_mux", UINT8_T)){
+            ERROR("Could not initialize the record attribute '%s'", "start_mux");
+            exit(EXIT_FAILURE);
+        }
+        if(slow5_aux_meta_add(aux_meta, "start_time", UINT64_T)){
+            ERROR("Could not initialize the record attribute '%s'", "start_time");
+            exit(EXIT_FAILURE);
+        }
         //    todo - add end_reason enum
     }
 
     header->aux_meta = aux_meta;
 
     //  main stuff
-    if(slow5_hdr_add_attr("file_format", header) || slow5_hdr_set("file_format", ".", 0, header)){
+    if(slow5_hdr_add_attr("file_format", header) || slow5_hdr_set("file_format", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "file_format");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("file_version", header) || slow5_hdr_set("file_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("file_version", header) || slow5_hdr_set("file_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "file_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("file_type", header) || slow5_hdr_set("file_type", ".", 0, header)){
+    if(slow5_hdr_add_attr("file_type", header) || slow5_hdr_set("file_type", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "file_type");
+        exit(EXIT_FAILURE);
     }
     //    READ
-    if(slow5_hdr_add_attr("run_id", header) || slow5_hdr_set("run_id", ".", 0, header)){
+    if(slow5_hdr_add_attr("run_id", header) || slow5_hdr_set("run_id", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "run_id");
+        exit(EXIT_FAILURE);
     }
     //    CONTEXT_TAGS
-    if(slow5_hdr_add_attr("sample_frequency", header) || slow5_hdr_set("sample_frequency", ".", 0, header)){
+    if(slow5_hdr_add_attr("sample_frequency", header) || slow5_hdr_set("sample_frequency", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "sample_frequency");
+        exit(EXIT_FAILURE);
     }
     //additional attributes in 2.0
-    if(slow5_hdr_add_attr("filename", header) || slow5_hdr_set("filename", ".", 0, header)){
+    if(slow5_hdr_add_attr("filename", header) || slow5_hdr_set("filename", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "filename");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("experiment_kit", header) || slow5_hdr_set("experiment_kit", ".", 0, header)){
+    if(slow5_hdr_add_attr("experiment_kit", header) || slow5_hdr_set("experiment_kit", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "experiment_kit");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("user_filename_input", header) || slow5_hdr_set("user_filename_input", ".", 0, header)){
+    if(slow5_hdr_add_attr("user_filename_input", header) || slow5_hdr_set("user_filename_input", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "user_filename_input");
+        exit(EXIT_FAILURE);
     }
     //additional attributes in 2.2
-    if(slow5_hdr_add_attr("barcoding_enabled", header) || slow5_hdr_set("barcoding_enabled", ".", 0, header)){
+    if(slow5_hdr_add_attr("barcoding_enabled", header) || slow5_hdr_set("barcoding_enabled", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "barcoding_enabled");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("experiment_duration_set", header) || slow5_hdr_set("experiment_duration_set", ".", 0, header)){
+    if(slow5_hdr_add_attr("experiment_duration_set", header) || slow5_hdr_set("experiment_duration_set", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "experiment_duration_set");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("experiment_type", header) || slow5_hdr_set("experiment_type", ".", 0, header)){
+    if(slow5_hdr_add_attr("experiment_type", header) || slow5_hdr_set("experiment_type", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "experiment_type");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("local_basecalling", header) || slow5_hdr_set("local_basecalling", ".", 0, header)){
+    if(slow5_hdr_add_attr("local_basecalling", header) || slow5_hdr_set("local_basecalling", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "local_basecalling");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("package", header) || slow5_hdr_set("package", ".", 0, header)){
+    if(slow5_hdr_add_attr("package", header) || slow5_hdr_set("package", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "package");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("package_version", header) || slow5_hdr_set("package_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("package_version", header) || slow5_hdr_set("package_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "package_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("sequencing_kit", header) || slow5_hdr_set("sequencing_kit", ".", 0, header)){
+    if(slow5_hdr_add_attr("sequencing_kit", header) || slow5_hdr_set("sequencing_kit", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "sequencing_kit");
+        exit(EXIT_FAILURE);
     }
     //    TRACKING_ID
-    if(slow5_hdr_add_attr("asic_id", header) || slow5_hdr_set("asic_id", ".", 0, header)){
+    if(slow5_hdr_add_attr("asic_id", header) || slow5_hdr_set("asic_id", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "asic_id");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("asic_id_eeprom", header) || slow5_hdr_set("asic_id_eeprom", ".", 0, header)){
+    if(slow5_hdr_add_attr("asic_id_eeprom", header) || slow5_hdr_set("asic_id_eeprom", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "asic_id_eeprom");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("asic_temp", header) || slow5_hdr_set("asic_temp", ".", 0, header)){
+    if(slow5_hdr_add_attr("asic_temp", header) || slow5_hdr_set("asic_temp", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "asic_temp");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("auto_update", header) || slow5_hdr_set("auto_update", ".", 0, header)){
+    if(slow5_hdr_add_attr("auto_update", header) || slow5_hdr_set("auto_update", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "auto_update");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("auto_update_source", header) || slow5_hdr_set("auto_update_source", ".", 0, header)){
+    if(slow5_hdr_add_attr("auto_update_source", header) || slow5_hdr_set("auto_update_source", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "auto_update_source");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("bream_is_standard", header) || slow5_hdr_set("bream_is_standard", ".", 0, header)){
+    if(slow5_hdr_add_attr("bream_is_standard", header) || slow5_hdr_set("bream_is_standard", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "bream_is_standard");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("device_id", header) || slow5_hdr_set("device_id", ".", 0, header)){
+    if(slow5_hdr_add_attr("device_id", header) || slow5_hdr_set("device_id", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "device_id");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("distribution_version", header) || slow5_hdr_set("distribution_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("distribution_version", header) || slow5_hdr_set("distribution_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "distribution_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("exp_script_name", header) || slow5_hdr_set("exp_script_name", ".", 0, header)){
+    if(slow5_hdr_add_attr("exp_script_name", header) || slow5_hdr_set("exp_script_name", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "exp_script_name");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("exp_script_purpose", header) || slow5_hdr_set("exp_script_purpose", ".", 0, header)){
+    if(slow5_hdr_add_attr("exp_script_purpose", header) || slow5_hdr_set("exp_script_purpose", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "exp_script_purpose");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("exp_start_time", header) || slow5_hdr_set("exp_start_time", ".", 0, header)){
+    if(slow5_hdr_add_attr("exp_start_time", header) || slow5_hdr_set("exp_start_time", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "exp_start_time");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("flow_cell_id", header) || slow5_hdr_set("flow_cell_id", ".", 0, header)){
+    if(slow5_hdr_add_attr("flow_cell_id", header) || slow5_hdr_set("flow_cell_id", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "flow_cell_id");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("heatsink_temp", header) || slow5_hdr_set("heatsink_temp", ".", 0, header)){
+    if(slow5_hdr_add_attr("heatsink_temp", header) || slow5_hdr_set("heatsink_temp", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "heatsink_temp");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("hostname", header) || slow5_hdr_set("hostname", ".", 0, header)){
+    if(slow5_hdr_add_attr("hostname", header) || slow5_hdr_set("hostname", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "hostname");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("installation_type", header) || slow5_hdr_set("installation_type", ".", 0, header)){
+    if(slow5_hdr_add_attr("installation_type", header) || slow5_hdr_set("installation_type", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "installation_type");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("local_firmware_file", header) || slow5_hdr_set("local_firmware_file", ".", 0, header)){
+    if(slow5_hdr_add_attr("local_firmware_file", header) || slow5_hdr_set("local_firmware_file", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "local_firmware_file");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("operating_system", header) || slow5_hdr_set("operating_system", ".", 0, header)){
+    if(slow5_hdr_add_attr("operating_system", header) || slow5_hdr_set("operating_system", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "operating_system");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("protocol_run_id", header) || slow5_hdr_set("protocol_run_id", ".", 0, header)){
+    if(slow5_hdr_add_attr("protocol_run_id", header) || slow5_hdr_set("protocol_run_id", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "protocol_run_id");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("protocols_version", header) || slow5_hdr_set("protocols_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("protocols_version", header) || slow5_hdr_set("protocols_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "protocols_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("tracking_id_run_id", header) || slow5_hdr_set("tracking_id_run_id", ".", 0, header)){
+    if(slow5_hdr_add_attr("tracking_id_run_id", header) || slow5_hdr_set("tracking_id_run_id", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "tracking_id_run_id");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("usb_config", header) || slow5_hdr_set("usb_config", ".", 0, header)){
+    if(slow5_hdr_add_attr("usb_config", header) || slow5_hdr_set("usb_config", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "usb_config");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("version", header) || slow5_hdr_set("version", ".", 0, header)){
+    if(slow5_hdr_add_attr("version", header) || slow5_hdr_set("version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "version");
+        exit(EXIT_FAILURE);
     }
     //additional attributes in 2.0
-    if(slow5_hdr_add_attr("bream_core_version", header) || slow5_hdr_set("bream_core_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("bream_core_version", header) || slow5_hdr_set("bream_core_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "bream_core_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("bream_ont_version", header) || slow5_hdr_set("bream_ont_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("bream_ont_version", header) || slow5_hdr_set("bream_ont_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "bream_ont_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("bream_prod_version", header) || slow5_hdr_set("bream_prod_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("bream_prod_version", header) || slow5_hdr_set("bream_prod_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "bream_prod_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("bream_rnd_version", header) || slow5_hdr_set("bream_rnd_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("bream_rnd_version", header) || slow5_hdr_set("bream_rnd_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "bream_rnd_version");
+        exit(EXIT_FAILURE);
     }
     //additional attributes in 2.2
-    if(slow5_hdr_add_attr("asic_version", header) || slow5_hdr_set("asic_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("asic_version", header) || slow5_hdr_set("asic_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "asic_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("configuration_version", header) || slow5_hdr_set("configuration_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("configuration_version", header) || slow5_hdr_set("configuration_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "configuration_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("device_type", header) || slow5_hdr_set("device_type", ".", 0, header)){
+    if(slow5_hdr_add_attr("device_type", header) || slow5_hdr_set("device_type", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "device_type");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("distribution_status", header) || slow5_hdr_set("distribution_status", ".", 0, header)){
+    if(slow5_hdr_add_attr("distribution_status", header) || slow5_hdr_set("distribution_status", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "distribution_status");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("flow_cell_product_code", header) || slow5_hdr_set("flow_cell_product_code", ".", 0, header)){
+    if(slow5_hdr_add_attr("flow_cell_product_code", header) || slow5_hdr_set("flow_cell_product_code", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "flow_cell_product_code");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("guppy_version", header) || slow5_hdr_set("guppy_version", ".", 0, header)){
+    if(slow5_hdr_add_attr("guppy_version", header) || slow5_hdr_set("guppy_version", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "guppy_version");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("protocol_group_id", header) || slow5_hdr_set("protocol_group_id", ".", 0, header)){
+    if(slow5_hdr_add_attr("protocol_group_id", header) || slow5_hdr_set("protocol_group_id", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "protocol_group_id");
+        exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_add_attr("sample_id", header) || slow5_hdr_set("sample_id", ".", 0, header)){
+    if(slow5_hdr_add_attr("sample_id", header) || slow5_hdr_set("sample_id", "", 0, header)){
         ERROR("Could not initialize the header attribute '%s'", "sample_id");
+        exit(EXIT_FAILURE);
     }
 
 }
