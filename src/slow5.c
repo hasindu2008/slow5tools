@@ -1766,7 +1766,6 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
         free(read_mem);
 
     } else if (s5p->format == FORMAT_BINARY) {
-
         if (*read == NULL) {
             // Allocate memory for read
             *read = (struct slow5_rec *) calloc(1, sizeof **read);
@@ -1774,6 +1773,11 @@ int slow5_get_next(struct slow5_rec **read, struct slow5_file *s5p) {
             // Free previously allocated read id
             free((*read)->read_id);
             (*read)->read_id = NULL;
+            if ((*read)->aux_map != NULL) {
+                // Free previously allocated auxiliary data
+                slow5_rec_aux_free((*read)->aux_map);
+                (*read)->aux_map = NULL;
+            }
         }
 
         slow5_rec_size_t record_size;
