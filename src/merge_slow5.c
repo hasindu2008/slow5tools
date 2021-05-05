@@ -261,15 +261,20 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
     std::string output_file;
-    std::string output_dir;
     std::string extension;
+
+    char buff[20];
+    time_t now = time(NULL);
+    strftime(buff, 20, "%H%M%S", localtime(&now));
+    std::string tstamp = buff;
+    std::string output_dir = "temp_"+tstamp;
+
     if(arg_fname_out){
         output_file = std::string(arg_fname_out);
-        output_dir = output_file.substr(0,output_file.find_last_of('/')) + "/temp";
         extension = output_file.substr(output_file.length()-6, output_file.length());
     }
     if(arg_temp_dir){
-        output_dir = std::string(arg_temp_dir) + "/temp";
+        output_dir = std::string(arg_temp_dir) + "/" + output_dir;
     }
     fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
 
@@ -421,12 +426,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         press_free(compress);
         slow5_close(slow5File_i);
 
-//        int del = remove(slow5_files[i].c_str());
-//        if (del) {
-//            ERROR("Deleting temporary file %s failed\n", slow5_files[i].c_str());
-//            perror("");
-//            exit(EXIT_FAILURE);
-//        }
+        int del = remove(slow5_files[i].c_str());
+        if (del) {
+            ERROR("Deleting temporary file %s failed\n", slow5_files[i].c_str());
+            perror("");
+            exit(EXIT_FAILURE);
+        }
     }
 
     if(format_out == FORMAT_BINARY){
@@ -434,12 +439,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
     slow5_close(slow5File);
 
-//    int del = rmdir(output_dir.c_str());
-//    if (del) {
-//        ERROR("Deleting temp directory failed%s\n", "");
-//        perror("");
-//        exit(EXIT_FAILURE);
-//    }
+    int del = rmdir(output_dir.c_str());
+    if (del) {
+        ERROR("Deleting temp directory failed%s\n", "");
+        perror("");
+        exit(EXIT_FAILURE);
+    }
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
