@@ -51,8 +51,7 @@ typedef struct {
 } pthread_arg;
 
 void merge_slow5(pthread_arg* pthreadArg) {
-    fprintf(stderr, "thread index = %d\n", pthreadArg->thread_index);
-
+//    fprintf(stderr, "thread index = %d\n", pthreadArg->thread_index);
     std::string out = pthreadArg->core->output_dir;
     out += "/" + std::to_string(pthreadArg->thread_index) + ".blow5";
     const char* output_path = out.c_str();
@@ -63,7 +62,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
         slow5_file_pointer = fopen(output_path, "w");
         if (!slow5_file_pointer) {
             ERROR("Output file %s could not be opened - %s.", output_path, strerror(errno));
-            return;
+            exit(EXIT_FAILURE);
         }
     }
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, FORMAT_BINARY);
@@ -78,7 +77,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
         slow5_file_t *slow5File_i = slow5_open(pthreadArg->core->slow5_files[i].c_str(), "r");
         if (!slow5File_i) {
             ERROR("cannot open %s. skipping...\n", pthreadArg->core->slow5_files[i].c_str());
-            continue;
+            exit(EXIT_FAILURE);
         }
         struct slow5_rec *read = NULL;
         struct press* compress = press_init(COMPRESS_NONE);
@@ -88,7 +87,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
             if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, FORMAT_BINARY, compress) == -1) {
                 slow5_rec_free(read);
                 ERROR("Could not write records to temp file %s\n", output_path);
-                return;
+                exit(EXIT_FAILURE);
             }
         }
         slow5_rec_free(read);
@@ -340,16 +339,22 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         arg_fname_out = &stdout_s[0];
     }
 
-
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, arg_fname_out, format_out);
     slow5_hdr_initialize(slow5File->header, lossy);
     slow5File->header->num_read_groups = 0;
     std::vector<std::vector<size_t>> list;
+    std::vector<std::string> merging_slow5_files;
+    size_t index = 0;
 
     for(size_t i=0; i<num_slow5s; i++) { //iterate over slow5files
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
-            ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+            ERROR("[Skip file]: cannot open %s. skipping...\n",slow5_files[i].c_str());
+            continue;
+        }
+        if(lossy==0 && slow5File_i->header->aux_meta == NULL){
+            WARNING("[Skip file]: %s has no auxiliary fields. Hence not merged.", slow5_files[i].c_str());
+            slow5_close(slow5File_i);
             continue;
         }
 
@@ -365,7 +370,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 char* run_id_k = slow5_hdr_get("run_id", k, slow5File->header);
                 if(strcmp(run_id_j,run_id_k) == 0){
                     flag_run_id_found = 1;
-                    list[i][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
+                    list[index][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
                     break;
                 }
             }
@@ -375,10 +380,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 if(new_read_group != read_group_count){ //sanity check
                     WARNING("New read group number is not equal to number of groups; something's wrong\n%s", "");
                 }
-                list[i][j] = new_read_group;
+                list[index][j] = new_read_group;
             }
         }
         slow5_close(slow5File_i);
+        index++;
+        merging_slow5_files.push_back(slow5_files[i]);
     }
 
     //now write the header to the slow5File. Use Binary non compress method for fast writing
@@ -393,8 +400,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     core.output_dir = output_dir;
     core.list = list;
     core.lossy = lossy;
-    core.slow5_files = slow5_files;
-    core.n_batch = slow5_files.size();
+    core.slow5_files = merging_slow5_files;
+    core.n_batch = merging_slow5_files.size();
 
     // Fetch records for read ids in the batch
     work_data(&core);
@@ -402,7 +409,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     slow5_files.clear();
     list_all_items(output_dir, slow5_files, 0, NULL);
 
-    fprintf(stderr, "merging\n");
     for(size_t i=0; i<slow5_files.size(); i++){
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
@@ -412,10 +418,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         struct slow5_rec *read = NULL;
         struct press* compress = press_init(pressMethod);
         int ret;
-        int count =0;
         while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
-            count++;
-//            if(count==3)break;
             if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, format_out, compress) == -1) {
                 slow5_rec_free(read);
                 ERROR("Could not write records to %s\n", arg_fname_out);

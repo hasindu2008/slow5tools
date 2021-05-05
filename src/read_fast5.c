@@ -157,7 +157,6 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
             char buf[50];
             sprintf(buf,"%.1f", value.attr_double);
             WARNING("Converting the attribute %s/%s from H5T_FLOAT to string ",operator_data->group_name,name);
-//            operator_data->slow5_header->file_version = buf);
             if(slow5_hdr_set("file_version", buf, 0, operator_data->slow5File->header) == -1){
                 WARNING("file_version attribute value could not be set in the slow5 header %s", "");
             }
