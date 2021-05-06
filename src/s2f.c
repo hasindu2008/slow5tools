@@ -11,7 +11,6 @@
 #include "error.h"
 #include "cmd.h"
 #include "slow5.h"
-#include "slow5_extra.h"
 #include "read_fast5.h"
 
 
@@ -279,7 +278,6 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 }
 
 void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
-    double realtime0 = slow5_realtime();
     int64_t num_slow5_files = slow5_files.size();
 
     //create processes
@@ -364,8 +362,6 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
         }
     }
 //    skip_forking:
-
-    fprintf(stderr, "[%s] Parallel converting to fast5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
 }
 
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
@@ -456,16 +452,20 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
-    double realtime0 = slow5_realtime();
     reads_count readsCount;
     std::vector<std::string> slow5_files;
 
+    //measure file listing time
+    double realtime0 = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], slow5_files, 0, NULL);
     }
-
     fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
+
+    //measure s2f conversion time
+    init_realtime = slow5_realtime();
     s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
+    fprintf(stderr, "[%s] Converting %ld s/blow5 files using %d process - took %.3fs\n", __func__, slow5_files.size(), iop, slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
 }

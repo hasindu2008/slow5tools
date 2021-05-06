@@ -276,7 +276,6 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 
 void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
         meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod, size_t lossy) {
-    double realtime0 = slow5_realtime();
     int64_t num_slow5_files = slow5_files.size();
 
     //create processes
@@ -360,8 +359,6 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
             exit(EXIT_FAILURE);
         }
     }
-//    skip_forking:
-    fprintf(stderr, "[%s] Parallel splitting slow5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
 }
 
 int split_main(int argc, char **argv, struct program_meta *meta){
@@ -486,7 +483,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             mkdir(arg_dir_out, 0700);
         }
     }
-    double realtime0 = slow5_realtime();
     reads_count readsCount;
     std::vector<std::string> slow5_files;
 
@@ -498,10 +494,16 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         MESSAGE(stderr, "an input multi read group slow5 files will be split into single read group slow5 files %s","");
     }
 
+    //measure file listing time
+    double realtime0 = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], slow5_files, 0, NULL);
     }
     fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
+
+    //measure slow5 splitting time
     split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod, lossy);
+    fprintf(stderr, "[%s] Splitting %ld s/blow5 files using %d process - took %.3fs\n", __func__, slow5_files.size(), iop, slow5_realtime() - init_realtime);
+
     return EXIT_SUCCESS;
 }
