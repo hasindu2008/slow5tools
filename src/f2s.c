@@ -61,7 +61,6 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
             readsCount->bad_5_file++;
             continue;
         }
-
         if(output_dir){
             if (fast5_file.is_multi_fast5) {
                 std::string slow5file = fast5_files[i].substr(fast5_files[i].find_last_of('/'),

@@ -66,6 +66,8 @@ struct operator_obj {
     int *flag_lossy;
     hsize_t* num_read_groups;
     size_t* nreads;
+    size_t* warning_flag_pore_type;
+    size_t* warning_flag_end_reason;
     slow5_file_t* slow5File;
 };
 
