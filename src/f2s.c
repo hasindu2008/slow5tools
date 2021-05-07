@@ -348,6 +348,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             mkdir(arg_dir_out, 0700);
         }
     }
+    if(lossy){
+        WARNING("[%s] Flag 'lossy' is set. Hence, auxiliary fields are not stored", SLOW5_FILE_FORMAT_SHORT);
+    }
 
     //measure file listing time
     init_realtime = slow5_realtime();

@@ -470,8 +470,7 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
                 WARNING("[%s] Not Stored: Attribute %s/%s is not stored", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
             }
             *(operator_data->warning_flag_end_reason) = *(operator_data->warning_flag_end_reason) + 1;
-        }
-        else{
+        } else if(strcmp("read_number",name) && strcmp("start_mux",name) && strcmp("start_time",name) && strcmp("median_before",name) && strcmp("channel_number",name)){
             WARNING("[%s] Not Stored: Attribute %s/%s is not stored", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
         }
     }
