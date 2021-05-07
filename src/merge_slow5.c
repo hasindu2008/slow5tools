@@ -317,17 +317,17 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     //measure file listing time
     double realtime0 = slow5_realtime();
-    std::vector<std::string> slow5_files;
+    std::vector<std::string> files;
     for (int i = optind; i < argc; ++i) {
-        list_all_items(argv[i], slow5_files, 0, NULL);
+        list_all_items(argv[i], files, 0, NULL);
     }
-    fprintf(stderr, "[%s] %ld slow5/blow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
-    size_t num_slow5s = slow5_files.size();
-    if(num_threads >= num_slow5s){
-        num_threads = num_threads/2;
-    }
+    fprintf(stderr, "[%s] %ld files found - took %.3fs\n", __func__, files.size(), slow5_realtime() - realtime0);
+
 
     //determine new read group numbers
+    //measure read_group number allocation time
+    realtime0 = slow5_realtime();
+
     FILE* slow5_file_pointer = stdout;
     if(arg_fname_out){
         slow5_file_pointer = fopen(arg_fname_out, "w");
@@ -344,18 +344,17 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     slow5_hdr_initialize(slow5File->header, lossy);
     slow5File->header->num_read_groups = 0;
     std::vector<std::vector<size_t>> list;
-
-    //measure read_group number allocation time
-    realtime0 = slow5_realtime();
-
-    for(size_t i=0; i<num_slow5s; i++) { //iterate over slow5files
-        slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+    size_t index = 0;
+    std::vector<std::string> slow5_files;
+    size_t num_files = files.size();
+    for(size_t i=0; i<num_files; i++) { //iterate over slow5files
+        slow5_file_t* slow5File_i = slow5_open(files[i].c_str(), "r");
         if(!slow5File_i){
-            ERROR("[Skip file]: cannot open %s. skipping...\n",slow5_files[i].c_str());
+            ERROR("[Skip file]: cannot open %s. skipping...\n",files[i].c_str());
             continue;
         }
         if(lossy==0 && slow5File_i->header->aux_meta == NULL){
-            WARNING("[Skip file]: %s has no auxiliary fields. Hence not merged.", slow5_files[i].c_str());
+            WARNING("[Skip file]: %s has no auxiliary fields. Hence not merged.", files[i].c_str());
             slow5_close(slow5File_i);
             exit(EXIT_FAILURE);
         }
@@ -372,7 +371,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 char* run_id_k = slow5_hdr_get("run_id", k, slow5File->header);
                 if(strcmp(run_id_j,run_id_k) == 0){
                     flag_run_id_found = 1;
-                    list[i][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
+                    list[index][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
                     break;
                 }
             }
@@ -382,10 +381,13 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 if(new_read_group != read_group_count){ //sanity check
                     WARNING("New read group number is not equal to number of groups; something's wrong\n%s", "");
                 }
-                list[i][j] = new_read_group;
+                list[index][j] = new_read_group;
             }
         }
         slow5_close(slow5File_i);
+        index++;
+        slow5_files.push_back(files[i]);
+
     }
 
     fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
@@ -394,6 +396,11 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){
         ERROR("Could not write the header to %s\n", arg_fname_out);
         exit(EXIT_FAILURE);
+    }
+
+    size_t num_slow5s = slow5_files.size();
+    if(num_threads >= num_slow5s){
+        num_threads = num_threads/2;
     }
 
     // Setup multithreading structures
