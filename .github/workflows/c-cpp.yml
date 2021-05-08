@@ -18,7 +18,7 @@ jobs:
     - name: env
       run: lsb_release -a &&  ldd --version && gcc --version && g++ --version
     - name: build
-      run: autoreconf && ./configure && make -j8
+      run: autoreconf --install && ./configure && make -j8
     - name: test
       run: make test
   ubuntu_16:
@@ -29,7 +29,7 @@ jobs:
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
     - name: build
-      run: autoreconf && ./configure && make -j8
+      run: autoreconf --install && ./configure && make -j8
     - name: test
       run: make test
   ubuntu_18:
