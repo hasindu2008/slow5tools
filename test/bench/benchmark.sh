@@ -28,21 +28,21 @@ mkdir "$OUT_DIR"
 cd "$OUT_DIR" || exit
 
 # Create slow5 files if not already there
-if [ ! -e "$SLOW5_FILE" ]; then
-    echo 'Creating slow5' 
-	test -d tmp/ && rm -rf tmp/
-	mkdir tmp/
-    command time -v "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" --lossy -d tmp/ --iop 64  2> f2s.slow5.stderr
-    command time -v "$SLOW5TOOLS_PATH"  merge tmp/ > "$SLOW5_FILE" 2>> f2s.slow5.stderr
-	rm -rf tmp/
-fi
 if [ ! -e "$BLOW5_FILE" ]; then
     echo 'Creating blow5'
-    command time -v "$SLOW5TOOLS_PATH" view "$SLOW5_FILE" --to blow5 -c none > "$BLOW5_FILE" 2> f2s.blow5.stderr
+	test -d tmp/ && rm -rf tmp/
+	mkdir tmp/
+    command time -v "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -d tmp/ --iop 64  2> f2s.blow5.stderr
+    command time -v "$SLOW5TOOLS_PATH"  merge -t64 tmp/ -o "$BLOW5_FILE" 2>> f2s.blow5.stderr
+	rm -rf tmp/
+fi
+if [ ! -e "$SLOW5_FILE" ]; then
+    echo 'Creating slow5'
+    command time -v "$SLOW5TOOLS_PATH" view "$BLOW5_FILE" --to slow5 > "$SLOW5_FILE" 2> f2s.slow5.stderr
 fi
 if [ ! -e "$CLOW5_FILE" ]; then
     echo 'Creating clow5'
-    command time -v "$SLOW5TOOLS_PATH" view "$SLOW5_FILE" --to blow5 -c gzip > "$CLOW5_FILE" 2> f2s.clow5.stderr
+    command time -v "$SLOW5TOOLS_PATH" view "$BLOW5_FILE" --to blow5 -c gzip > "$CLOW5_FILE" 2> f2s.clow5.stderr
 fi
 
 # Create index files if not already there
@@ -67,7 +67,7 @@ i=1
 while [ "$i" -le "32" ]; do
    clean_fscache
    echo "Extracting with $i threads"
-   command time -v "$SLOW5TOOLS_PATH" extract "-@$i" "$SLOW5_FILE" < "$READID_FILE" > /dev/null 2> "slow5.bench.stderr$i"
+   command time -v "$SLOW5TOOLS_PATH" extract "-t$i" "$SLOW5_FILE" < "$READID_FILE" > /dev/null 2> "slow5.bench.stderr$i"
    i=$((i*2))
 done
 
@@ -77,7 +77,7 @@ i=1
 while [ "$i" -le "32" ]; do
    clean_fscache
    echo "Extracting with $i threads"
-   command time -v "$SLOW5TOOLS_PATH" extract "-@$i" "$BLOW5_FILE" < "$READID_FILE" > /dev/null 2> "blow5.bench.stderr$i"
+   command time -v "$SLOW5TOOLS_PATH" extract "-t$i" "$BLOW5_FILE" < "$READID_FILE" > /dev/null 2> "blow5.bench.stderr$i"
    i=$((i*2))
 done
 
@@ -87,7 +87,7 @@ i=1
 while [ "$i" -le "32" ]; do
     clean_fscache
     echo "Extracting with $i threads"
-    command time -v "$SLOW5TOOLS_PATH" extract "-@$i" "$CLOW5_FILE" < "$READID_FILE" > /dev/null 2> "clow5.bench.stderr$i"
+    command time -v "$SLOW5TOOLS_PATH" extract "-t$i" "$CLOW5_FILE" < "$READID_FILE" > /dev/null 2> "clow5.bench.stderr$i"
     i=$((i*2))
 done
 

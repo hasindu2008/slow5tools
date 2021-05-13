@@ -24,7 +24,8 @@
     "    -o, --output=[dir]         output directory\n"              \
     "    -f INT                     split into n files\n"              \
     "    -r INT                     split into n reads\n"              \
-    "    -g                         split multi read group file into single read group files\n"              \
+    "    -g                         split multi read group file into single read group files\n" \
+    "    -l, --lossy                do not store auxiliary fields\n" \
     "    --iop INT                  number of I/O processes to read slow5 files\n" \
 
 static double init_realtime = 0;
@@ -40,7 +41,7 @@ typedef struct {
     size_t n;
 }meta_split_method;
 
-void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount, meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod) {
+void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount, meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod, size_t lossy) {
 
     readsCount->total_5 = args.endi-args.starti - 1;
     std::string extension = ".blow5";
@@ -93,7 +94,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, 0);
+                slow5_hdr_initialize(slow5File->header, lossy);
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
@@ -178,7 +179,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, 0);
+                slow5_hdr_initialize(slow5File->header, lossy);
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
@@ -233,7 +234,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, 0);
+                slow5_hdr_initialize(slow5File->header, lossy);
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
@@ -274,8 +275,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 }
 
 void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
-        meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod) {
-    double realtime0 = slow5_realtime();
+        meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod, size_t lossy) {
     int64_t num_slow5_files = slow5_files.size();
 
     //create processes
@@ -303,7 +303,7 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
     }
 
     if(iop==1){
-        split_child_worker(proc_args[0], slow5_files, output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod);
+        split_child_worker(proc_args[0], slow5_files, output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod, lossy);
 //        goto skip_forking;
         return;
     }
@@ -319,7 +319,7 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
             exit(EXIT_FAILURE);
         }
         if(pids[t]==0){ //child
-            split_child_worker(proc_args[t],slow5_files,output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod);
+            split_child_worker(proc_args[t],slow5_files,output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod, lossy);
             exit(EXIT_SUCCESS);
         }
         if(pids[t]>0){ //parent
@@ -359,8 +359,6 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
             exit(EXIT_FAILURE);
         }
     }
-//    skip_forking:
-    fprintf(stderr, "[%s] Parallel splitting slow5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
 }
 
 int split_main(int argc, char **argv, struct program_meta *meta){
@@ -398,6 +396,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {"compress", no_argument, NULL, 'c'},  //2
             {"output", required_argument, NULL, 'o' },  //3
             { "iop", required_argument, NULL, 0},   //4
+            { "lossy", no_argument, NULL, 'l'}, //5
             {NULL, 0, NULL, 0 }
     };
 
@@ -406,13 +405,15 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
     char opt;
     int iop = 1;
+    size_t lossy = 0;
+
     meta_split_method metaSplitMethod;
     // Default options
     enum slow5_fmt format_out = FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_NONE;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hscgf:r:o:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hscglf:r:o:", long_opts, &longindex)) != -1) {
         if (meta->debug) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -445,6 +446,9 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 'g':
                 metaSplitMethod.splitMethod = GROUP_SPLIT;
+                break;
+            case 'l':
+                lossy = 1;
                 break;
             case  0 :
                 if (longindex == 4) {
@@ -479,7 +483,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             mkdir(arg_dir_out, 0700);
         }
     }
-    double realtime0 = slow5_realtime();
     reads_count readsCount;
     std::vector<std::string> slow5_files;
 
@@ -491,10 +494,16 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         MESSAGE(stderr, "an input multi read group slow5 files will be split into single read group slow5 files %s","");
     }
 
+    //measure file listing time
+    double realtime0 = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], slow5_files, 0, NULL);
     }
     fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
-    split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod);
+
+    //measure slow5 splitting time
+    split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod, lossy);
+    fprintf(stderr, "[%s] Splitting %ld s/blow5 files using %d process - took %.3fs\n", __func__, slow5_files.size(), iop, slow5_realtime() - init_realtime);
+
     return EXIT_SUCCESS;
 }
