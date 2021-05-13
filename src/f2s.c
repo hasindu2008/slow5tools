@@ -147,7 +147,6 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
 }
 
 void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
-    double realtime0 = slow5_realtime();
     int64_t num_fast5_files = fast5_files.size();
 
     //create processes
@@ -231,10 +230,6 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
             exit(EXIT_FAILURE);
         }
     }
-//    skip_forking:
-
-    fprintf(stderr, "[%s] Parallel converting to slow5 is done - took %.3fs\n", __func__,  slow5_realtime() - realtime0);
-
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
@@ -343,9 +338,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     reads_count readsCount;
     std::vector<std::string> fast5_files;
-    init_realtime = slow5_realtime();
 
-    // Recursive way
     if(iop==1 && !arg_dir_out){
         WARNING("When converting multi-fast5 files with --iop=1 and -d=NULL, multiple headers will be written to stdout. It is recommended to set -d%s", ".");
     }
@@ -355,12 +348,21 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             mkdir(arg_dir_out, 0700);
         }
     }
+    if(lossy){
+        WARNING("[%s] Flag 'lossy' is set. Hence, auxiliary fields are not stored", SLOW5_FILE_FORMAT_SHORT);
+    }
+
+    //measure file listing time
+    init_realtime = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], fast5_files, 0, FAST5_EXTENSION);
     }
-
     fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
+
+    //measure fast5 conversion time
+    init_realtime = slow5_realtime();
     f2s_iop(format_out, pressMethod, lossy, iop, fast5_files, arg_dir_out, meta, &readsCount);
+    fprintf(stderr, "[%s] Converting %ld fast5 files using %d process - took %.3fs\n", __func__, fast5_files.size(), iop, slow5_realtime() - init_realtime);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;

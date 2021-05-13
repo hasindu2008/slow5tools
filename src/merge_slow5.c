@@ -275,7 +275,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     if(arg_temp_dir){
         output_dir = std::string(arg_temp_dir) + "/" + output_dir;
     }
-    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
+//    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
 
     if(arg_fname_out && extension==".blow5" && format_out==FORMAT_ASCII){
         MESSAGE(stderr, "Output file extension '%s' does not match with the output format", extension.c_str());
@@ -315,18 +315,19 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         exit(1);
     }
 
+    //measure file listing time
     double realtime0 = slow5_realtime();
-    std::vector<std::string> slow5_files;
+    std::vector<std::string> files;
     for (int i = optind; i < argc; ++i) {
-        list_all_items(argv[i], slow5_files, 0, NULL);
+        list_all_items(argv[i], files, 0, NULL);
     }
-    fprintf(stderr, "[%s] %ld slow5/blow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
-    size_t num_slow5s = slow5_files.size();
-    if(num_threads >= num_slow5s){
-        num_threads = num_threads/2;
-    }
+    fprintf(stderr, "[%s] %ld files found - took %.3fs\n", __func__, files.size(), slow5_realtime() - realtime0);
+
 
     //determine new read group numbers
+    //measure read_group number allocation time
+    realtime0 = slow5_realtime();
+
     FILE* slow5_file_pointer = stdout;
     if(arg_fname_out){
         slow5_file_pointer = fopen(arg_fname_out, "w");
@@ -343,19 +344,19 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     slow5_hdr_initialize(slow5File->header, lossy);
     slow5File->header->num_read_groups = 0;
     std::vector<std::vector<size_t>> list;
-    std::vector<std::string> merging_slow5_files;
     size_t index = 0;
-
-    for(size_t i=0; i<num_slow5s; i++) { //iterate over slow5files
-        slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+    std::vector<std::string> slow5_files;
+    size_t num_files = files.size();
+    for(size_t i=0; i<num_files; i++) { //iterate over slow5files
+        slow5_file_t* slow5File_i = slow5_open(files[i].c_str(), "r");
         if(!slow5File_i){
-            ERROR("[Skip file]: cannot open %s. skipping...\n",slow5_files[i].c_str());
+            ERROR("[Skip file]: cannot open %s. skipping...\n",files[i].c_str());
             continue;
         }
         if(lossy==0 && slow5File_i->header->aux_meta == NULL){
-            WARNING("[Skip file]: %s has no auxiliary fields. Hence not merged.", slow5_files[i].c_str());
+            WARNING("[Skip file]: %s has no auxiliary fields. Hence not merged.", files[i].c_str());
             slow5_close(slow5File_i);
-            continue;
+            exit(EXIT_FAILURE);
         }
 
         int64_t read_group_count_i = slow5File_i->header->num_read_groups; // number of read_groups in ith slow5file
@@ -385,13 +386,21 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
         slow5_close(slow5File_i);
         index++;
-        merging_slow5_files.push_back(slow5_files[i]);
+        slow5_files.push_back(files[i]);
+
     }
+
+    fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
 
     //now write the header to the slow5File. Use Binary non compress method for fast writing
     if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){
         ERROR("Could not write the header to %s\n", arg_fname_out);
         exit(EXIT_FAILURE);
+    }
+
+    size_t num_slow5s = slow5_files.size();
+    if(num_threads >= num_slow5s){
+        num_threads = num_threads/2;
     }
 
     // Setup multithreading structures
@@ -400,14 +409,22 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     core.output_dir = output_dir;
     core.list = list;
     core.lossy = lossy;
-    core.slow5_files = merging_slow5_files;
-    core.n_batch = merging_slow5_files.size();
+    core.slow5_files = slow5_files;
+    core.n_batch = slow5_files.size();
+
+    //measure read_group number assigning using multi-threads time
+    realtime0 = slow5_realtime();
 
     // Fetch records for read ids in the batch
     work_data(&core);
 
+    fprintf(stderr, "[%s] Assigning new read group numbers using %ld threads - took %.3fs\n", __func__, num_threads, slow5_realtime() - realtime0);
+
     slow5_files.clear();
     list_all_items(output_dir, slow5_files, 0, NULL);
+
+    //measure single thread file concatenation time
+    realtime0 = slow5_realtime();
 
     for(size_t i=0; i<slow5_files.size(); i++){
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
@@ -441,6 +458,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         slow5_eof_fwrite(slow5File->fp);
     }
     slow5_close(slow5File);
+
+    fprintf(stderr, "[%s] Concatinating blow5s - took %.3fs\n", __func__, slow5_realtime() - realtime0);
 
     int del = rmdir(output_dir.c_str());
     if (del) {
