@@ -6,9 +6,16 @@
 
 # first do f2s and then merge several times with different number of threads
 
-SLOWTOOLS=/media/shan/OS/slow5-work/slow5/slow5tools
-FAST5_DIR=/media/shan/OS/slow5-work/slow5/test/keep_local/three_small_multifast5s
-TEST_DIR=/media/shan/OS/slow5-work/slow5/build/test/merge_threads_test
+Usage="test_merge_threads.sh [path to fast5 directory] [path to create a temporary directory] [path to slow5tools executable]"
+
+if [[ "$#" -lt 3 ]]; then
+	echo "Usage: $Usage"
+	exit
+fi
+
+FAST5_DIR=$1
+TEST_DIR=$2
+SLOWTOOLS=$3
 F2S_OUTPUT_DIR=$TEST_DIR
 MERGED_OUTPUT_DIR=$TEST_DIR
 SLOW5_FORMAT=blow5
