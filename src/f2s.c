@@ -25,7 +25,7 @@
     "    -s, --slow5                convert to slow5\n" \
     "    -c, --compress             convert to compressed blow5\n" \
     "    -h, --help                 display this message and exit\n" \
-    "    --iop INT                  number of I/O processes to read fast5 files\n" \
+    "    --iop INT                  number of I/O processes to read fast5 files -- 1\n" \
     "    -l, --lossy                do not store auxiliary fields\n" \
     "    -d, --output_dir=[dir]     output directory where slow5files are written to\n" \
 

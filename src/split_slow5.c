@@ -26,7 +26,7 @@
     "    -r INT                     split into n reads\n"              \
     "    -g                         split multi read group file into single read group files\n" \
     "    -l, --lossy                do not store auxiliary fields\n" \
-    "    --iop INT                  number of I/O processes to read slow5 files\n" \
+    "    --iop INT                  number of I/O processes to read slow5 files -- 1\n" \
 
 static double init_realtime = 0;
 
