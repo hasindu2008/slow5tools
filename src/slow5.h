@@ -438,7 +438,7 @@ char *slow5_aux_get_string(const slow5_rec_t *read, const char *attr, uint64_t *
 
 
 /**************************************************************************************************
- ***  Mid-level API *******************************************************************************
+ ***  Low-level API *******************************************************************************
  **************************************************************************************************/
 
 
@@ -459,22 +459,6 @@ char *slow5_aux_get_string(const slow5_rec_t *read, const char *attr, uint64_t *
  * @return              slow5 file structure
  */
 slow5_file_t *slow5_open_with(const char *pathname, const char *mode, enum slow5_fmt format);
-
-// Return
-// 0    success
-// -1   input invalid
-// -2   failure
-int slow5_convert(slow5_file_t *from, FILE *to_fp, enum slow5_fmt to_format, press_method_t to_compress);
-
-// Merge slow5 files to another slow5 file
-// TODO Just a merge for 2 -> 1?
-// TODO compile time 2 args in ...
-int8_t slow5_merge(slow5_file_t *s5p_to, ...); // TODO
-int8_t slow5_vmerge(slow5_file_t *s5p_to, va_list ap); // TODO
-
-// Split a slow5 file to a dir
-// TODO split into multiple slow5 files from same rg
-int8_t slow5_split(const char *dirname_to, slow5_file_t *s5p_from); // TODO
 
 
 /**
@@ -648,3 +632,21 @@ static inline ssize_t slow5_eof_print(void) {
 }
 
 #endif
+
+
+
+// Return
+// 0    success
+// -1   input invalid
+// -2   failure
+int slow5_convert(slow5_file_t *from, FILE *to_fp, enum slow5_fmt to_format, press_method_t to_compress);
+
+// Merge slow5 files to another slow5 file
+// TODO Just a merge for 2 -> 1?
+// TODO compile time 2 args in ...
+int8_t slow5_merge(slow5_file_t *s5p_to, ...); // TODO
+int8_t slow5_vmerge(slow5_file_t *s5p_to, va_list ap); // TODO
+
+// Split a slow5 file to a dir
+// TODO split into multiple slow5 files from same rg
+int8_t slow5_split(const char *dirname_to, slow5_file_t *s5p_from); // TODO
