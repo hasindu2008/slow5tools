@@ -23,15 +23,21 @@ GREEN='\033[0;32m'
 echo "-------------------slow5tools version-------------------"
 $REL_PATH/../slow5tools --version
 
+
+OUTPUT_DIR="$REL_PATH/data/out/merge"
+test -d  $OUTPUT_DIR
+rm -r $OUTPUT_DIR
+mkdir $OUTPUT_DIR
+
 echo
 echo "-------------------merging-------------------"
-if ! $REL_PATH/../slow5tools merge $REL_PATH/data/test/merge/slow5s -o $REL_PATH/data/test/merge/merged_output.slow5 -s; then
+if ! $REL_PATH/../slow5tools merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 -s; then
     echo "merge failed" 
     exit 1
 fi
 
 echo "comparing merged_output and merged_expected"
-cmp -s $REL_PATH/data/test/merge/merged_expected.slow5 $REL_PATH/data/test/merge/merged_output.slow5
+cmp -s $REL_PATH/data/exp/merge/merged_expected.slow5 $OUTPUT_DIR/merged_output.slow5
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: merged files are consistent!${NC}"
@@ -44,13 +50,13 @@ fi
 
 echo
 echo "-------------------lossy merging-------------------"
-if ! $REL_PATH/../slow5tools merge -l $REL_PATH/data/test/merge/slow5s -o $REL_PATH/data/test/merge/lossy_merged_output.slow5 -s; then
+if ! $REL_PATH/../slow5tools merge -l $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 -s; then
     echo "merge failed" 
     exit 1
 fi
 
 echo "comparing lossy_merged_output and lossy_merged_expected"
-cmp -s $REL_PATH/data/test/merge/lossy_merged_expected.slow5 $REL_PATH/data/test/merge/lossy_merged_output.slow5
+cmp -s $REL_PATH/data/exp/merge/lossy_merged_expected.slow5 $OUTPUT_DIR/lossy_merged_output.slow5
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: lossy merged files are consistent!${NC}"
