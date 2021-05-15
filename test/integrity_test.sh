@@ -7,6 +7,9 @@ if [[ "$#" -lt 3 ]]; then
 	exit
 fi
 
+NC='\033[0m' # No Color
+RED='\033[0;31m'
+GREEN='\033[0;32m'
 
 FAST5_DIR=$1
 TEMP_DIR="$2/integrity_test"
@@ -47,11 +50,7 @@ if ! $SLOW5_EXEC f2s $S2F_OUTPUT -d $F2S_atm2_OUTPUT --iop 64 -s; then
 fi
 
 echo "running diff on f2s attempt 1 and f2s attempt 2"
-diff -bur $F2S_atm1_OUTPUT $F2S_atm2_OUTPUT
-
-NC='\033[0m' # No Color
-RED='\033[0;31m'
-GREEN='\033[0;32m'
+cmp -s $F2S_atm1_OUTPUT $F2S_atm2_OUTPUT
 
 if [ $? -eq 0 ]; then
 	echo -e "${GREEN}SUCCESS: f2s and s2f conversions are consistent!${NC}"
