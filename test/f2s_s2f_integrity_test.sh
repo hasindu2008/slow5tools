@@ -24,7 +24,7 @@ mkdir "$F2S_atm1_OUTPUT" || exit 1
 mkdir "$S2F_OUTPUT" || exit 1
 mkdir "$F2S_atm2_OUTPUT" || exit 1
 
-
+clean_fscache
 echo "-------------------f2s attempt 1-------------------"
 echo
 if ! $SLOW5_EXEC f2s $FAST5_DIR -d $F2S_atm1_OUTPUT --iop 64 -s; then
@@ -32,7 +32,7 @@ if ! $SLOW5_EXEC f2s $FAST5_DIR -d $F2S_atm1_OUTPUT --iop 64 -s; then
     exit 1
 fi
 
-
+clean_fscache
 echo
 echo "-------------------s2f attempt-------------------"
 echo
@@ -41,6 +41,7 @@ if ! $SLOW5_EXEC s2f $F2S_atm1_OUTPUT -o $S2F_OUTPUT --iop 64; then
     exit 1
 fi
 
+clean_fscache
 echo
 echo "-------------------f2s attempt 2-------------------"
 echo
@@ -50,7 +51,7 @@ if ! $SLOW5_EXEC f2s $S2F_OUTPUT -d $F2S_atm2_OUTPUT --iop 64 -s; then
 fi
 
 echo "running diff on f2s attempt 1 and f2s attempt 2"
-cmp -s $F2S_atm1_OUTPUT $F2S_atm2_OUTPUT
+diff -s $F2S_atm1_OUTPUT $F2S_atm2_OUTPUT &>/dev/null
 
 if [ $? -eq 0 ]; then
 	echo -e "${GREEN}SUCCESS: f2s and s2f conversions are consistent!${NC}"
@@ -60,4 +61,6 @@ else
 	echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
 fi
 
+
+rm -r "$TEMP_DIR"
 exit
