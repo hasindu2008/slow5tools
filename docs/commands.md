@@ -2,60 +2,79 @@
 
 ## COMMANDS
 
-* `f2s5`:
+* `f2s`:
          Converts from FAST5 to SLOW5/BLOW5.
-* `s2f`:
-         Converts from SLOW5/BLOW5 to FAST5.
+* `merge`:
+         Merge multiple SLOW5/BLOW5 files to a single file.         
 * `index`:
          Indexes a SLOW5/BLOW5 file.
 * `view`:
          SLOW5<->BLOW5 conversion.
-* `merge`:
-         Merge multiple SLOW5/BLOW5 files to a single file.
 * `split`:
          Splits a SLOW5/BLOW5 file.
+* `s2f`:
+         Converts from SLOW5/BLOW5 to FAST5.         
 * `get`:
          Get records for specified read IDs.
 * `stats`:
          Generates Statistics from a SLOW5/BLOW5 file.
 
-## OPTIONS
-
-*  `--version`:
-    Print the version number to the standard out.
 
 
 ### f2s
 
-`slow5tools fast2slow [OPTIONS] fast5_dir1/file1.fast5 ... >  out.slow5`
+`slow5tools f2s [OPTIONS] fast5_dir1 fast5_dir2 ... -d output_dir`
 
-Recursively searches for FAST5 files (.fast5 extension) in specified directories and converts them to SLOW5/BLOW5 format. FAST5 files also can be provided directly as arguments instead of directories.
+Recursively searches for FAST5 files (.fast5 extension) in specified directories and converts them to SLOW5/BLOW5 format. Do not mix multi-FAST5 and single-FAST5 files in a single command (is this correct Hiruna?). For each multi-FAST5 file in provided input directories, a SLOW5/BLOW5 file with the same file name will be created inside rge directory specified by `-d`. If single-FAST5 files are provided as input, a SLOW5/BLOW5 file will be created one for each process (specified by -p below).
+What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_dir2 hiruna?
 
-*  `-s, --slow5`:
-   Outputs in text-based SLOW5 format.
-*  `-b, --blow5 compression_type`:
-   Outputs in BLOW5 format. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression.
+*  `-t STR , --to STR`:
+   Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: BLOW5].
+*  `-c, --compress compression_type`:
+   Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip].. 
+*  `-d STR, --out-dir STR:  
+   The output directory name/location. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
+<!--   
 *  `-c INT`, `--compress INT`:
    Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
+-->
 *  `-h, --help`:
    Prints the help to the standard out.
+<!--   
 *  `-i FILE`, `--index FILE`
    Generates SLOW5/BLOW5 index.
 *  `-o FILE`, `--output FILE`:
    Outputs converted contents to FILE [default value: stdout]
+-->
 *  `-p, --iop INT`:
     Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
-*   `--lossy`:
-    Discard useless information in FAST5.
+*   `-l`,`--lossy`:
+    Discard auxilliary field information in FAST5.
+<!--    
 *  `--no-merge DIR`:
-    Convert each FAST5 file to a separate SLOW5/BLOW5 and write to the directory specified by DIR. `-o` is ineffective with this option.
+    Convert each FAST5 file to a separate SLOW5/BLOW5 and write to the directory specified by DIR. `-o` is ineffective with this option.    
 *  `--no-recursion`:
     Do not recursively search for FAST5 files in specified directories.
+-->    
 *  `--tmp-prefix` STR:
-    Write temporary files to STR.nnnn.blow5 [default value: ./tmp]
+    Write temporary files to the directory specified by STR [default value: ./slow5_timestamp_pid]. Same conditions as for `-d` applies.
 *  `--verbose INT`:
     Verbosity level for the log messages [default value: 0].
 
+
+### merge
+
+`slow5tools merge [OPTIONS] dir1/file1.slow5 dir2/file2.slow5 ...`
+
+Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples are detected, the header and the *read_group* field will be modified accordingly.
+*  `-s, --slow5`:
+   Outputs in text-based SLOW5 format.
+*  `-b, --blow5 compression_type`:
+   Outputs in BLOW5 format. `compression_type` can be `bin` for uncompressed binary, `gzip` or gzip-based compression.
+*  `-c INT`, `--compress INT`:
+   Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
+*  `-o FILE`, `--output FILE`:
+   Outputs converted contents to FILE [default value: stdout]
 
 
 ### s2f
@@ -73,20 +92,6 @@ Recursively searches for FAST5 files (.fast5 extension) in specified directories
 *  `--verbose INT`:
     Verbosity level for the log messages [default value: 0].
 
-
-### merge
-
-`slow5tools merge [OPTIONS] file1.slow5 ...`
-
-Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples are detected, the header and the *read_group* field will be modified accordingly.
-*  `-s, --slow5`:
-   Outputs in text-based SLOW5 format.
-*  `-b, --blow5 compression_type`:
-   Outputs in BLOW5 format. `compression_type` can be `bin` for uncompressed binary, `gzip` or gzip-based compression.
-*  `-c INT`, `--compress INT`:
-   Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
-*  `-o FILE`, `--output FILE`:
-   Outputs converted contents to FILE [default value: stdout]
 
 ### split
 
@@ -142,3 +147,10 @@ The compression technique and compression level if applicable
 Number of read groups
 Total number of reads
 Number of reads from each group
+
+
+## OPTIONS
+
+*  `--version`:
+    Print the version number to the standard out.
+
