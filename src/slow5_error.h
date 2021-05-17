@@ -29,7 +29,7 @@ enum slow5_exit_condition_opt {
 #define SLOW5_NO_COLOUR "\033[0m\n"
 
 #define SLOW5_WARNING(msg, ...) { \
-        if (slow5_log_level == SLOW5_LOG_WARN) { \
+        if (slow5_log_level >= SLOW5_LOG_WARN) { \
                 fprintf(stderr, SLOW5_WARNING_PREFIX msg SLOW5_NO_COLOUR, __func__, __VA_ARGS__); \
                 fprintf(stderr, "At %s:%d\n", __FILE__, __LINE__ - 1); \
         } \
@@ -40,7 +40,7 @@ enum slow5_exit_condition_opt {
 }
 
 #define SLOW5_ERROR(msg, ...) { \
-        if (slow5_log_level == SLOW5_LOG_ERR) { \
+        if (slow5_log_level >= SLOW5_LOG_ERR) { \
                 fprintf(stderr, SLOW5_ERROR_PREFIX msg SLOW5_NO_COLOUR, __func__, __VA_ARGS__); \
                 fprintf(stderr, "At %s:%d\n", __FILE__, __LINE__ - 1); \
         } \

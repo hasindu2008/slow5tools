@@ -1,4 +1,4 @@
-#include "misc.h"
+#include "slow5_misc.h"
 #include "cmd.h"
 #include "error.h"
 #include "slow5.h"

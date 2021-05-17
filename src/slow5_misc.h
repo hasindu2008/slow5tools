@@ -1,7 +1,7 @@
 // Miscellaneous definitions and functions
 
-#ifndef MISC_H
-#define MISC_H
+#ifndef SLOW5_MISC_H
+#define SLOW5_MISC_H
 
 #include <zlib.h>
 #include <stdio.h>

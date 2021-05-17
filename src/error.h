@@ -11,13 +11,13 @@
 
 #define STDERR_PREFIX "[%s] "
 #define MESSAGE_PREFIX "%s: "
-#define VERBOSE_PREFIX "[INFO] %s: \033[1;34m" 
+#define VERBOSE_PREFIX "[INFO] %s: \033[1;34m"
 #define DEBUG_PREFIX "[DEBUG] %s:%s:%d: \033[1;35m"
 #define WARNING_PREFIX "[%s::WARNING]\033[1;33m "
 #define ERROR_PREFIX "[%s::ERROR]\033[1;31m "
 #define INFO_PREFIX "[%s::INFO]\033[1;34m "
 #define SUCCESS_PREFIX "[%s::SUCCESS]\033[1;32m "
-#define DEBUG2_PREFIX "[%s::DEBUG]\033[1;35m " 
+#define DEBUG2_PREFIX "[%s::DEBUG]\033[1;35m "
 #define NO_COLOUR "\033[0m\n"
 
 #define STDERR(msg, ...) fprintf(stderr, STDERR_PREFIX msg "\n", __func__, __VA_ARGS__)
@@ -37,7 +37,7 @@
 #define NULL_CHK(ret) null_chk((void*) ret, __func__, __FILE__, __LINE__ - 1)
 #define NEG_CHK(ret) neg_chk(ret, __func__, __FILE__, __LINE__ - 1)
 
-static inline void malloc_chk(void* ret, const char* func, const char* file, 
+static inline void malloc_chk(void* ret, const char* func, const char* file,
                               int line) {
     if (ret == NULL) {
         fprintf(stderr, ERROR_PREFIX "Failed to allocate memory : %s." NO_COLOUR,

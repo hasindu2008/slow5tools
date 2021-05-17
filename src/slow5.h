@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include "klib/khash.h"
 #include "klib/kvec.h"
-#include "press.h"
+#include "slow5_press.h"
 #include "slow5_defs.h"
 
 

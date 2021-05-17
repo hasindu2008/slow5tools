@@ -7,7 +7,7 @@
 
 #include <getopt.h>
 #include <signal.h>
-#include "misc.h"
+#include "slow5_misc.h"
 #include "error.h"
 #include "cmd.h"
 

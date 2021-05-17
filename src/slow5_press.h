@@ -1,11 +1,11 @@
-#ifndef PRESS_H
-#define PRESS_H
+#ifndef SLOW5_PRESS_H
+#define SLOW5_PRESS_H
 
 #include <zlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#include "misc.h"
+#include "slow5_misc.h"
 
 // Compression methods
 enum press_method {

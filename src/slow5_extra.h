@@ -1,5 +1,5 @@
-#ifndef SLOW5TOOLS_H
-#define SLOW5TOOLS_H
+#ifndef SLOW5_EXTRA_H
+#define SLOW5_EXTRA_H
 
 #include <dirent.h>
 #include "slow5.h"

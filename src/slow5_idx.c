@@ -1,10 +1,10 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include "klib/khash.h"
-#include "slow5idx.h"
+#include "slow5_idx.h"
 #include "slow5.h"
 #include "slow5_extra.h"
-#include "misc.h"
+#include "slow5_misc.h"
 //TODO MALLOC_CHK for testing
 
 #define BUF_INIT_CAP (20*1024*1024)

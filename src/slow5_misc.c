@@ -11,7 +11,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <inttypes.h>
-#include "misc.h"
+#include "slow5_misc.h"
 #include "error.h"
 #include "fast5.h"
 

@@ -19,13 +19,13 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/get.o \
 	  $(BUILD_DIR)/thread.o \
 	  $(BUILD_DIR)/read_fast5.o \
-	  $(BUILD_DIR)/merge_slow5.o \
-	  $(BUILD_DIR)/split_slow5.o \
+	  $(BUILD_DIR)/merge.o \
+	  $(BUILD_DIR)/split.o \
 
 OBJ_LIB = $(BUILD_DIR)/slow5.o \
-		$(BUILD_DIR)/slow5idx.o	\
-		$(BUILD_DIR)/misc.o	\
-		$(BUILD_DIR)/press.o \
+		$(BUILD_DIR)/slow5_idx.o	\
+		$(BUILD_DIR)/slow5_misc.o	\
+		$(BUILD_DIR)/slow5_press.o \
 
 PREFIX = /usr/local
 VERSION = `git describe --tags`
@@ -35,7 +35,7 @@ VERSION = `git describe --tags`
 $(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN) $(BUILD_DIR)/libslow5.a
 	$(CXX) $(CFLAGS) $(OBJ_BIN) $(BUILD_DIR)/libslow5.a $(LDFLAGS) -o $@
 
-$(BUILD_DIR)/main.o: src/main.c src/misc.h src/error.h
+$(BUILD_DIR)/main.o: src/main.c src/error.h src/slow5_misc.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/f2s.o: src/f2s.c src/error.h
@@ -50,7 +50,7 @@ $(BUILD_DIR)/index.o: src/index.c src/error.h
 $(BUILD_DIR)/get.o: src/get.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/view.o: src/view.c src/error.h src/misc.c
+$(BUILD_DIR)/view.o: src/view.c src/error.h src/slow5_misc.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/kstring.o: src/klib/kstring.c src/klib/kstring.h
@@ -62,10 +62,10 @@ $(BUILD_DIR)/thread.o: src/thread.c
 $(BUILD_DIR)/read_fast5.o: src/read_fast5.c
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/merge_slow5.o: src/merge_slow5.c src/error.h
+$(BUILD_DIR)/merge.o: src/merge.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/split_slow5.o: src/split_slow5.c src/error.h
+$(BUILD_DIR)/split.o: src/split.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 
@@ -79,13 +79,13 @@ $(BUILD_DIR)/libslow5.a: $(OBJ_LIB)
 $(BUILD_DIR)/slow5.o: src/slow5.c src/slow5.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
 
-$(BUILD_DIR)/slow5idx.o: src/slow5idx.c src/slow5idx.h
+$(BUILD_DIR)/slow5_idx.o: src/slow5_idx.c src/slow5_idx.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
 
-$(BUILD_DIR)/misc.o: src/misc.c src/misc.h
+$(BUILD_DIR)/slow5_misc.o: src/slow5_misc.c src/slow5_misc.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
 
-$(BUILD_DIR)/press.o: src/press.c src/press.h
+$(BUILD_DIR)/slow5_press.o: src/slow5_press.c src/slow5_press.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -fpic -o $@
 
 src/config.h:
@@ -155,7 +155,7 @@ pyslow5:
 	python3 < python/example.py
 
 test-prep: $(BINARY)
-	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5idx.c src/misc.c -o test/bin/make_blow5 -g
+	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5_idx.c src/misc.c -o test/bin/make_blow5 -g
 	./test/bin/make_blow5
 
 valgrind: $(BINARY)

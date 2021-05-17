@@ -1,5 +1,5 @@
-#ifndef SLOW5IDX_CLEAN_H
-#define SLOW5IDX_CLEAN_H
+#ifndef SLOW5_IDX_H
+#define SLOW5_IDX_H
 
 #include <stdio.h>
 #include <stdint.h>
