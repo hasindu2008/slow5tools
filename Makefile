@@ -16,7 +16,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/index.o \
       $(BUILD_DIR)/view.o \
 	  $(BUILD_DIR)/kstring.o \
-	  $(BUILD_DIR)/extract.o \
+	  $(BUILD_DIR)/get.o \
 	  $(BUILD_DIR)/thread.o \
 	  $(BUILD_DIR)/read_fast5.o \
 	  $(BUILD_DIR)/merge_slow5.o \
@@ -47,7 +47,7 @@ $(BUILD_DIR)/s2f.o: src/s2f.c src/error.h
 $(BUILD_DIR)/index.o: src/index.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/extract.o: src/extract.c src/error.h
+$(BUILD_DIR)/get.o: src/get.c src/error.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/view.o: src/view.c src/error.h src/misc.c

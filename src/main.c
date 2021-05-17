@@ -1,9 +1,9 @@
-/* @slow5tools
-**
-** main
-** @author: Hasindu Gamaarachchi (hasindu@garvan.org.au)
-** @@
-******************************************************************************/
+/**
+ * @file main.c
+ * @brief main programme
+ * @author Sasha Jenner (jenner.sasha@gmail.com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
+ * @date 27/02/2021
+ */
 
 #include <getopt.h>
 #include <signal.h>
@@ -21,9 +21,8 @@
     "Tools for using slow5 files.\n" \
     "\n" \
     "OPTIONS:\n" \
-    "    -d, --debug      Output debug information.\n" \
     "    -h, --help       Display this message and exit.\n" \
-    "    -v, --verbose    Explain what is being done.\n" \
+    "    -v, --verbose    Verbosity level.\n" \
     "    -V, --version    Output version information and exit.\n" \
     "\n" \
     "COMMANDS:\n" \
@@ -32,7 +31,7 @@
     "    merge      merge slow5 files\n" \
     "    split      split slow5 files\n" \
     "    index      create a slow5 or blow5 index file.\n" \
-    "    extract    display the read entry for each specified read id.\n" \
+    "    get        display the read entry for each specified read id.\n" \
     "    view       TODO.\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
@@ -49,7 +48,7 @@ int (s2f_main)(int, char **, struct program_meta *);
 int (merge_main)(int, char **, struct program_meta *);
 int (split_main)(int, char **, struct program_meta *);
 int (index_main)(int, char **, struct program_meta *);
-int (extract_main)(int, char **, struct program_meta *);
+int (get_main)(int, char **, struct program_meta *);
 int (view_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
@@ -82,8 +81,7 @@ int main(const int argc, char **argv){
 
     // Default options
     struct program_meta meta = {
-        .debug = false,
-        .verbose = false
+        .verbosity_level = LOG_VERBOSE
     };
 
     // Setup segmentation fault handler
@@ -103,15 +101,14 @@ int main(const int argc, char **argv){
             {"merge", merge_main},
             {"split", split_main},
             {"index", index_main},
-            {"extract", extract_main},
+            {"get", get_main},
             {"view", view_main},
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
         static struct option long_opts[] = {
-            {"debug", no_argument, NULL, 'd' },
             {"help", no_argument, NULL, 'h' },
-            {"verbose", no_argument, NULL, 'v'},
+            {"verbose", required_argument, NULL, 'v'},
             {"version", no_argument, NULL, 'V'},
             {NULL, 0, NULL, 0 }
         };
@@ -119,21 +116,30 @@ int main(const int argc, char **argv){
         int opt;
         bool break_flag = false;
         // Parse options up to first non-option argument (command)
-        while (!break_flag && (opt = getopt_long(argc, argv, "+dhvV", long_opts, NULL)) != -1) {
+        while (!break_flag && (opt = getopt_long(argc, argv, "+hVv:", long_opts, NULL)) != -1) {
 
-            if (meta.debug) {
+            if (meta.verbosity_level >= LOG_DEBUG) {
                 DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                       opt, optarg, optind, opterr, optopt);
             }
 
             switch (opt) {
-                case 'd':
-                    // Print arguments
-                    if (!meta.debug) {
-                        if (meta.verbose) {
-                            VERBOSE("printing the arguments given%s","");
-                        }
+                case 'h':
+                    if (meta.verbosity_level >= LOG_VERBOSE) {
+                        VERBOSE("displaying large help message%s","");
+                    }
+                    fprintf(stdout, HELP_LARGE_MSG, argv[0], argv[0]);
+                    exit(EXIT_SUCCESS);
+                    // ret = EXIT_SUCCESS;
+                    // break_flag = true;
+                    //break;
+                case 'v':
+                    meta.verbosity_level = atoi(optarg);
+                    if (meta.verbosity_level >= LOG_VERBOSE) {
+                        VERBOSE("printing the arguments given%s","");
+                    }
 
+                    if (meta.verbosity_level >= LOG_DEBUG) {
                         fprintf(stderr, DEBUG_PREFIX "argv=[",
                                 __FILE__, __func__, __LINE__);
                         for (int i = 0; i < argc; ++ i) {
@@ -145,25 +151,10 @@ int main(const int argc, char **argv){
                             }
                         }
                         fprintf(stderr, NO_COLOUR);
-
-                        meta.debug = true;
                     }
-
-                    break;
-                case 'h':
-                    if (meta.verbose) {
-                        VERBOSE("displaying large help message%s","");
-                    }
-                    fprintf(stdout, HELP_LARGE_MSG, argv[0], argv[0]);
-
-                    ret = EXIT_SUCCESS;
-                    break_flag = true;
-                    break;
-                case 'v':
-                    meta.verbose = true;
                     break;
                 case 'V':
-                    if (meta.verbose) {
+                    if (meta.verbosity_level >= LOG_VERBOSE) {
                         VERBOSE("displaying version information%s","");
                     }
                     fprintf(stdout, SLOW5TOOLS_VERSION, argv[0]);
@@ -217,7 +208,7 @@ int main(const int argc, char **argv){
                         cmd_argv[optind_copy] = combined_name;
 
                         // Calling command program
-                        if (meta.verbose) {
+                        if (meta.verbosity_level >= LOG_VERBOSE) {
                             VERBOSE("using command '%s'", cmds[i].name);
                         }
                         ret = cmds[i].main(argc - optind_copy, cmd_argv + optind_copy, &meta);
@@ -248,25 +239,27 @@ int main(const int argc, char **argv){
         }
     }
 
-    fprintf(stderr, "\n");
-    if (meta.verbose) {
-        VERBOSE("printing command given%s", "");
-    }
-    fprintf(stderr, "cmd: ");
-    for (int i = 0; i < argc; ++ i) {
-        fprintf(stderr, "%s", argv[i]);
-        if (i == argc - 1) {
-            fprintf(stderr, "\n");
-        } else {
-            fprintf(stderr, " ");
+    if(ret==EXIT_SUCCESS){
+        fprintf(stderr, "\n");
+        if (meta.verbosity_level >= LOG_VERBOSE) {
+            VERBOSE("printing command given%s", "");
         }
-    }
+        fprintf(stderr, "cmd: ");
+        for (int i = 0; i < argc; ++ i) {
+            fprintf(stderr, "%s", argv[i]);
+            if (i == argc - 1) {
+                fprintf(stderr, "\n");
+            } else {
+                fprintf(stderr, " ");
+            }
+        }
 
-    if (meta.verbose) {
-        VERBOSE("printing resource use%s", "");
+        if (meta.verbosity_level >= LOG_VERBOSE) {
+            VERBOSE("printing resource use%s", "");
+        }
+        MESSAGE(stderr, "real time = %.3f sec | CPU time = %.3f sec | peak RAM = %.3f GB",
+                slow5_realtime() - init_realtime, slow5_cputime(), slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
     }
-    MESSAGE(stderr, "real time = %.3f sec | CPU time = %.3f sec | peak RAM = %.3f GB",
-            slow5_realtime() - init_realtime, slow5_cputime(), slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
 
     EXIT_MSG(ret, argv, &meta);
     return ret;

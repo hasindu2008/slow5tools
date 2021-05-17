@@ -369,8 +369,8 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     init_realtime = slow5_realtime();
 
     // Debug: print arguments
-    if (meta != NULL && meta->debug) {
-        if (meta->verbose) {
+    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+        if (meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("printing the arguments given%s","");
         }
 
@@ -409,19 +409,19 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
     // Parse options
     while ((opt = getopt_long(argc, argv, "h:o:", long_opts, &longindex)) != -1) {
-        if (meta->debug) {
+        if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
         switch (opt) {
             case 'h':
-                if (meta->verbose) {
+                if (meta->verbosity_level >= LOG_VERBOSE) {
                     VERBOSE("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             case 'o':
                 arg_dir_out = optarg;
                 break;

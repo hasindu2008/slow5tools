@@ -65,11 +65,11 @@ bool fetch_record(slow5_file_t *fp, const char *read_id,
     return success;
 }
 
-int extract_main(int argc, char **argv, struct program_meta *meta) {
+int get_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
-    if (meta != NULL && meta->debug) {
-        if (meta->verbose) {
+    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+        if (meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("printing the arguments given%s","");
         }
 
@@ -111,7 +111,7 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
     // Parse options
     while ((opt = getopt_long(argc, argv, "t:h", long_opts, NULL)) != -1) {
 
-        if (meta->debug) {
+        if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
@@ -121,13 +121,13 @@ int extract_main(int argc, char **argv, struct program_meta *meta) {
                 arg_num_threads = optarg;
                 break;
             case 'h':
-                if (meta->verbose) {
+                if (meta->verbosity_level >= LOG_VERBOSE) {
                     VERBOSE("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);

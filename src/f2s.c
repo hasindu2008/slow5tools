@@ -141,7 +141,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
     if(stdout_copy>0){
         close(stdout_copy);
     }
-    if(meta->verbose){
+    if(meta->verbosity_level >= LOG_VERBOSE){
         fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
 }
@@ -237,8 +237,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int lossy = 0;
 
     // Debug: print arguments
-    if (meta != NULL && meta->debug) {
-        if (meta->verbose) {
+    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+        if (meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("printing the arguments given%s","");
         }
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -283,7 +283,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int longindex = 0;
     // Parse options
     while ((opt = getopt_long(argc, argv, "schi:o:d:l", long_opts, &longindex)) != -1) {
-        if (meta->debug) {
+        if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
@@ -298,12 +298,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 lossy = 1;
                 break;
             case 'h':
-                if (meta->verbose) {
+                if (meta->verbosity_level >= LOG_VERBOSE) {
                     VERBOSE("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             case 'd':
                 arg_dir_out = optarg;
                 break;
