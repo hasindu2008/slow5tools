@@ -1,5 +1,5 @@
 #include "unit_test.h"
-#include "press.h"
+#include "slow5_press.h"
 #include <string.h>
 
 int press_init_valid(void) {

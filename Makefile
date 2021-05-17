@@ -155,7 +155,7 @@ pyslow5:
 	python3 < python/example.py
 
 test-prep: $(BINARY)
-	gcc test/make_blow5.c -Isrc src/slow5.c src/press.c -lz src/slow5_idx.c src/misc.c -o test/bin/make_blow5 -g
+	gcc test/make_blow5.c -Isrc src/slow5.c src/slow5_press.c -lz src/slow5_idx.c src/slow5_misc.c -o test/bin/make_blow5 -g
 	./test/bin/make_blow5
 
 valgrind: $(BINARY)

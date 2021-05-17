@@ -6,8 +6,8 @@
 #include "unit_test.h"
 #include "slow5.h"
 #include "slow5_extra.h"
-#include "slow5idx.h"
-#include "misc.h"
+#include "slow5_idx.h"
+#include "slow5_misc.h"
 
 int slow5_idx_init_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.blow5", "r");
