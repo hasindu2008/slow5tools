@@ -10,6 +10,10 @@
 int main(){
 
     slow5_file_t *sp = slow5_open(FILE_PATH,"r");
+    if(sp==NULL){
+       fprintf(stderr,"Error in opening file\n");
+       exit(EXIT_FAILURE);
+    }
     slow5_rec_t *rec = NULL;
     int ret=0;
 

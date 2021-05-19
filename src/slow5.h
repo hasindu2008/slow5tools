@@ -20,6 +20,9 @@
 #include "slow5_press.h"
 #include "slow5_defs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**************************************************************************************************
  ***  struct definitions **************************************************************************
@@ -631,10 +634,6 @@ static inline ssize_t slow5_eof_print(void) {
     return slow5_eof_fwrite(stdout);
 }
 
-#endif
-
-
-
 // Return
 // 0    success
 // -1   input invalid
@@ -650,3 +649,11 @@ int8_t slow5_vmerge(slow5_file_t *s5p_to, va_list ap); // TODO
 // Split a slow5 file to a dir
 // TODO split into multiple slow5 files from same rg
 int8_t slow5_split(const char *dirname_to, slow5_file_t *s5p_from); // TODO
+
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif

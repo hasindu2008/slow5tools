@@ -169,7 +169,11 @@ struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum 
         SLOW5_WARNING("%s","pathname and mode cannot be NULL.");
         return NULL;
     } else {
-        return slow5_init(fopen(pathname, mode), pathname, format);
+        FILE *fp = fopen(pathname, mode);
+        if(fp==NULL){
+            SLOW5_WARNING("Error opening file %s: %s",pathname, strerror(errno));
+        }
+        return slow5_init(fp, pathname, format);
     }
 }
 

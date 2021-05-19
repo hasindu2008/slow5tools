@@ -4,6 +4,10 @@
 #include <dirent.h>
 #include "slow5.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**************************************************************************************************
  ***  Low-level API ******************************************************************************
  **************************************************************************************************/
@@ -121,6 +125,11 @@ const char *slow5_format_get_str(enum slow5_format format);
 // Get the slow5 version array from a version string
 //const uint8_t *str_get_slow5_version(const char *str);
 */
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif
