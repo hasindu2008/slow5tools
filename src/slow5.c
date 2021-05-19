@@ -43,7 +43,7 @@ static inline void slow5_rec_set_aux_map(khash_t(s2a) *aux_map, const char *fiel
 
 
 enum slow5_log_level_opt  slow5_log_level = SLOW5_LOG_WARN;
-enum slow5_exit_condition_opt  slow5_exit_condition = SLOW5_EXIT_ON_ERR;
+enum slow5_exit_condition_opt  slow5_exit_condition = SLOW5_EXIT_OFF;
 
 
 
@@ -171,7 +171,7 @@ struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum 
     } else {
         FILE *fp = fopen(pathname, mode);
         if(fp==NULL){
-            SLOW5_WARNING("Error opening file %s: %s",pathname, strerror(errno));
+            SLOW5_ERROR("Error opening file %s: %s",pathname, strerror(errno));
         }
         return slow5_init(fp, pathname, format);
     }
@@ -2737,7 +2737,11 @@ int slow5_idx_load(struct slow5_file *s5p) {
     }
 }
 
-
+void slow5_idx_unload(struct slow5_file *s5p){
+    slow5_idx_free(s5p->index);
+    s5p->index = NULL;
+    return;
+}
 
 /**
  * Print the binary end of file to a file pointer.
@@ -3142,6 +3146,12 @@ char *data_to_str(uint8_t *data, enum aux_type type, uint64_t len, size_t *str_l
     return str;
 }
 
+void slow5_set_log_level(enum slow5_log_level_opt log_level){
+    slow5_log_level = log_level;
+}
+void slow5_set_exit_condition(enum slow5_exit_condition_opt exit_condition){
+    slow5_exit_condition = exit_condition;
+}
 
 //int main(void) {
 

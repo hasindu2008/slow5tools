@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+
 /* Debug and verbosity */
 enum slow5_log_level_opt {
     SLOW5_LOG_OFF,

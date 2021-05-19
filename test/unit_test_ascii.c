@@ -979,6 +979,9 @@ int slow5_add_rec_duplicate(void) {
 
 int main(void) {
 
+    slow5_set_log_level(SLOW5_LOG_OFF);
+    slow5_set_exit_condition(SLOW5_EXIT_OFF);
+
     struct command tests[] = {
         // API
         CMD(slow5_open_valid)

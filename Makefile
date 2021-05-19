@@ -57,7 +57,7 @@ $(BUILD_DIR)/kstring.o: src/klib/kstring.c src/klib/kstring.h
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/thread.o: src/thread.c
-	$(CXX) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/read_fast5.o: src/read_fast5.c
 	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@

@@ -305,6 +305,9 @@ int slow5_rec_to_mem_gzip(void) {
 
 int main(void) {
 
+    slow5_set_log_level(SLOW5_LOG_OFF);
+    slow5_set_exit_condition(SLOW5_EXIT_OFF);
+
     struct command tests[] = {
         CMD(slow5_idx_init_valid)
 

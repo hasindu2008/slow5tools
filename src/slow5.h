@@ -19,6 +19,7 @@
 #include "klib/kvec.h"
 #include "slow5_press.h"
 #include "slow5_defs.h"
+#include "slow5_error.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -327,6 +328,7 @@ int slow5_idx_create(slow5_file_t *s5p);
  */
 int slow5_idx_load(slow5_file_t *s5p);
 
+void slow5_idx_unload(slow5_file_t *s5p);
 
 /**
  * Get a header data attribute for a particular read_group.
@@ -633,6 +635,10 @@ ssize_t slow5_eof_fwrite(FILE *fp);
 static inline ssize_t slow5_eof_print(void) {
     return slow5_eof_fwrite(stdout);
 }
+
+void slow5_set_log_level(enum slow5_log_level_opt log_level);
+void slow5_set_exit_condition(enum slow5_exit_condition_opt exit_condition);
+
 
 // Return
 // 0    success
