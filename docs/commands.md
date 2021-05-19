@@ -32,7 +32,7 @@ What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_d
    Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: BLOW5].
 *  `-c, --compress compression_type`:
    Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip].. 
-*  `-d STR, --out-dir STR:  
+*  `-d STR, --out-dir STR`:  
    The output directory name/location. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
 <!--   
 *  `-c INT`, `--compress INT`:
@@ -149,8 +149,13 @@ Total number of reads
 Number of reads from each group
 
 
-## OPTIONS
+## GLOBAL OPTIONS
 
-*  `--version`:
+*  `-V, --version`:
     Print the version number to the standard out.
+*  `-v INT, --verbose INT`:
+    Set the verbosity level (0-7) [default value: 4]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-gossip, 6-debug, 7-trace.
+*  `-h, --help`:
+    Prints the help to the standard out.
+             
 
