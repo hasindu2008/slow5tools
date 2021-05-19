@@ -7,6 +7,10 @@
 #include <string.h>
 #include "slow5_misc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Compression methods
 enum press_method {
     COMPRESS_NONE,
@@ -85,5 +89,9 @@ int printf_compress(struct press *comp, const char *format, ...);
 
 /* --- Write compression footer on immediate next compression call --- */
 void compress_footer_next(struct press *comp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

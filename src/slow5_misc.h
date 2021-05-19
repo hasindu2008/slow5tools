@@ -18,6 +18,10 @@
 #include <unistd.h>
 #include "error.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#define MIN(A,B) ( ( (A) < (B) ) ? (A) : (B) )
 //#define MAX(A,B) ( ( (A) > (B) ) ? (A) : (B) )
 
@@ -143,5 +147,9 @@ float strtof_check(const char *str, int *err);
 char *double_to_str(double x, size_t *len);
 // Convert float to decimal string without trailing 0s
 char *float_to_str(float x, size_t *len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

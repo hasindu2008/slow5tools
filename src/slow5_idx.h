@@ -6,6 +6,10 @@
 #include "klib/khash.h"
 #include "slow5.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define INDEX_EXTENSION             "." "idx"
 #define INDEX_VERSION               { 0, 1, 0 }
 #define INDEX_MAGIC_NUMBER          { 'S', 'L', 'O', 'W', '5', 'I', 'D', 'X', '\1' }
@@ -48,5 +52,9 @@ int slow5_idx_get(struct slow5_idx *index, const char *read_id, struct slow5_rec
 void slow5_idx_insert(struct slow5_idx *index, char *read_id, uint64_t offset, uint64_t size);
 void slow5_idx_write(struct slow5_idx *index);
 void slow5_rec_idx_print(struct slow5_rec_idx read_index);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

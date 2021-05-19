@@ -7,6 +7,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Debug and verbosity */
 enum slow5_log_level_opt {
@@ -50,5 +53,8 @@ enum slow5_exit_condition_opt {
         } \
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // SLOW5 format specs
 #define SLOW5_HEADER_PREFIX             "#"
 #define SLOW5_HEADER_DATA_PREFIX        "@"
@@ -77,5 +81,9 @@
 // SLOW5 Index specs
 //#define SLOW5_INDEX_HEADER_PREFIX   "#"
 #define SLOW5_INDEX_HEADER          SLOW5_INDEX_HEADER_PREFIX "read_id" SEP_COL "offset" SEP_COL "length\n"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
