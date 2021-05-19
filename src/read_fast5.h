@@ -49,7 +49,7 @@ struct operator_obj {
     unsigned        group_level;         /* Recursion level.  0=root */
     struct operator_obj   *prev;          /* Pointer to previous opdata */
     haddr_t         addr;           /* Group address */
-    //attributes are useful when writing. They are also passed to the op_func_group function along with the struct
+    //attributes are useful when writing. They are also passed to the fast5_group_itr function along with the struct
     struct program_meta *meta;
     FILE *f_out;
     enum slow5_fmt format_out;
@@ -64,6 +64,7 @@ struct operator_obj {
     int *flag_tracking_id;
     int *flag_run_id;
     int *flag_lossy;
+    int *flag_write_header;
     hsize_t* num_read_groups;
     size_t* nreads;
     size_t* warning_flag_pore_type;

@@ -366,6 +366,9 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
 
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
+    // Turn off HDF's exception printing, which is generally unhelpful for users
+    H5Eset_auto(0, NULL, NULL);
+
     init_realtime = slow5_realtime();
 
     // Debug: print arguments

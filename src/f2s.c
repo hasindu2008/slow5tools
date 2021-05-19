@@ -36,8 +36,12 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
 
     static size_t call_count = 0;
     slow5_file_t* slow5File = NULL;
+    slow5_file_t* slow5File_outputdir_single_fast5 = NULL;
     FILE *slow5_file_pointer = NULL;
+    FILE *slow5_file_pointer_outputdir_single_fast5 = NULL;
     std::string slow5_path;
+    std::string slow5_path_outputdir_single_fast5;
+
     std::string extension = ".blow5";
     int stdout_copy = -1;
     if(format_out==FORMAT_ASCII){
@@ -45,6 +49,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
     }
     if(output_dir){
         slow5_path = std::string(output_dir);
+        slow5_path_outputdir_single_fast5 = slow5_path;
     }else{ //duplicate stdout file descriptor
         stdout_copy = dup(1);
     }
@@ -78,65 +83,56 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
                 slow5_hdr_initialize(slow5File->header, lossy);
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count, meta, slow5File);
+                read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, meta, slow5File);
+
+                if(format_out == FORMAT_BINARY){
+                    slow5_eof_fwrite(slow5File->fp);
+                }
+                slow5_close(slow5File);
+                slow5_path = std::string(output_dir);
 
             }else{ // single-fast5
-                if(!slow5_file_pointer){
-                    slow5_path += "/"+std::to_string(args.starti)+extension;
-                    if(call_count==0){
-                        slow5_file_pointer = fopen(slow5_path.c_str(), "w");
-                    }else{
-                        slow5_file_pointer = fopen(slow5_path.c_str(), "a");
-                    }
+                if(!slow5_file_pointer_outputdir_single_fast5){
+                    slow5_path_outputdir_single_fast5 += "/"+std::to_string(args.starti)+extension;
+                    slow5_file_pointer_outputdir_single_fast5 = fopen(slow5_path_outputdir_single_fast5.c_str(), "w");
                     // An error occured
-                    if (!slow5_file_pointer) {
+                    if (!slow5_file_pointer_outputdir_single_fast5) {
                         ERROR("File '%s' could not be opened - %s.",
-                              slow5_path.c_str(), strerror(errno));
+                              slow5_path_outputdir_single_fast5.c_str(), strerror(errno));
                         continue;
                     }
+                    slow5File_outputdir_single_fast5 = slow5_init_empty(slow5_file_pointer_outputdir_single_fast5, slow5_path_outputdir_single_fast5.c_str(), FORMAT_BINARY);
+                    slow5_hdr_initialize(slow5File_outputdir_single_fast5->header, lossy);
+                }
+                read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, meta, slow5File_outputdir_single_fast5);
+            }
+        }
+        else{ // output dir not set hence, writing to stdout
+            if(call_count==0){
+                slow5_file_pointer = fdopen(1,"w");  //obtain a pointer to stdout file stream
+                // An error occured
+                if (!slow5_file_pointer) {
+                    ERROR("Could not open stdout file stream - %s.", strerror(errno));
+                    return;
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_BINARY);
                 slow5_hdr_initialize(slow5File->header, lossy);
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, meta, slow5File);
-
             }
-        } else{ // output dir not set hence, writing to stdout
-            slow5_file_pointer = fdopen(1,"w");  //obtain a pointer to stdout file stream
-            // An error occured
-            if (!slow5_file_pointer) {
-                ERROR("Could not open stdout file stream - %s.", strerror(errno));
-                return;
-            }
-            slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_BINARY);
-            slow5_hdr_initialize(slow5File->header, lossy);
-            if (fast5_file.is_multi_fast5) {
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count, meta, slow5File);
-            }else{
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, meta, slow5File);
-            }
+            read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, meta, slow5File);
         }
         H5Fclose(fast5_file.hdf5_file);
-        if(fast5_file.is_multi_fast5){
-            if(format_out == FORMAT_BINARY){
-                slow5_eof_fwrite(slow5File->fp);
-            }
-            slow5_close(slow5File);
-            if(output_dir){
-                slow5_path = std::string(output_dir);
-            }
-            else{
-                dup2(stdout_copy, 1);
-            }
-        }
     }
-    if(!fast5_file.is_multi_fast5) {
+    if(output_dir && !fast5_file.is_multi_fast5) {
+        if(format_out == FORMAT_BINARY){
+            slow5_eof_fwrite(slow5File_outputdir_single_fast5->fp);
+        }
+        slow5_close(slow5File_outputdir_single_fast5);
+    }
+    if(!output_dir) {
         if(format_out == FORMAT_BINARY){
             slow5_eof_fwrite(slow5File->fp);
         }
         slow5_close(slow5File);
-        if(!output_dir){
-            dup2(stdout_copy, 1);
-        }
     }
     if(stdout_copy>0){
         close(stdout_copy);
@@ -233,6 +229,10 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
+
+    // Turn off HDF's exception printing, which is generally unhelpful for users
+    H5Eset_auto(0, NULL, NULL);
+
     int iop = 1;
     int lossy = 0;
 

@@ -20,18 +20,18 @@ NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 
-echo "-------------------slow5tools version-------------------"
-$REL_PATH/../slow5tools --version
-
-
+SLOW5_EXEC=$REL_PATH/../slow5tools
 OUTPUT_DIR="$REL_PATH/data/out/merge"
 test -d  $OUTPUT_DIR
 rm -r $OUTPUT_DIR
 mkdir $OUTPUT_DIR
 
+echo "-------------------slow5tools version-------------------"
+SLOW5_EXEC --version
+
 echo
 echo "-------------------merging-------------------"
-if ! $REL_PATH/../slow5tools merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 -s; then
+if ! SLOW5_EXEC merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 -s; then
     echo "merge failed" 
     exit 1
 fi
@@ -50,7 +50,7 @@ fi
 
 echo
 echo "-------------------lossy merging-------------------"
-if ! $REL_PATH/../slow5tools merge -l $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 -s; then
+if ! SLOW5_EXEC merge -l $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 -s; then
     echo "merge failed" 
     exit 1
 fi
