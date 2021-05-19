@@ -114,6 +114,12 @@ static inline bool is_dir(const char *path) {
     return S_ISDIR(path_stat.st_mode);
 }
 
+static inline int slow5_is_big_endian(void)
+{
+    long one= 1;
+    return !(*((char *)(&one)));
+}
+
 // sprintf and vsprintf but dynamically allocates strp memory
 int asprintf_mine(char **strp, const char *fmt, ...);
 int vasprintf_mine(char **strp, const char *fmt, va_list ap);

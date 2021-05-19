@@ -165,6 +165,10 @@ struct slow5_file *slow5_open(const char *pathname, const char *mode) {
  * @return              slow5 file structure
  */
 struct slow5_file *slow5_open_with(const char *pathname, const char *mode, enum slow5_fmt format) {
+    if(slow5_is_big_endian()){
+        SLOW5_ERROR("%s","Big endian machine detected. SLOW5lib only support little endian at this time. Please open a github issue stating your machine spec.");
+        return NULL;
+    }
     if (pathname == NULL || mode == NULL) {
         SLOW5_WARNING("%s","pathname and mode cannot be NULL.");
         return NULL;
