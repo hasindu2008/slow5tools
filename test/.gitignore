@@ -21,3 +21,4 @@ data/out/unit_test_out_press
 data/out/unit_test_out_two_rg
 endian_test
 unit_test
+unit_test_out.txt
