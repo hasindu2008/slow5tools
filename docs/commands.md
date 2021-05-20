@@ -60,7 +60,8 @@ What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_d
 -->
 * `-a, --allow`:
    allow run id mismatches in with in a multi-fast5 file or inside a directory of single-fast5 files.
-
+*  `-h`, `--help`:
+   Prints the help to the standard out.
 
 ### merge
 
@@ -78,6 +79,8 @@ Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples
     Write temporary files to the directory specified by STR [default value: ./slow5_timestamp_pid]. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
 * `-t, --threads INT`:
    Number of threads
+*  `-h`, `--help`:
+   Prints the help to the standard out.
    
 ### s2f
 
@@ -100,7 +103,7 @@ Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples
 
 Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelising accross array jobs / distributed systems.
 
-**  `-b STR , --to STR`:
+*  `-b STR , --to STR`:
    Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress STR`:
    Outputs the compression method for BLOW5 output. `STR` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip].
@@ -116,7 +119,8 @@ Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelisi
 -->
 *  `-p, --iop INT`:
    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks)
-
+*  `-h`, `--help`:
+   Prints the help to the standard out.
 
 
 ### index
