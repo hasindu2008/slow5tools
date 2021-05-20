@@ -10,12 +10,12 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 
-#define WARNING_LIMIT 4
+#define WARNING_LIMIT 3
 
 // Operator function to be called by H5Aiterate.
-herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *operator_data);
+herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data);
 // Operator function to be called by H5Literate.
-herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, void *operator_data);
+herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, void *operator_data);
 
 // from nanopolish_fast5_io.cpp
 static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std::string& group_name, const std::string& attribute_name);
@@ -60,7 +60,7 @@ fast5_file_t fast5_open(const char* filename) {
     return fh;
 }
 
-herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data){
+herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data){
     hid_t attribute, attribute_type, native_type;
     herr_t return_val = 0;
     int ret = 0;
@@ -165,12 +165,25 @@ herr_t op_func_attr (hid_t loc_id, const char *name, const H5A_info_t  *info, vo
 //            READ
     else if(strcmp("run_id",name)==0 && H5Tclass==H5T_STRING){
         *(operator_data->flag_run_id) = 1;
-
-        if(slow5_hdr_set("run_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
-            WARNING("run_id attribute value could not be set in the slow5 header %s", "");
-        }
-        if(slow5_hdr_set("tracking_id_run_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
-            WARNING("tracking_id_run_id attribute value could not be set in the slow5 header %s", "");
+        char* run_id_stored = slow5_hdr_get("run_id", 0, operator_data->slow5File->header);
+        if(strcmp(run_id_stored,"")==0 || strcmp(run_id_stored,value.attr_string)==0){
+            if(slow5_hdr_set("run_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+                WARNING("run_id attribute value could not be set in the slow5 header %s", "");
+            }
+            if(slow5_hdr_set("tracking_id_run_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
+                WARNING("tracking_id_run_id attribute value could not be set in the slow5 header %s", "");
+            }
+        }else if(*(operator_data->flag_allow_run_id_mismatch)){
+            if(*(operator_data->warning_flag_allow_run_id_mismatch)==WARNING_LIMIT){
+                WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header. This warning is supressed...", SLOW5_FILE_FORMAT_SHORT);
+            }
+            else if(*(operator_data->warning_flag_allow_run_id_mismatch)<WARNING_LIMIT){
+                WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header.", SLOW5_FILE_FORMAT_SHORT);
+            }
+            *(operator_data->warning_flag_allow_run_id_mismatch) = *(operator_data->warning_flag_allow_run_id_mismatch) + 1;
+        }else{
+            ERROR("Different run_ids found in a single fast5 file. Cannot create a single header slow5/blow5. Please use --out-dir option.If you are using single-fast5 files make sure they have the same run_id%s", "");
+            exit(EXIT_FAILURE);
         }
     }
 //            RAW
@@ -523,7 +536,7 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
     return 0;
 }
 
-int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File){
+int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_write_header, int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t* slow5File){
 
     struct operator_obj tracker;
     tracker.group_level = ROOT;
@@ -547,14 +560,18 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
     size_t zero0 = 0;
     size_t zero1 = 0;
     size_t zero2 = 0;
+    size_t zero3 = 0;
 
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
     tracker.flag_run_id = &flag_run_id;
     tracker.flag_lossy = &flag_lossy;
+    tracker.flag_write_header = &flag_write_header;
+    tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
     tracker.nreads = &zero0;
     tracker.warning_flag_pore_type = &zero1;
     tracker.warning_flag_end_reason = &zero2;
+    tracker.warning_flag_allow_run_id_mismatch = &zero3;
     tracker.slow5_record = slow5_rec_init();
     tracker.group_name = "";
 
@@ -567,22 +584,22 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
         H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
         tracker.num_read_groups = &number_of_groups; //todo:check if the assumption is valid
         //obtain the root group attributes
-        H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
-        //now iterate over read groups. loading records and writing them are done inside op_func_group
-        H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
+        H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
+        //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
+        H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
     }else{ // single-fast5
         //obtain the root group attributes
-        H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &tracker);
+        H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
         hsize_t number_of_groups = 1;
         tracker.num_read_groups = &number_of_groups;
-        //now iterate over read groups. loading records and writing them are done inside op_func_group
-        H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, op_func_group, (void *) &tracker);
+        //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
+        H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
         //        todo: compare header values with the previous singlefast5
-        if(write_header_flag==0){
-            if(*(tracker.flag_run_id) != 1){
-                ERROR("run_id is not set%s", ".");
-                exit(EXIT_FAILURE);
-            }
+        if(*(tracker.flag_run_id) != 1){
+            ERROR("run_id is not set%s", ".");
+            exit(EXIT_FAILURE);
+        }
+        if(flag_write_header==0){
             print_slow5_header(&tracker);
         }
         print_record(&tracker);
@@ -602,11 +619,11 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
   circular path in the file.
 
  ************************************************************/
-herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, void *op_data){
+herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, void *opdata){
 
     herr_t return_val = 0;
     H5O_info_t infobuf;
-    struct operator_obj *operator_data = (struct operator_obj *) op_data;
+    struct operator_obj *operator_data = (struct operator_obj *) opdata;
     /* Type conversion */
     unsigned spaces = 2*(operator_data->group_level + 1);
 
@@ -655,21 +672,22 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
 
                 if (operator_data->fast5_file->is_multi_fast5) {
                     if (strcmp(name, "tracking_id") == 0 && *(operator_data->flag_tracking_id) == 0) {
-                        H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &next_op);
+                        H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &next_op);
                         *(operator_data->flag_tracking_id) = 1;
                     } else if (strcmp(name, "context_tags") == 0 && *(operator_data->flag_context_tags) == 0) {
-                        H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &next_op);
+                        H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &next_op);
                         *(operator_data->flag_context_tags) = 1;
                     } else if (strcmp(name, "tracking_id") != 0 && strcmp(name, "context_tags") != 0) {
-                        H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &next_op);
+                        H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &next_op);
                     }
                 }else{
-                    H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, op_func_attr, (void *) &next_op);
+                    H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &next_op);
                 }
 
                 H5Gclose(group);
                 //the recursive call
-                return_val = H5Literate_by_name(loc_id, name, H5_INDEX_NAME,H5_ITER_INC, 0, op_func_group, (void *) &next_op, H5P_DEFAULT);
+                return_val = H5Literate_by_name(loc_id, name, H5_INDEX_NAME, H5_ITER_INC, 0, fast5_group_itr,
+                                                (void *) &next_op, H5P_DEFAULT);
 
                 if (operator_data->fast5_file->is_multi_fast5) {
                     //check if we are at a root-level group
@@ -687,7 +705,9 @@ herr_t op_func_group (hid_t loc_id, const char *name, const H5L_info_t *info, vo
                                 ERROR("run_id is not set%s", ".");
                                 exit(EXIT_FAILURE);
                             }
-                            print_slow5_header(operator_data);//remove this later; added for the sake of slow5 format completeness
+                            if(*(operator_data->flag_write_header) == 0){
+                                print_slow5_header(operator_data);
+                            }
                         }
                         *(operator_data->nreads) = *(operator_data->nreads) + 1;
 

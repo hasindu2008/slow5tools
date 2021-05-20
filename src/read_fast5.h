@@ -49,7 +49,7 @@ struct operator_obj {
     unsigned        group_level;         /* Recursion level.  0=root */
     struct operator_obj   *prev;          /* Pointer to previous opdata */
     haddr_t         addr;           /* Group address */
-    //attributes are useful when writing. They are also passed to the op_func_group function along with the struct
+    //attributes are useful when writing. They are also passed to the fast5_group_itr function along with the struct
     struct program_meta *meta;
     FILE *f_out;
     enum slow5_fmt format_out;
@@ -64,17 +64,21 @@ struct operator_obj {
     int *flag_tracking_id;
     int *flag_run_id;
     int *flag_lossy;
+    int *flag_write_header;
+    int *flag_allow_run_id_mismatch;
     hsize_t* num_read_groups;
     size_t* nreads;
     size_t* warning_flag_pore_type;
     size_t* warning_flag_end_reason;
+    size_t* warning_flag_allow_run_id_mismatch;
     slow5_file_t* slow5File;
 };
 
 //implemented in read_fast5.c
-int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int write_header_flag, struct program_meta *meta, slow5_file_t* slow5File);
+int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int write_header_flag, int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t* slow5File);
 fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
+std::vector< std::string > list_directory(const std::string& file_name);
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
 void slow5_hdr_initialize(slow5_hdr *header, int lossy);
 
