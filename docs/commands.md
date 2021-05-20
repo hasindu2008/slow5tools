@@ -5,7 +5,7 @@
 * `f2s`:
          Converts from FAST5 to SLOW5/BLOW5.
 * `merge`:
-         Merge multiple SLOW5/BLOW5 files to a single file.         
+         Merge multiple SLOW5/BLOW5 files to a single file.
 * `index`:
          Indexes a SLOW5/BLOW5 file.
 * `view`:
@@ -13,7 +13,7 @@
 * `split`:
          Splits a SLOW5/BLOW5 file.
 * `s2f`:
-         Converts from SLOW5/BLOW5 to FAST5.         
+         Converts from SLOW5/BLOW5 to FAST5.
 * `get`:
          Get records for specified read IDs.
 * `stats`:
@@ -31,16 +31,16 @@ What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_d
 *  `-t STR , --to STR`:
    Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: BLOW5].
 *  `-c, --compress compression_type`:
-   Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip].. 
-*  `-d STR, --out-dir STR`:  
+   Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip]..
+*  `-d STR, --out-dir STR`:
    The output directory name/location. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
-<!--   
+<!--
 *  `-c INT`, `--compress INT`:
    Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
 -->
 *  `-h, --help`:
    Prints the help to the standard out.
-<!--   
+<!--
 *  `-i FILE`, `--index FILE`
    Generates SLOW5/BLOW5 index.
 *  `-o FILE`, `--output FILE`:
@@ -50,16 +50,13 @@ What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_d
     Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
 *   `-l`,`--lossy`:
     Discard auxilliary field information in FAST5.
-<!--    
+<!--
 *  `--no-merge DIR`:
-    Convert each FAST5 file to a separate SLOW5/BLOW5 and write to the directory specified by DIR. `-o` is ineffective with this option.    
+    Convert each FAST5 file to a separate SLOW5/BLOW5 and write to the directory specified by DIR. `-o` is ineffective with this option.
 *  `--no-recursion`:
     Do not recursively search for FAST5 files in specified directories.
--->    
-*  `--tmp-prefix` STR:
-    Write temporary files to the directory specified by STR [default value: ./slow5_timestamp_pid]. Same conditions as for `-d` applies.
-*  `--verbose INT`:
-    Verbosity level for the log messages [default value: 0].
+-->
+
 
 
 ### merge
@@ -75,7 +72,8 @@ Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples
    Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
 *  `-o FILE`, `--output FILE`:
    Outputs converted contents to FILE [default value: stdout]
-
+*  `--tmp-prefix` STR:
+    Write temporary files to the directory specified by STR [default value: ./slow5_timestamp_pid]. Same conditions as for `-d` applies.
 
 ### s2f
 
@@ -154,8 +152,6 @@ Number of reads from each group
 *  `-V, --version`:
     Print the version number to the standard out.
 *  `-v INT, --verbose INT`:
-    Set the verbosity level (0-7) [default value: 4]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-gossip, 6-debug, 7-trace.
+    Set the verbosity level (0-7) [default value: 3]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-gossip, 6-debug, 7-trace.
 *  `-h, --help`:
     Prints the help to the standard out.
-             
-

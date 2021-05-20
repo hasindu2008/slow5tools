@@ -29,7 +29,7 @@ IOP=4
 LOSSY_F2S=-l
 LOSSY_MERGE=-l
 
-THREAD_LIST="32 24 16 8 4 1" #same as number of processes
+THREAD_LIST="32 24 16 8 4 2 1" #same as number of processes
 # THREAD_LIST="1"
 
 
@@ -45,7 +45,7 @@ slow5_f2s_merge_varied_processes_threads () {
 
 	for num in $THREAD_LIST
 	do
-		# clean_fscache
+		clean_file_system_cache
 
 		num_threads=$num
 		MERGED_BLOW5="$MERGED_OUTPUT_DIR/merged_thread_$num_threads.blow5"
@@ -68,12 +68,12 @@ slow5_f2s_merge_varied_processes_threads () {
 			exit 1
 		fi
 		echo
-		
+
 		# delete merge file if necessary
 		rm $MERGED_BLOW5
 		# delete f2s output
 		rm $F2S_OUTPUT_DIR/*
-		# clean_fscache
+		clean_file_system_cache
 
 	done
 

@@ -7,6 +7,7 @@
 
 #include <getopt.h>
 #include <signal.h>
+#include "slow5.h"
 #include "slow5_misc.h"
 #include "error.h"
 #include "cmd.h"
@@ -206,6 +207,9 @@ int main(const int argc, char **argv){
                         cmd_argv = (char **) malloc(argc * sizeof *cmd_argv);
                         memcpy(cmd_argv, argv, argc * sizeof *cmd_argv);
                         cmd_argv[optind_copy] = combined_name;
+
+                        slow5_set_log_level((enum slow5_log_level_opt)meta.verbosity_level);
+                        slow5_set_exit_condition(SLOW5_EXIT_ON_ERR);
 
                         // Calling command program
                         if (meta.verbosity_level >= LOG_VERBOSE) {
