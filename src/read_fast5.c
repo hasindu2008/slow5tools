@@ -10,7 +10,7 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 
-#define WARNING_LIMIT 4
+#define WARNING_LIMIT 3
 
 // Operator function to be called by H5Aiterate.
 herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data);
@@ -173,8 +173,16 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             if(slow5_hdr_set("tracking_id_run_id", value.attr_string, 0, operator_data->slow5File->header) == -1){
                 WARNING("tracking_id_run_id attribute value could not be set in the slow5 header %s", "");
             }
+        }else if(*(operator_data->flag_allow_run_id_mismatch)){
+            if(*(operator_data->warning_flag_allow_run_id_mismatch)==WARNING_LIMIT){
+                WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header. This warning is supressed...", SLOW5_FILE_FORMAT_SHORT);
+            }
+            else if(*(operator_data->warning_flag_allow_run_id_mismatch)<WARNING_LIMIT){
+                WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header.", SLOW5_FILE_FORMAT_SHORT);
+            }
+            *(operator_data->warning_flag_allow_run_id_mismatch) = *(operator_data->warning_flag_allow_run_id_mismatch) + 1;
         }else{
-            ERROR("run_id conflict. Cannot create a single header slow5/blow5. Please use --out-dir option.If you are using single-fast5 files make sure they have the same run_id%s", "");
+            ERROR("Different run_ids found in a single fast5 file. Cannot create a single header slow5/blow5. Please use --out-dir option.If you are using single-fast5 files make sure they have the same run_id%s", "");
             exit(EXIT_FAILURE);
         }
     }
@@ -528,7 +536,7 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
     return 0;
 }
 
-int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_write_header, struct program_meta *meta, slow5_file_t* slow5File){
+int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_write_header, int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t* slow5File){
 
     struct operator_obj tracker;
     tracker.group_level = ROOT;
@@ -552,15 +560,18 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
     size_t zero0 = 0;
     size_t zero1 = 0;
     size_t zero2 = 0;
+    size_t zero3 = 0;
 
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
     tracker.flag_run_id = &flag_run_id;
     tracker.flag_lossy = &flag_lossy;
     tracker.flag_write_header = &flag_write_header;
+    tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
     tracker.nreads = &zero0;
     tracker.warning_flag_pore_type = &zero1;
     tracker.warning_flag_end_reason = &zero2;
+    tracker.warning_flag_allow_run_id_mismatch = &zero3;
     tracker.slow5_record = slow5_rec_init();
     tracker.group_name = "";
 

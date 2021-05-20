@@ -4,9 +4,13 @@
 
 ###############################################################################
 
-# first do f2s and then merge several times with different number of threads
+# do f2s and then merge several times with different number of processes and threads
 
-Usage="test_merge_threads.sh [path to fast5 directory] [path to create a temporary directory] [path to slow5tools executable]"
+NC='\033[0m' # No Color
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+
+Usage="multi_process_f2s_threaded_merge.sh [path to fast5 directory] [path to create a temporary directory] [path to slow5tools executable]"
 
 if [[ "$#" -lt 3 ]]; then
 	echo "Usage: $Usage"
@@ -14,7 +18,7 @@ if [[ "$#" -lt 3 ]]; then
 fi
 
 FAST5_DIR=$1
-TEST_DIR=$2
+TEST_DIR=$2/multi_process_f2s_threaded_merge
 SLOWTOOLS=$3
 F2S_OUTPUT_DIR=$TEST_DIR
 MERGED_OUTPUT_DIR=$TEST_DIR
@@ -25,7 +29,7 @@ IOP=4
 LOSSY_F2S=-l
 LOSSY_MERGE=-l
 
-THREAD_LIST="32 24 16 8 4 1"
+THREAD_LIST="32 24 16 8 4 1" #same as number of processes
 # THREAD_LIST="1"
 
 
@@ -35,7 +39,9 @@ clean_file_system_cache() {
 	#echo 3 | tee /proc/sys/vm/drop_caches
 }
 
-slow5_merge_varied_threads () {
+LOG="$TEST_DIR/multi_process_f2s_threaded_merge.log"
+
+slow5_f2s_merge_varied_processes_threads () {
 
 	for num in $THREAD_LIST
 	do
@@ -43,17 +49,30 @@ slow5_merge_varied_threads () {
 
 		num_threads=$num
 		MERGED_BLOW5="$MERGED_OUTPUT_DIR/merged_thread_$num_threads.blow5"
-		LOG="$TEST_DIR/merge_$SLOW5_FORMAT.log"
 
 
 		echo >> $LOG
-		echo "-------------$num_threads threads---------" >> $LOG
-		echo >> $LOG
+		echo "-------------$num_threads threads/processes---------" >> $LOG
 
-		/usr/bin/time -v $SLOWTOOLS merge $F2S_OUTPUT_DIR $TEMP_DIR $LOSSY_MERGE -t $num_threads -o $MERGED_BLOW5 2>> $LOG
+		echo "-------------running f2s using $num_threads processes---------"
+		echo "-------------running f2s using $num_threads processes---------" >> $LOG
+		if ! /usr/bin/time -v $SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $num_threads $LOSSY_F2S 2>>$LOG;then
+			echo -e "${RED}FAILED${NC}"
+			exit 1
+		fi
+
+		echo "-------------running merge using $num_threads threads-------"
+		echo "-------------running merge using $num_threads threads-------" >> $LOG
+		if ! /usr/bin/time -v $SLOWTOOLS merge $F2S_OUTPUT_DIR $TEMP_DIR $LOSSY_MERGE -t $num_threads -o $MERGED_BLOW5 2>> $LOG;then
+			echo -e "${RED}FAILED${NC}"
+			exit 1
+		fi
+		echo
 		
 		# delete merge file if necessary
 		rm $MERGED_BLOW5
+		# delete f2s output
+		rm $F2S_OUTPUT_DIR/*
 		# clean_fscache
 
 	done
@@ -61,23 +80,30 @@ slow5_merge_varied_threads () {
 }
 
 # create test directory
-test -d  $TEST_DIR && rm -r $TEST_DIR && mkdir $TEST_DIR
+test -d  $TEST_DIR && rm -r $TEST_DIR
+mkdir $TEST_DIR
 
 # f2s .blow5s
 SLOW5_FORMAT=blow5
 F2S_OUTPUT_DIR=$TEST_DIR/blow5s
 test -d  $F2S_OUTPUT_DIR && rm -r $F2S_OUTPUT_DIR
 mkdir $F2S_OUTPUT_DIR
-$SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP $LOSSY_F2S 2>>"$TEST_DIR/f2s_$SLOW5_FORMAT.log"
 
 MERGED_OUTPUT_DIR=$TEST_DIR/merged_blow5s
 test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
 mkdir $MERGED_OUTPUT_DIR
-slow5_merge_varied_threads
+
+echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT---------" >> $LOG
+slow5_f2s_merge_varied_processes_threads
 
 # remove f2s or merge output if necessary
 rm -r $F2S_OUTPUT_DIR
 rm -r $MERGED_OUTPUT_DIR
+
+echo -e "${GREEN}SUCCESS${NC}"
+
+exit
+# --------------------------------------------------------------------------------
 
 # f2s .slow5s
 SLOW5_FORMAT=slow5
