@@ -54,12 +54,17 @@ set(slow5 src/slow5.c)
 set(misc src/misc.c)
 set(press src/press.c)
 
+
 set (hdf5-static "${PROJECT_SOURCE_DIR}/hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
 add_executable(slow5tools ${main} ${f2s} ${s2f} ${index} ${view} ${kstring} ${extract} ${thread} ${read_fast5} ${merge_slow5} ${split_slow5} ${misc} ${slow5} ${press} ${slow5idx})
 
 # Build a static lib
 add_library(slow5 STATIC ${slow5} ${slow5idx} ${misc} ${press})
+
+#just to get rid of Clion warnings
+file(GLOB_RECURSE C_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "test/*.c")
+add_executable(slow5test ${C_SOURCES} ${CPP_SOURCES})
 
 # link with dependencies
 IF (${DEPLOY_PLATFORM} STREQUAL "x86")

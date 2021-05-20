@@ -6,8 +6,8 @@
 #include "unit_test.h"
 #include "slow5.h"
 #include "slow5_extra.h"
-#include "slow5idx.h"
-#include "misc.h"
+#include "slow5_idx.h"
+#include "slow5_misc.h"
 
 int slow5_open_valid(void) {
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
@@ -164,6 +164,126 @@ int slow5_get_invalid(void) {
     slow5_rec_free(read);
 
     ASSERT(slow5_close(s5p) == 0);
+
+    return EXIT_SUCCESS;
+}
+
+int slow5_skip_load_index(void) {
+    // simulate -2 error
+    struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
+    ASSERT(s5p != NULL);
+
+    struct slow5_rec *read = NULL;
+    ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == -2);
+    ASSERT(slow5_get("", &read, s5p) == -2);
+    ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be", &read, s5p) == -2);
+    ASSERT(slow5_get("O_O", &read, s5p) == -2);
+
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+
+    ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be4", &read, s5p) == 0);
+    ASSERT(slow5_get("", &read, s5p) == -3);
+    ASSERT(slow5_get("a649a4ae-c43d-492a-b6a1-a5b8b8076be", &read, s5p) == -3);
+    ASSERT(slow5_get("O_O", &read, s5p) == -3);
+
+    slow5_rec_free(read);
+    ASSERT(slow5_close(s5p) == 0);
+
+    return EXIT_SUCCESS;
+}
+
+int slow5_record_parsing_check(void) {
+    // simulate -5 error
+    struct slow5_file *s5p;
+    struct slow5_rec *read = NULL;
+
+    s5p = slow5_open("test/data/test/parsing_error_check/no_parsing_errors.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == 0);
+    ASSERT(slow5_close(s5p) == 0);
+
+    s5p = slow5_open("test/data/test/parsing_error_check/auxiliary_data_missing.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+    s5p = slow5_open("test/data/test/parsing_error_check/auxiliary_datatype_missing.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+    s5p = slow5_open("test/data/test/parsing_error_check/auxiliary_name_missing.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+    s5p = slow5_open("test/data/test/parsing_error_check/main_attribute_data_missing.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+//    todo: return -5 with appropriate warning instead of dumping the core.
+//    s5p = slow5_open("test/data/test/parsing_error_check/main_attribute_datatype_missing.slow5", "r");
+//    ASSERT(s5p != NULL);
+//    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+//    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+//    ASSERT(slow5_close(s5p) == 0);
+
+//  todo: correct the warning 'Auxiliary fields are missing in header, but present in record' as Main columns are missing.
+    s5p = slow5_open("test/data/test/parsing_error_check/main_attribute_name_missing.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+//    todo: return -5 instead of -3 by correctly detecting that read_id has a '#'
+    s5p = slow5_open("test/data/test/parsing_error_check/read_id_starts_with_hash.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -3);
+    ASSERT(slow5_close(s5p) == 0);
+
+//    todo: return -5 with appropriate warning instead of dumping the core.
+//    s5p = slow5_open("test/data/test/parsing_error_check/more_than_one_tab_datatype_header.slow5", "r");
+//    ASSERT(s5p != NULL);
+//    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+//    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+//    ASSERT(slow5_close(s5p) == 0);
+
+    s5p = slow5_open("test/data/test/parsing_error_check/more_than_one_tab_attribute_name_header.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+    s5p = slow5_open("test/data/test/parsing_error_check/more_than_one_tab_datarecord.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+    s5p = slow5_open("test/data/test/parsing_error_check/deleted_main_colum_data.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+    s5p = slow5_open("test/data/test/parsing_error_check/deleted_auxiliary_data.slow5", "r");
+    ASSERT(s5p != NULL);
+    ASSERT(slow5_idx_load(s5p) == 0); //skip this
+    ASSERT(slow5_get("bc5615d7-dc94-4315-9cf1-5112555c19d5", &read, s5p) == -5);
+    ASSERT(slow5_close(s5p) == 0);
+
+//    todo: deleted datatype, name
+// missing means deleted + tab
+// deleted means only deleted
+
+    slow5_rec_free(read);
 
     return EXIT_SUCCESS;
 }
@@ -859,6 +979,9 @@ int slow5_add_rec_duplicate(void) {
 
 int main(void) {
 
+    slow5_set_log_level(SLOW5_LOG_OFF);
+    slow5_set_exit_condition(SLOW5_EXIT_OFF);
+
     struct command tests[] = {
         // API
         CMD(slow5_open_valid)
@@ -926,6 +1049,9 @@ int main(void) {
         CMD(slow5_add_rec_null)
         CMD(slow5_add_rec_valid)
         CMD(slow5_add_rec_duplicate)
+
+        CMD(slow5_skip_load_index)
+        CMD(slow5_record_parsing_check)
     };
 
     return RUN_TESTS(tests);

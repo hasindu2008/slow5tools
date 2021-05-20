@@ -1,4 +1,4 @@
-#include "misc.h"
+#include "slow5_misc.h"
 #include "cmd.h"
 #include "error.h"
 #include "slow5.h"
@@ -103,8 +103,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     //init_realtime = slow5_realtime();
 
     // Debug: print arguments
-    if (meta != NULL && meta->debug) {
-        if (meta->verbose) {
+    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+        if (meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("printing the arguments given%s","");
         }
 
@@ -155,7 +155,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Parse options
     while ((opt = getopt_long(argc, argv, "c:f:ho:t:", long_opts, &longindex)) != -1) {
-        if (meta->debug) {
+        if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
@@ -167,12 +167,12 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
                 arg_fmt_in = optarg;
                 break;
             case 'h':
-                if (meta->verbose) {
+                if (meta->verbosity_level >= LOG_VERBOSE) {
                     VERBOSE("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             case 'o':
                 arg_fname_out = optarg;
                 break;
@@ -188,7 +188,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Parse format arguments
     if (arg_fmt_in != NULL) {
-        if (meta != NULL && meta->verbose) {
+        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("parsing input format%s","");
         }
 
@@ -202,7 +202,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
     if (arg_fmt_out != NULL) {
-        if (meta != NULL && meta->verbose) {
+        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("parsing output format%s","");
         }
 
@@ -233,7 +233,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Autodetect input/output formats
     if (fmt_in == VIEW_FORMAT_UNKNOWN) {
-        if (meta != NULL && meta->verbose) {
+        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("auto detecting input file format%s","");
         }
 
@@ -255,7 +255,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             return EXIT_FAILURE;
         }
 
-        if (meta != NULL && meta->verbose) {
+        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("auto detecting output file format%s","");
         }
 
@@ -289,7 +289,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Parse output argument
     if (arg_fname_out != NULL) {
-        if (meta != NULL && meta->verbose) {
+        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("opening output file%s","");
         }
         // Create new file or
@@ -340,7 +340,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Close output file
     if (arg_fname_out != NULL) {
-        if (meta != NULL && meta->verbose) {
+        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("closing output file%s","");
         }
 

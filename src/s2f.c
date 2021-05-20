@@ -22,7 +22,7 @@
     "\n" \
     "OPTIONS:\n" \
     "    -h, --help             display this message and exit\n" \
-    "    --iop INT              number of I/O processes to read slow5 files\n" \
+    "    --iop INT              number of I/O processes to read slow5 files -- 1\n" \
 
 
 static double init_realtime = 0;
@@ -366,11 +366,14 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
 
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
+    // Turn off HDF's exception printing, which is generally unhelpful for users
+    H5Eset_auto(0, NULL, NULL);
+
     init_realtime = slow5_realtime();
 
     // Debug: print arguments
-    if (meta != NULL && meta->debug) {
-        if (meta->verbose) {
+    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+        if (meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("printing the arguments given%s","");
         }
 
@@ -409,19 +412,19 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
     // Parse options
     while ((opt = getopt_long(argc, argv, "h:o:", long_opts, &longindex)) != -1) {
-        if (meta->debug) {
+        if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
         switch (opt) {
             case 'h':
-                if (meta->verbose) {
+                if (meta->verbosity_level >= LOG_VERBOSE) {
                     VERBOSE("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
-                return EXIT_SUCCESS;
+                exit(EXIT_SUCCESS);
             case 'o':
                 arg_dir_out = optarg;
                 break;

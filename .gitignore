@@ -70,6 +70,8 @@ src/config.h
 /*.slow5
 /*.txt
 /*.blow5
+python/pyslow5.c
+docs/doxygen
 
 # testing output
 *actual*
@@ -77,3 +79,4 @@ src/config.h
 
 # R output
 *Rplots.pdf
+*.Rhistory

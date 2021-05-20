@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "slow5_defs.h"
 #include "slow5.h"
-#include "press.h"
+#include "slow5_press.h"
 
 void make_blow5(void) {
 
