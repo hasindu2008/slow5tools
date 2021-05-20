@@ -69,7 +69,7 @@ What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_d
 
 Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples are detected, the header and the *read_group* field will be modified accordingly.
 
-**  `-b STR , --to STR`:
+*  `-b STR , --to STR`:
    Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress compression_type`:
    Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip].
@@ -129,6 +129,9 @@ Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelisi
 
 Generates an index for a SLOW5/BLOW5 file.
 
+*  `-h`, `--help`:
+   Prints the help to the standard out.
+
 
 ### get
 
@@ -139,6 +142,9 @@ Generates an index for a SLOW5/BLOW5 file.
    Number of threads
 * `-K, --batchsize`
    The batch size
+*  `-h`, `--help`:
+   Prints the help to the standard out.
+   
 
 Get records for specified read IDs.
 
