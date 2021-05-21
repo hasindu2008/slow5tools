@@ -31,7 +31,7 @@ $SLOW5_EXEC --version
 
 echo
 echo "-------------------merging-------------------"
-if ! $SLOW5_EXEC merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 -s; then
+if ! $SLOW5_EXEC merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 -b slow5; then
     echo "merge failed" 
     exit 1
 fi
@@ -50,7 +50,7 @@ fi
 
 echo
 echo "-------------------lossy merging-------------------"
-if ! $SLOW5_EXEC merge -l $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 -s; then
+if ! $SLOW5_EXEC merge -l $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 -b slow5; then
     echo "merge failed" 
     exit 1
 fi
@@ -67,3 +67,5 @@ else
 fi
 
 exit
+
+

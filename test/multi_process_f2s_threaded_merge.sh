@@ -18,7 +18,7 @@ if [[ "$#" -lt 3 ]]; then
 fi
 
 FAST5_DIR=$1
-TEST_DIR=$2/multi_process_f2s_threaded_merge
+TEST_DIR=$2/multi_process_f2s_threaded_merge_$(date +%s)
 SLOWTOOLS=$3
 F2S_OUTPUT_DIR=$TEST_DIR
 MERGED_OUTPUT_DIR=$TEST_DIR
@@ -28,9 +28,10 @@ TEMP_DIR="-f $TEST_DIR"
 IOP=4
 LOSSY_F2S=-l
 LOSSY_MERGE=-l
+EXTRA_FLAGS=""
 
-THREAD_LIST="32 24 16 8 4 2 1" #same as number of processes
-# THREAD_LIST="1"
+# THREAD_LIST="32 24 16 8 4 2 1" #same as number of processes
+THREAD_LIST="1"
 
 
 clean_file_system_cache() {
@@ -45,34 +46,32 @@ slow5_f2s_merge_varied_processes_threads () {
 
 	for num in $THREAD_LIST
 	do
-		clean_file_system_cache
 
 		num_threads=$num
-		MERGED_BLOW5="$MERGED_OUTPUT_DIR/merged_thread_$num_threads.blow5"
+		MERGED_BLOW5="$MERGED_OUTPUT_DIR/merged_thread_$num_threads.$SLOW5_FORMAT"
 
 
+		clean_file_system_cache
 		echo >> $LOG
 		echo "-------------$num_threads threads/processes---------" >> $LOG
 
 		echo "-------------running f2s using $num_threads processes---------"
 		echo "-------------running f2s using $num_threads processes---------" >> $LOG
-		if ! /usr/bin/time -v $SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $num_threads $LOSSY_F2S 2>>$LOG;then
+		if ! /usr/bin/time -v $SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $num_threads $LOSSY_F2S $EXTRA_FLAGS 2>>$LOG;then
 			echo -e "${RED}FAILED${NC}"
 			exit 1
 		fi
 
+		# clean_file_system_cache
 		echo "-------------running merge using $num_threads threads-------"
 		echo "-------------running merge using $num_threads threads-------" >> $LOG
-		if ! /usr/bin/time -v $SLOWTOOLS merge $F2S_OUTPUT_DIR $TEMP_DIR $LOSSY_MERGE -t $num_threads -o $MERGED_BLOW5 2>> $LOG;then
+		if ! /usr/bin/time -v $SLOWTOOLS merge $F2S_OUTPUT_DIR $TEMP_DIR/$num $LOSSY_MERGE -t $num_threads -o $MERGED_BLOW5 $EXTRA_FLAGS 2>> $LOG;then
 			echo -e "${RED}FAILED${NC}"
 			exit 1
 		fi
-		echo
 
-		# delete merge file if necessary
-		rm $MERGED_BLOW5
-		# delete f2s output
-		rm $F2S_OUTPUT_DIR/*
+		rm $MERGED_BLOW5 # delete merge file if necessary
+		rm $F2S_OUTPUT_DIR/* # delete f2s output
 		clean_file_system_cache
 
 	done
@@ -83,6 +82,7 @@ slow5_f2s_merge_varied_processes_threads () {
 test -d  $TEST_DIR && rm -r $TEST_DIR
 mkdir $TEST_DIR
 
+# --------------------------------------------------------------------------------
 # f2s .blow5s
 SLOW5_FORMAT=blow5
 F2S_OUTPUT_DIR=$TEST_DIR/blow5s
@@ -101,39 +101,54 @@ rm -r $F2S_OUTPUT_DIR
 rm -r $MERGED_OUTPUT_DIR
 
 echo -e "${GREEN}SUCCESS${NC}"
+echo
 
-exit
 # --------------------------------------------------------------------------------
+# f2s .compressed_blow5s
+SLOW5_FORMAT=blow5
+F2S_OUTPUT_DIR=$TEST_DIR/compressed_blow5s
+test -d  $F2S_OUTPUT_DIR && rm -r $F2S_OUTPUT_DIR
+mkdir $F2S_OUTPUT_DIR
 
-# f2s .slow5s
+MERGED_OUTPUT_DIR=$TEST_DIR/merged_compressed_blow5s
+test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
+mkdir $MERGED_OUTPUT_DIR
+
+echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT---------" >> $LOG
+EXTRA_FLAGS="-c gzip"
+slow5_f2s_merge_varied_processes_threads
+
+# remove f2s or merge output if necessary
+rm -r $F2S_OUTPUT_DIR
+rm -r $MERGED_OUTPUT_DIR
+
+echo -e "${GREEN}SUCCESS${NC}"
+echo
+
+
+
+# --------------------------------------------------------------------------------
+# f2s slow5
 SLOW5_FORMAT=slow5
 F2S_OUTPUT_DIR=$TEST_DIR/slow5s
 test -d  $F2S_OUTPUT_DIR && rm -r $F2S_OUTPUT_DIR
 mkdir $F2S_OUTPUT_DIR
-$SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP $LOSSY_F2S -s 2>>"$TEST_DIR/f2s_$SLOW5_FORMAT.log"
 
-MERGED_OUTPUT_DIR=$TEST_DIR/merged_slow5s
+MERGED_OUTPUT_DIR=$TEST_DIR/merged_compressed_blow5s
 test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
 mkdir $MERGED_OUTPUT_DIR
-slow5_merge_varied_threads
+
+echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT---------" >> $LOG
+EXTRA_FLAGS="-b slow5"
+slow5_f2s_merge_varied_processes_threads
 
 # remove f2s or merge output if necessary
 rm -r $F2S_OUTPUT_DIR
 rm -r $MERGED_OUTPUT_DIR
 
+echo -e "${GREEN}SUCCESS${NC}"
+echo
 
-# f2s .blow5s compressed
-SLOW5_FORMAT=blow5_compressed
-F2S_OUTPUT_DIR=$TEST_DIR/blow5_compressed
-test -d  $F2S_OUTPUT_DIR && rm -r $F2S_OUTPUT_DIR
-mkdir $F2S_OUTPUT_DIR
-$SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP $LOSSY_F2S -c 2>>"$TEST_DIR/f2s_$SLOW5_FORMAT.log"
 
-MERGED_OUTPUT_DIR=$TEST_DIR/merged_blow5_compressed
-test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
-mkdir $MERGED_OUTPUT_DIR
-slow5_merge_varied_threads
-
-# remove f2s or merge output if necessary
-rm -r $F2S_OUTPUT_DIR
-rm -r $MERGED_OUTPUT_DIR
+rm -r $TEST_DIR
+exit

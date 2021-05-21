@@ -22,13 +22,13 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -h, --help                 display this message and exit\n" \
-    "    -t, --threads=[INT]        number of threads -- 4\n"        \
-    "    -s, --slow5                convert to slow5\n" \
-    "    -c, --compress             convert to compressed blow5\n"   \
-    "    -l, --lossy                do not store auxiliary fields\n" \
-    "    -o, --output=[FILE]        output converted contents to FILE -- stdout\n" \
-    "    -f, --temp=[DIR]           path to crete a directory to write temporary files"                   \
+    "    -h, --help                         display this message and exit\n" \
+    "    -t, --threads=[INT]                number of threads -- 4\n"        \
+    "    -b, --to=[STR]                     output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
+    "    -c, --compress=[compression_type]  convert to compressed blow5 [default: gzip]\n" \
+    "    -l, --lossy                        do not store auxiliary fields\n" \
+    "    -o, --output=[FILE]                output converted contents to FILE -- stdout\n" \
+    "    -f, --tmp-prefix=[STR]             path to crete a directory to write temporary files"                   \
 
 static double init_realtime = 0;
 
@@ -187,11 +187,11 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h'},  //0
             {"threads", required_argument, NULL, 't' }, //1
-            {"slow5", no_argument, NULL, 's'},    //2
-            {"compress", no_argument, NULL, 'c'},  //3
+            {"to", no_argument, NULL, 'b'},    //2
+            {"compress", required_argument, NULL, 'c'},  //3
             { "lossy", no_argument, NULL, 'l'}, //4
             {"output", required_argument, NULL, 'o'}, //5
-            {"temp", required_argument, NULL, 'f'}, //6
+            {"tmp-prefix", required_argument, NULL, 'f'}, //6
             {NULL, 0, NULL, 0 }
     };
 
@@ -211,7 +211,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "schlt:o:f:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:hlt:o:f:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -227,11 +227,25 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 't':
                 arg_num_threads = optarg;
                 break;
-            case 's':
-                format_out = FORMAT_ASCII;
+            case 'b':
+                if(strcmp(optarg,"slow5")==0){
+                    format_out = FORMAT_ASCII;
+                }else if(strcmp(optarg,"blow5")==0){
+                    format_out = FORMAT_BINARY;
+                }else{
+                    ERROR("Incorrect output format%s", "");
+                    exit(EXIT_FAILURE);
+                }
                 break;
             case 'c':
-                pressMethod = COMPRESS_GZIP;
+                if(strcmp(optarg,"none")==0){
+                    pressMethod = COMPRESS_NONE;
+                }else if(strcmp(optarg,"gzip")==0){
+                    pressMethod = COMPRESS_GZIP;
+                }else{
+                    ERROR("Incorrect compression type%s", "");
+                    exit(EXIT_FAILURE);
+                }
                 break;
             case 'l':
                 lossy = 1;
@@ -255,33 +269,10 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-    std::string output_file;
-    std::string extension;
 
-    char buff[20];
-    time_t now = time(NULL);
-    strftime(buff, 20, "%H%M%S", localtime(&now));
-    std::string tstamp = buff;
-    std::string output_dir = "temp_"+tstamp;
-
-    if(arg_fname_out){
-        output_file = std::string(arg_fname_out);
-        extension = output_file.substr(output_file.length()-6, output_file.length());
-    }
-    if(arg_temp_dir){
-        output_dir = std::string(arg_temp_dir) + "/" + output_dir;
-    }
-//    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
-
-    if(arg_fname_out && format_out==FORMAT_ASCII && extension!=".slow5"){
-        ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }else if(arg_fname_out && format_out==FORMAT_BINARY && extension!=".blow5"){
-        ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
+    // compression option is only effective with -t blow5
+    if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
+        ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }
 
@@ -309,11 +300,47 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    int check_dir = mkdir(output_dir.c_str(),0777);
-    // check if directory is created or not
-    if (check_dir) {
-        ERROR("Cannot create temporary directory. Exiting...%s\n", "");
-        exit(1);
+    std::string output_file;
+    std::string extension;
+    if(arg_fname_out){
+        output_file = std::string(arg_fname_out);
+        extension = output_file.substr(output_file.length()-6, output_file.length());
+    }
+
+    if(arg_fname_out && format_out==FORMAT_ASCII && extension!=".slow5"){
+        ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }else if(arg_fname_out && format_out==FORMAT_BINARY && extension!=".blow5"){
+        ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+
+    char buff[20];
+    time_t now = time(NULL);
+    strftime(buff, 20, "%H%M%S", localtime(&now));
+    std::string tstamp = buff;
+    int p_id=getpid();  /*process id*/
+    std::string output_dir = "slow5_"+tstamp+"_"+std::to_string(p_id);
+
+    if(arg_temp_dir){
+        output_dir = std::string(arg_temp_dir);
+    }
+    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
+
+    //create tmp-prefix directory
+    struct stat st = {0};
+    if (stat(output_dir.c_str(), &st) == -1) {
+        mkdir(output_dir.c_str(), 0700);
+    }else{
+        std::vector< std::string > dir_list = list_directory(output_dir.c_str());
+        if(dir_list.size()>2){
+            ERROR("Temp-prefix director %s is not empty",output_dir.c_str());
+            return EXIT_FAILURE;
+        }
     }
 
     //measure file listing time
