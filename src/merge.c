@@ -40,6 +40,8 @@ typedef struct {
     int lossy;
     std::vector<std::string> slow5_files;
     int64_t n_batch;    // number of files
+    slow5_fmt format_out;
+    press_method compress_method;
 } global_thread;
 
 /* argument wrapper for the multithreaded framework used for data processing */
@@ -65,13 +67,8 @@ void merge_slow5(pthread_arg* pthreadArg) {
             exit(EXIT_FAILURE);
         }
     }
-    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, FORMAT_BINARY);
+    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, pthreadArg->core->format_out);
     slow5_hdr_initialize(slow5File->header, pthreadArg->core->lossy);
-
-    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, FORMAT_BINARY, COMPRESS_NONE) == -1){
-        ERROR("Could not write the header to temp file %s\n", output_path);
-        exit(EXIT_FAILURE);
-    }
 
     for(int32_t i=pthreadArg->starti; i<pthreadArg->endi; i++) { //iterate over slow5files
         slow5_file_t *slow5File_i = slow5_open(pthreadArg->core->slow5_files[i].c_str(), "r");
@@ -80,11 +77,11 @@ void merge_slow5(pthread_arg* pthreadArg) {
             exit(EXIT_FAILURE);
         }
         struct slow5_rec *read = NULL;
-        struct press* compress = press_init(COMPRESS_NONE);
+        struct press* compress = press_init(pthreadArg->core->compress_method);
         int ret;
         while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
             read->read_group = pthreadArg->core->list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
-            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, FORMAT_BINARY, compress) == -1) {
+            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, pthreadArg->core->format_out, compress) == -1) {
                 slow5_rec_free(read);
                 ERROR("Could not write records to temp file %s\n", output_path);
                 exit(EXIT_FAILURE);
@@ -94,7 +91,6 @@ void merge_slow5(pthread_arg* pthreadArg) {
         press_free(compress);
         slow5_close(slow5File_i);
     }
-    slow5_eof_fwrite(slow5File->fp);
     slow5_close(slow5File);
 
     return;
@@ -277,8 +273,13 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
 //    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
 
-    if(arg_fname_out && extension==".blow5" && format_out==FORMAT_ASCII){
-        MESSAGE(stderr, "Output file extension '%s' does not match with the output format", extension.c_str());
+    if(arg_fname_out && format_out==FORMAT_ASCII && extension!=".slow5"){
+        ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }else if(arg_fname_out && format_out==FORMAT_BINARY && extension!=".blow5"){
+        ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -330,7 +331,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     FILE* slow5_file_pointer = stdout;
     if(arg_fname_out){
-        slow5_file_pointer = fopen(arg_fname_out, "w");
+        slow5_file_pointer = fopen(arg_fname_out, "wb");
         if (!slow5_file_pointer) {
             ERROR("Output file %s could not be opened - %s.", arg_fname_out, strerror(errno));
             return EXIT_FAILURE;
@@ -411,6 +412,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     core.lossy = lossy;
     core.slow5_files = slow5_files;
     core.n_batch = slow5_files.size();
+    core.format_out = format_out;
+    core.compress_method = pressMethod;
 
     //measure read_group number assigning using multi-threads time
     realtime0 = slow5_realtime();
@@ -427,24 +430,24 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     realtime0 = slow5_realtime();
 
     for(size_t i=0; i<slow5_files.size(); i++){
-        slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+
+        // BUFSIZE default is 8192 bytes
+        // BUFSIZE of 1 means one chareter at time
+        // good values should fit to blocksize, like 1024 or 4096
+        // higher values reduce number of system calls
+
+        char buf[BUFSIZ];
+        size_t size;
+
+        FILE* slow5File_i = fopen(slow5_files[i].c_str(), "rb");
         if(!slow5File_i){
             ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
             continue;
         }
-        struct slow5_rec *read = NULL;
-        struct press* compress = press_init(pressMethod);
-        int ret;
-        while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
-            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, format_out, compress) == -1) {
-                slow5_rec_free(read);
-                ERROR("Could not write records to %s\n", arg_fname_out);
-                exit(EXIT_FAILURE);
-            }
+        while ((size = fread(buf, 1, BUFSIZ, slow5File_i))) {
+            fwrite(buf, 1, size, slow5File->fp);
         }
-        slow5_rec_free(read);
-        press_free(compress);
-        slow5_close(slow5File_i);
+        fclose(slow5File_i);
 
         int del = remove(slow5_files[i].c_str());
         if (del) {

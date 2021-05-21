@@ -27,11 +27,11 @@ rm -r $OUTPUT_DIR
 mkdir $OUTPUT_DIR
 
 echo "-------------------slow5tools version-------------------"
-SLOW5_EXEC --version
+$SLOW5_EXEC --version
 
 echo
 echo "-------------------merging-------------------"
-if ! SLOW5_EXEC merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 -s; then
+if ! $SLOW5_EXEC merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 -s; then
     echo "merge failed" 
     exit 1
 fi
@@ -50,7 +50,7 @@ fi
 
 echo
 echo "-------------------lossy merging-------------------"
-if ! SLOW5_EXEC merge -l $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 -s; then
+if ! $SLOW5_EXEC merge -l $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 -s; then
     echo "merge failed" 
     exit 1
 fi
