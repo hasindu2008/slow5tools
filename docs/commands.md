@@ -59,7 +59,7 @@ What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_d
     Do not recursively search for FAST5 files in specified directories.
 -->
 * `-a, --allow`:
-   allow run id mismatches in with in a multi-fast5 file or inside a directory of single-fast5 files.
+   allow run id mismatches in a multi-fast5 file or inside a directory of single-fast5 files.
 *  `-h`, `--help`:
    Prints the help to the standard out.
 

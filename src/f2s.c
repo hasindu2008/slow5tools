@@ -22,12 +22,12 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -t, --to STR                       output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
-    "    -c, --compress compression_type    convert to compressed blow5\n" \
+    "    -b, --to=[STR]                     output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
+    "    -c, --compress=[compression_type]  convert to compressed blow5\n [default: gzip]" \
     "    -h, --help                         display this message and exit\n" \
-    "    -p, --iop INT                      number of I/O processes to read fast5 files [default: 8]\n" \
+    "    -p, --iop=[INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
     "    -l, --lossy                        do not store auxiliary fields\n" \
-    "    -d, --output_dir=[dir]             output directory where slow5files are written to\n" \
+    "    -d, --output_dir=[STR]             output directory where slow5files are written to\n" \
     "    -a, --allow                        allow run id mismatches in a fast5 file to\n" \
 
 static double init_realtime = 0;
@@ -268,7 +268,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     static struct option long_opts[] = {
-            {"to", required_argument, NULL, 't'},    //0
+            {"to", required_argument, NULL, 'b'},    //0
             {"compress", required_argument, NULL, 'c'},  //1
             {"help", no_argument, NULL, 'h'},  //2
             {"output", required_argument, NULL, 'o'},   //3
@@ -288,13 +288,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "c:ht:o:d:lap:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:hb:o:d:lap:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
         switch (opt) {
-            case 't':
+            case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = FORMAT_ASCII;
                 }else if(strcmp(optarg,"blow5")==0){
