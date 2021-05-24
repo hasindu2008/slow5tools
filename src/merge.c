@@ -263,13 +263,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
     }
 
-    if(!arg_fname_out && !arg_temp_dir){
-        MESSAGE(stderr, "When redirecting output to stdout, path to create a temporary directory must be set%s", "");
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }
-
     // compression option is only effective with -t blow5
     if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
@@ -418,6 +411,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     }
 
+    fprintf(stderr,"slow5_files size=%d",slow5_files.size());
+    if(slow5_files.size()==0){
+        WARNING("No proper slow5/blow5 files found. Exiting...%s","");
+        exit(EXIT_SUCCESS);
+    }
+
     fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
 
     //now write the header to the slow5File. Use Binary non compress method for fast writing
@@ -428,7 +427,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     size_t num_slow5s = slow5_files.size();
     if(num_threads >= num_slow5s){
-        num_threads = num_threads/2;
+        num_threads = num_slow5s;
     }
 
     // Setup multithreading structures
