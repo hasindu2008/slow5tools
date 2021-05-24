@@ -62,7 +62,7 @@ slow5_f2s_merge_varied_processes_threads () {
 			exit 1
 		fi
 
-		# clean_file_system_cache
+		clean_file_system_cache
 		echo "-------------running merge using $num_threads threads-------"
 		echo "-------------running merge using $num_threads threads-------" >> $LOG
 		if ! /usr/bin/time -v $SLOWTOOLS merge $F2S_OUTPUT_DIR $TEMP_DIR/$num $LOSSY_MERGE -t $num_threads -o $MERGED_BLOW5 $EXTRA_FLAGS 2>> $LOG;then
