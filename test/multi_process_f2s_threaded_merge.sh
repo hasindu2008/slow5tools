@@ -30,8 +30,8 @@ LOSSY_F2S=-l
 LOSSY_MERGE=-l
 EXTRA_FLAGS=""
 
-# THREAD_LIST="32 24 16 8 4 2 1" #same as number of processes
-THREAD_LIST="1"
+THREAD_LIST="32 24 16 8 4 2 1" #same as number of processes
+# THREAD_LIST="1"
 
 
 clean_file_system_cache() {
@@ -83,6 +83,7 @@ test -d  $TEST_DIR && rm -r $TEST_DIR
 mkdir $TEST_DIR
 
 # --------------------------------------------------------------------------------
+echo -e "${GREEN}SLOW5_FORMAT=blow5${NC}"
 # f2s .blow5s
 SLOW5_FORMAT=blow5
 F2S_OUTPUT_DIR=$TEST_DIR/blow5s
@@ -104,6 +105,7 @@ echo -e "${GREEN}SUCCESS${NC}"
 echo
 
 # --------------------------------------------------------------------------------
+echo -e "${GREEN}SLOW5_FORMAT=blow5_compressed${NC}"
 # f2s .compressed_blow5s
 SLOW5_FORMAT=blow5
 F2S_OUTPUT_DIR=$TEST_DIR/compressed_blow5s
@@ -114,7 +116,7 @@ MERGED_OUTPUT_DIR=$TEST_DIR/merged_compressed_blow5s
 test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
 mkdir $MERGED_OUTPUT_DIR
 
-echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT---------" >> $LOG
+echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT_compressed---------" >> $LOG
 EXTRA_FLAGS="-c gzip"
 slow5_f2s_merge_varied_processes_threads
 
@@ -129,6 +131,7 @@ echo
 
 # --------------------------------------------------------------------------------
 # f2s slow5
+echo -e "${GREEN}SLOW5_FORMAT=slow5${NC}"
 SLOW5_FORMAT=slow5
 F2S_OUTPUT_DIR=$TEST_DIR/slow5s
 test -d  $F2S_OUTPUT_DIR && rm -r $F2S_OUTPUT_DIR
@@ -150,5 +153,4 @@ echo -e "${GREEN}SUCCESS${NC}"
 echo
 
 
-rm -r $TEST_DIR
 exit
