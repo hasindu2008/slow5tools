@@ -83,19 +83,51 @@ Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples
 *  `-h`, `--help`:
    Prints the help to the standard out.
    
-### s2f
 
-`slow5tools slow2fast [OPTIONS] file1.slow5/file1.blow5/dir1 ... -o fast5_dir`
+### index
+
+`slow5tools index [OPTIONS] file1.slow5/file1.blow5`
+
+Generates an index for a SLOW5/BLOW5 file.
 
 *  `-h`, `--help`:
    Prints the help to the standard out.
-*  `n`, `--num-reads`:
-   Number of reads to write into one FAST5 file [default value: 4000]
-*  `-p, --iop INT`:
-   Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
-*   `-d DIR`
-   Output directory where the FAST5 files will be written.
 
+### view
+
+View a SLOW5 file. Can be used to convert back and forth between ASCII and binary and also with and without compression.
+
+`./slow5tools view [OPTIONS] file.slow5/file.blow5`
+
+*  `-f STR, --from STR`        
+      Specify input file format. STR can be slow5 or blow5 [Default: autodetected based on the file extension otherwise].
+*  `-b STR, --to STR`          
+      Specify output file format. STR can be slow5 or blow5. [Default: slow5]     
+*  `-c, --compress compression_type`:
+      Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective 
+*  `-o STR, --output STR`        
+      output to file specified by STR. [default: stdout]
+*  `-h`, `--help`:
+   Prints the help to the standard out.
+
+*TODO: if '-' is specified as the file, read from stdin*
+*TODO: view specified field only*
+*TODO: view header only*
+
+### get
+
+`slow5tools get [OPTIONS] file1.slow5/file1.blow5 < readids.txt`
+`slow5tools get [OPTIONS] file1.slow5/file1.blow5 readid1 ....`
+
+* `-t, --threads INT`:
+   Number of threads
+* `-K, --batchsize`
+   The batch size
+*  `-h`, `--help`:
+   Prints the help to the standard out.
+   
+
+Get records for specified read IDs.
 
 
 ### split
@@ -124,30 +156,21 @@ Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelisi
    Prints the help to the standard out.
 
 
-### index
+### s2f
 
-`slow5tools index [OPTIONS] file1.slow5/file1.blow5`
-
-Generates an index for a SLOW5/BLOW5 file.
+`slow5tools slow2fast [OPTIONS] file1.slow5/file1.blow5/dir1 ... -o fast5_dir`
 
 *  `-h`, `--help`:
    Prints the help to the standard out.
+*  `n`, `--num-reads`:
+   Number of reads to write into one FAST5 file [default value: 4000]
+*  `-p, --iop INT`:
+   Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
+*   `-d DIR`
+   Output directory where the FAST5 files will be written.
 
 
-### get
 
-`slow5tools get [OPTIONS] file1.slow5/file1.blow5 < readids.txt`
-`slow5tools get [OPTIONS] file1.slow5/file1.blow5 readid1 ....`
-
-* `-t, --threads INT`:
-   Number of threads
-* `-K, --batchsize`
-   The batch size
-*  `-h`, `--help`:
-   Prints the help to the standard out.
-   
-
-Get records for specified read IDs.
 
 ### stats
 
