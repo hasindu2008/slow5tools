@@ -41,17 +41,37 @@ Building from the Github repository additionally requires `autoreconf` which can
 
 ## Usage
 
+Visit the [man page](https://github.com/hasindu2008/slow5/blob/master/docs/commands.md) for all the commands and options.
+
+### Examples
+ 
 ```sh
-slow5tools ...
-```
+#convert a directory of fast5 files into .blow5 (compression enabled) using 8 I/O processes
+slow5tools f2s fast5_dir -d blow5_dir  -p 8 
+#convert a single fast5 file into a blow5 file(compression enabled)
+slow5tools f2s file.fast5 -o file.blow5  -p 1 
+#merge all blow5 files in a directory into a single blow5 file using 8 threads
+slow5tools merge blow5_dir -o file.blow5 -t8
+ 
+#Convert a BLOW5 file into SLOW5 ASCII
+slow5tools view file.blow5 -b slow5 -o file.slow5
+#convert a SLOW5 file to BLOW5
+slow5tools view file.slow5 -b blow5 -o file.blow5
+ 
+#index a slow5/blow5 file
+slow5tools index file.blow5
+ 
+#extract records from a slow5/blow5 file corresponding to given read ids 
+slow5tools get file.blow5 readid1 readid2 
+ 
+#split a blow5 file into separate blow5 files based on the read groups
+slow5tools split file.blow5 -d blow5_dir -r
+#split a blow5 file (single read group) into separate blow5 files such that there are 4000 reads in one file
+slow5tools split file.blow5 -d bloow5_dir -n 4000
+ 
+#convert a directory of blow5 files to fast5 using 8 I/O processes
+slow5tools s2f blow5_dir -d fast5  -p 8 
 
-Visit the [man page](https://hasindu2008.github.io/slow5/docs/commands) for all the commands and options.
-
-### Example
-
-
-```sh
-slow5tools ...
 ```
 
 ## Acknowledgement
