@@ -24,6 +24,7 @@
 ### f2s
 
 `slow5tools f2s [OPTIONS] file.fast5 -o file.blow5 -p 1`
+
 `slow5tools f2s [OPTIONS] fast5_dir1/file1.fast5 fast5_dir2/file2.fast5 ... -d output_dir`
 
 Recursively searches for FAST5 files (.fast5 extension) in directories specified as arguments and converts them to SLOW5/BLOW5 format. 
