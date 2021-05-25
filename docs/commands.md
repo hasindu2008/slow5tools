@@ -109,10 +109,10 @@ Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelisi
    Outputs the compression method for BLOW5 output. `STR` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip].
 *  `-d STR`, `--out-dir STR`:
    Output directory where the split files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
-*  `n, --num-reads INT`:
-   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file)
 *  `r, --read-groups`:
-   Split such that each read group goes into a different file. cannot be used together with -n.
+   Split such that each read group goes into a different file. 
+*  `n, --num-reads INT`:
+   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file). Note that, this option works only for slow5 files with a single read group. Cannot be used together with -r. You can run with -r first to split each read groups into separate files and subsequently with -n on each file.
 <!--
 *  `l, --list FILE`:
    Split as per the mappings given in file containing a list of readID and filename pairs.
@@ -148,15 +148,18 @@ Generates an index for a SLOW5/BLOW5 file.
 
 Get records for specified read IDs.
 
-
 ### stats
 
-Get statistics of a SLOW5/BLOW5 file
-Should print if SLOW5 or BLOW5
+`slow5tools stats [OPTIONS] file1.slow5/file1.blow5`
+
+Get statistics of a SLOW5/BLOW5 file and prints to the stdout.
+
+if SLOW5 or BLOW5
 The compression technique and compression level if applicable
 Number of read groups
 Total number of reads
 Number of reads from each group
+and whatever is useful.
 
 
 ## GLOBAL OPTIONS
