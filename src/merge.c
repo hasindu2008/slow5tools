@@ -197,7 +197,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     enum slow5_fmt format_out = FORMAT_BINARY;
-    enum press_method pressMethod = COMPRESS_NONE;
+    enum press_method pressMethod = COMPRESS_GZIP;
 
     // Input arguments
     char *arg_fname_out = NULL;
@@ -230,6 +230,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = FORMAT_ASCII;
+                    pressMethod = COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = FORMAT_BINARY;
                 }else{

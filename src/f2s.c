@@ -27,7 +27,7 @@
     "    -h, --help                         display this message and exit\n" \
     "    -p, --iop=[INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
     "    -l, --lossy                        do not store auxiliary fields\n" \
-    "    -d, --output_dir=[STR]             output directory where slow5files are written to\n" \
+    "    -d, --out-dir=[STR]             output directory where slow5files are written to\n" \
     "    -a, --allow                        allow run id mismatches in a fast5 file to\n" \
     "    -o, --output=[FILE]                output contents to FILE -- stdout\n" \
 
@@ -127,7 +127,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
         }
         H5Fclose(fast5_file.hdf5_file);
     }
-    if(output_dir && !fast5_file.is_multi_fast5) {
+    if(slow5_file_pointer_outputdir_single_fast5) {
         if(format_out == FORMAT_BINARY){
             slow5_eof_fwrite(slow5File_outputdir_single_fast5->fp);
         }
@@ -276,13 +276,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             {"output", required_argument, NULL, 'o'},   //3
             { "iop", required_argument, NULL, 'p'}, //4
             { "lossy", no_argument, NULL, 'l'}, //4
-            { "output_dir", required_argument, NULL, 'd'}, //5
+            { "out-dir", required_argument, NULL, 'd'}, //5
             { "allow", no_argument, NULL, 'a'}, //6
             {NULL, 0, NULL, 0 }
     };
 
     enum slow5_fmt format_out = FORMAT_BINARY;
-    enum press_method pressMethod = COMPRESS_NONE;
+    enum press_method pressMethod = COMPRESS_GZIP;
 
     // Input arguments
     char *arg_dir_out = NULL;
@@ -300,6 +300,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = FORMAT_ASCII;
+                    pressMethod = COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = FORMAT_BINARY;
                 }else{

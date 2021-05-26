@@ -28,13 +28,12 @@
 `slow5tools f2s [OPTIONS] fast5_dir1/file1.fast5 fast5_dir2/file2.fast5 ... -d output_dir`
 
 Recursively searches for FAST5 files (.fast5 extension) in directories specified as arguments and converts them to SLOW5/BLOW5 format. 
-Do not mix multi-FAST5 and single-FAST5 files in a single command (is this correct Hiruna?). For each multi-FAST5 file in provided input directories, a SLOW5/BLOW5 file with the same file name will be created inside rge directory specified by `-d`. If single-FAST5 files are provided as input, a SLOW5/BLOW5 file will be created one for each process (specified by -p below).
-What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_dir2 hiruna?
+It is recommended not to mix multi-FAST5 and single-FAST5 files in a single command. For each multi-FAST5 file in provided input directories, a SLOW5/BLOW5 file with the same file name will be created inside rge directory specified by `-d`. If single-FAST5 files are provided as input, a SLOW5/BLOW5 file will be created one for each process (specified by -p below).
 
 *  `-b STR , --to STR`:
    Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress compression_type`:
-   Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip]..
+   Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -b blow5 [default value: gzip]..
 *  `-d STR, --out-dir STR`:
    The output directory name/location. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
 <!--
@@ -60,7 +59,7 @@ What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_d
     Do not recursively search for FAST5 files in specified directories.
 -->
 * `-a, --allow`:
-   allow run id mismatches in a multi-fast5 file or inside a directory of single-fast5 files.
+   Allow run id mismatches in a multi-fast5 file or inside a directory of single-fast5 files, i.e., FAST5 files from different samples can be converted in a single command.
 *  `-h`, `--help`:
    Prints the help to the standard out.
 
@@ -68,7 +67,7 @@ What happens if we provide a.fast5 and b.fast5 instead of fast5_dir1 and fast5_d
 
 `slow5tools merge [OPTIONS] dir1/file1.slow5 dir2/file2.slow5 ...`
 
-Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples are detected, the header and the *read_group* field will be modified accordingly.
+Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples (different run ids) are detected, the header and the *read_group* field will be modified accordingly.
 
 *  `-b STR , --to STR`:
    Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
@@ -80,6 +79,8 @@ Merges multiple SLOW5/BLOW5 files into one SLOW5/BLOW5 file. If multiple samples
     Write temporary files to the directory specified by STR [default value: ./slow5_timestamp_pid]. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
 * `-t, --threads INT`:
    Number of threads
+*   `-l`,`--lossy`:
+   Discard auxilliary field information in FAST5.
 *  `-h`, `--help`:
    Prints the help to the standard out.
    
@@ -142,32 +143,40 @@ Split a SLOW5/BLOW5 file into multiple SLOW5/BLOW5 files. Useful for parallelisi
    Outputs the compression method for BLOW5 output. `STR` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -t blow5 [default value: gzip].
 *  `-d STR`, `--out-dir STR`:
    Output directory where the split files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
-*  `r, --read-groups`:
-   Split such that each read group goes into a different file. 
-*  `n, --num-reads INT`:
-   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file). Note that, this option works only for slow5 files with a single read group. Cannot be used together with -r. You can run with -r first to split each read groups into separate files and subsequently with -n on each file.
-<!--
-*  `l, --list FILE`:
-   Split as per the mappings given in file containing a list of readID and filename pairs.
--->
+*  `f, --files INT`:
+   Split such that N (as specified in INT) number of files  are created with all having equal number of reads. Note that, this option works only for slow5 files with a single read group. Cannot be used together with -r. You can run with -r first to split each read groups into separate files and subsequently with -n on each file.
+*  `r, --reads INT`:
+   Split such that files are created with each having N (as specified in INT) number of reads. Note that, this option works only for slow5 files with a single read group. Cannot be used together with -r. You can run with -r first to split each read groups into separate files and subsequently with -n on each file.
+*  `g, --groups`:
+   Split such that each read group (sample/run id) goes into a different file. 
+*   `-l`,`--lossy`:
+    Discard auxilliary field information in FAST5.
 *  `-p, --iop INT`:
    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks)
 *  `-h`, `--help`:
    Prints the help to the standard out.
+<!--
+*  `n, --num-reads INT`:
+   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file). 
+*  `l, --list FILE`:
+   Split as per the mappings given in file containing a list of readID and filename pairs.
+-->
 
 
 ### s2f
 
 `slow5tools slow2fast [OPTIONS] file1.slow5/file1.blow5/dir1 ... -o fast5_dir`
 
+Convert SLOW5/BLOW5 into FAST5 files. One FAST5 per SLOW5/BLOW5.
+
 *  `-h`, `--help`:
    Prints the help to the standard out.
 *  `n`, `--num-reads`:
-   Number of reads to write into one FAST5 file [default value: 4000]
+   Number of reads to write into one FAST5 file [default value: 4000]. not implemented (todo). Use split --reads option to first split reads.
 *  `-p, --iop INT`:
    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
-*   `-d DIR`
-   Output directory where the FAST5 files will be written.
+*   `-d STR`, `--out-dir STR`:
+   Output directory where the FAST5 files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
 
 
 

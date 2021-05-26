@@ -14,15 +14,16 @@
 #include "read_fast5.h"
 
 
-#define USAGE_MSG "Usage: %s [OPTION]... -o [output DIR] [SLOW5_FILE/DIR]...\n"
+#define USAGE_MSG "Usage: %s [OPTION]... -d [output DIR] [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Convert slow5 or (compressed) blow5 file(s) to fast5.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
+    "    -d, --out-dir=[STR]             output directory where files are written to\n" \
+    "    -p, --iop=[INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
     "    -h, --help             display this message and exit\n" \
-    "    --iop INT              number of I/O processes to read slow5 files -- 1\n" \
 
 
 static double init_realtime = 0;
@@ -279,7 +280,10 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
 
 void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
     int64_t num_slow5_files = slow5_files.size();
-
+    if (iop > num_slow5_files) {
+        iop = num_slow5_files;
+        WARNING("Only %d proceses will be used",iop);
+    }
     //create processes
     std::vector<pid_t> pids_v(iop);
     std::vector<proc_arg_t> proc_args_v(iop);
@@ -399,8 +403,8 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
-            {"output", required_argument, NULL, 'o' },  //1
-            { "iop", required_argument, NULL, 0},   //2
+            {"out-dir", required_argument, NULL, 'd' },  //1
+            { "iop", required_argument, NULL, 'p'},   //2
             {NULL, 0, NULL, 0 }
     };
 
@@ -408,10 +412,10 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     char *arg_dir_out = NULL;
     int longindex = 0;
     int opt;
-    int iop = 1;
+    int iop = 8;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "h:o:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "h:d:p:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -425,16 +429,14 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
-            case 'o':
+            case 'd':
                 arg_dir_out = optarg;
                 break;
-            case  0 :
-                if (longindex == 2) {
-                    iop = atoi(optarg);
-                    if (iop < 1) {
-                        ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-                        exit(EXIT_FAILURE);
-                    }
+            case 'p':
+                iop = atoi(optarg);
+                if (iop < 1) {
+                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
+                    exit(EXIT_FAILURE);
                 }
                 break;
             default: // case '?'
@@ -452,6 +454,12 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         struct stat st = {0};
         if (stat(arg_dir_out, &st) == -1) {
             mkdir(arg_dir_out, 0700);
+        }else{
+            std::vector< std::string > dir_list = list_directory(arg_dir_out);
+            if(dir_list.size()>2){
+                ERROR("Output director %s is not empty",arg_dir_out);
+                return EXIT_FAILURE;
+            }
         }
     }
 
