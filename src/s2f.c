@@ -21,9 +21,9 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -d, --out-dir=[STR]             output directory where files are written to\n" \
-    "    -p, --iop=[INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
-    "    -h, --help             display this message and exit\n" \
+    "    -d, --out-dir=[STR]        output directory where files are written to\n" \
+    "    -p, --iop=[INT]            number of I/O processes to read fast5 files [default: 8]\n" \
+    "    -h, --help                 display this message and exit\n" \
 
 
 static double init_realtime = 0;

@@ -395,9 +395,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     reads_count readsCount;
     std::vector<std::string> fast5_files;
 
-    if(iop==1 && !arg_dir_out){
-        WARNING("When converting multi-fast5 files with --iop=1 and -d=NULL, multiple headers will be written to stdout. It is recommended to set -d%s", ".");
-    }
     if(arg_dir_out){
         struct stat st = {0};
         if (stat(arg_dir_out, &st) == -1) {
