@@ -411,7 +411,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     }
 
-    fprintf(stderr,"slow5_files size=%d",slow5_files.size());
     if(slow5_files.size()==0){
         WARNING("No proper slow5/blow5 files found. Exiting...%s","");
         exit(EXIT_SUCCESS);

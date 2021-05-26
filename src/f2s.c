@@ -29,11 +29,12 @@
     "    -l, --lossy                        do not store auxiliary fields\n" \
     "    -d, --output_dir=[STR]             output directory where slow5files are written to\n" \
     "    -a, --allow                        allow run id mismatches in a fast5 file to\n" \
+    "    -o, --output=[FILE]                output contents to FILE -- stdout\n" \
 
 static double init_realtime = 0;
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
-void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
+void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
 
     static size_t call_count = 0;
     slow5_file_t* slow5File = NULL;
@@ -44,15 +45,12 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
     std::string slow5_path_outputdir_single_fast5;
 
     std::string extension = ".blow5";
-    int stdout_copy = -1;
     if(format_out==FORMAT_ASCII){
         extension = ".slow5";
     }
     if(output_dir){
         slow5_path = std::string(output_dir);
         slow5_path_outputdir_single_fast5 = slow5_path;
-    }else{ //duplicate stdout file descriptor
-        stdout_copy = dup(1);
     }
     fast5_file_t fast5_file;
     for (int i = args.starti; i < args.endi; i++) {
@@ -109,11 +107,18 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
         }
         else{ // output dir not set hence, writing to stdout
             if(call_count==0){
-                slow5_file_pointer = fdopen(1,"w");  //obtain a pointer to stdout file stream
-                // An error occured
-                if (!slow5_file_pointer) {
-                    ERROR("Could not open stdout file stream - %s.", strerror(errno));
-                    return;
+                if(arg_fname_out){
+                    slow5_file_pointer = fopen(arg_fname_out, "wb");
+                    if (!slow5_file_pointer) {
+                        ERROR("Output file %s could not be opened - %s.", arg_fname_out, strerror(errno));
+                        return;
+                    }
+                }else{
+                    slow5_file_pointer = fdopen(1,"w");  //obtain a pointer to stdout file stream
+                    if (!slow5_file_pointer) {
+                        ERROR("Could not open stdout file stream - %s.", strerror(errno));
+                        return;
+                    }
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_BINARY);
                 slow5_hdr_initialize(slow5File->header, lossy);
@@ -132,17 +137,14 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
         if(format_out == FORMAT_BINARY){
             slow5_eof_fwrite(slow5File->fp);
         }
-        slow5_close(slow5File);
-    }
-    if(stdout_copy>0){
-        close(stdout_copy);
+        slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
     if(meta->verbosity_level >= LOG_VERBOSE){
         fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
 }
 
-void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount){
+void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
     int64_t num_fast5_files = fast5_files.size();
     if (iop > num_fast5_files) {
         iop = num_fast5_files;
@@ -174,7 +176,7 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
     }
 
     if(iop==1){
-        f2s_child_worker(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, proc_args[0], fast5_files, output_dir, meta, readsCount);
+        f2s_child_worker(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, proc_args[0], fast5_files, output_dir, meta, readsCount, arg_fname_out);
 //        goto skip_forking;
         return;
     }
@@ -190,7 +192,7 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
             exit(EXIT_FAILURE);
         }
         if(pids[t]==0){ //child
-            f2s_child_worker(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, proc_args[t], fast5_files, output_dir, meta, readsCount);
+            f2s_child_worker(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, proc_args[t], fast5_files, output_dir, meta, readsCount, arg_fname_out);
             exit(EXIT_SUCCESS);
         }
         if(pids[t]>0){ //parent
@@ -284,6 +286,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Input arguments
     char *arg_dir_out = NULL;
+    char *arg_fname_out = NULL;
 
     int opt;
     int longindex = 0;
@@ -337,6 +340,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                     exit(EXIT_FAILURE);
                 }
                 break;
+            case 'o':
+                arg_fname_out = optarg;
+                break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -344,14 +350,36 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    if(arg_fname_out && arg_dir_out){
+        ERROR("output file name and output directory both cannot be set%s","");
+        return EXIT_FAILURE;
+    }
     if(iop>1 && !arg_dir_out){
         ERROR("output directory should be specified when using multiprocessing iop=%d",iop);
         return EXIT_FAILURE;
     }
 
-    // compression option is only effective with -t blow5
+    // compression option is only effective with -b blow5
     if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
+        return EXIT_FAILURE;
+    }
+
+    std::string output_file;
+    std::string extension;
+    if(arg_fname_out){
+        output_file = std::string(arg_fname_out);
+        extension = output_file.substr(output_file.length()-6, output_file.length());
+    }
+    if(arg_fname_out && format_out==FORMAT_ASCII && extension!=".slow5"){
+        ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }else if(arg_fname_out && format_out==FORMAT_BINARY && extension!=".blow5"){
+        ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
 
@@ -394,7 +422,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
-    f2s_iop(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount);
+    f2s_iop(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
     fprintf(stderr, "[%s] Converting %ld fast5 files using %d process - took %.3fs\n", __func__, fast5_files.size(), iop, slow5_realtime() - init_realtime);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
