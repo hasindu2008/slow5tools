@@ -24,7 +24,7 @@ struct command {
 static inline void exit_msg(const int exit_code, char **argv, struct program_meta *meta,
                             const char *file, const char *func, const int line) {
     if (meta != NULL) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
+        if (meta->verbosity_level >= LOG_GOSSIP) {
             VERBOSE("exiting with %s",
                     exit_code == EXIT_SUCCESS ? "SUCCESS" :
                     exit_code == EXIT_FAILURE ? "FAILURE" :

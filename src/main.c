@@ -82,7 +82,7 @@ int main(const int argc, char **argv){
 
     // Default options
     struct program_meta meta = {
-        .verbosity_level = LOG_INFO
+        .verbosity_level = LOG_VERBOSE
     };
 
     // Setup segmentation fault handler
@@ -126,7 +126,7 @@ int main(const int argc, char **argv){
 
             switch (opt) {
                 case 'h':
-                    if (meta.verbosity_level >= LOG_VERBOSE) {
+                    if (meta.verbosity_level >= LOG_GOSSIP) {
                         VERBOSE("displaying large help message%s","");
                     }
                     fprintf(stdout, HELP_LARGE_MSG, argv[0], argv[0]);
@@ -136,7 +136,7 @@ int main(const int argc, char **argv){
                     //break;
                 case 'v':
                     meta.verbosity_level = atoi(optarg);
-                    if (meta.verbosity_level >= LOG_VERBOSE) {
+                    if (meta.verbosity_level >= LOG_GOSSIP) {
                         VERBOSE("printing the arguments given%s","");
                     }
 
@@ -155,7 +155,7 @@ int main(const int argc, char **argv){
                     }
                     break;
                 case 'V':
-                    if (meta.verbosity_level >= LOG_VERBOSE) {
+                    if (meta.verbosity_level >= LOG_GOSSIP) {
                         VERBOSE("displaying version information%s","");
                     }
                     fprintf(stdout, SLOW5TOOLS_VERSION, argv[0]);
@@ -212,7 +212,7 @@ int main(const int argc, char **argv){
                         slow5_set_exit_condition(SLOW5_EXIT_ON_ERR);
 
                         // Calling command program
-                        if (meta.verbosity_level >= LOG_VERBOSE) {
+                        if (meta.verbosity_level >= LOG_GOSSIP) {
                             VERBOSE("using command '%s'", cmds[i].name);
                         }
                         ret = cmds[i].main(argc - optind_copy, cmd_argv + optind_copy, &meta);
@@ -245,7 +245,7 @@ int main(const int argc, char **argv){
 
     if(ret==EXIT_SUCCESS){
         fprintf(stderr, "\n");
-        if (meta.verbosity_level >= LOG_VERBOSE) {
+        if (meta.verbosity_level >= LOG_GOSSIP) {
             VERBOSE("printing command given%s", "");
         }
         fprintf(stderr, "cmd: ");
@@ -258,7 +258,7 @@ int main(const int argc, char **argv){
             }
         }
 
-        if (meta.verbosity_level >= LOG_VERBOSE) {
+        if (meta.verbosity_level >= LOG_GOSSIP) {
             VERBOSE("printing resource use%s", "");
         }
         MESSAGE(stderr, "real time = %.3f sec | CPU time = %.3f sec | peak RAM = %.3f GB",
