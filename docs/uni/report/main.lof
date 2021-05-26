@@ -1,4 +1,0 @@
-\contentsline {figure}{\numberline {1}{\ignorespaces Bar plot of the bytes stored per base on average for each file type and encoding technique.}}{3}{figure.caption.9}%
-\contentsline {figure}{\numberline {2}{\ignorespaces Line chart of the number of kilobases accessed and decoded per second on average for each file format and encoding technique against the number of threads used.}}{4}{figure.caption.10}%
-\contentsline {figure}{\numberline {3}{\ignorespaces Binary encoding of the example SLOW5 file shown in Table \ref {tab:slow5}.}}{6}{figure.caption.15}%
-\contentsline {figure}{\numberline {4}{\ignorespaces Compressed binary encoding of the example SLOW5 file shown in Table \ref {tab:slow5}.}}{6}{figure.caption.16}%
