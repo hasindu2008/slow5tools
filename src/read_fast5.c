@@ -10,7 +10,7 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 
-#define WARNING_LIMIT 3
+#define WARNING_LIMIT 1
 
 // Operator function to be called by H5Aiterate.
 herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data);
@@ -175,7 +175,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             }
         }else if(*(operator_data->flag_allow_run_id_mismatch)){
             if(*(operator_data->warning_flag_allow_run_id_mismatch)==WARNING_LIMIT){
-                WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header. This warning is supressed...", SLOW5_FILE_FORMAT_SHORT);
+                WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT);
             }
             else if(*(operator_data->warning_flag_allow_run_id_mismatch)<WARNING_LIMIT){
                 WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header.", SLOW5_FILE_FORMAT_SHORT);
@@ -469,7 +469,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }else{
         if(strcmp("pore_type",name)==0){
             if(*(operator_data->warning_flag_pore_type)==WARNING_LIMIT){
-                WARNING("[%s] Not Stored: Attribute %s/%s is not stored. This warning is supressed...", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
+                WARNING("[%s] Not Stored: Attribute %s/%s is not stored. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
             }
             else if(*(operator_data->warning_flag_pore_type)<WARNING_LIMIT){
                 WARNING("[%s] Not Stored: Attribute %s/%s is not stored", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
@@ -478,7 +478,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
         else if(strcmp("end_reason",name)==0){
             if(*(operator_data->warning_flag_end_reason)==WARNING_LIMIT){
-                WARNING("[%s] Not Stored: Attribute %s/%s is not stored. This warning is supressed...", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
+                WARNING("[%s] Not Stored: Attribute %s/%s is not stored. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
             } else if(*(operator_data->warning_flag_end_reason)<WARNING_LIMIT){
                 WARNING("[%s] Not Stored: Attribute %s/%s is not stored", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
             }
