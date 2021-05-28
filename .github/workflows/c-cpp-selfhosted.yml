@@ -17,6 +17,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+        token: ${{ secrets.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 }}
     - name: build
       run: autoreconf && ./configure && make -j8
     - name: test
