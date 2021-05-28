@@ -37,7 +37,14 @@ On OS X : brew install hdf5
 ```
 If you skip `./configure` hdf5 will be compiled locally. It is a good option if you cannot install hdf5 library system wide. However, building hdf5 takes ages.
 
-Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake`.
+Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake`. To build from GitHub:
+
+```
+git clone --recursive https://github.com/hasindu2008/slow5tools
+autoreconf
+./configure
+make
+```
 
 ## Usage
 

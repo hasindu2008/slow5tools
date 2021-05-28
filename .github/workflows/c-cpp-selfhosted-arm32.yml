@@ -15,8 +15,9 @@ jobs:
         runners: [ARM]
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: build
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
-      

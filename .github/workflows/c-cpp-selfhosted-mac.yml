@@ -15,6 +15,8 @@ jobs:
         runners: [macOS]
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: build
       run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test

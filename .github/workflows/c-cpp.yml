@@ -13,6 +13,8 @@ jobs:
     container: ubuntu:14.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make
     - name: env
@@ -26,6 +28,8 @@ jobs:
     runs-on: ubuntu-16.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
     - name: build
@@ -37,6 +41,8 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev valgrind
     - name: build
@@ -52,6 +58,8 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: sudo apt-get update && sudo apt-get install zlib1g-dev
     - name: install packages
@@ -65,6 +73,8 @@ jobs:
     runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: brew install hdf5 autoconf automake
     - name: build
@@ -76,18 +86,11 @@ jobs:
     runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: install packages
       run: brew install gcc autoconf automake
     - name: build
       run: autoreconf --install && CC=gcc CXX=g++ CFLAGS="-Wno-implicit-function-declaration" ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
       run: make test
-  pyslow5_ubuntu_16:
-    name: pyslow5 Ubuntu 16
-    runs-on: ubuntu-16.04
-    steps:
-    - uses: actions/checkout@v2
-    - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev python3-pip && pip3 install setuptools cython
-    - name: build
-      run: autoreconf && ./configure && make pyslow5
