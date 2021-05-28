@@ -30,6 +30,8 @@
 #define SLOW5_FILE_FORMAT_SHORT SLOW5_NAME "v" VERSION
 #define SLOW5_NAME "slow5"
 
+KHASH_MAP_INIT_STR(warncount, uint32_t)
+
 typedef struct {
     uint64_t bad_5_file = 0;
     uint64_t total_5 = 0;
@@ -68,14 +70,15 @@ struct operator_obj {
     int *flag_allow_run_id_mismatch;
     hsize_t* num_read_groups;
     size_t* nreads;
-    size_t* warning_flag_pore_type;
-    size_t* warning_flag_end_reason;
     size_t* warning_flag_allow_run_id_mismatch;
     slow5_file_t* slow5File;
+    kh_warncount_s **warncount_hash;
 };
 
 //implemented in read_fast5.c
-int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int write_header_flag, int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t* slow5File);
+int
+read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, press_method pressMethod, int lossy, int write_header_flag,
+           int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t *slow5File, kh_warncount_t **warncount_hash);
 fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 std::vector< std::string > list_directory(const std::string& file_name);

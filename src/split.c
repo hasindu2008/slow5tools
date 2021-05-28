@@ -18,15 +18,15 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -h, --help                 display this message and exit\n" \
-    "    -s, --slow5                convert to slow5\n" \
-    "    -c, --compress             convert to compressed blow5\n"   \
-    "    -o, --output=[dir]         output directory\n"              \
-    "    -f INT                     split into n files\n"              \
-    "    -r INT                     split into n reads\n"              \
-    "    -g                         split multi read group file into single read group files\n" \
-    "    -l, --lossy                do not store auxiliary fields\n" \
-    "    --iop INT                  number of I/O processes to read slow5 files -- 1\n" \
+    "    -b, --to=[STR]                     output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
+    "    -c, --compress=[compression_type]  convert to compressed blow5\n [default: gzip]" \
+    "    -d, --out-dir=[STR]             output directory where files are written to\n" \
+    "    -f, --files=[INT]                  split reads into n files evenly\n"              \
+    "    -r, --reads=[INT]                  split into n reads, i.e., each file will have n reads\n"              \
+    "    -g, --groups                       split multi read group file into single read group files\n" \
+    "    -l, --lossy                        do not store auxiliary fields\n" \
+    "    -p, --iop=[INT]                    number of I/O processes used to split files [default: 8]\n" \
+    "    -h, --help                         display this message and exit\n" \
 
 static double init_realtime = 0;
 
@@ -277,6 +277,10 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
         meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod, size_t lossy) {
     int64_t num_slow5_files = slow5_files.size();
+    if (iop > num_slow5_files) {
+        iop = num_slow5_files;
+        WARNING("Only %d proceses will be used",iop);
+    }
 
     //create processes
     std::vector<pid_t> pids_v(iop);
@@ -392,11 +396,14 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
-            {"slow5", no_argument, NULL, 's'},    //1
+            {"to", no_argument, NULL, 'b'},    //1
             {"compress", no_argument, NULL, 'c'},  //2
-            {"output", required_argument, NULL, 'o' },  //3
-            { "iop", required_argument, NULL, 0},   //4
+            {"out-dir", required_argument, NULL, 'd' },  //3
+            { "iop", required_argument, NULL, 'p'},   //4
             { "lossy", no_argument, NULL, 'l'}, //5
+            { "groups", no_argument, NULL, 'g'}, //6
+            { "files", required_argument, NULL, 'f'}, //7
+            { "reads", required_argument, NULL, 'r'}, //8
             {NULL, 0, NULL, 0 }
     };
 
@@ -404,7 +411,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     char *arg_dir_out = NULL;
     int longindex = 0;
     char opt;
-    int iop = 1;
+    int iop = 8;
     size_t lossy = 0;
 
     meta_split_method metaSplitMethod;
@@ -413,7 +420,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     enum press_method pressMethod = COMPRESS_NONE;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hscglf:r:o:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hb:cg:lf:r:d:p:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -427,13 +434,28 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
-            case 's':
-                format_out = FORMAT_ASCII;
+            case 'b':
+                if(strcmp(optarg,"slow5")==0){
+                    format_out = FORMAT_ASCII;
+                    pressMethod = COMPRESS_NONE;
+                }else if(strcmp(optarg,"blow5")==0){
+                    format_out = FORMAT_BINARY;
+                }else{
+                    ERROR("Incorrect output format%s", "");
+                    exit(EXIT_FAILURE);
+                }
                 break;
             case 'c':
-                pressMethod = COMPRESS_GZIP;
+                if(strcmp(optarg,"none")==0){
+                    pressMethod = COMPRESS_NONE;
+                }else if(strcmp(optarg,"gzip")==0){
+                    pressMethod = COMPRESS_GZIP;
+                }else{
+                    ERROR("Incorrect compression type%s", "");
+                    exit(EXIT_FAILURE);
+                }
                 break;
-            case 'o':
+            case 'd':
                 arg_dir_out = optarg;
                 break;
             case 'f':
@@ -450,13 +472,11 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'l':
                 lossy = 1;
                 break;
-            case  0 :
-                if (longindex == 4) {
-                    iop = atoi(optarg);
-                    if (iop < 1) {
-                        ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-                        exit(EXIT_FAILURE);
-                    }
+            case 'p':
+                iop = atoi(optarg);
+                if (iop < 1) {
+                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
+                    exit(EXIT_FAILURE);
                 }
                 break;
             default: // case '?'
@@ -465,6 +485,13 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
+
+    // compression option is only effective with -b blow5
+    if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
+        ERROR("Compression option is only effective with SLOW5 binary format%s","");
+        return EXIT_FAILURE;
+    }
+
     if(metaSplitMethod.splitMethod==READS_SPLIT && metaSplitMethod.n==0){
         ERROR("Default splitting method - reads split is used. Specify the number of reads to include in a slow5 file%s","");
         return EXIT_FAILURE;
@@ -477,12 +504,20 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         ERROR("The output directory must be specified %s","");
         return EXIT_FAILURE;
     }
+
     if(arg_dir_out){
         struct stat st = {0};
         if (stat(arg_dir_out, &st) == -1) {
             mkdir(arg_dir_out, 0700);
+        }else{
+            std::vector< std::string > dir_list = list_directory(arg_dir_out);
+            if(dir_list.size()>2){
+                ERROR("Output director %s is not empty",arg_dir_out);
+                return EXIT_FAILURE;
+            }
         }
     }
+
     reads_count readsCount;
     std::vector<std::string> slow5_files;
 

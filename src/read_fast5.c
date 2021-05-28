@@ -467,24 +467,30 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             WARNING("sample_id attribute value could not be set in the slow5 header %s", "");
         }
     }else{
-        if(strcmp("pore_type",name)==0){
-            if(*(operator_data->warning_flag_pore_type)==WARNING_LIMIT){
-                WARNING("[%s] Not Stored: Attribute %s/%s is not stored. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
-            }
-            else if(*(operator_data->warning_flag_pore_type)<WARNING_LIMIT){
+        if(strcmp("read_number",name) && strcmp("start_mux",name) && strcmp("start_time",name) && strcmp("median_before",name) && strcmp("channel_number",name)){
+            int ret;
+            int is_missing = 0;
+            khint_t iter = 0;
+            char key[strlen(name)+1];
+            // copying str1 to str2
+            strcpy(key, name);
+            kh_warncount_s * warncount_hash = *operator_data->warncount_hash;
+            iter = kh_get(warncount, warncount_hash, key);          // query the hash table
+            is_missing = (iter == kh_end(warncount_hash));   // test if the key is present
+            if(is_missing){
+                iter = kh_put(warncount, warncount_hash, key, &ret);     // insert a key to the hash table
+                kh_value(warncount_hash, iter) = 1;             // set the value
                 WARNING("[%s] Not Stored: Attribute %s/%s is not stored", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
+            }else{
+                uint32_t value = kh_value(warncount_hash, iter);
+                if(value < WARNING_LIMIT){
+                    WARNING("[%s] Not Stored: Attribute %s/%s is not stored", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
+                    kh_value(warncount_hash, iter) = ++value;
+                }else if(value == WARNING_LIMIT){
+                    WARNING("[%s] Not Stored: Attribute %s/%s is not stored. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
+                    kh_value(warncount_hash, iter) = WARNING_LIMIT+1;
+                }
             }
-            *(operator_data->warning_flag_pore_type) = *(operator_data->warning_flag_pore_type) + 1;
-        }
-        else if(strcmp("end_reason",name)==0){
-            if(*(operator_data->warning_flag_end_reason)==WARNING_LIMIT){
-                WARNING("[%s] Not Stored: Attribute %s/%s is not stored. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
-            } else if(*(operator_data->warning_flag_end_reason)<WARNING_LIMIT){
-                WARNING("[%s] Not Stored: Attribute %s/%s is not stored", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
-            }
-            *(operator_data->warning_flag_end_reason) = *(operator_data->warning_flag_end_reason) + 1;
-        } else if(strcmp("read_number",name) && strcmp("start_mux",name) && strcmp("start_time",name) && strcmp("median_before",name) && strcmp("channel_number",name)){
-            WARNING("[%s] Not Stored: Attribute %s/%s is not stored", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
         }
     }
 
@@ -536,7 +542,9 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
     return 0;
 }
 
-int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_write_header, int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t* slow5File){
+int
+read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, press_method pressMethod, int lossy, int write_header_flag,
+           int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t *slow5File, kh_warncount_t **warncount_hash) {
 
     struct operator_obj tracker;
     tracker.group_level = ROOT;
@@ -558,26 +566,21 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
     int flag_run_id = 0;
     int flag_lossy = lossy;
     size_t zero0 = 0;
-    size_t zero1 = 0;
     size_t zero2 = 0;
-    size_t zero3 = 0;
 
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
     tracker.flag_run_id = &flag_run_id;
     tracker.flag_lossy = &flag_lossy;
-    tracker.flag_write_header = &flag_write_header;
+    tracker.flag_write_header = &write_header_flag;
     tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
     tracker.nreads = &zero0;
-    tracker.warning_flag_pore_type = &zero1;
-    tracker.warning_flag_end_reason = &zero2;
-    tracker.warning_flag_allow_run_id_mismatch = &zero3;
+    tracker.warning_flag_allow_run_id_mismatch = &zero2;
     tracker.slow5_record = slow5_rec_init();
     tracker.group_name = "";
+    tracker.warncount_hash = warncount_hash;
 
     slow5_hdr_set("SLOW5_file_format", SLOW5_FILE_FORMAT_SHORT, 0, tracker.slow5File->header);
-
-//    slow5_rec_free(read);
 
     if (fast5_file->is_multi_fast5) {
         hsize_t number_of_groups = 0;
@@ -599,7 +602,7 @@ int read_fast5(fast5_file_t *fast5_file, enum slow5_fmt format_out, enum press_m
             ERROR("run_id is not set%s", ".");
             exit(EXIT_FAILURE);
         }
-        if(flag_write_header==0){
+        if(write_header_flag == 0){
             print_slow5_header(&tracker);
         }
         print_record(&tracker);
