@@ -99,4 +99,4 @@ jobs:
     - name: build
       run: autoreconf --install && CC=gcc CXX=g++ CFLAGS="-Wno-implicit-function-declaration" ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
-      run: make test
+      run: make test 
