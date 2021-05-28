@@ -13,13 +13,13 @@ jobs:
     container: ubuntu:14.04
     steps:
     - name: install git
-      run: sudo add-apt-repository ppa:git-core/ppa && sudo apt-get update -y && sudo apt-get install git -y
+      run: sudo apt-get install software-properties-common && sudo add-apt-repository ppa:git-core/ppa && sudo apt-get update -y && sudo apt-get install git -y
     - uses: actions/checkout@v2
       with:
         ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
         submodules: recursive
     - name: install packages
-      run: sudo sudo apt-get install software-properties-common && apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make
     - name: env
       run: lsb_release -a &&  ldd --version && gcc --version && g++ --version
     - name: build
@@ -59,7 +59,7 @@ jobs:
     - name: test valgrind
       run: ./test/test.sh mem
     - name: valgrind
-      run: valgrind --leak-check=full --error-exitcode=1 ./slow5tools f2s test/data/raw/chr22_meth_example-subset-multi > /dev/null
+      run: ./test/test.sh mem
   ubuntu_20:
     name: Ubuntu 20
     runs-on: ubuntu-20.04
