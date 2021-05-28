@@ -19,7 +19,7 @@ jobs:
         ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
         submodules: recursive
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make
+      run: sudo sudo apt-get install software-properties-common && apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make
     - name: env
       run: lsb_release -a &&  ldd --version && gcc --version && g++ --version
     - name: build
