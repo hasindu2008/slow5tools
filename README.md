@@ -2,15 +2,15 @@
 
 A toolset for converting to and from SLOW5 files.
 <todo>
- 
+
 <!--- [![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?token=pN7xnsxgLrRxbAn8WLVQ&branch=master)](https://travis-ci.com/hasindu2008/slow5) -->
-[![SLOW5 C/C++ CI Local](https://github.com/hasindu2008/slow5/workflows/SLOW5%20C/C++%20CI%20Local/badge.svg)](https://github.com/hasindu2008/slow5/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local%22)
-[![SLOW5 C/C++ CI Local OSX](https://github.com/hasindu2008/slow5/workflows/SLOW5%20C/C++%20CI%20Local%20OSX/badge.svg)](https://github.com/hasindu2008/slow5/actions/workflows/c-cpp-selfhosted-mac.yml?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local+OSX%22)
-[![SLOW5 C/C++ CI Github](https://github.com/hasindu2008/slow5/workflows/SLOW5%20C/C++%20CI%20Github/badge.svg)](https://github.com/hasindu2008/slow5/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Github%22)
+[![SLOW5 C/C++ CI Local](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Local/badge.svg)](https://github.com/hasindu2008/slow5tools/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local%22)
+[![SLOW5 C/C++ CI Local OSX](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Local%20OSX/badge.svg)](https://github.com/hasindu2008/slow5tools/actions/workflows/c-cpp-selfhosted-mac.yml?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local+OSX%22)
+[![SLOW5 C/C++ CI Github](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Github/badge.svg)](https://github.com/hasindu2008/slow5tools/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Github%22)
 
 ## Quick start
 
-If you are a Linux user and want to quickly try out download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5/releases). For example:
+If you are a Linux user and want to quickly try out download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
 ```sh
 VERSION=v0.2-beta
 wget "https://github.com/hasindu2008/f5c/releases/download/$VERSION/slow5tools-$VERSION-binaries.tar.gz" && tar xvf slow5tools-$VERSION-binaries.tar.gz && cd slow5tools-$VERSION/
@@ -20,11 +20,11 @@ Binaries should work on most Linux distributions and the only dependency is `zli
 
 ## Building
 
-Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5/releases) tar ball. Quick example for Ubuntu :
+Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball. Quick example for Ubuntu :
 ```sh
 sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development libraries
 VERSION=v0.2-beta
-wget "https://github.com/hasindu2008/slow5/releases/download/$VERSION/slow5tools-$VERSION-release.tar.gz" && tar xvf slow5tools-$VERSION-release.tar.gz && cd slow5tools-$VERSION/
+wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-release.tar.gz" && tar xvf slow5tools-$VERSION-release.tar.gz && cd slow5tools-$VERSION/
 ./configure
 make
 ```
@@ -41,36 +41,36 @@ Building from the Github repository additionally requires `autoreconf` which can
 
 ## Usage
 
-Visit the [man page](https://github.com/hasindu2008/slow5/blob/master/docs/commands.md) for all the commands and options.
+Visit the [man page](https://github.com/hasindu2008/slow5tools/blob/master/docs/commands.md) for all the commands and options.
 
 ### Examples
- 
+
 ```sh
 #convert a directory of fast5 files into .blow5 (compression enabled) using 8 I/O processes
-slow5tools f2s fast5_dir -d blow5_dir  -p 8 
+slow5tools f2s fast5_dir -d blow5_dir  -p 8
 #convert a single fast5 file into a blow5 file(compression enabled)
-slow5tools f2s file.fast5 -o file.blow5  -p 1 
+slow5tools f2s file.fast5 -o file.blow5  -p 1
 #merge all blow5 files in a directory into a single blow5 file using 8 threads
 slow5tools merge blow5_dir -o file.blow5 -t8
- 
+
 #Convert a BLOW5 file into SLOW5 ASCII
 slow5tools view file.blow5 -b slow5 -o file.slow5
 #convert a SLOW5 file to BLOW5
 slow5tools view file.slow5 -b blow5 -o file.blow5
- 
+
 #index a slow5/blow5 file
 slow5tools index file.blow5
- 
-#extract records from a slow5/blow5 file corresponding to given read ids 
-slow5tools get file.blow5 readid1 readid2 
- 
+
+#extract records from a slow5/blow5 file corresponding to given read ids
+slow5tools get file.blow5 readid1 readid2
+
 #split a blow5 file into separate blow5 files based on the read groups
 slow5tools split file.blow5 -d blow5_dir -r
 #split a blow5 file (single read group) into separate blow5 files such that there are 4000 reads in one file
 slow5tools split file.blow5 -d bloow5_dir -n 4000
- 
+
 #convert a directory of blow5 files to fast5 using 8 I/O processes
-slow5tools s2f blow5_dir -d fast5  -p 8 
+slow5tools s2f blow5_dir -d fast5  -p 8
 
 ```
 
