@@ -1,9 +1,8 @@
 #include "slow5_misc.h"
-#include "cmd.h"
 #include "error.h"
+#include "cmd.h"
 #include "slow5.h"
 #include "slow5_defs.h"
-#include "fast5.h"
 #include <getopt.h>
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FILE]...\n"
@@ -43,7 +42,6 @@ struct view_fmt_meta {
 static const struct view_fmt_meta VIEW_FORMAT_META[] = {
     { VIEW_FORMAT_SLOW5_ASCII,  ASCII_NAME,     ASCII_EXTENSION     },
     { VIEW_FORMAT_SLOW5_BINARY, BINARY_NAME,    BINARY_EXTENSION    },
-    { VIEW_FORMAT_FAST5,        FAST5_NAME,     FAST5_EXTENSION     }
 };
 
 enum view_fmt name_to_view_fmt(const char *fmt_str) {
