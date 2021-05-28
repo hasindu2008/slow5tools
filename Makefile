@@ -4,7 +4,7 @@
 CC       = gcc
 CXX      = g++
 AR 		 = ar
-CPPFLAGS = -I slow5lib/src/
+CPPFLAGS += -I slow5lib/src/
 CFLAGS   += -g -rdynamic -Wall -O2
 LANG 	 = -x c++ -std=c++11
 LDFLAGS  += $(LIBS) -lpthread -lz
