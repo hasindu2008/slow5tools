@@ -15,7 +15,6 @@ jobs:
         runners: [macOS]
     steps:
     - uses: actions/checkout@v2
-    - name: submodule
       with:
         submodules: recursive
         ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
