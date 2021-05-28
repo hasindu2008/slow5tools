@@ -29,19 +29,11 @@ jobs:
         runners: [linux-x86, linux-arm64]
     steps:
     - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: build
       run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
       run: make test
     - name: valgrind
       run: ./test/test.sh mem
-  pyslow5:
-    name: pyslow5 Linux
-    runs-on: ${{ matrix.runners }}
-    strategy:
-      matrix:
-        runners: [linux-x86, linux-arm64]
-    steps:
-    - uses: actions/checkout@v2
-    - name: build
-      run: autoreconf && ./configure && make pyslow5
