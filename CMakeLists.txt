@@ -15,7 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -O2 -std=c++11 ")
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(${PROJECT_SOURCE_DIR}/hdf5/include)
+include_directories(${PROJECT_SOURCE_DIR}/prebuilt-hdf5/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/slow5lib/src)
 include_directories(${PROJECT_SOURCE_DIR}/test)
@@ -42,7 +42,7 @@ set(split src/split.c)
 set(thread src/thread.c)
 set(view src/view.c)
 
-#set(hdf5-static "${PROJECT_SOURCE_DIR}/hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
+set(hdf5-static "${PROJECT_SOURCE_DIR}/prebuilt-hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
 add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view})
 
@@ -54,7 +54,8 @@ file(GLOB_RECURSE C_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "test/*.c")
 
 # link with dependencies
 IF (${DEPLOY_PLATFORM} STREQUAL "x86")
-    target_link_libraries(slow5tools slow5 -lhdf5_serial -lz -ldl -lm -lpthread -lrt)
+#    target_link_libraries(slow5tools slow5 -lhdf5_serial -lz -ldl -lm -lpthread -lrt)
+    target_link_libraries(slow5tools slow5 ${hdf5-static} -lz -ldl -lm -lpthread -lrt)
 ELSE()
     target_link_libraries(slow5tools slow5 ${hdf5-static} -lz -ldl -lm)
 ENDIF()
