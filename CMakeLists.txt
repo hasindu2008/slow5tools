@@ -15,6 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -O2 -std=c++11 ")
 
 set(CMAKE_CXX_STANDARD 11)
 
+#to obtain prebuilt hdf5 libraries https://github.com/hiruna72/slow5tools/tree/cmake_support
 include_directories(${PROJECT_SOURCE_DIR}/prebuilt-hdf5/include)
 include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${PROJECT_SOURCE_DIR}/slow5lib/src)
