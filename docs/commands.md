@@ -3,21 +3,21 @@
 ## COMMANDS
 
 * `f2s`:
-         Converts from FAST5 to SLOW5/BLOW5.
+         Convert FAST5 file/s to SLOW5/BLOW5 format.
+* `s2f`:
+         Convert SLOW5/BLOW5 file/s to FAST5 format.
+* `view`:
+         View the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats (ASCII, binary, compressed).
+* `index`:
+         Create an index for a SLOW5/BLOW5 file.        
 * `merge`:
          Merge multiple SLOW5/BLOW5 files to a single file.
-* `index`:
-         Indexes a SLOW5/BLOW5 file.
-* `view`:
-         SLOW5<->BLOW5 conversion.
 * `split`:
-         Splits a SLOW5/BLOW5 file.
-* `s2f`:
-         Converts from SLOW5/BLOW5 to FAST5.
+         Split a single a SLOW5/BLOW5 file into multiple separate files.
 * `get`:
-         Get records for specified read IDs.
+         Retrieve records for specified read IDs from a SLOW5/BLOW5 file.
 * `stats`:
-         Generates Statistics from a SLOW5/BLOW5 file.
+         Generate summary statistics describing a SLOW5/BLOW5 file.
 
 
 
