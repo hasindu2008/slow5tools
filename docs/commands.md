@@ -39,32 +39,30 @@ It is not recommended to run f2s on a mixture of both multi-FAST5 and single-FAS
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `-b blow5`.
 *  `-d STR, --out-dir STR`:
    Specifies name/location of the output directory. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
+*  `-o FILE`, `--output FILE`:
+ Specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and requires `-p 1`.
 <!--
 *  `-c INT`, `--compress INT`:
    Specifies the compression level of BLOW5 output files (compression levels 1 to 9 as in gzip). Assumes `-b blow5` and `-c gzip`.
 -->
-*  `-h, --help`:
-   Prints the help menu.
 <!--
 *  `-i FILE`, `--index FILE`
    Create a SLOW5/BLOW5 index for each output file. Assumes `-b blow5`.
 -->
-*  `-o FILE`, `--output FILE`:
-   Outputs converted contents to FILE [default value: stdout]. Incompatible with `-d` and must be used with `-p 1` 
 *  `-p, --iop INT`:
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks), where up to 64 processes can be used.
 *   `-l`,`--lossy`:
     Discard information in auxilliary fields during FAST5 to SLOW5 conversion. This information is generally not required for downstream analysis and will be discarded by default to reduce filesize.
 <!--
 *  `--no-merge DIR`:
-    Convert each FAST5 file to a separate SLOW5/BLOW5 file and write to the directory specified by DIR. `-o` is ineffective with this option.
+    Convert each FAST5 file to a separate SLOW5/BLOW5 file and write to the directory specified by DIR. Cannot be used with `-o`.
 *  `--no-recursion`:
     Do not recursively search for FAST5 files in specified directories.
 -->
 * `-a, --allow`:
    Allow run id mismatches in a multi-fast5 file or inside a directory of single-fast5 files, i.e., FAST5 files from different samples can be converted in a single command.
 *  `-h`, `--help`:
-   Prints the help to the standard out.
+   Prints the help menu.
 
 ### merge
 
