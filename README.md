@@ -70,9 +70,9 @@ slow5tools f2s file.fast5 -o file.blow5  -p 1
 slow5tools merge blow5_dir -o file.blow5 -t8
 
 #Convert a BLOW5 file into SLOW5 ASCII
-slow5tools view file.blow5 -b slow5 -o file.slow5
+slow5tools view file.blow5 --to slow5 -o file.slow5
 #convert a SLOW5 file to BLOW5
-slow5tools view file.slow5 -b blow5 -o file.blow5
+slow5tools view file.slow5 --to blow5 -o file.blow5
 
 #index a slow5/blow5 file
 slow5tools index file.blow5
