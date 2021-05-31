@@ -3,9 +3,9 @@
 ## COMMANDS
 
 * `f2s`:
-         Convert FAST5 file/s to SLOW5/BLOW5 format.
+         Convert FAST5 file to SLOW5/BLOW5 format.
 * `s2f`:
-         Convert SLOW5/BLOW5 file/s to FAST5 format.
+         Convert SLOW5/BLOW5 file to FAST5 format.
 * `view`:
          View the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats (ASCII, binary, compressed).
 * `index`:
