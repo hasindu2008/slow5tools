@@ -27,34 +27,37 @@
 
 `slow5tools f2s [OPTIONS] fast5_dir1/file1.fast5 fast5_dir2/file2.fast5 ... -d output_dir`
 
-Recursively searches for FAST5 files (.fast5 extension) in directories specified as arguments and converts them to SLOW5/BLOW5 format. 
-It is recommended not to mix multi-FAST5 and single-FAST5 files in a single command. For each multi-FAST5 file in provided input directories, a SLOW5/BLOW5 file with the same file name will be created inside rge directory specified by `-d`. If single-FAST5 files are provided as input, a SLOW5/BLOW5 file will be created one for each process (specified by -p below).
+Use this tool to convert FAST5 files to SLOW5/BLOW5 format.
+The tool recursively searches the specified input directories for FAST5 files (.fast5 extension) and converts them to SLOW5/BLOW5.
+For each multi-FAST5 file in the input directories, a SLOW5/BLOW5 file with the same file name will be created inside the output directory (specified with `-d`).
+If single-FAST5 files are provided as input, a single SLOW5/BLOW5 file will be created for each process used during conversion (specified with `-p`).
+It is not recommended to run f2s on a mixture of both multi-FAST5 and single-FAST5 files in a single command.
 
-*  `-b STR , --to STR`:
-   Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
+*  `-b STR , --to format_type`:
+   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress compression_type`:
-   Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -b blow5 [default value: gzip]..
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `-b blow5`.
 *  `-d STR, --out-dir STR`:
-   The output directory name/location. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
+   Specifies name/location of the output directory. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 <!--
 *  `-c INT`, `--compress INT`:
-   Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
+   Specifies the compression level of BLOW5 output files (compression levels 1 to 9 as in gzip). Assumes `-b blow5` and `-c gzip`.
 -->
 *  `-h, --help`:
-   Prints the help to the standard out.
+   Prints the help menu.
 <!--
 *  `-i FILE`, `--index FILE`
-   Generates SLOW5/BLOW5 index.
+   Create a SLOW5/BLOW5 index for each output file. Assumes `-b blow5`.
 -->
 *  `-o FILE`, `--output FILE`:
    Outputs converted contents to FILE [default value: stdout]. Incompatible with `-d` and must be used with `-p 1` 
 *  `-p, --iop INT`:
-    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
+    Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks), where up to 64 processes can be used.
 *   `-l`,`--lossy`:
-    Discard auxilliary field information in FAST5.
+    Discard information in auxilliary fields during FAST5 to SLOW5 conversion. This information is generally not required for downstream analysis and will be discarded by default to reduce filesize.
 <!--
 *  `--no-merge DIR`:
-    Convert each FAST5 file to a separate SLOW5/BLOW5 and write to the directory specified by DIR. `-o` is ineffective with this option.
+    Convert each FAST5 file to a separate SLOW5/BLOW5 file and write to the directory specified by DIR. `-o` is ineffective with this option.
 *  `--no-recursion`:
     Do not recursively search for FAST5 files in specified directories.
 -->
