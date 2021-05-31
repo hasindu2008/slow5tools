@@ -1,6 +1,6 @@
 # slow5tools
 
-Slow5tools is a simple toolkit for converting (FAST5-to-SLOW5 & SLOW5-to-FAST5), compressing, viewing, indexing and manipulating data in SLOW5 format.
+Slow5tools is a simple toolkit for converting (FAST5-to-SLOW5 / SLOW5-to-FAST5), compressing, viewing, indexing and manipulating data in SLOW5 format.
 
 About SLOW5:
 
