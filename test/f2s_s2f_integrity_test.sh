@@ -43,7 +43,7 @@ clean_fscache
 echo
 echo "-------------------s2f attempt-------------------"
 echo
-if ! $SLOW5_EXEC s2f $F2S_atm1_OUTPUT -o $S2F_OUTPUT --iop 64; then
+if ! $SLOW5_EXEC s2f $F2S_atm1_OUTPUT -d $S2F_OUTPUT --iop 64; then
     echo "s2f failed"
     exit 1
 fi

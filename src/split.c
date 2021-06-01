@@ -21,7 +21,7 @@
     "OPTIONS:\n" \
     "    -b, --to=[STR]                     output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
     "    -c, --compress=[compression_type]  convert to compressed blow5\n [default: gzip]" \
-    "    -d, --out-dir=[STR]             output directory where files are written to\n" \
+    "    -d, --out-dir=[STR]                output directory where files are written to\n" \
     "    -f, --files=[INT]                  split reads into n files evenly\n"              \
     "    -r, --reads=[INT]                  split into n reads, i.e., each file will have n reads\n"              \
     "    -g, --groups                       split multi read group file into single read group files\n" \

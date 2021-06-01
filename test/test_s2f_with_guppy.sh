@@ -6,21 +6,28 @@
 
 # first do f2s, s2f and then basecall
 
-SLOWTOOLS=/media/shan/OS/slow5-work/slow5/slow5tools
-FAST5_DIR=/media/shan/OS/slow5-work/slow5/test/keep_local/three_small_multifast5s
-TEST_DIR=/media/shan/OS/slow5-work/slow5/build/test/s2f_guppy_test
+Usage="test_s2f_with_guppy.sh [path to fast5 directory] [path to create a temporary directory] [path to slow5tools executable] [path to guppy executable]"
+
+if [[ "$#" -lt 4 ]]; then
+	echo "Usage: $Usage"
+	exit
+fi
+
+FAST5_DIR=$1
+TEST_DIR=$2
+SLOWTOOLS=$3
+GUPPY_BASECALLER=$4
+
 F2S_OUTPUT_DIR=$TEST_DIR/f2s
 S2F_OUTPUT_DIR=$TEST_DIR/s2f
-
-GUPPY_BASECALLER=
-GUPPY_OUTPUT_ORIGINAL=
-GUPPY_OUTPUT_S2F=
+GUPPY_OUTPUT_ORIGINAL=$TEST_DIR/guppy_output_original
+GUPPY_OUTPUT_S2F=$TEST_DIR/guppy_output_s2f
 
 IOP=4
 LOSSY_F2S=-l
 
 $SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP
-$SLOWTOOLS s2f $F2S_OUTPUT_DIR -o $S2F_OUTPUT_DIR --iop $IOP
+$SLOWTOOLS s2f $F2S_OUTPUT_DIR -d $S2F_OUTPUT_DIR --iop $IOP
 
 $GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $FAST5_DIR -s $GUPPY_OUTPUT_ORIGINAL -r
 $GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $S2F_OUTPUT_DIR -s $GUPPY_OUTPUT_S2F -r
