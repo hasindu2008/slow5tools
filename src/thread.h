@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include "slow5.h"
+#include <slow5/slow5.h>
 #include "error.h"
 
 /**********************************

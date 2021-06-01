@@ -10,7 +10,8 @@
 #include "cmd.h"
 #include "slow5_extra.h"
 #include "read_fast5.h"
-#include "slow5_press.h"
+#include <slow5/slow5_press.h>
+
 
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"

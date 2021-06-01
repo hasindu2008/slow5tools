@@ -1,6 +1,15 @@
 # slow5tools
 
-A toolset for converting to and from SLOW5 files.
+Slow5tools is a simple toolkit for converting (FAST5-to-SLOW5 / SLOW5-to-FAST5), compressing, viewing, indexing and manipulating data in SLOW5 format.
+
+About SLOW5:
+
+SLOW5 is a new file format for storting signal data from Oxford Nanopore Technologies (ONT) devices. SLOW5 was developed to overcome inherent limitations in the standard FAST5 signal data format that prevent efficient, scalable analysis and cause many headaches for developers.
+
+SLOW5 is a simple tab-separated values (TSV) file encoding metadata and time-series signal data for one nanopore read per line, with global metadata stored in a file header. Parallel file access is facilitated by an accompanying index file, also in TSV format, that specifies the position of each read (in Bytes) within the main SLOW5 file. SLOW5 can be encoded in human-readable ASCII format, or a more compact and efficient binary format (BLOW5) - this is analogous to the seminal SAM/BAM format for storing DNA sequence alignments. The BLOW5 binary format can be compressed using standard gzip compression, or other compression methods, thereby minimising the data storage footprint while still permitting efficient parallel access.
+
+Detailed benchmarking experiments have shown that SLOW5 format is up to X-fold faster and X% smaller than FAST5 [SLOW5 paper].
+
 <todo>
 
 <!--- [![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?token=pN7xnsxgLrRxbAn8WLVQ&branch=master)](https://travis-ci.com/hasindu2008/slow5) -->
@@ -61,9 +70,9 @@ slow5tools f2s file.fast5 -o file.blow5  -p 1
 slow5tools merge blow5_dir -o file.blow5 -t8
 
 #Convert a BLOW5 file into SLOW5 ASCII
-slow5tools view file.blow5 -b slow5 -o file.slow5
+slow5tools view file.blow5 --to slow5 -o file.slow5
 #convert a SLOW5 file to BLOW5
-slow5tools view file.slow5 -b blow5 -o file.blow5
+slow5tools view file.slow5 --to blow5 -o file.blow5
 
 #index a slow5/blow5 file
 slow5tools index file.blow5

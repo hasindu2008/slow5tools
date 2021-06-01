@@ -3,65 +3,56 @@
 ## COMMANDS
 
 * `f2s`:
-         Converts from FAST5 to SLOW5/BLOW5.
+         Convert FAST5 files to SLOW5/BLOW5 format.
+* `s2f`:
+         Convert SLOW5/BLOW5 files to FAST5 format.
+* `view`:
+         View the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats (ASCII, binary, compressed).
+* `index`:
+         Create an index for a SLOW5/BLOW5 file.        
 * `merge`:
          Merge multiple SLOW5/BLOW5 files to a single file.
-* `index`:
-         Indexes a SLOW5/BLOW5 file.
-* `view`:
-         SLOW5<->BLOW5 conversion.
 * `split`:
-         Splits a SLOW5/BLOW5 file.
-* `s2f`:
-         Converts from SLOW5/BLOW5 to FAST5.
+         Split a single a SLOW5/BLOW5 file into multiple separate files.
 * `get`:
-         Get records for specified read IDs.
+         Retrieve records for specified read IDs from a SLOW5/BLOW5 file.
 * `stats`:
-         Generates Statistics from a SLOW5/BLOW5 file.
+         Generate summary statistics describing a SLOW5/BLOW5 file.
 
 
 
 ### f2s
 
+`slow5tools f2s [OPTIONS] fast5_dir1 -d output_dir`
+
+`slow5tools f2s [OPTIONS] fast5_dir1 fast5_dir2 ... -d output_dir`
+
+`slow5tools f2s [OPTIONS] file1.fast5 file2.fast5 ... -d output_dir`
+
 `slow5tools f2s [OPTIONS] file.fast5 -o file.blow5 -p 1`
 
-`slow5tools f2s [OPTIONS] fast5_dir1/file1.fast5 fast5_dir2/file2.fast5 ... -d output_dir`
+Use this tool to convert FAST5 files to SLOW5/BLOW5 format.
+The tool recursively searches the specified input directories for FAST5 files (.fast5 extension) and converts them to SLOW5/BLOW5.
+For each multi-FAST5 file in the input directories, a SLOW5/BLOW5 file with the same file name will be created inside the output directory (specified with `-d`).
+If single-FAST5 files are provided as input, a single SLOW5/BLOW5 file will be created for each process used during conversion (specified with `-p`).
+It is not recommended to run f2s on a mixture of both multi-FAST5 and single-FAST5 files in a single command.
 
-Recursively searches for FAST5 files (.fast5 extension) in directories specified as arguments and converts them to SLOW5/BLOW5 format. 
-It is recommended not to mix multi-FAST5 and single-FAST5 files in a single command. For each multi-FAST5 file in provided input directories, a SLOW5/BLOW5 file with the same file name will be created inside rge directory specified by `-d`. If single-FAST5 files are provided as input, a SLOW5/BLOW5 file will be created one for each process (specified by -p below).
-
-*  `-b STR , --to STR`:
-   Output in the format specified in STR which can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
+*  `--to format_type`:
+   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress compression_type`:
-   Outputs the compression method for BLOW5 output. `compression_type` can be `none` for uncompressed binary, `gzip` for gzip-based compression. This option is only effective with -b blow5 [default value: gzip]..
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `--to blow5`.
 *  `-d STR, --out-dir STR`:
-   The output directory name/location. If a name is provided, a directory will be created under the current working directory. Alternatively, a relative or absolute path can be provided, as long as the immediate parent directory exists (e.g., if /path/to/foo is given, /path/to should already exist).  For prevent overwriting your data, the program will terminate with error if the provided directory name already exists and is non-empty.
-<!--
-*  `-c INT`, `--compress INT`:
-   Outputs compressed BLOW5 at compression level specified by INT (compression levels 1 to 9 as in gzip). This option is in-efective if `-s` is specified or `-b bin`.
--->
-*  `-h, --help`:
-   Prints the help to the standard out.
-<!--
-*  `-i FILE`, `--index FILE`
-   Generates SLOW5/BLOW5 index.
--->
+   Specifies name/location of the output directory (required option unless converting only one FAST5 file). If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-o FILE`, `--output FILE`:
-   Outputs converted contents to FILE [default value: stdout]. Incompatible with `-d` and must be used with `-p 1` 
+When only one FAST5 files is being converted, `-o` specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and requires `-p 1`.
 *  `-p, --iop INT`:
-    Number of I/O processes [default value: 8]. Increasing the number of I/O processes makes conversion significantly faster, especially on HPC with RAID systems (multiple disks) where this can be as high as 64.
-*   `-l`,`--lossy`:
-    Discard auxilliary field information in FAST5.
-<!--
-*  `--no-merge DIR`:
-    Convert each FAST5 file to a separate SLOW5/BLOW5 and write to the directory specified by DIR. `-o` is ineffective with this option.
-*  `--no-recursion`:
-    Do not recursively search for FAST5 files in specified directories.
--->
+    Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
+*   `-l`,`--lossless`:
+    Discard information in auxilliary fields during FAST5 to SLOW5 conversion [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
 * `-a, --allow`:
-   Allow run id mismatches in a multi-fast5 file or inside a directory of single-fast5 files, i.e., FAST5 files from different samples can be converted in a single command.
+   By default f2s will not accept an indiviudal multi-fast5 file or an indiviudal single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an indiviudal multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user is happy to lose the original run IDs.
 *  `-h`, `--help`:
-   Prints the help to the standard out.
+   Prints the help menu.
 
 ### merge
 

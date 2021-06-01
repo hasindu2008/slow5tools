@@ -8,6 +8,7 @@
 #include <vector>
 #include "error.h"
 #include "cmd.h"
+#include "misc.h"
 #include "slow5_extra.h"
 #include "read_fast5.h"
 
