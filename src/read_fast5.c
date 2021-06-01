@@ -39,9 +39,7 @@ void print_record(operator_obj* operator_data) {
 
 // from nanopolish_fast5_io.cpp
 fast5_file_t fast5_open(const char* filename) {
-//    unsigned major, minor, release;
-//    H5get_libversion(&major, &minor, &release);
-//    fprintf(stderr, "majnum=%u, minnum=%u, relnum=%u\n", major, minor, release);
+
     fast5_file_t fh;
     fh.hdf5_file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
 

@@ -34,6 +34,7 @@
     "    index      create a slow5 or blow5 index file.\n" \
     "    get        display the read entry for each specified read id.\n" \
     "    view       TODO.\n" \
+    "    stats      prints statistics of a SLOW5/BLOW5 file to the stdout\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
 
