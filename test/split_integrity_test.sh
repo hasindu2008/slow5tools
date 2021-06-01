@@ -70,7 +70,7 @@ fi
 echo
 echo "-------------------split by reads-------------------"
 
-if ! $REL_PATH/../slow5tools split -r 2 -l $REL_PATH/data/exp/split/11reads.slow5 -d $OUTPUT_DIR/split_reads_slow5s -s; then
+if ! $REL_PATH/../slow5tools split -r 2 -l $REL_PATH/data/exp/split/11reads.slow5 -d $OUTPUT_DIR/split_reads_slow5s -b slow5; then
     echo "splitting groups failed" 
     exit 1
 fi
@@ -89,7 +89,7 @@ fi
 echo
 echo "-------------------split by files-------------------"
 
-if ! $REL_PATH/../slow5tools split -f 3 -l $REL_PATH/data/exp/split/11reads.slow5 -d $OUTPUT_DIR/split_files_slow5s -s; then
+if ! $REL_PATH/../slow5tools split -f 3 -l $REL_PATH/data/exp/split/11reads.slow5 -d $OUTPUT_DIR/split_files_slow5s -b slow5; then
     echo "splitting groups failed" 
     exit 1
 fi
