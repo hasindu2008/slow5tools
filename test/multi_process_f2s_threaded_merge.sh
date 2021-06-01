@@ -93,14 +93,12 @@ mkdir $F2S_OUTPUT_DIR
 MERGED_OUTPUT_DIR=$TEST_DIR/merged_blow5s
 test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
 mkdir $MERGED_OUTPUT_DIR
-
 echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT---------" >> $LOG
+EXTRA_FLAGS="-c none"
 slow5_f2s_merge_varied_processes_threads
-
 # remove f2s or merge output if necessary
 rm -r $F2S_OUTPUT_DIR
 rm -r $MERGED_OUTPUT_DIR
-
 echo -e "${GREEN}SUCCESS${NC}"
 echo
 
@@ -111,23 +109,17 @@ SLOW5_FORMAT=blow5
 F2S_OUTPUT_DIR=$TEST_DIR/compressed_blow5s
 test -d  $F2S_OUTPUT_DIR && rm -r $F2S_OUTPUT_DIR
 mkdir $F2S_OUTPUT_DIR
-
 MERGED_OUTPUT_DIR=$TEST_DIR/merged_compressed_blow5s
 test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
 mkdir $MERGED_OUTPUT_DIR
-
 echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT_compressed---------" >> $LOG
 EXTRA_FLAGS="-c gzip"
 slow5_f2s_merge_varied_processes_threads
-
 # remove f2s or merge output if necessary
 rm -r $F2S_OUTPUT_DIR
 rm -r $MERGED_OUTPUT_DIR
-
 echo -e "${GREEN}SUCCESS${NC}"
 echo
-
-
 
 # --------------------------------------------------------------------------------
 # f2s slow5
@@ -136,21 +128,16 @@ SLOW5_FORMAT=slow5
 F2S_OUTPUT_DIR=$TEST_DIR/slow5s
 test -d  $F2S_OUTPUT_DIR && rm -r $F2S_OUTPUT_DIR
 mkdir $F2S_OUTPUT_DIR
-
 MERGED_OUTPUT_DIR=$TEST_DIR/merged_compressed_blow5s
 test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
 mkdir $MERGED_OUTPUT_DIR
-
 echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT---------" >> $LOG
 EXTRA_FLAGS="-b slow5"
 slow5_f2s_merge_varied_processes_threads
-
 # remove f2s or merge output if necessary
 rm -r $F2S_OUTPUT_DIR
 rm -r $MERGED_OUTPUT_DIR
-
 echo -e "${GREEN}SUCCESS${NC}"
 echo
-
 
 exit

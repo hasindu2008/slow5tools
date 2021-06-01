@@ -187,7 +187,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h'},  //0
             {"threads", required_argument, NULL, 't' }, //1
-            {"to", no_argument, NULL, 'b'},    //2
+            {"to", required_argument, NULL, 'b'},    //2
             {"compress", required_argument, NULL, 'c'},  //3
             { "lossy", no_argument, NULL, 'l'}, //4
             {"output", required_argument, NULL, 'o'}, //5
