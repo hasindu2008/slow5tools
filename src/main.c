@@ -51,6 +51,7 @@ int (split_main)(int, char **, struct program_meta *);
 int (index_main)(int, char **, struct program_meta *);
 int (get_main)(int, char **, struct program_meta *);
 int (view_main)(int, char **, struct program_meta *);
+int (stats_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
 void segv_handler(int sig) {
@@ -104,6 +105,7 @@ int main(const int argc, char **argv){
             {"index", index_main},
             {"get", get_main},
             {"view", view_main},
+            {"stats", stats_main},
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
