@@ -10,9 +10,10 @@
 
 #include "error.h"
 #include "cmd.h"
-#include "slow5.h"
+#include <slow5/slow5.h>
 #include "read_fast5.h"
 #include "slow5_extra.h"
+#include "misc.h"
 
 #define DEFAULT_NUM_THREADS (4)
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"

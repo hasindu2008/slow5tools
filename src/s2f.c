@@ -10,8 +10,9 @@
 
 #include "error.h"
 #include "cmd.h"
-#include "slow5.h"
+#include <slow5/slow5.h>
 #include "read_fast5.h"
+#include "misc.h"
 
 
 #define USAGE_MSG "Usage: %s [OPTION]... -d [output DIR] [SLOW5_FILE/DIR]...\n"

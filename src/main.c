@@ -7,8 +7,8 @@
 
 #include <getopt.h>
 #include <signal.h>
-#include "slow5.h"
-#include "slow5_misc.h"
+#include <slow5/slow5.h>
+#include "misc.h"
 #include "error.h"
 #include "cmd.h"
 

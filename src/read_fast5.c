@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include "slow5.h"
+#include <slow5/slow5.h>
 #include "error.h"
 #include "slow5_extra.h"
 #include "read_fast5.h"

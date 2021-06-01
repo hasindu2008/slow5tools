@@ -1,9 +1,10 @@
 #include <getopt.h>
 #include <stdio.h>
 
-#include "slow5.h"
+#include <slow5/slow5.h>
 #include "thread.h"
 #include "cmd.h"
+#include "misc.h"
 
 #define DEFAULT_NUM_THREADS (4)
 

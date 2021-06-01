@@ -1,8 +1,7 @@
 #include "slow5_misc.h"
 #include "error.h"
 #include "cmd.h"
-#include "slow5.h"
-#include "slow5_defs.h"
+#include <slow5/slow5.h>
 #include <getopt.h>
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FILE]...\n"
