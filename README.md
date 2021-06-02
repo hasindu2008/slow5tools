@@ -2,7 +2,7 @@
 
 Slow5tools is a simple toolkit for converting (FAST5-to-SLOW5 / SLOW5-to-FAST5), compressing, viewing, indexing and manipulating data in SLOW5 format.
 
-About SLOW5:
+## About SLOW5 format
 
 SLOW5 is a new file format for storting signal data from Oxford Nanopore Technologies (ONT) devices. SLOW5 was developed to overcome inherent limitations in the standard FAST5 signal data format that prevent efficient, scalable analysis and cause many headaches for developers.
 
