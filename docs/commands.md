@@ -47,8 +47,8 @@ Note: it is not recommended to run f2s on a mixture of both multi-FAST5 and sing
 When only one FAST5 file is being converted, `-o` specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and requires `-p 1`.
 *  `-p, --iop INT`:
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
-*   `-l`,`--lossless`:
-    Retain information in auxilliary fields during FAST5 to SLOW5 conversion [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
+*   `-l STR`,`--lossless STR`:
+    Retain information in auxilliary fields during FAST5 to SLOW5 conversion. STR can be either true or false. [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
 * `-a, --allow`:
    By default f2s will not accept an indiviudal multi-fast5 file or an indiviudal single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an indiviudal multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user is happy to lose the original run IDs.
 *  `-h`, `--help`:
