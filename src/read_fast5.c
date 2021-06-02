@@ -39,6 +39,7 @@ void print_record(operator_obj* operator_data) {
 
 // from nanopolish_fast5_io.cpp
 fast5_file_t fast5_open(const char* filename) {
+
     fast5_file_t fh;
     fh.hdf5_file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
 
