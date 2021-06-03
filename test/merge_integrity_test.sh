@@ -38,11 +38,10 @@ if ! $SLOW5_EXEC merge $INPUT_FILE/rg0.slow5 $INPUT_FILE/rg1.slow5 $INPUT_FILE/r
 fi
 
 echo "comparing merged_output and merged_expected"
-#sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $REL_PATH/data/exp/merge/merged_expected_sorted.slow5
-#rm $REL_PATH/data/exp/merge/merged_expected.slow5
-#sort $OUTPUT_DIR/merged_output.slow5 > $OUTPUT_DIR/merged_output_sorted.slow5
-#rm $OUTPUT_DIR/merged_output.slow5
-cmp -s $REL_PATH/data/exp/merge/merged_expected.slow5 $OUTPUT_DIR/merged_output.slow5
+sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $OUTPUT_DIR/merged_expected_sorted.slow5
+sort $OUTPUT_DIR/merged_output.slow5 > $OUTPUT_DIR/merged_output_sorted.slow5
+rm $OUTPUT_DIR/merged_output.slow5
+cmp -s $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_sorted.slow5
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: merged files are consistent!${NC}"
@@ -61,11 +60,10 @@ if ! $SLOW5_EXEC merge -l false $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/l
 fi
 
 echo "comparing lossy_merged_output and lossy_merged_expected"
-sort $REL_PATH/data/exp/merge/lossy_merged_expected.slow5 > $REL_PATH/data/exp/merge/lossy_merged_expected_sorted.slow5
-rm $REL_PATH/data/exp/merge/lossy_merged_expected.slow5
+sort $REL_PATH/data/exp/merge/lossy_merged_expected.slow5 > $OUTPUT_DIR/lossy_merged_expected_sorted.slow5
 sort $OUTPUT_DIR/lossy_merged_output.slow5 > $OUTPUT_DIR/lossy_merged_output_sorted.slow5
 rm $OUTPUT_DIR/lossy_merged_output.slow5
-cmp -s $REL_PATH/data/exp/merge/lossy_merged_expected_sorted.slow5 $OUTPUT_DIR/lossy_merged_output_sorted.slow5
+cmp -s $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 $OUTPUT_DIR/lossy_merged_output_sorted.slow5
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: lossy merged files are consistent!${NC}"
