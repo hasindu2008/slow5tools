@@ -147,6 +147,7 @@ fi
 echo -e "${GREEN}testcase passed${NC}"
 
 echo
+rm $OUTPUT_DIR/stdout.slow5
 echo "------------------- f2s testcase 9 >>> format:single_and_multi-fast5 input:directory process:single_process output:stdout-------------------"
 if ! $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
