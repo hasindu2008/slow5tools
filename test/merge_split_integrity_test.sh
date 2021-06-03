@@ -30,7 +30,7 @@ mkdir "$MERGE_atm3_OUTPUT" || exit 1
 
 echo "-------------------merge attempt 1-------------------"
 echo
-if ! $SLOW5_EXEC merge $SLOW5_DIR -o $MERGE_atm1_OUTPUT/merged1.slow5 -t 16 -b slow5; then
+if ! $SLOW5_EXEC merge $SLOW5_DIR -o $MERGE_atm1_OUTPUT/merged1.slow5 -t 16 --to slow5; then
     echo "merge attempt 1 failed" 
     exit 1
 fi
@@ -67,7 +67,7 @@ fi
 echo
 echo "-------------------merge attempt 2-------------------"
 echo
-if ! $SLOW5_EXEC merge $SPLIT_OUTPUT/read_split -o $MERGE_atm2_OUTPUT/merged2.slow5 -t 16 -b slow5; then
+if ! $SLOW5_EXEC merge $SPLIT_OUTPUT/read_split -o $MERGE_atm2_OUTPUT/merged2.slow5 -t 16 --to slow5; then
     echo "merge attempt 2 failed"
     exit 1
 fi
@@ -128,7 +128,7 @@ fi
 echo
 echo "-------------------merge attempt 3-------------------"
 echo
-if ! $SLOW5_EXEC merge $SPLIT_OUTPUT/read_split -o $MERGE_atm3_OUTPUT/merged3.slow5 -t 16 -s; then
+if ! $SLOW5_EXEC merge $SPLIT_OUTPUT/read_split -o $MERGE_atm3_OUTPUT/merged3.slow5 -t 16 --to slow5; then
     echo "merge attempt 2 failed"
     exit 1
 fi

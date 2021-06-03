@@ -41,17 +41,17 @@ Note: it is not recommended to run f2s on a mixture of both multi-FAST5 and sing
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress compression_type`:
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `--to blow5`.
-*  `-d STR, --out-dir STR`:
+*  `-d, --out-dir STR`:
    Specifies name/location of the output directory (required option unless converting only one FAST5 file). If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
-*  `-o FILE`, `--output FILE`:
+*  `-o, --output FILE`:
 When only one FAST5 file is being converted, `-o` specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and requires `-p 1`.
 *  `-p, --iop INT`:
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
-*   `-l STR`,`--lossless STR`:
-    Retain information in auxilliary fields during FAST5 to SLOW5 conversion. STR can be either true or false. [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
+*   `-l, --lossless STR`:
+    Retain information in auxilliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize.
 * `-a, --allow`:
    By default f2s will not accept an indiviudal multi-fast5 file or an indiviudal single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an indiviudal multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user is happy to lose the original run IDs.
-*  `-h`, `--help`:
+*  `-h, --help`:
    Prints the help menu.
 
 ### merge
@@ -70,15 +70,15 @@ If multiple samples (different run ids) are detected, the header and the *read_g
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
 *  `-c, --compress compression_type`:
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `--to blow5`.
-*  `-o FILE`, `--output FILE`:
+*  `-o, --output FILE`:
    Outputs merged data to FILE [default value: stdout]
 *  `--tmp-prefix` STR:
     Write temporary files to the directory specified by STR [default value: ./slow5_timestamp_pid]. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
-*   `-l`,`--lossless`:
+*   `-l, --lossless`:
     Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
 * `-t, --threads INT`:
    Number of threads
-*  `-h`, `--help`:
+*  `-h, --help`:
    Prints the help menu.
    
 
@@ -146,7 +146,7 @@ This tool is useful for parallelising across array jobs / distributed systems.
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5]. 
 *  `-c, --compress compression_type`:
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `--to blow5`.
-*  `-d STR`, `--out-dir STR`:
+*  `-d, --out-dir STR`:
    Output directory where the split files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-f, --files INT`:
    Split the data into n files (where n = INT) in which all files have equal numbers of reads. Cannot be used together with `-r` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-n`.
@@ -154,11 +154,11 @@ This tool is useful for parallelising across array jobs / distributed systems.
    Split the data into files containing n reads (where N = INT). Cannot be used together with `-f` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-r`.
 *  `-g, --groups`:
    Split the data into separate files for each read group (usually run id / sample name). The number of output files will equal the number of read groups in the input file. 
-*   `-l`,`--lossless`:
+*   `-l, --lossless`:
     Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
 *  `-p, --iop INT`:
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
-*  `-h`, `--help`:
+*  `-h, --help`:
    Prints the help menu.
 <!--
 *  `n, --num-reads INT`:
@@ -182,13 +182,13 @@ Converts SLOW5/BLOW5 files to FAST5 format.
 The input can be a list of SLOW5/BLOW5 files, a directory containing multiple SLOW5/BLOW5 files, or a list of directories. If a directory is provided, the tool recursively searches within for SLOW5/BLOW5 files (.slow5/blow5 extension) and converts them to FAST5.
 Note: different SLOW5 read groups cannot be converted to the a single FAST5 file.
 
-*  `n`, `--num-reads`:
+*  `n, --num-reads`:
    Number of reads to write into one FAST5 file [default value: 4000]. not implemented (todo). Use split --reads option to first split reads.
-*   `-d STR`, `--out-dir STR`:
+*   `-d, --out-dir STR`:
    Output directory where the FAST5 files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-p, --iop INT`:
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
-*  `-h`, `--help`:
+*  `-h, --help`:
    Prints the help menu.
 
 

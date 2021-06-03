@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run f2s, s2f, and again f2s and check if first produced slow5s are same as the last set.
+# Run f2s with different file, input and output formats.
 Usage="f2s_output_test.sh"
 
 # Relative path to "slow5/tests/"
@@ -32,7 +32,7 @@ fi
 
 echo
 echo "------------------- f2s testcase 1 >>> format:single-fast5 input:file process:single_process output:stdout-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 --iop 1 -b slow5 > $OUTPUT_DIR/stdout.slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -45,7 +45,7 @@ echo -e "${GREEN}testcase passed${NC}"
 
 echo
 echo "------------------- f2s testcase 2 >>> format:single-fast5 input:file process:single_process output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 -b slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 --to slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -58,7 +58,7 @@ echo -e "${GREEN}testcase passed${NC}"
 
 echo
 echo "------------------- f2s testcase 3 >>> format:single-fast5 input:directory process:single_process output:stdout-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 --iop 1 -b slow5 > $OUTPUT_DIR/stdout.slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -72,7 +72,7 @@ echo -e "${GREEN}testcase passed${NC}"
 echo
 rm $OUTPUT_DIR/single-fast5-output/*
 echo "------------------- f2s testcase 4 >>> format:single-fast5 input:directory process:single_process output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 -b slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 --to slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -85,7 +85,7 @@ echo -e "${GREEN}testcase passed${NC}"
 
 echo
 echo "------------------- f2s testcase 5 >>> format:multi-fast5 input:file process:single_process output:stdout-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 1 -b slow5>$OUTPUT_DIR/stdout.slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 1 --to slow5>$OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -98,7 +98,7 @@ echo -e "${GREEN}testcase passed${NC}"
 
 echo
 echo "------------------- f2s testcase 6 >>> format:multi-fast5 input:file process:single_process output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 1 -b slow5 -d $OUTPUT_DIR/multi-fast5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 1 --to slow5 -d $OUTPUT_DIR/multi-fast5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -111,7 +111,7 @@ echo -e "${GREEN}testcase passed${NC}"
 
 echo
 echo "------------------- f2s testcase 7 >>> format:multi-fast5 input:directory process:single_process output:stdout-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 1 -b slow5>$OUTPUT_DIR/stdout.slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 1 --to slow5>$OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -125,7 +125,7 @@ echo -e "${GREEN}testcase passed${NC}"
 echo
 rm $OUTPUT_DIR/multi-fast5/*
 echo "------------------- f2s testcase 8 >>> format:multi-fast5 input:directory process:single_process output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 1 -b slow5 -d $OUTPUT_DIR/multi-fast5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 1 --to slow5 -d $OUTPUT_DIR/multi-fast5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -147,21 +147,22 @@ fi
 echo -e "${GREEN}testcase passed${NC}"
 
 echo
+rm $OUTPUT_DIR/stdout.slow5
 echo "------------------- f2s testcase 9 >>> format:single_and_multi-fast5 input:directory process:single_process output:stdout-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 1 -b slow5>$OUTPUT_DIR/stdout.slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
-diff -s $EXP_SLOW5_DIR/single-and-multi-fast5-output/file_single-and-multi-fast5.slow5 $OUTPUT_DIR/stdout.slow5 &>/dev/null
+diff -s $EXP_SLOW5_DIR/single-and-multi-fast5-output/file_single-and-multi-fast5.slow5 $OUTPUT_DIR/stdout.slow5
 if [ $? -ne 0 ]; then
     echo -e "${RED}ERROR: diff failed for 'format:single_and_multi-fast5 input:directory process:single_process output:stdout'${NC}"
     exit 1
 fi
 echo -e "${GREEN}testcase passed${NC}"
-
+exit
 echo
 echo "------------------- f2s testcase 10 >>> format:single_and_multi-fast5 input:directory process:single_process output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 1 -b slow5 -d $OUTPUT_DIR/single-and-multi-fast5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 1 --to slow5 -d $OUTPUT_DIR/single-and-multi-fast5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -187,7 +188,7 @@ echo -e "${GREEN}testcase passed${NC}"
 echo
 rm $OUTPUT_DIR/single-fast5-output/*
 echo "------------------- f2s testcase 11 >>> format:single-fast5 input:file process:multi output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 -d $OUTPUT_DIR/single-fast5-output --iop 4 -b slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 -d $OUTPUT_DIR/single-fast5-output --iop 4 --to slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -201,7 +202,7 @@ echo -e "${GREEN}testcase passed${NC}"
 echo
 rm $OUTPUT_DIR/single-fast5-output/*
 echo "------------------- f2s testcase 12 >>> format:single-fast5 input:directory process:multi output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 -d $OUTPUT_DIR/single-fast5-output --iop 4 -b slow5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 -d $OUTPUT_DIR/single-fast5-output --iop 4 --to slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -225,7 +226,7 @@ echo -e "${GREEN}testcase passed${NC}"
 echo
 rm $OUTPUT_DIR/multi-fast5/*
 echo "------------------- f2s testcase 13 >>> format:multi-fast5 input:file process:multi output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 4 -b slow5 -d $OUTPUT_DIR/multi-fast5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 4 --to slow5 -d $OUTPUT_DIR/multi-fast5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -239,7 +240,7 @@ echo -e "${GREEN}testcase passed${NC}"
 echo
 rm $OUTPUT_DIR/multi-fast5/*
 echo "------------------- f2s testcase 14 >>> format:multi-fast5 input:directory process:multi output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 4 -b slow5 -d $OUTPUT_DIR/multi-fast5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 4 --to slow5 -d $OUTPUT_DIR/multi-fast5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -263,7 +264,7 @@ echo -e "${GREEN}testcase passed${NC}"
 echo
 rm $OUTPUT_DIR/single-and-multi-fast5/*
 echo "------------------- f2s testcase 15 >>> format:single_and_multi-fast5 input:directory process:multi output:directory-------------------"
-if ! $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 4 -b slow5 -d $OUTPUT_DIR/single-and-multi-fast5; then
+if ! $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 4 --to slow5 -d $OUTPUT_DIR/single-and-multi-fast5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -283,7 +284,7 @@ echo -e "${GREEN}testcase passed${NC}"
 
 echo
 echo "------------------- f2s testcase 16 >>> format:single-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 --iop 1 -b slow5 > $OUTPUT_DIR/stdout.slow5; then
+if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -292,7 +293,7 @@ echo -e "${GREEN}testcase passed${NC}"
 echo
 rm $OUTPUT_DIR/single-fast5-output/*
 echo "------------------- f2s testcase 17 >>> format:single-fast5 input:directory process:single_process output:directory run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 -b slow5; then
+if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 --to slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -300,7 +301,7 @@ echo -e "${GREEN}testcase passed${NC}"
 
 echo
 echo "------------------- f2s testcase 18 >>> format:multi-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 -b slow5 > $OUTPUT_DIR/stdout.slow5; then
+if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi
@@ -308,7 +309,7 @@ echo -e "${GREEN}testcase passed${NC}"
 
 echo
 echo "------------------- f2s testcase 19 >>> format:single_and_multi-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 -b slow5 > $OUTPUT_DIR/stdout.slow5; then
+if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase failed${NC}" 
     exit 1
 fi

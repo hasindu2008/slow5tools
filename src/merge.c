@@ -19,17 +19,17 @@
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
-    "merge slow5 files\n" \
+    "Merge multiple SLOW5/BLOW5 files to a single file\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
+    "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
+    "    -c, --compress [compression_type]  convert to compressed blow5 [default: gzip]\n" \
+    "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
+    "    ---tmp-prefix [STR]                path to crete a directory to write temporary files"                   \
+    "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
+    "    -t, --threads [INT]                number of threads [default: 4]\n"        \
     "    -h, --help                         display this message and exit\n" \
-    "    -t, --threads=[INT]                number of threads -- 4\n"        \
-    "    -b, --to=[STR]                     output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
-    "    -c, --compress=[compression_type]  convert to compressed blow5 [default: gzip]\n" \
-    "    -l, --lossy                        do not store auxiliary fields\n" \
-    "    -o, --output=[FILE]                output converted contents to FILE -- stdout\n" \
-    "    -f, --tmp-prefix=[STR]             path to crete a directory to write temporary files"                   \
 
 static double init_realtime = 0;
 
@@ -190,7 +190,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {"threads", required_argument, NULL, 't' }, //1
             {"to", required_argument, NULL, 'b'},    //2
             {"compress", required_argument, NULL, 'c'},  //3
-            { "lossy", no_argument, NULL, 'l'}, //4
+            { "lossless", required_argument, NULL, 'l'}, //4
             {"output", required_argument, NULL, 'o'}, //5
             {"tmp-prefix", required_argument, NULL, 'f'}, //6
             {NULL, 0, NULL, 0 }
@@ -212,7 +212,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:hlt:o:f:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:hl:t:o:f:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -250,7 +250,14 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 }
                 break;
             case 'l':
-                lossy = 1;
+                if(strcmp(optarg,"true")==0){
+                    lossy = 0;
+                }else if(strcmp(optarg,"false")==0){
+                    lossy = 1;
+                }else{
+                    ERROR("Incorrect argument%s", "");
+                    exit(EXIT_FAILURE);
+                }
                 break;
             case 'o':
                 arg_fname_out = optarg;
@@ -324,7 +331,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     if(arg_temp_dir){
         output_dir = std::string(arg_temp_dir);
     }
-    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
+//    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
 
     //create tmp-prefix directory
     struct stat st = {0};

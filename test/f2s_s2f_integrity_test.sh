@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run f2s, s2f, and again f2s and check if first produced slow5s are same as the last set.
-Usage="f2s_s2f_integrity_test.sh [path to fast5 directory] [path to create a temporary directory] [path to slow5tools executable] [-c or -s (optional)]"
+Usage="f2s_s2f_integrity_test.sh [path to fast5 directory] [path to create a temporary directory] [path to slow5tools executable] [-c or --to (optional)]"
 
 if [[ "$#" -lt 3 ]]; then
 	echo "Usage: $Usage"
