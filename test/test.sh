@@ -95,7 +95,7 @@ else
         fail
     fi
 fi
-
+exit
 echo_test 'merge integrity test'
 if [ $mem -eq 1 ]; then
     if ! ./test/merge_integrity_test.sh mem; then
