@@ -159,7 +159,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 echo -e "${GREEN}testcase passed${NC}"
-exit
+
 echo
 echo "------------------- f2s testcase 10 >>> format:single_and_multi-fast5 input:directory process:single_process output:directory-------------------"
 if ! $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 1 --to slow5 -d $OUTPUT_DIR/single-and-multi-fast5; then
