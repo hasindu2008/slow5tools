@@ -18,17 +18,16 @@
 #define USAGE_MSG "Usage: %s [OPTION]... -d [output DIR] [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
-    "Convert slow5 or (compressed) blow5 file(s) to fast5.\n" \
+    "Convert SLOW5/BLOW5 files to FAST5 format.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -d, --out-dir=[STR]        output directory where files are written to\n" \
-    "    -p, --iop=[INT]            number of I/O processes to read fast5 files [default: 8]\n" \
+    "    -d, --out-dir [STR]        output directory where files are written to\n" \
+    "    -p, --iop [INT]            number of I/O processes to read fast5 files [default: 8]\n" \
     "    -h, --help                 display this message and exit\n" \
 
 
 static double init_realtime = 0;
-
 
 void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t datatype);

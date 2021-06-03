@@ -26,8 +26,8 @@ SLOW5_FORMAT=blow5
 # set TEMP_DIR to use a faster storage system
 TEMP_DIR="-f $TEST_DIR"
 IOP=4
-LOSSY_F2S=-l
-LOSSY_MERGE=-l
+LOSSY_F2S="-l false"
+LOSSY_MERGE="-l false"
 EXTRA_FLAGS=""
 
 THREAD_LIST="32 24 16 8 4 2 1" #same as number of processes
@@ -132,7 +132,7 @@ MERGED_OUTPUT_DIR=$TEST_DIR/merged_compressed_blow5s
 test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
 mkdir $MERGED_OUTPUT_DIR
 echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT---------" >> $LOG
-EXTRA_FLAGS="-b slow5"
+EXTRA_FLAGS="--to slow5"
 slow5_f2s_merge_varied_processes_threads
 # remove f2s or merge output if necessary
 rm -r $F2S_OUTPUT_DIR

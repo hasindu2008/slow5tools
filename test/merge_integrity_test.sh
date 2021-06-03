@@ -3,8 +3,8 @@
 
 # WARNING: this file should be stored inside test directory
 # WARNING: the executable should be found at ../
-# WARNING: four slow5s should be found at ./data/test/merge/slow5s
-# WARNING: expected slow5 should be found at ./data/test/merge/
+# WARNING: four slow5s should be found at ./data/exp/merge/slow5s
+# WARNING: expected slow5 should be found at ./data/exp/merge
 
 Usage="merge_integrity.sh"
 
@@ -31,7 +31,7 @@ $SLOW5_EXEC --version
 
 echo
 echo "-------------------merging-------------------"
-if ! $SLOW5_EXEC merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 -b slow5; then
+if ! $SLOW5_EXEC merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 --to slow5; then
     echo "merge failed" 
     exit 1
 fi
@@ -50,7 +50,7 @@ fi
 
 echo
 echo "-------------------lossy merging-------------------"
-if ! $SLOW5_EXEC merge -l $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 -b slow5; then
+if ! $SLOW5_EXEC merge -l false $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5; then
     echo "merge failed" 
     exit 1
 fi

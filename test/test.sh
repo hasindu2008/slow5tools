@@ -57,7 +57,7 @@ prep_unit() {
     cp 'test/data/exp/one_fast5/exp_1_default.slow5' 'test/data/out/exp_1_default_add_duplicate.slow5'
 }
 
-prep_cli() {
+prep_view() {
     rm test/data/out/one_fast5/*
 }
 
@@ -72,15 +72,59 @@ else
     not_compiled
 fi
 
-prep_cli
+prep_view
 
-echo_test 'cli test'
+echo_test 'view test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/test_cli.sh mem; then
+    if ! ./test/test_view.sh mem; then
         fail
     fi
 else
-    if ! ./test/test_cli.sh; then
+    if ! ./test/test_view.sh; then
+        fail
+    fi
+fi
+
+echo_test 'f2s output test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/f2s_output_test.sh mem; then
+        fail
+    fi
+else
+    if ! ./test/f2s_output_test.sh; then
+        fail
+    fi
+fi
+
+echo_test 'f2s output test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/f2s_output_test.sh mem; then
+        fail
+    fi
+else
+    if ! ./test/f2s_output_test.sh; then
+        fail
+    fi
+fi
+
+echo_test 'merge integrity test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/merge_integrity_test.sh mem; then
+        fail
+    fi
+else
+    if ! ./test/merge_integrity_test.sh; then
+        fail
+    fi
+fi
+
+echo_test 'split integrity test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/split_integrity_test.sh mem; then
+        fail
+    fi
+else
+    if ! ./test/split_integrity_test.sh; then
         fail
     fi
 fi

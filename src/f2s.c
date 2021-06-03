@@ -21,18 +21,18 @@
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
-    "Convert fast5 file(s) to slow5 or (compressed) blow5.\n" \
+    "Convert FAST5 files to SLOW5/BLOW5 format.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -b, --to=[STR]                     output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
-    "    -c, --compress=[compression_type]  convert to compressed blow5\n [default: gzip]" \
+    "    --to [format_type]                 output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
+    "    -c, --compress [compression_type]  convert to compressed blow5. [default: gzip]\n" \
+    "    -d, --out-dir [STR]                output directory where slow5files are written to\n" \
+    "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
+    "    -p, --iop [INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
+    "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
+    "    -a, --allow                        allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
     "    -h, --help                         display this message and exit\n" \
-    "    -p, --iop=[INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
-    "    -l, --lossy                        do not store auxiliary fields\n" \
-    "    -d, --out-dir=[STR]             output directory where slow5files are written to\n" \
-    "    -a, --allow                        allow run id mismatches in a fast5 file to\n" \
-    "    -o, --output=[FILE]                output contents to FILE -- stdout\n" \
 
 static double init_realtime = 0;
 
@@ -284,7 +284,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             {"help", no_argument, NULL, 'h'},  //2
             {"output", required_argument, NULL, 'o'},   //3
             { "iop", required_argument, NULL, 'p'}, //4
-            { "lossy", no_argument, NULL, 'l'}, //4
+            { "lossless", required_argument, NULL, 'l'}, //4
             { "out-dir", required_argument, NULL, 'd'}, //5
             { "allow", no_argument, NULL, 'a'}, //6
             {NULL, 0, NULL, 0 }
@@ -300,7 +300,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "c:hb:o:d:lap:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:hb:o:d:l:ap:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -328,7 +328,14 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 }
                 break;
             case 'l':
-                lossy = 1;
+                if(strcmp(optarg,"true")==0){
+                    lossy = 0;
+                }else if(strcmp(optarg,"false")==0){
+                    lossy = 1;
+                }else{
+                    ERROR("Incorrect argument%s", "");
+                    exit(EXIT_FAILURE);
+                }
                 break;
             case 'a':
                 flag_allow_run_id_mismatch = 1;

@@ -15,18 +15,18 @@
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
-    "split slow5 files\n" \
+    "Split a single a SLOW5/BLOW5 file into multiple separate files.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -b, --to=[STR]                     output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
-    "    -c, --compress=[compression_type]  convert to compressed blow5\n [default: gzip]" \
-    "    -d, --out-dir=[STR]                output directory where files are written to\n" \
-    "    -f, --files=[INT]                  split reads into n files evenly\n"              \
-    "    -r, --reads=[INT]                  split into n reads, i.e., each file will have n reads\n"              \
+    "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
+    "    -c, --compress [compression_type]  convert to compressed blow5\n [default: gzip]" \
+    "    -d, --out-dir [STR]                output directory where files are written to\n" \
+    "    -f, --files [INT]                  split reads into n files evenly\n"              \
+    "    -r, --reads [INT]                  split into n reads, i.e., each file will have n reads\n"              \
     "    -g, --groups                       split multi read group file into single read group files\n" \
-    "    -l, --lossy                        do not store auxiliary fields\n" \
-    "    -p, --iop=[INT]                    number of I/O processes used to split files [default: 8]\n" \
+    "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
+    "    -p, --iop [INT]                    number of I/O processes used to split files [default: 8]\n" \
     "    -h, --help                         display this message and exit\n" \
 
 static double init_realtime = 0;
@@ -397,11 +397,11 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
-            {"to", no_argument, NULL, 'b'},    //1
+            {"to", required_argument, NULL, 'b'},    //1
             {"compress", no_argument, NULL, 'c'},  //2
             {"out-dir", required_argument, NULL, 'd' },  //3
             { "iop", required_argument, NULL, 'p'},   //4
-            { "lossy", no_argument, NULL, 'l'}, //5
+            { "lossless", required_argument, NULL, 'l'}, //5
             { "groups", no_argument, NULL, 'g'}, //6
             { "files", required_argument, NULL, 'f'}, //7
             { "reads", required_argument, NULL, 'r'}, //8
@@ -421,7 +421,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     enum press_method pressMethod = COMPRESS_NONE;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hb:cg:lf:r:d:p:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hb:cgl:f:r:d:p:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -471,7 +471,14 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 metaSplitMethod.splitMethod = GROUP_SPLIT;
                 break;
             case 'l':
-                lossy = 1;
+                if(strcmp(optarg,"true")==0){
+                    lossy = 0;
+                }else if(strcmp(optarg,"false")==0){
+                    lossy = 1;
+                }else{
+                    ERROR("Incorrect argument%s", "");
+                    exit(EXIT_FAILURE);
+                }
                 break;
             case 'p':
                 iop = atoi(optarg);
