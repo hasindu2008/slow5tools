@@ -31,17 +31,18 @@ $SLOW5_EXEC --version
 
 echo
 echo "-------------------merging-------------------"
-if ! $SLOW5_EXEC merge $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/merged_output.slow5 --to slow5; then
+INPUT_FILE=$REL_PATH/data/exp/merge/slow5s
+if ! $SLOW5_EXEC merge $INPUT_FILE/rg0.slow5 $INPUT_FILE/rg1.slow5 $INPUT_FILE/rg2.slow5 $INPUT_FILE/rg3.slow5 -o $OUTPUT_DIR/merged_output.slow5 --to slow5; then
     echo "merge failed" 
     exit 1
 fi
 
 echo "comparing merged_output and merged_expected"
-sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $REL_PATH/data/exp/merge/merged_expected_sorted.slow5
-rm $REL_PATH/data/exp/merge/merged_expected.slow5
-sort $OUTPUT_DIR/merged_output.slow5 > $OUTPUT_DIR/merged_output_sorted.slow5
-rm $OUTPUT_DIR/merged_output.slow5
-cmp -s $REL_PATH/data/exp/merge/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_sorted.slow5
+#sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $REL_PATH/data/exp/merge/merged_expected_sorted.slow5
+#rm $REL_PATH/data/exp/merge/merged_expected.slow5
+#sort $OUTPUT_DIR/merged_output.slow5 > $OUTPUT_DIR/merged_output_sorted.slow5
+#rm $OUTPUT_DIR/merged_output.slow5
+cmp -s $REL_PATH/data/exp/merge/merged_expected.slow5 $OUTPUT_DIR/merged_output.slow5
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: merged files are consistent!${NC}"
