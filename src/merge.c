@@ -331,7 +331,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     if(arg_temp_dir){
         output_dir = std::string(arg_temp_dir);
     }
-    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
+//    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
 
     //create tmp-prefix directory
     struct stat st = {0};

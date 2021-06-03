@@ -96,17 +96,6 @@ else
     fi
 fi
 
-echo_test 'f2s output test'
-if [ $mem -eq 1 ]; then
-    if ! ./test/f2s_output_test.sh mem; then
-        fail
-    fi
-else
-    if ! ./test/f2s_output_test.sh; then
-        fail
-    fi
-fi
-
 echo_test 'merge integrity test'
 if [ $mem -eq 1 ]; then
     if ! ./test/merge_integrity_test.sh mem; then
