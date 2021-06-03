@@ -26,13 +26,15 @@ test -d  $OUTPUT_DIR
 rm -r $OUTPUT_DIR
 mkdir $OUTPUT_DIR
 
+INPUT_FILE=$REL_PATH/data/exp/merge/slow5s
+INPUT_FILES=$INPUT_FILE/rg0.slow5 $INPUT_FILE/rg1.slow5 $INPUT_FILE/rg2.slow5 $INPUT_FILE/rg3.slow5
+
 echo "-------------------slow5tools version-------------------"
 $SLOW5_EXEC --version
 
 echo
 echo "-------------------merging-------------------"
-INPUT_FILE=$REL_PATH/data/exp/merge/slow5s
-if ! $SLOW5_EXEC merge $INPUT_FILE/rg0.slow5 $INPUT_FILE/rg1.slow5 $INPUT_FILE/rg2.slow5 $INPUT_FILE/rg3.slow5 -o $OUTPUT_DIR/merged_output.slow5 --to slow5; then
+if ! $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --to slow5; then
     echo "merge failed" 
     exit 1
 fi
@@ -54,7 +56,7 @@ fi
 
 echo
 echo "-------------------lossy merging-------------------"
-if ! $SLOW5_EXEC merge -l false $REL_PATH/data/exp/merge/slow5s -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5; then
+if ! $SLOW5_EXEC merge -l false INPUT_FILES -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5; then
     echo "merge failed" 
     exit 1
 fi
@@ -74,5 +76,3 @@ else
 fi
 
 exit
-
-
