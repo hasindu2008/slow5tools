@@ -95,7 +95,6 @@ else
         fail
     fi
 fi
-exit $ret
 
 echo_test 'merge integrity test'
 if [ $mem -eq 1 ]; then
@@ -107,6 +106,7 @@ else
         fail
     fi
 fi
+exit $ret
 
 echo_test 'split integrity test'
 if [ $mem -eq 1 ]; then
