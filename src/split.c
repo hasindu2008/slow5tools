@@ -415,6 +415,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             { "out-dir", required_argument, NULL, 'd'}, //5
             { "allow", no_argument, NULL, 'a'}, //6
             { "groups", no_argument, NULL, 'g'}, //6
+            { "files", required_argument, NULL, 'f'}, //7
+            { "reads", required_argument, NULL, 'r'}, //8
             {NULL, 0, NULL, 0 }
     };
 
@@ -428,7 +430,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "c:hb:o:d:l:ap:g", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:hb:o:d:l:ap:gf:r:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -481,6 +483,14 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'g':
                 fprintf(stderr, "case g\n");
                 metaSplitMethod.splitMethod = GROUP_SPLIT;
+                break;
+            case 'f':
+                metaSplitMethod.splitMethod = FILE_SPLIT;
+                metaSplitMethod.n = atoi(optarg);
+                break;
+            case 'r':
+                metaSplitMethod.splitMethod = READS_SPLIT;
+                metaSplitMethod.n = atoi(optarg);
                 break;
             case 'p':
                 iop = atoi(optarg);
