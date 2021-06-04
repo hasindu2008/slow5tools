@@ -368,20 +368,6 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
 
 int split_main(int argc, char **argv, struct program_meta *meta){
 
-    fprintf(stderr, "\n");
-    if (meta->verbosity_level >= LOG_GOSSIP) {
-        VERBOSE("printing command given%s", "");
-    }
-    fprintf(stderr, "cmd: ");
-    for (int i = 0; i < argc; ++ i) {
-        fprintf(stderr, "%s", argv[i]);
-        if (i == argc - 1) {
-            fprintf(stderr, "\n");
-        } else {
-            fprintf(stderr, " ");
-        }
-    }
-
     init_realtime = slow5_realtime();
 
     // Debug: print arguments
@@ -409,6 +395,105 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
+
+    // code from f2s
+    int iop = 8;
+    int lossy = 0;
+    int flag_allow_run_id_mismatch = 0;
+
+    // Default options
+    static struct option long_opts[] = {
+            {"to", required_argument, NULL, 'b'},    //0
+            {"compress", required_argument, NULL, 'c'},  //1
+            {"help", no_argument, NULL, 'h'},  //2
+            {"output", required_argument, NULL, 'o'},   //3
+            { "iop", required_argument, NULL, 'p'}, //4
+            { "lossless", required_argument, NULL, 'l'}, //4
+            { "out-dir", required_argument, NULL, 'd'}, //5
+            { "allow", no_argument, NULL, 'a'}, //6
+            {NULL, 0, NULL, 0 }
+    };
+
+    enum slow5_fmt format_out = FORMAT_BINARY;
+    enum press_method pressMethod = COMPRESS_GZIP;
+
+    // Input arguments
+    char *arg_dir_out = NULL;
+    char *arg_fname_out = NULL;
+
+    int opt;
+    int longindex = 0;
+    // Parse options
+    while ((opt = getopt_long(argc, argv, "c:hb:o:d:l:ap:", long_opts, &longindex)) != -1) {
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+                  opt, optarg, optind, opterr, optopt);
+        }
+        switch (opt) {
+            case 'b':
+                if(strcmp(optarg,"slow5")==0){
+                    format_out = FORMAT_ASCII;
+                    pressMethod = COMPRESS_NONE;
+                }else if(strcmp(optarg,"blow5")==0){
+                    format_out = FORMAT_BINARY;
+                }else{
+                    ERROR("Incorrect output format%s", "");
+                    exit(EXIT_FAILURE);
+                }
+                break;
+            case 'c':
+                if(strcmp(optarg,"none")==0){
+                    pressMethod = COMPRESS_NONE;
+                }else if(strcmp(optarg,"gzip")==0){
+                    pressMethod = COMPRESS_GZIP;
+                }else{
+                    ERROR("Incorrect compression type%s", "");
+                    exit(EXIT_FAILURE);
+                }
+                break;
+            case 'l':
+                if(strcmp(optarg,"true")==0){
+                    lossy = 0;
+                }else if(strcmp(optarg,"false")==0){
+                    lossy = 1;
+                }else{
+                    ERROR("Incorrect argument%s", "");
+                    exit(EXIT_FAILURE);
+                }
+                break;
+            case 'a':
+                flag_allow_run_id_mismatch = 1;
+                break;
+            case 'h':
+                if (meta->verbosity_level >= LOG_VERBOSE) {
+                    VERBOSE("displaying large help message%s","");
+                }
+                fprintf(stdout, HELP_LARGE_MSG, argv[0]);
+                EXIT_MSG(EXIT_SUCCESS, argv, meta);
+                exit(EXIT_SUCCESS);
+            case 'd':
+                arg_dir_out = optarg;
+                break;
+            case 'p':
+                iop = atoi(optarg);
+                if (iop < 1) {
+                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
+                    exit(EXIT_FAILURE);
+                }
+                break;
+            case 'o':
+                arg_fname_out = optarg;
+                break;
+            default: // case '?'
+                fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
+                return EXIT_FAILURE;
+        }
+    }
+
+    return 0;
+    // code from f2s end
+
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
@@ -506,14 +591,13 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 }
                 break;
             default: // case '?'
-
-
-
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
     }
+
+    return 0;
 
     // compression option is only effective with -b blow5
     if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
