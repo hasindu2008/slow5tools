@@ -367,10 +367,6 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
 }
 
 int split_main(int argc, char **argv, struct program_meta *meta){
-
-    meta_split_method metaSplitMethod;
-
-
     init_realtime = slow5_realtime();
 
     // Debug: print arguments
@@ -378,7 +374,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         if (meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("printing the arguments given%s","");
         }
-
         fprintf(stderr, DEBUG_PREFIX "argv=[",
                 __FILE__, __func__, __LINE__);
         for (int i = 0; i < argc; ++ i) {
@@ -405,18 +400,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int flag_allow_run_id_mismatch = 0;
 
     // Default options
-//    static struct option long_opts[] = {
-//            {"to", required_argument, NULL, 'b'},    //0
-//            {"compress", required_argument, NULL, 'c'},  //1
-//            {"help", no_argument, NULL, 'h'},  //2
-//            { "iop", required_argument, NULL, 'p'}, //4
-//            { "lossless", required_argument, NULL, 'l'}, //4
-//            { "out-dir", required_argument, NULL, 'd'}, //5
-//            { "groups", no_argument, NULL, 'g'}, //6
-//            { "files", required_argument, NULL, 'f'}, //7
-//            { "reads", required_argument, NULL, 'r'}, //8
-//            {NULL, 0, NULL, 0 }
-//    };
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
             {"to", required_argument, NULL, 'b'},    //1
@@ -433,88 +416,15 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     enum slow5_fmt format_out = FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_GZIP;
+    meta_split_method metaSplitMethod;
 
     // Input arguments
     char *arg_dir_out = NULL;
     char *arg_fname_out = NULL;
 
-    //c:hb:d:l:p:gf:r:
     int opt;
     int longindex = 0;
     // Parse options
-//    while ((opt = getopt_long(argc, argv, "hb:cgl:f:r:d:p:", long_opts, &longindex)) != -1) {
-//        if (meta->verbosity_level >= LOG_DEBUG) {
-//            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
-//                  opt, optarg, optind, opterr, optopt);
-//        }
-//        switch (opt) {
-//            case 'b':
-//                if(strcmp(optarg,"slow5")==0){
-//                    format_out = FORMAT_ASCII;
-//                    pressMethod = COMPRESS_NONE;
-//                }else if(strcmp(optarg,"blow5")==0){
-//                    format_out = FORMAT_BINARY;
-//                }else{
-//                    ERROR("Incorrect output format%s", "");
-//                    exit(EXIT_FAILURE);
-//                }
-//                break;
-//            case 'c':
-//                if(strcmp(optarg,"none")==0){
-//                    pressMethod = COMPRESS_NONE;
-//                }else if(strcmp(optarg,"gzip")==0){
-//                    pressMethod = COMPRESS_GZIP;
-//                }else{
-//                    ERROR("Incorrect compression type%s", "");
-//                    exit(EXIT_FAILURE);
-//                }
-//                break;
-//            case 'l':
-//                if(strcmp(optarg,"true")==0){
-//                    lossy = 0;
-//                }else if(strcmp(optarg,"false")==0){
-//                    lossy = 1;
-//                }else{
-//                    ERROR("Incorrect argument%s", "");
-//                    exit(EXIT_FAILURE);
-//                }
-//                break;
-//            case 'h':
-//                if (meta->verbosity_level >= LOG_VERBOSE) {
-//                    VERBOSE("displaying large help message%s","");
-//                }
-//                fprintf(stdout, HELP_LARGE_MSG, argv[0]);
-//                EXIT_MSG(EXIT_SUCCESS, argv, meta);
-//                exit(EXIT_SUCCESS);
-//            case 'd':
-//                arg_dir_out = optarg;
-//                break;
-//            case 'g':
-//                fprintf(stderr, "case g\n");
-//                metaSplitMethod.splitMethod = GROUP_SPLIT;
-//                break;
-//            case 'f':
-//                metaSplitMethod.splitMethod = FILE_SPLIT;
-//                metaSplitMethod.n = atoi(optarg);
-//                break;
-//            case 'r':
-//                metaSplitMethod.splitMethod = READS_SPLIT;
-//                metaSplitMethod.n = atoi(optarg);
-//                break;
-//            case 'p':
-//                iop = atoi(optarg);
-//                if (iop < 1) {
-//                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-//                    exit(EXIT_FAILURE);
-//                }
-//                break;
-//            default: // case '?'
-//                fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-//                EXIT_MSG(EXIT_FAILURE, argv, meta);
-//                return EXIT_FAILURE;
-//        }
-//    }
-
     while ((opt = getopt_long(argc, argv, "hb:cgl:f:r:d:p:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
@@ -590,114 +500,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
-
-//    return 0;
-    // code from f2s end
-
-/*
-
-    static struct option long_opts[] = {
-            {"help", no_argument, NULL, 'h' }, //0
-            {"to", required_argument, NULL, 'b'},    //1
-            {"compress", no_argument, NULL, 'c'},  //2
-            {"out-dir", required_argument, NULL, 'd' },  //3
-            { "iop", required_argument, NULL, 'p'},   //4
-            { "lossless", required_argument, NULL, 'l'}, //5
-            { "groups", no_argument, NULL, 'g'}, //6
-            { "files", required_argument, NULL, 'f'}, //7
-            { "reads", required_argument, NULL, 'r'}, //8
-            {NULL, 0, NULL, 0 }
-    };
-
-    // Input arguments
-    char *arg_dir_out = NULL;
-    int longindex = 0;
-    char opt;
-    int iop = 8;
-    size_t lossy = 0;
-
-
-    // Default options
-    enum slow5_fmt format_out = FORMAT_BINARY;
-    enum press_method pressMethod = COMPRESS_NONE;
-
-    // Parse options
-    while ((opt = getopt_long(argc, argv, "hb:cgl:f:r:d:p:", long_opts, &longindex)) != -1) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
-                  opt, optarg, optind, opterr, optopt);
-        }
-        switch (opt) {
-            case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
-                }
-                fprintf(stdout, HELP_LARGE_MSG, argv[0]);
-
-                EXIT_MSG(EXIT_SUCCESS, argv, meta);
-                exit(EXIT_SUCCESS);
-            case 'b':
-                fprintf(stderr, "case b\n");
-                if(strcmp(optarg,"slow5")==0){
-                    format_out = FORMAT_ASCII;
-                    pressMethod = COMPRESS_NONE;
-                }else if(strcmp(optarg,"blow5")==0){
-                    format_out = FORMAT_BINARY;
-                }else{
-                    ERROR("Incorrect output format%s", "");
-                    exit(EXIT_FAILURE);
-                }
-                break;
-            case 'c':
-                if(strcmp(optarg,"none")==0){
-                    pressMethod = COMPRESS_NONE;
-                }else if(strcmp(optarg,"gzip")==0){
-                    pressMethod = COMPRESS_GZIP;
-                }else{
-                    ERROR("Incorrect compression type%s", "");
-                    exit(EXIT_FAILURE);
-                }
-                break;
-            case 'd':
-                fprintf(stderr, "case d\n");
-                arg_dir_out = optarg;
-                break;
-            case 'f':
-                metaSplitMethod.splitMethod = FILE_SPLIT;
-                metaSplitMethod.n = atoi(optarg);
-                break;
-            case 'r':
-                metaSplitMethod.splitMethod = READS_SPLIT;
-                metaSplitMethod.n = atoi(optarg);
-                break;
-            case 'g':
-                fprintf(stderr, "case g\n");
-                metaSplitMethod.splitMethod = GROUP_SPLIT;
-                break;
-            case 'l':
-                if(strcmp(optarg,"true")==0){
-                    lossy = 0;
-                }else if(strcmp(optarg,"false")==0){
-                    lossy = 1;
-                }else{
-                    ERROR("Incorrect argument%s", "");
-                    exit(EXIT_FAILURE);
-                }
-                break;
-            case 'p':
-                iop = atoi(optarg);
-                if (iop < 1) {
-                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-                    exit(EXIT_FAILURE);
-                }
-                break;
-            default: // case '?'
-                fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-                EXIT_MSG(EXIT_FAILURE, argv, meta);
-                return EXIT_FAILURE;
-        }
-    }
-*/
 
     // compression option is only effective with -b blow5
     if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
