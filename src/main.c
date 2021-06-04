@@ -84,7 +84,7 @@ int main(const int argc, char **argv){
 
     // Default options
     struct program_meta meta = {
-        .verbosity_level = LOG_DEBUG
+        .verbosity_level = LOG_VERBOSE
     };
 
     // Setup segmentation fault handler
