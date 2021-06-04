@@ -591,7 +591,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         }
     }
 
-    return 0;
+//    return 0;
     // code from f2s end
 
 /*
@@ -698,7 +698,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         }
     }
 */
-    return 0;
 
     // compression option is only effective with -b blow5
     if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
