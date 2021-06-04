@@ -367,6 +367,21 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
 }
 
 int split_main(int argc, char **argv, struct program_meta *meta){
+
+    fprintf(stderr, "\n");
+    if (meta->verbosity_level >= LOG_GOSSIP) {
+        VERBOSE("printing command given%s", "");
+    }
+    fprintf(stderr, "cmd: ");
+    for (int i = 0; i < argc; ++ i) {
+        fprintf(stderr, "%s", argv[i]);
+        if (i == argc - 1) {
+            fprintf(stderr, "\n");
+        } else {
+            fprintf(stderr, " ");
+        }
+    }
+
     init_realtime = slow5_realtime();
 
     // Debug: print arguments
@@ -489,19 +504,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 break;
             default: // case '?'
 
-                fprintf(stderr, "\n");
-                if (meta->verbosity_level >= LOG_GOSSIP) {
-                    VERBOSE("printing command given%s", "");
-                }
-                fprintf(stderr, "cmd: ");
-                for (int i = 0; i < argc; ++ i) {
-                    fprintf(stderr, "%s", argv[i]);
-                    if (i == argc - 1) {
-                        fprintf(stderr, "\n");
-                    } else {
-                        fprintf(stderr, " ");
-                    }
-                }
+
 
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
