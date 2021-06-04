@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Testing output of slow5tools
 

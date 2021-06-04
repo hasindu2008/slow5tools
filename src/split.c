@@ -374,7 +374,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         if (meta->verbosity_level >= LOG_VERBOSE) {
             VERBOSE("printing the arguments given%s","");
         }
-
         fprintf(stderr, DEBUG_PREFIX "argv=[",
                 __FILE__, __func__, __LINE__);
         for (int i = 0; i < argc; ++ i) {
@@ -395,6 +394,12 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
+    // code from f2s
+    int iop = 8;
+    int lossy = 0;
+    int flag_allow_run_id_mismatch = 0;
+
+    // Default options
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
             {"to", required_argument, NULL, 'b'},    //1
@@ -408,18 +413,17 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {NULL, 0, NULL, 0 }
     };
 
+
+    enum slow5_fmt format_out = FORMAT_BINARY;
+    enum press_method pressMethod = COMPRESS_GZIP;
+    meta_split_method metaSplitMethod;
+
     // Input arguments
     char *arg_dir_out = NULL;
+    char *arg_fname_out = NULL;
+
+    int opt;
     int longindex = 0;
-    char opt;
-    int iop = 8;
-    size_t lossy = 0;
-
-    meta_split_method metaSplitMethod;
-    // Default options
-    enum slow5_fmt format_out = FORMAT_BINARY;
-    enum press_method pressMethod = COMPRESS_NONE;
-
     // Parse options
     while ((opt = getopt_long(argc, argv, "hb:cgl:f:r:d:p:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
@@ -436,6 +440,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             case 'b':
+                fprintf(stderr, "case b\n");
                 if(strcmp(optarg,"slow5")==0){
                     format_out = FORMAT_ASCII;
                     pressMethod = COMPRESS_NONE;
@@ -457,6 +462,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 }
                 break;
             case 'd':
+                fprintf(stderr, "case d\n");
                 arg_dir_out = optarg;
                 break;
             case 'f':
@@ -468,6 +474,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 metaSplitMethod.n = atoi(optarg);
                 break;
             case 'g':
+                fprintf(stderr, "case g\n");
                 metaSplitMethod.splitMethod = GROUP_SPLIT;
                 break;
             case 'l':
