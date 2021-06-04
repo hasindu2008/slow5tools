@@ -425,10 +425,11 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     char *arg_dir_out = NULL;
     char *arg_fname_out = NULL;
 
+    //c:hb:d:l:p:gf:r:
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "c:hb:d:l:p:gf:r:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hb:cgl:f:r:d:p:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
