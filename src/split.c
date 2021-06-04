@@ -368,6 +368,9 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
 
 int split_main(int argc, char **argv, struct program_meta *meta){
 
+    meta_split_method metaSplitMethod;
+
+
     init_realtime = slow5_realtime();
 
     // Debug: print arguments
@@ -411,6 +414,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             { "lossless", required_argument, NULL, 'l'}, //4
             { "out-dir", required_argument, NULL, 'd'}, //5
             { "allow", no_argument, NULL, 'a'}, //6
+            { "groups", no_argument, NULL, 'g'}, //6
             {NULL, 0, NULL, 0 }
     };
 
@@ -424,7 +428,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "c:hb:o:d:l:ap:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:hb:o:d:l:ap:g", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -474,6 +478,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'd':
                 arg_dir_out = optarg;
                 break;
+            case 'g':
+                fprintf(stderr, "case g\n");
+                metaSplitMethod.splitMethod = GROUP_SPLIT;
+                break;
             case 'p':
                 iop = atoi(optarg);
                 if (iop < 1) {
@@ -494,7 +502,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     return 0;
     // code from f2s end
 
-    meta_split_method metaSplitMethod;
 /*
 
     static struct option long_opts[] = {
