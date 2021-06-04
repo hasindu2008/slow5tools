@@ -405,18 +405,31 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int flag_allow_run_id_mismatch = 0;
 
     // Default options
+//    static struct option long_opts[] = {
+//            {"to", required_argument, NULL, 'b'},    //0
+//            {"compress", required_argument, NULL, 'c'},  //1
+//            {"help", no_argument, NULL, 'h'},  //2
+//            { "iop", required_argument, NULL, 'p'}, //4
+//            { "lossless", required_argument, NULL, 'l'}, //4
+//            { "out-dir", required_argument, NULL, 'd'}, //5
+//            { "groups", no_argument, NULL, 'g'}, //6
+//            { "files", required_argument, NULL, 'f'}, //7
+//            { "reads", required_argument, NULL, 'r'}, //8
+//            {NULL, 0, NULL, 0 }
+//    };
     static struct option long_opts[] = {
-            {"to", required_argument, NULL, 'b'},    //0
-            {"compress", required_argument, NULL, 'c'},  //1
-            {"help", no_argument, NULL, 'h'},  //2
-            { "iop", required_argument, NULL, 'p'}, //4
-            { "lossless", required_argument, NULL, 'l'}, //4
-            { "out-dir", required_argument, NULL, 'd'}, //5
+            {"help", no_argument, NULL, 'h' }, //0
+            {"to", required_argument, NULL, 'b'},    //1
+            {"compress", no_argument, NULL, 'c'},  //2
+            {"out-dir", required_argument, NULL, 'd' },  //3
+            { "iop", required_argument, NULL, 'p'},   //4
+            { "lossless", required_argument, NULL, 'l'}, //5
             { "groups", no_argument, NULL, 'g'}, //6
             { "files", required_argument, NULL, 'f'}, //7
             { "reads", required_argument, NULL, 'r'}, //8
             {NULL, 0, NULL, 0 }
     };
+
 
     enum slow5_fmt format_out = FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_GZIP;
