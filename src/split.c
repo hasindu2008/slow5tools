@@ -494,6 +494,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     return 0;
     // code from f2s end
 
+    meta_split_method metaSplitMethod;
+/*
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
@@ -515,7 +517,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int iop = 8;
     size_t lossy = 0;
 
-    meta_split_method metaSplitMethod;
+
     // Default options
     enum slow5_fmt format_out = FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_NONE;
@@ -596,7 +598,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
-
+*/
     return 0;
 
     // compression option is only effective with -b blow5
