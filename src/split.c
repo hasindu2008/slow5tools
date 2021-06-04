@@ -451,6 +451,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             case 'b':
+                fprintf(stderr, "case b\n");
                 if(strcmp(optarg,"slow5")==0){
                     format_out = FORMAT_ASCII;
                     pressMethod = COMPRESS_NONE;
@@ -472,6 +473,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 }
                 break;
             case 'd':
+                fprintf(stderr, "case d\n");
                 arg_dir_out = optarg;
                 break;
             case 'f':
@@ -483,6 +485,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 metaSplitMethod.n = atoi(optarg);
                 break;
             case 'g':
+                fprintf(stderr, "case g\n");
                 metaSplitMethod.splitMethod = GROUP_SPLIT;
                 break;
             case 'l':
