@@ -465,9 +465,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                     exit(EXIT_FAILURE);
                 }
                 break;
-            case 'a':
-                flag_allow_run_id_mismatch = 1;
-                break;
             case 'h':
                 if (meta->verbosity_level >= LOG_VERBOSE) {
                     VERBOSE("displaying large help message%s","");
@@ -496,9 +493,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                     ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
                     exit(EXIT_FAILURE);
                 }
-                break;
-            case 'o':
-                arg_fname_out = optarg;
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
