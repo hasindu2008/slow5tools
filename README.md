@@ -11,7 +11,6 @@ SLOW5 is a simple tab-separated values (TSV) file encoding metadata and time-ser
 Detailed benchmarking experiments have shown that SLOW5 format is up to X-fold faster and X% smaller than FAST5 [SLOW5 paper].
 
 <todo>
-
 <!--- [![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?token=pN7xnsxgLrRxbAn8WLVQ&branch=master)](https://travis-ci.com/hasindu2008/slow5) -->
 [![SLOW5 C/C++ CI Local](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Local/badge.svg)](https://github.com/hasindu2008/slow5tools/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local%22)
 [![SLOW5 C/C++ CI Local OSX](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Local%20OSX/badge.svg)](https://github.com/hasindu2008/slow5tools/actions/workflows/c-cpp-selfhosted-mac.yml?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local+OSX%22)
