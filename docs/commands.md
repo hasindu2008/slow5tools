@@ -182,8 +182,6 @@ Converts SLOW5/BLOW5 files to FAST5 format.
 The input can be a list of SLOW5/BLOW5 files, a directory containing multiple SLOW5/BLOW5 files, or a list of directories. If a directory is provided, the tool recursively searches within for SLOW5/BLOW5 files (.slow5/blow5 extension) and converts them to FAST5.
 Note: different SLOW5 read groups cannot be converted to the a single FAST5 file.
 
-*  `n, --num-reads`:
-   Number of reads to write into one FAST5 file [default value: 4000]. not implemented (todo). Use split --reads option to first split reads.
 *   `-d, --out-dir STR`:
    Output directory where the FAST5 files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-p, --iop INT`:
