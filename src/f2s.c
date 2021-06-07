@@ -73,7 +73,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
             if (fast5_file.is_multi_fast5) {
                 std::string slow5file = fast5_files[i].substr(fast5_files[i].find_last_of('/'),
                                                               fast5_files[i].length() -
-                                                              fast5_files[i].find_last_of('/') - 6) + extension;
+                                                              fast5_files[i].find_last_of('/') - extension.length()) + extension;
                 slow5_path += slow5file;
                 //fprintf(stderr,"slow5path = %s\n fast5_path = %s\nslow5file = %s\n",slow5_path.c_str(), fast5_files[i].c_str(),slow5file.c_str());
 
