@@ -397,7 +397,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     // code from f2s
     int iop = 8;
     int lossy = 0;
-    int flag_allow_run_id_mismatch = 0;
 
     // Default options
     static struct option long_opts[] = {
@@ -420,7 +419,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     // Input arguments
     char *arg_dir_out = NULL;
-    char *arg_fname_out = NULL;
 
     int opt;
     int longindex = 0;
