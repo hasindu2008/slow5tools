@@ -38,7 +38,6 @@ static double init_realtime = 0;
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
 void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
-
     static size_t call_count = 0;
     slow5_file_t* slow5File = NULL;
     slow5_file_t* slow5File_outputdir_single_fast5 = NULL;
@@ -161,10 +160,8 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
     }
 
     //create processes
-    std::vector<pid_t> pids_v(iop);
-    std::vector<proc_arg_t> proc_args_v(iop);
-    pid_t *pids = pids_v.data();
-    proc_arg_t *proc_args = proc_args_v.data();
+    pid_t pids[iop];
+    proc_arg_t proc_args[iop];
 
     int32_t t;
     int32_t i = 0;
@@ -241,6 +238,7 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
             exit(EXIT_FAILURE);
         }
     }
+    return;
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
