@@ -20,7 +20,7 @@
     "\n" \
     "OPTIONS:\n" \
     "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
-    "    -c, --compress [compression_type]  convert to compressed blow5\n [default: gzip]" \
+    "    -c, --compress [compression_type]  convert to compressed blow5 [default: gzip]\n" \
     "    -d, --out-dir [STR]                output directory where files are written to\n" \
     "    -f, --files [INT]                  split reads into n files evenly\n"              \
     "    -r, --reads [INT]                  split into n reads, i.e., each file will have n reads\n"              \
@@ -84,8 +84,12 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
             }
             size_t file_count = 0;
             while(1){
-                std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),slow5_files[i].length() - slow5_files[i].find_last_of('/') - 6) + "_" + std::to_string(file_count) + extension;
-                std::string slow5_path = std::string(output_dir);
+                int last_slash = slow5_files[i].find_last_of('/');
+                if(last_slash == -1){
+                    last_slash = 0;
+                }
+                std::string slow5file = slow5_files[i].substr(last_slash,slow5_files[i].length() - last_slash - extension.length()) + "_" + std::to_string(file_count) + extension;
+                std::string slow5_path = std::string(output_dir) + "/";
                 slow5_path += slow5file;
 
                 FILE* slow5_file_pointer =  NULL;
@@ -169,8 +173,12 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 // fprintf(stderr, "file_count = %d, number_of_records_per_file = %d, number_of_records = %d\n", file_count, number_of_records_per_file, number_of_records);
                 number_of_records -= number_of_records_per_file;
                 rem--;
-                std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),slow5_files[i].length() - slow5_files[i].find_last_of('/') - 6) + "_" + std::to_string(file_count) + extension;
-                std::string slow5_path = std::string(output_dir);
+                int last_slash = slow5_files[i].find_last_of('/');
+                if(last_slash == -1){
+                    last_slash = 0;
+                }
+                std::string slow5file = slow5_files[i].substr(last_slash,slow5_files[i].length() - last_slash - extension.length()) + "_" + std::to_string(file_count) + extension;
+                std::string slow5_path = std::string(output_dir) + "/";
                 slow5_path += slow5file;
 
                 FILE* slow5_file_pointer =  NULL;
@@ -223,9 +231,12 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
                     return;
                 }
-
-                std::string slow5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),slow5_files[i].length() - slow5_files[i].find_last_of('/') - 6) + "_" + std::to_string(j) + extension;
-                std::string slow5_path = std::string(output_dir);
+                int last_slash = slow5_files[i].find_last_of('/');
+                if(last_slash == -1){
+                    last_slash = 0;
+                }
+                std::string slow5file = slow5_files[i].substr(last_slash,slow5_files[i].length() - last_slash - extension.length()) + "_" + std::to_string(j) + extension;
+                std::string slow5_path = std::string(output_dir) + "/";
                 slow5_path += slow5file;
 
                 FILE* slow5_file_pointer =  NULL;
