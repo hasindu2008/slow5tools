@@ -425,6 +425,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     enum slow5_fmt format_out = FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_GZIP;
     meta_split_method metaSplitMethod;
+    metaSplitMethod.n = 0;
+    metaSplitMethod.splitMethod = READS_SPLIT;
 
     // Input arguments
     char *arg_dir_out = NULL;
