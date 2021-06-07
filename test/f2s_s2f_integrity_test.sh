@@ -4,7 +4,7 @@ Usage="f2s_s2f_integrity_test.sh [path to fast5 directory] [path to create a tem
 
 if [[ "$#" -lt 3 ]]; then
 	echo "Usage: $Usage"
-	exit
+	exit 1
 fi
 
 NC='\033[0m' # No Color

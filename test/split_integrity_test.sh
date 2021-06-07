@@ -10,7 +10,7 @@ REL_PATH="$(dirname $0)/"
 
 if [[ "$#" -ne 0 ]]; then
 	echo "Usage: $Usage"
-	exit
+	exit 1
 fi
 
 NC='\033[0m' # No Color

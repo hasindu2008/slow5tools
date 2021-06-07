@@ -14,7 +14,7 @@ Usage="multi_process_f2s_threaded_merge.sh [path to fast5 directory] [path to cr
 
 if [[ "$#" -lt 3 ]]; then
 	echo "Usage: $Usage"
-	exit
+	exit 1
 fi
 
 FAST5_DIR=$1
