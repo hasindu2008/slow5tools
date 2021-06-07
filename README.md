@@ -19,7 +19,7 @@ Detailed benchmarking experiments have shown that SLOW5 format is up to X-fold f
 
 ## Quick start
 
-If you are a Linux user and want to quickly try out download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
+[Not yet implemented] If you are a Linux user and want to quickly try out download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
 ```sh
 VERSION=v0.2-beta
 wget "https://github.com/hasindu2008/f5c/releases/download/$VERSION/slow5tools-$VERSION-binaries.tar.gz" && tar xvf slow5tools-$VERSION-binaries.tar.gz && cd slow5tools-$VERSION/
@@ -29,6 +29,10 @@ Binaries should work on most Linux distributions and the only dependency is `zli
 
 ## Building
 
+### Building a release
+  
+[not yet implemnted]
+  
 Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball. Quick example for Ubuntu :
 ```sh
 sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development libraries
@@ -44,23 +48,43 @@ On Fedora/CentOS : sudo dnf/yum install hdf5-devel zlib-devel
 On Arch Linux: sudo pacman -S hdf5
 On OS X : brew install hdf5
 ```
+
 If you skip `./configure` hdf5 will be compiled locally. It is a good option if you cannot install hdf5 library system wide. However, building hdf5 takes ages.
+
+  
+### Building from GitHub
+  
 
 Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake`. To build from GitHub:
 
 ```
+sudo apt-get install libhdf5-dev zlib1g-dev autoconf automake  #install HDF5 and zlib development libraries and autotools
 git clone --recursive https://github.com/hasindu2008/slow5tools
+cd slow5tools
 autoreconf
 ./configure
 make
 ```
+  
+If you want to locally build HDF5 (takes ages) and build slow5tools against that:
+```
+git clone --recursive https://github.com/hasindu2008/slow5tools
+cd slow5tools  
+autoreconf
+scripts/install-hdf5.sh         # download and compiles HDF5 in the current folder
+./configure --enable-localhdf5  
+./configure
+make
+```  
+ 
+  
 
 ## Usage
 
 Visit the [man page](https://github.com/hasindu2008/slow5tools/blob/master/docs/commands.md) for all the commands and options.
 
 ### Examples
-
+  
 ```sh
 #convert a directory of fast5 files into .blow5 (compression enabled) using 8 I/O processes
 slow5tools f2s fast5_dir -d blow5_dir  -p 8
@@ -83,11 +107,22 @@ slow5tools get file.blow5 readid1 readid2
 #split a blow5 file into separate blow5 files based on the read groups
 slow5tools split file.blow5 -d blow5_dir -r
 #split a blow5 file (single read group) into separate blow5 files such that there are 4000 reads in one file
-slow5tools split file.blow5 -d bloow5_dir -n 4000
+slow5tools split file.blow5 -d blow5_dir -n 4000
 
 #convert a directory of blow5 files to fast5 using 8 I/O processes
 slow5tools s2f blow5_dir -d fast5  -p 8
 
+```
+  
+### Example workflows
+  
+To convert a FAST5 dataset to a single BLOW5 file and then convert back to FAST5:
+  
+```
+slow5tools f2s fast5_dir -d blow5_dir  -p 8
+slow5tools merge blow5_dir -o file.blow5 -t8
+slow5tools split file.blow5 -d blow5_dir -n 4000
+slow5tools s2f blow5_dir -d fast5  -p 8  
 ```
 
 ## Acknowledgement
