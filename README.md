@@ -107,7 +107,7 @@ slow5tools get file.blow5 readid1 readid2
 #split a blow5 file into separate blow5 files based on the read groups
 slow5tools split file.blow5 -d blow5_dir -r
 #split a blow5 file (single read group) into separate blow5 files such that there are 4000 reads in one file
-slow5tools split file.blow5 -d blow5_dir -n 4000
+slow5tools split file.blow5 -d blow5_dir -r 4000
 
 #convert a directory of blow5 files to fast5 using 8 I/O processes
 slow5tools s2f blow5_dir -d fast5  -p 8
@@ -122,7 +122,7 @@ To convert a FAST5 dataset to a single BLOW5 file and then convert back to FAST5
 slow5tools f2s fast5_dir -d blow5_dir  -p 8
 slow5tools merge blow5_dir -o file.blow5 -t8
 rm -rf  blow5_dir
-slow5tools split file.blow5 -d blow5_dir -n 4000
+slow5tools split file.blow5 -d blow5_dir -r 4000
 slow5tools s2f blow5_dir -d fast5  -p 8  
 ```
 
