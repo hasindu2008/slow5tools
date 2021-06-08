@@ -21,6 +21,7 @@
 #ifdef HAVE___HDF5_INCLUDE_HDF5_H
 #    include <hdf5.h>
 #endif
+#include <unordered_map>
 
 #define VERSION "0.1"
 #define FAST5_NAME "fast5"
@@ -72,13 +73,13 @@ struct operator_obj {
     size_t* nreads;
     size_t* warning_flag_allow_run_id_mismatch;
     slow5_file_t* slow5File;
-    kh_warncount_s **warncount_hash;
+    std::unordered_map<std::string, uint32_t>* warning_map;
 };
 
 //implemented in read_fast5.c
 int
 read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, press_method pressMethod, int lossy, int write_header_flag,
-           int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t *slow5File, kh_warncount_t **warncount_hash);
+           int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t *slow5File);
 fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 std::vector< std::string > list_directory(const std::string& file_name);

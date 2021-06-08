@@ -26,7 +26,7 @@ fi
 
 echo "-------------------slow5tools version-------------------"
 if ! $SLOW5_EXEC --version; then
-    echo "slow5tools version failed" 
+    echo "slow5tools version failed"
     exit 1
 fi
 echo
@@ -280,7 +280,7 @@ if [ $? -ne 0 ]; then
 fi
 echo -e "${GREEN}testcase 15 passed${NC}"
 
------------------------------------------ run id conflicts -------------------------------------------
+#----------------------------------------- run id conflicts -------------------------------------------
 
 echo
 echo "------------------- f2s testcase 16 >>> format:single-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
@@ -315,7 +315,6 @@ if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_co
 fi
 echo -e "${GREEN}testcase 19 passed${NC}"
 
-
 echo
 echo "------------------- f2s testcase 20 >>> format:single_and_multi-fast5 input:directory process:single_process output:directory run_id_conflicts-------------------"
 if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 -d $OUTPUT_DIR/single_and_multi-fast5; then
@@ -323,6 +322,16 @@ if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_co
     exit 1
 fi
 echo -e "${GREEN}testcase 20 passed${NC}"
+
+echo
+echo "------------------- f2s testcase 21 >>> current directory:fast5 file directory-------------------"
+cd $FAST5_DIR/single-fast5
+CD_BACK=../../../../..
+if ! $CD_BACK/slow5tools f2s sss1.fast5 --iop 1 --to slow5 > $CD_BACK/$OUTPUT_DIR/stdout.slow5; then
+    echo "${RED}testcase 21 failed ${NC}"
+    exit 1
+fi
+echo -e "${GREEN}testcase 21 passed${NC}"
 
 rm -r $OUTPUT_DIR
 exit

@@ -112,4 +112,15 @@ if ! $SLOW5_EXEC split -f 3 -l false $REL_PATH/data/raw/split/single_group_slow5
     exit 1
 fi
 echo -e "${GREEN}SUCCESS: testcase 6${NC}"
+
+echo
+echo "-------------------testcase 7: split to files current directory:fast5 file stored directory-------------------"
+rm -r $OUTPUT_DIR/split_files_slow5s
+cd $REL_PATH/data/raw/split/single_group_slow5s
+CD_BACK=../../../../..
+if ! $CD_BACK/slow5tools split -f 3 -l false 11reads.slow5 -d $CD_BACK/$OUTPUT_DIR/split_files_slow5s --to slow5; then
+    echo -e "${RED}testcase 7: split to files current directory:fast5 file stored directory${NC}"
+    exit 1
+fi
+echo -e "${GREEN}SUCCESS: testcase 7${NC}"
 exit

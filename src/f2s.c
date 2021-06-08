@@ -46,8 +46,6 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
     std::string slow5_path;
     std::string slow5_path_outputdir_single_fast5;
 
-    khash_t(warncount) *warncount_hash = kh_init(warncount);  // allocate a hash table
-
     std::string extension = ".blow5";
     if(format_out==FORMAT_ASCII){
         extension = ".slow5";
@@ -85,8 +83,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
                 slow5_hdr_initialize(slow5File->header, lossy);
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File,
-                           &warncount_hash);
+                read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File);
 
                 if(format_out == FORMAT_BINARY){
                     slow5_eof_fwrite(slow5File->fp);
@@ -108,7 +105,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                     slow5_hdr_initialize(slow5File_outputdir_single_fast5->header, lossy);
                 }
                 read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
-                           slow5File_outputdir_single_fast5, &warncount_hash);
+                           slow5File_outputdir_single_fast5);
             }
         }
         else{ // output dir not set hence, writing to stdout
@@ -130,7 +127,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 slow5_hdr_initialize(slow5File->header, lossy);
             }
             read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
-                       slow5File, &warncount_hash);
+                       slow5File);
         }
         H5Fclose(fast5_file.hdf5_file);
     }
@@ -146,7 +143,6 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
         }
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
-    kh_destroy(warncount, warncount_hash);              // deallocate the hash table
     if(meta->verbosity_level >= LOG_VERBOSE){
         fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
