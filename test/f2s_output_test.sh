@@ -331,6 +331,7 @@ if ! $CD_BACK/slow5tools f2s sss1.fast5 --iop 1 --to slow5 > $CD_BACK/$OUTPUT_DI
     echo "${RED}testcase 21 failed ${NC}"
     exit 1
 fi
+cd -
 echo -e "${GREEN}testcase 21 passed${NC}"
 
 rm -r $OUTPUT_DIR
