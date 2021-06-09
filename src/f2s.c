@@ -38,7 +38,6 @@ static double init_realtime = 0;
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
 void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
-
     static size_t call_count = 0;
     slow5_file_t* slow5File = NULL;
     slow5_file_t* slow5File_outputdir_single_fast5 = NULL;
@@ -46,8 +45,6 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
     FILE *slow5_file_pointer_outputdir_single_fast5 = NULL;
     std::string slow5_path;
     std::string slow5_path_outputdir_single_fast5;
-
-    khash_t(warncount) *warncount_hash = kh_init(warncount);  // allocate a hash table
 
     std::string extension = ".blow5";
     if(format_out==FORMAT_ASCII){
@@ -86,8 +83,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
                 slow5_hdr_initialize(slow5File->header, lossy);
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File,
-                           &warncount_hash);
+                read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File);
 
                 if(format_out == FORMAT_BINARY){
                     slow5_eof_fwrite(slow5File->fp);
@@ -109,7 +105,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                     slow5_hdr_initialize(slow5File_outputdir_single_fast5->header, lossy);
                 }
                 read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
-                           slow5File_outputdir_single_fast5, &warncount_hash);
+                           slow5File_outputdir_single_fast5);
             }
         }
         else{ // output dir not set hence, writing to stdout
@@ -131,7 +127,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 slow5_hdr_initialize(slow5File->header, lossy);
             }
             read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
-                       slow5File, &warncount_hash);
+                       slow5File);
         }
         H5Fclose(fast5_file.hdf5_file);
     }
@@ -147,7 +143,6 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
         }
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
-    kh_destroy(warncount, warncount_hash);              // deallocate the hash table
     if(meta->verbosity_level >= LOG_VERBOSE){
         fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
@@ -161,10 +156,8 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
     }
 
     //create processes
-    std::vector<pid_t> pids_v(iop);
-    std::vector<proc_arg_t> proc_args_v(iop);
-    pid_t *pids = pids_v.data();
-    proc_arg_t *proc_args = proc_args_v.data();
+    pid_t pids[iop];
+    proc_arg_t proc_args[iop];
 
     int32_t t;
     int32_t i = 0;
@@ -241,6 +234,7 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
             exit(EXIT_FAILURE);
         }
     }
+    return;
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
