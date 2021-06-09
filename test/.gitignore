@@ -22,3 +22,6 @@ data/out/unit_test_out_two_rg
 endian_test
 unit_test
 unit_test_out.txt
+test/data/big/
+test/data/out/merge/
+test/data/out/split/
