@@ -73,7 +73,6 @@ cd slow5tools
 autoreconf
 scripts/install-hdf5.sh         # download and compiles HDF5 in the current folder
 ./configure --enable-localhdf5  
-./configure
 make
 ```  
  

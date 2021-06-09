@@ -295,10 +295,8 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
     }
 
     //create processes
-    std::vector<pid_t> pids_v(iop);
-    std::vector<proc_arg_t> proc_args_v(iop);
-    pid_t *pids = pids_v.data();
-    proc_arg_t *proc_args = proc_args_v.data();
+    pid_t pids[iop];
+    proc_arg_t proc_args[iop];
 
     int32_t t;
     int32_t i = 0;
@@ -427,6 +425,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     enum slow5_fmt format_out = FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_GZIP;
     meta_split_method metaSplitMethod;
+    metaSplitMethod.n = 0;
+    metaSplitMethod.splitMethod = READS_SPLIT;
 
     // Input arguments
     char *arg_dir_out = NULL;
@@ -449,7 +449,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             case 'b':
-                fprintf(stderr, "case b\n");
                 if(strcmp(optarg,"slow5")==0){
                     format_out = FORMAT_ASCII;
                     pressMethod = COMPRESS_NONE;
@@ -471,7 +470,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 }
                 break;
             case 'd':
-                fprintf(stderr, "case d\n");
                 arg_dir_out = optarg;
                 break;
             case 'f':
@@ -483,7 +481,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 metaSplitMethod.n = atoi(optarg);
                 break;
             case 'g':
-                fprintf(stderr, "case g\n");
                 metaSplitMethod.splitMethod = GROUP_SPLIT;
                 break;
             case 'l':
