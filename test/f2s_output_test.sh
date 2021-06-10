@@ -14,14 +14,13 @@ test -d  $OUTPUT_DIR
 rm -r $OUTPUT_DIR
 mkdir $OUTPUT_DIR
 
-
 FAST5_DIR=$REL_PATH/data/raw/f2s_output
 EXP_SLOW5_DIR=$REL_PATH/data/exp/f2s_output
-
+SLOW5_EXEC_WITHOUT_VALGRIND=$REL_PATH/../slow5tools
 if [ "$1" = 'mem' ]; then
-    SLOW5_EXEC="valgrind --leak-check=full --error-exitcode=1 $REL_PATH/../slow5tools"
+    SLOW5_EXEC="valgrind --leak-check=full --error-exitcode=1 $SLOW5_EXEC_WITHOUT_VALGRIND"
 else
-    SLOW5_EXEC=$REL_PATH/../slow5tools
+    SLOW5_EXEC=$SLOW5_EXEC_WITHOUT_VALGRIND
 fi
 
 echo "-------------------slow5tools version-------------------"
@@ -284,7 +283,7 @@ echo -e "${GREEN}testcase 15 passed${NC}"
 
 echo
 echo "------------------- f2s testcase 16 >>> format:single-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
+if $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/single_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase 16 failed ${NC}"
     exit 1
 fi
@@ -293,7 +292,7 @@ echo -e "${GREEN}testcase 16 passed${NC}"
 echo
 rm $OUTPUT_DIR/single-fast5-output/*
 echo "------------------- f2s testcase 17 >>> format:single-fast5 input:directory process:single_process output:directory run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 --to slow5; then
+if $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/single_fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 --to slow5; then
     echo "${RED}testcase 17 failed ${NC}"
     exit 1
 fi
@@ -309,7 +308,7 @@ echo -e "${GREEN}testcase 18 passed${NC}"
 
 echo
 echo "------------------- f2s testcase 19 >>> format:single_and_multi-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
+if $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase 19 failed ${NC}"
     exit 1
 fi
@@ -317,7 +316,7 @@ echo -e "${GREEN}testcase 19 passed${NC}"
 
 echo
 echo "------------------- f2s testcase 20 >>> format:single_and_multi-fast5 input:directory process:single_process output:directory run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 -d $OUTPUT_DIR/single_and_multi-fast5; then
+if $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 -d $OUTPUT_DIR/single_and_multi-fast5; then
     echo "${RED}testcase 20 failed ${NC}"
     exit 1
 fi

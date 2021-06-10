@@ -144,7 +144,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
     if(meta->verbosity_level >= LOG_VERBOSE){
-        fprintf(stderr, "The processed - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
+        fprintf(stderr, "Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
 }
 
