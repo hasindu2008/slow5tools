@@ -6,7 +6,7 @@ CXX      = g++
 AR 		 = ar
 CPPFLAGS += -I slow5lib/include/ -I slow5lib/src
 CFLAGS   += -g -rdynamic -Wall -O2
-LANG 	 = -x c++ -std=c++11
+LANGFLAG 	 = -x c++ -std=c++11
 LDFLAGS  += $(LIBS) -lpthread -lz
 BUILD_DIR = build
 
@@ -33,37 +33,37 @@ $(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN) slow5lib/lib/libslow5.a
 	$(CXX) $(CFLAGS) $(OBJ_BIN) slow5lib/lib/libslow5.a $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/main.o: src/main.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/f2s.o: src/f2s.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/s2f.o: src/s2f.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/index.o: src/index.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/get.o: src/get.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/view.o: src/view.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/thread.o: src/thread.c
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/read_fast5.o: src/read_fast5.c
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/merge.o: src/merge.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/split.o: src/split.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/stats.o: src/stats.c src/error.h
-	$(CXX) $(LANG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 slow5lib/lib/libslow5.a:
 	make -C slow5lib
@@ -92,26 +92,32 @@ clean:
 
 # Delete all gitignored files (but not directories)
 distclean: clean
+	make clean
 	git clean -f -X
 	rm -rf $(BUILD_DIR)/* autom4te.cache
 
 dist: distclean
 	mkdir -p slow5tools-$(VERSION)
+	mkdir -p slow5tools-$(VERSION)/scripts slow5tools-$(VERSION)/docs slow5tools-$(VERSION)/slow5lib
 	autoreconf
 	cp -r README.md LICENSE Makefile configure.ac config.mk.in \
-		installdeps.mk src docs build configure slow5tools-$(VERSION)
-	mkdir -p slow5tools-$(VERSION)/scripts
+		installdeps.mk configure build src slow5tools-$(VERSION)
 	cp scripts/install-hdf5.sh slow5tools-$(VERSION)/scripts
+	cp -r docs/commands.md slow5tools-$(VERSION)/docs/
+	cp -r slow5lib/lib slow5lib/include slow5lib/src  slow5lib/Makefile slow5lib/LICENSE slow5tools-$(VERSION)/slow5lib
 	tar -zcf slow5tools-$(VERSION)-release.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
-binary:
+binary: distclean
+	autoreconf
+	scripts/install-hdf5.sh
+	./configure --enable-localhdf5
+	make -j8
 	mkdir -p slow5tools-$(VERSION)
-	make clean
-	make && mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux
-	cp -r README.md LICENSE docs slow5tools-$(VERSION)/
-	#mkdir -p slow5tools-$(VERSION)/scripts
-	#cp scripts/test.sh slow5tools-$(VERSION)/scripts
+	mkdir slow5tools-$(VERSION)/docs
+	mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux
+	cp -r README.md LICENSE slow5tools-$(VERSION)/
+	cp -r docs/commands.md slow5tools-$(VERSION)/docs/
 	tar -zcf slow5tools-$(VERSION)-binaries.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
