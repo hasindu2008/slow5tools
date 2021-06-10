@@ -45,7 +45,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
     FILE *slow5_file_pointer_outputdir_single_fast5 = NULL;
     std::string slow5_path;
     std::string slow5_path_outputdir_single_fast5;
-
+    std::unordered_map<std::string, uint32_t> warning_map;
     std::string extension = ".blow5";
     if(format_out==FORMAT_ASCII){
         extension = ".slow5";
@@ -83,7 +83,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
                 slow5_hdr_initialize(slow5File->header, lossy);
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File);
+                read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File, &warning_map);
 
                 if(format_out == FORMAT_BINARY){
                     slow5_eof_fwrite(slow5File->fp);
@@ -105,7 +105,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                     slow5_hdr_initialize(slow5File_outputdir_single_fast5->header, lossy);
                 }
                 read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
-                           slow5File_outputdir_single_fast5);
+                           slow5File_outputdir_single_fast5, &warning_map);
             }
         }
         else{ // output dir not set hence, writing to stdout
@@ -127,7 +127,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                 slow5_hdr_initialize(slow5File->header, lossy);
             }
             read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
-                       slow5File);
+                       slow5File, &warning_map);
         }
         H5Fclose(fast5_file.hdf5_file);
     }
@@ -240,6 +240,7 @@ void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Turn off HDF's exception printing, which is generally unhelpful for users
+    // This can cause a 'still reachable' memory leak on a valgrind check
     H5Eset_auto(0, NULL, NULL);
 
     int iop = 8;

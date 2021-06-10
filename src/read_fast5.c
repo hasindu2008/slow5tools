@@ -550,7 +550,7 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
 
 int
 read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, press_method pressMethod, int lossy, int write_header_flag,
-           int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t *slow5File) {
+           int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t *slow5File, std::unordered_map<std::string, uint32_t>* warning_map) {
 
     struct operator_obj tracker;
     tracker.group_level = ROOT;
@@ -585,8 +585,7 @@ read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, press_method pressMet
     tracker.slow5_record = slow5_rec_init();
     tracker.group_name = "";
 
-    std::unordered_map<std::string, uint32_t> warning_map;
-    tracker.warning_map = &warning_map;
+    tracker.warning_map = warning_map;
 
     slow5_hdr_set("SLOW5_file_format", SLOW5_FILE_FORMAT_SHORT, 0, tracker.slow5File->header);
 
