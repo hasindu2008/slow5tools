@@ -19,10 +19,10 @@ Detailed benchmarking experiments have shown that SLOW5 format is up to X-fold f
 
 ## Quick start
 
-[Not yet implemented] If you are a Linux user and want to quickly try out download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
+If you are a Linux user and want to quickly try out download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
 ```sh
-VERSION=v0.2-beta
-wget "https://github.com/hasindu2008/f5c/releases/download/$VERSION/slow5tools-$VERSION-binaries.tar.gz" && tar xvf slow5tools-$VERSION-binaries.tar.gz && cd slow5tools-$VERSION/
+VERSION=v0.0-alpha
+wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-binaries.tar.gz" && tar xvf slow5tools-$VERSION-binaries.tar.gz && cd slow5tools-$VERSION/
 ./slow5tools_x86_64_linux
 ```
 Binaries should work on most Linux distributions and the only dependency is `zlib` which is available by default on most distros.
@@ -31,12 +31,11 @@ Binaries should work on most Linux distributions and the only dependency is `zli
 
 ### Building a release
   
-[not yet implemnted]
   
 Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball. Quick example for Ubuntu :
 ```sh
 sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development libraries
-VERSION=v0.2-beta
+VERSION=v0.0-alpha
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-release.tar.gz" && tar xvf slow5tools-$VERSION-release.tar.gz && cd slow5tools-$VERSION/
 ./configure
 make
