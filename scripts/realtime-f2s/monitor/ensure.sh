@@ -128,12 +128,13 @@ while read filename; do
             else # Else it is new
                 ((i_new ++))
                 >&2 echo -e $YELLOW"new file ($i_new): $filename"$NORMAL
-
-                echo $filename # Output fast5 filename
-                TIME=$(date)
-                echo -e $filename"\t"${TIME} >> monitor_trace.log
             fi
 
         fi
 
+        echo $filename # Output fast5 filename
+        TIME=$(date)
+        echo -e $filename"\t"${TIME} >> monitor_trace.log
+
+    fi
 done
