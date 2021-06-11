@@ -31,8 +31,7 @@ GUPPY_OUTPUT_S2F=$TEST_DIR/guppy_output_s2f
 test -d  $TEST_DIR && rm -r $TEST_DIR
 mkdir $TEST_DIR
 
-IOP=4
-LOSSY_F2S=-l
+IOP=40
 
 $SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP
 $SLOWTOOLS s2f $F2S_OUTPUT_DIR -d $S2F_OUTPUT_DIR --iop $IOP
@@ -44,17 +43,16 @@ PASS_FAIL_STRUCTURE=0
 
 if test -d $GUPPY_OUTPUT_S2F/pass; then
     PASS_FAIL_STRUCTURE=1
-    sed -i 's/sampleid=[^ ]*/sampleid=/g' $GUPPY_OUTPUT_ORIGINAL/pass/*.fast*
-    sort -o $GUPPY_OUTPUT_ORIGINAL/pass/*.fast* $GUPPY_OUTPUT_ORIGINAL/pass/*.fast*
 
-    sed -i 's/sampleid=[^ ]*/sampleid=/g' $GUPPY_OUTPUT_S2F/pass/*.fast*
-    sort -o $GUPPY_OUTPUT_S2F/pass/*.fast* $GUPPY_OUTPUT_S2F/pass/*.fast*
+    cat $GUPPY_OUTPUT_S2F/pass/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_s2f_pass_sorted.fastq
+    cat $GUPPY_OUTPUT_ORIGINAL/pass/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_original_pass_sorted.fastq
 
     echo "diff sorted pass files"
-    diff $GUPPY_OUTPUT_ORIGINAL/pass $GUPPY_OUTPUT_S2F/pass &>/dev/null
+    diff guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq &>/dev/null
+    
 
     if [ $? -ne 0 ]; then
-      echo -e "${RED}ERROR: diff failed for $GUPPY_OUTPUT_ORIGINAL/pass and $GUPPY_OUTPUT_S2F/pass files ${NC}"
+      echo -e "${RED}ERROR: diff failed for guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq files ${NC}"
       exit 1
     fi
     echo -e "${GREEN}diff passed${NC}"
@@ -62,34 +60,28 @@ fi
 
 if test -d $GUPPY_OUTPUT_S2F/fail; then
     PASS_FAIL_STRUCTURE=1
-    sed -i 's/sampleid=[^ ]*/sampleid=/g' $GUPPY_OUTPUT_ORIGINAL/fail/*.fast*
-    sort -o $GUPPY_OUTPUT_ORIGINAL/fail/*.fast* $GUPPY_OUTPUT_ORIGINAL/fail/*.fast*
-
-    sed -i 's/sampleid=[^ ]*/sampleid=/g' $GUPPY_OUTPUT_S2F/fail/*.fast*
-    sort -o $GUPPY_OUTPUT_S2F/fail/*.fast* $GUPPY_OUTPUT_S2F/fail/*.fast*
+    cat $GUPPY_OUTPUT_S2F/fail/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_s2f_fail_sorted.fastq
+    cat $GUPPY_OUTPUT_ORIGINAL/fail/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_original_fail_sorted.fastq
 
     echo "diff sorted fail files"
-    diff $GUPPY_OUTPUT_ORIGINAL/fail $GUPPY_OUTPUT_S2F/fail &>/dev/null
+    diff guppy_output_s2f_fail_sorted.fastq guppy_output_original_fail_sorted.fastq &>/dev/null
 
     if [ $? -ne 0 ]; then
-      echo -e "${RED}ERROR: diff failed for $GUPPY_OUTPUT_ORIGINAL/fail and $GUPPY_OUTPUT_S2F/fail files ${NC}"
+      echo -e "${RED}ERROR: diff failed for guppy_output_s2f_fail_sorted.fastq and guppy_output_original_fail_sorted.fastq files ${NC}"
       exit 1
     fi
     echo -e "${GREEN}diff passed${NC}"
 fi
 
 if [ $PASS_FAIL_STRUCTURE -eq 0 ]; then
-    sed -i 's/sampleid=[^ ]*/sampleid=/g' $GUPPY_OUTPUT_ORIGINAL/*.fast*
-    sort -o $GUPPY_OUTPUT_ORIGINAL/*.fast* $GUPPY_OUTPUT_ORIGINAL/*.fast*
-
-    sed -i 's/sampleid=[^ ]*/sampleid=/g' $GUPPY_OUTPUT_S2F/*.fast*
-    sort -o $GUPPY_OUTPUT_S2F/*.fast* $GUPPY_OUTPUT_S2F/fail/*.fast*
+    cat $GUPPY_OUTPUT_S2F/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_s2f_sorted.fastq
+    cat $GUPPY_OUTPUT_ORIGINAL/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_original_sorted.fastq
 
     echo "diff sorted files"
-    diff $GUPPY_OUTPUT_ORIGINAL $GUPPY_OUTPUT_S2F &>/dev/null
+    diff guppy_output_s2f_sorted.fastq guppy_output_original_sorted.fastq &>/dev/null
 
     if [ $? -ne 0 ]; then
-      echo -e "${RED}ERROR: diff failed for $GUPPY_OUTPUT_ORIGINAL and $GUPPY_OUTPUT_S2F files ${NC}"
+      echo -e "${RED}ERROR: diff failed for guppy_output_s2f_sorted.fastq guppy_output_original_sorted.fastq files ${NC}"
       exit 1
     fi
     echo -e "${GREEN}diff passed${NC}"
