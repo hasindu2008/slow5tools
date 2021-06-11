@@ -131,7 +131,7 @@ while read filename; do
 
                 echo $filename # Output fast5 filename
                 TIME=$(date)
-                echo $filename"\t"${TIME} >> monitor_trace.log
+                echo -e $filename"\t"${TIME} >> monitor_trace.log
             fi
 
         fi

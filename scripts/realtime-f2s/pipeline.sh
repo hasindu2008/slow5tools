@@ -25,7 +25,7 @@ while getopts "d:" o; do
 done
 shift $((OPTIND-1))
 
-slow5tools --version > /dev/null || die "slow5tools not found in path. Exiting."
+slow5tools --version &> /dev/null || die "slow5tools not found in path. Exiting."
 
 test -e start_end_trace.log && rm start_end_trace.log
 
@@ -48,6 +48,6 @@ do
     END_TIME=$(date)
 
     echo "$F5_FILEPATH" >> $TMP_FILE
-    echo $F5_FILEPATH"\t"$SLOW5_FILEPATH"\t"$START_TIME"\t"$END_TIME >> start_end_trace.log
+    echo -e $F5_FILEPATH"\t"$SLOW5_FILEPATH"\t"$START_TIME"\t"$END_TIME >> start_end_trace.log
 
 done
