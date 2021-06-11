@@ -181,6 +181,7 @@ test -d $MONITOR_PARENT_DIR/slow5_logs    || mkdir $MONITOR_PARENT_DIR/slow5_log
 
 
 if ! $realtime; then # If non-realtime option set
+    echo "Non realtime conversion of all files in $MONITOR_PARENT_DIR"
     test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
     find $MONITOR_PARENT_DIR/ -name *.fast5 | "$PIPELINE_SCRIPT"  |&
     tee $LOG
