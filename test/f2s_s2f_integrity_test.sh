@@ -64,8 +64,10 @@ if [ $? -eq 0 ]; then
 	echo -e "${GREEN}SUCCESS: f2s and s2f conversions are consistent!${NC}"
 elif [ $? -eq 1 ]; then
 	echo -e "${RED}FAILURE: f2s and s2f conversions are not consistent${NC}"
+	exit 1
 else
 	echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+	exit 1
 fi
 
 

@@ -41,8 +41,10 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: splitting groups worked properly!${NC}"
 elif [ $? -eq 1 ]; then
     echo -e "${RED}FAILURE: splitting groups not working properly${NC}"
+    exit 1
 else
     echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
 fi
 
 echo
@@ -58,8 +60,10 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: lossy splitting groups worked properly!${NC}"
 elif [ $? -eq 1 ]; then
     echo -e "${RED}FAILURE: lossy splitting groups not working properly${NC}"
+    exit 1
 else
     echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
 fi
 
 echo
@@ -74,8 +78,10 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: read splitting worked properly!${NC}"
 elif [ $? -eq 1 ]; then
     echo -e "${RED}FAILURE: read splitting not working properly${NC}"
+    exit 1
 else
     echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
 fi
 
 echo
@@ -90,8 +96,10 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: files splitting worked properly!${NC}"
 elif [ $? -eq 1 ]; then
     echo -e "${RED}FAILURE: files splitting not working properly${NC}"
+    exit 1
 else
     echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
 fi
 
 echo

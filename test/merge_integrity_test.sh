@@ -50,8 +50,10 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: merged files are consistent!${NC}"
 elif [ $? -eq 1 ]; then
     echo -e "${RED}FAILURE: merged files are not consistent${NC}"
+    exit 1
 else
     echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
 fi
 
 
@@ -70,8 +72,10 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: lossy merged files are consistent!${NC}"
 elif [ $? -eq 1 ]; then
     echo -e "${RED}FAILURE: lossy merged files are not consistent${NC}"
+    exit 1
 else
     echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
 fi
 
 exit
