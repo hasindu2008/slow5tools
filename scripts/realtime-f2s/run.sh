@@ -3,28 +3,25 @@
 # HEADER
 #================================================================
 #% SYNOPSIS
-#+    ${SCRIPT_NAME} -f [format] -m [directory] [options ...]
+#+    ${SCRIPT_NAME} -m [directory] [options ...]
 #%
 #% DESCRIPTION
-#%    Runs realtime (or not) analysis of sequenced genomes
-#%    given input directory and its expected format.
+#%    Runs realtime (or not) FAST5 to SLOW5 conversion of sequenced genomes
+#%    given input directory.
 #%
 #% OPTIONS
 #%
 #%    -h, --help                                    Print help message
 #%    -i, --info                                    Print script information
-#%    -l [filename]                                 Specify log filename for logs
-#%                                                  default log.txt
+#%    -l [filename]                                 Specify log filename for logs (default log.txt)
 #%
 #%    -m [directory]                                Monitor a specific directory
 #%    -n                                            Specify non-realtime analysis
 #%    -r                                            Resumes from last processing position
-#%    -d [directory]                               Specify a directory to place results
-#%        default script location
-#%    -s [file]                                     Custom script for processing files on the cluster
-#%        default scripts/pipeline.sh         Default script which calls minimap, f5c & samtools
+#%    -d [filename]                                 Specify location of temporary file (default: processed_list.log)
+#%    -s [file]                                     Custom script for processing files (default: script_location/pipeline.sh)
 #%
-#%    -t [time]                                   Timeout format in seconds (default 1 hour)
+#%    -t [time]                                     Timeout format in seconds (default 3600 s)
 #%    -y, --yes                                     Say yes to 'Are you sure?' message in advance
 #%
 #% EXAMPLES
@@ -33,7 +30,7 @@
 #%        ${SCRIPT_NAME} -m [directory] -r
 
 #%    non realtime
-#%        ${SCRIPT_NAME}  [format] -m [directory] -n
+#%        ${SCRIPT_NAME} -m [directory] -n
 #%
 #================================================================
 #- IMPLEMENTATION
@@ -72,7 +69,7 @@ SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )" # Scripts current path
 
     #== Usage functions ==#
 usage() { printf "Usage: "; head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#+" | sed -e "s/^#+[ ]*//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
-usagefull() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#[%+-]" | sed -e "s/^#[%+-]//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
+usagefull() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#[%+]" | sed -e "s/^#[%+-]//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
 scriptinfo() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#-" | sed -e "s/^#-//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
 
     #== Default variables ==#
@@ -80,9 +77,8 @@ scriptinfo() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#-" | sed -e "s/^#-
 # Default script to be copied and run on the worker nodes
 PIPELINE_SCRIPT="$SCRIPT_PATH/pipeline.sh"
 
-RESULTS_DIR_PATH="$SCRIPT_PATH" # Default location for results
-RESULTS_DIR_NAME="" # Default directory name for results
-LOG="$SCRIPT_PATH"/log.txt # Default log filepath
+TMP_FILE_PATH="processed_list.log" # Default location for temporary files
+LOG=log.txt # Default log filepath
 
 # Set options off by default
 resuming=false
@@ -94,9 +90,7 @@ say_yes=false
 TIME_INACTIVE=3600
 
 # Assume necessary options not set
-format_specified=true
 monitor_dir_specified=false
-
 MONITOR_PARENT_DIR=
 
 ## Handle flags
@@ -130,8 +124,7 @@ while getopts "ihnrym:l:t:d:" o; do
             ;;
 
         d)
-            RESULTS_DIR_PATH="${OPTARG}"
-            RESULTS_DIR_NAME=$(basename "$RESULTS_DIR_PATH")
+            TMP_FILE_PATH="${OPTARG}"
             ;;
         t)
             TIME_INACTIVE="${OPTARG}"
@@ -167,7 +160,7 @@ if ! $resuming && ! $say_yes; then # If not resuming
         case $response in
             [Yy]* )
                 # make clean && make || exit 1 # Freshly compile necessary programs
-                rm $LOG # Empty log file
+                test -e $LOG && rm $LOG # Empty log file
                 break
                 ;;
 
@@ -182,13 +175,14 @@ if ! $resuming && ! $say_yes; then # If not resuming
     done
 fi
 
-# Create folders to copy the results (SAM files, BAM files, logs and methylation calls)
+# Create folders to copy the results (slow5 files logs)
 test -d $MONITOR_PARENT_DIR/slow5         || mkdir $MONITOR_PARENT_DIR/slow5            || exit 1
-test -d $MONITOR_PARENT_DIR/slow5_logs        || mkdir $MONITOR_PARENT_DIR/slow5_logs           || exit 1
+test -d $MONITOR_PARENT_DIR/slow5_logs    || mkdir $MONITOR_PARENT_DIR/slow5_logs       || exit 1
 
 
 if ! $realtime; then # If non-realtime option set
-    find $MONITOR_PARENT_DIR/fast5_pass -name *.fast5 | /usr/bin/time -v "$PIPELINE_SCRIPT"  |&
+    test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
+    find $MONITOR_PARENT_DIR/ -name *.fast5 | "$PIPELINE_SCRIPT"  |&
     tee $LOG
 
 else # Else assume realtime analysis is desired
@@ -197,20 +191,22 @@ else # Else assume realtime analysis is desired
     # Close after timeout met
     if $resuming; then # If resuming option set
         echo "resuming"
-        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -e $MONITOR_PARENT_DIR/fast5_pass/ $MONITOR_PARENT_DIR/fastq_pass/ 2>> $LOG |
-        bash "$SCRIPT_PATH"/monitor/ensure.sh -r --results-dir=$RESULTS_DIR_PATH 2>> $LOG |
-        /usr/bin/time -v "$PIPELINE_SCRIPT"  |&
+        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -e $MONITOR_PARENT_DIR/  2>> $LOG |
+        bash "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH 2>> $LOG |
+        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH  |&
         tee -a $LOG
     else
         echo "running"
-        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f $MONITOR_PARENT_DIR/fast5_pass/ $MONITOR_PARENT_DIR/fastq_pass/ 2>> $LOG |
-        bash "$SCRIPT_PATH"/monitor/ensure.sh 2>> $LOG |
-        /usr/bin/time -v "$PIPELINE_SCRIPT"  |&
+        test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
+        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f $MONITOR_PARENT_DIR/ 2>> $LOG |
+        bash "$SCRIPT_PATH"/monitor/ensure.sh -d $TMP_FILE_PATH 2>> $LOG |
+        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH |&
         tee -a $LOG
     fi
 fi
 
 echo "[run.sh] handling logs" # testing
 cp  $LOG "$MONITOR_PARENT_DIR"/slow5_logs/slow5_master_log.log # Copy entire data folder to local f5pmaster folder
+cp  $TMP_FILE_PATH "$MONITOR_PARENT_DIR"/slow5_logs/processed_list.log # Copy entire data folder to local f5pmaster folder
 
 echo "[run.sh] exiting" # testing

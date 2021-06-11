@@ -60,7 +60,7 @@ SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )" # Scripts current path
 
     #== Usage functions ==#
 usage() { printf "Usage: "; head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#+" | sed -e "s/^#+[ ]*//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
-usagefull() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#[%+-]" | sed -e "s/^#[%+-]//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
+usagefull() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#[%+]" | sed -e "s/^#[%+-]//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
 scriptinfo() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#-" | sed -e "s/^#-//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
 
 : ${1?$(usage)} # Require 1 arg else give usage message
@@ -120,7 +120,7 @@ done
 
 if $existing; then # If existing files option set
 # Output the absolute path of all existing fast5 and fastq files
-    find ${monitor_dirs[@]} | grep '\\.fast5\|\\.fastq'
+    find ${monitor_dirs[@]} | grep '\\.fast5'
 fi
 
 reset_timer() {

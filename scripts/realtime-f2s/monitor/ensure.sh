@@ -3,18 +3,18 @@
 # HEADER
 #================================================================
 #% SYNOPSIS
-#+    monitor.sh [options ...] [fast5_dir] [fastq_dir] | ${SCRIPT_NAME} -
+#+    monitor.sh [options ...] [fast5_dir]  | ${SCRIPT_NAME} -
 #%
 #% DESCRIPTION
-#%    Ensures corresponding fast5 and fastq files are created
+#%    Ensures corresponding fast5 are created
 #%    before printing fast5 filename.
 #%
 #% OPTIONS
-#%    -h, --help                                    Print help message
-#%    -i, --info                                    Print script information
-#%    -r, --resume                                  Check if dev files already contain any of the filenames
-#%    --results-dir=[directory]                     Specify directory where results are from previous run.
-#%                                                  Only used when resume option set.
+#%    -h                                 Print help message
+#%    -i                                 Print script information
+#%    -r                                 Check if dev files already contain any of the filenames
+#%    -d [tmp_file]                      Specify the temporary file location for resuming purposes.
+#%                                       Only used when resume option set.
 #%
 #================================================================
 #- IMPLEMENTATION
@@ -51,7 +51,7 @@ SCRIPT_NAME="$(basename ${0})"
 
     #== Usage functions ==#
 usage() { printf "Usage: "; head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#+" | sed -e "s/^#+[ ]*//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
-usagefull() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#[%+-]" | sed -e "s/^#[%+-]//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
+usagefull() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#[%+]" | sed -e "s/^#[%+-]//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
 scriptinfo() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#-" | sed -e "s/^#-//g" -e "s/\${SCRIPT_NAME}/${SCRIPT_NAME}/g"; }
 
 
@@ -59,38 +59,37 @@ scriptinfo() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#-" | sed -e "s/^#-
     #== Default variables ==#
 
 RESUME=false # Set resume option to false by default
-RESULTS_DIR="./" # Default current directory as the results directory
+TMP_FILE="processed_list.log" # Default  temp in current directory
+
 
 ## Handle flags
-while [ ! $# -eq 0 ]; do # While there are arguments
-    case "$1" in
-
-        --help | -h)
+while getopts "hird:" o; do
+    case "${o}" in
+        h)
             usagefull
             exit 0
             ;;
-
-        --info | -i)
+        i)
             scriptinfo
             exit 0
             ;;
-
-        --results-dir=*)
-            RESULTS_DIR="${1#*=}"
+        d)
+            TMP_FILE=${OPTARG}
             ;;
-
-        --resume | -r)
+        r)
             RESUME=true
             ;;
-
+        *)
+            echo "Incorrect args"
+            usagefull
+            exit 1
+            ;;
     esac
-    shift
 done
-
+shift $((OPTIND-1))
 
     #== Begin ==#
 
-file_list=() # Declare file list
 
 # Initialise counters
 i_new=0
@@ -101,6 +100,7 @@ YELLOW="\e[33m"
 RED="\e[31m"
 NORMAL="\033[0;39m"
 
+test -e monitor_trace.log && rm monitor_trace.log
 
 while read filename; do
 
@@ -118,7 +118,7 @@ while read filename; do
     if echo $filename | grep -q \\.fast5; then # If it is a fast5 file
 
         if $RESUME; then # If resume option set
-            grep -q /$prefix\\.fast5$ "$RESULTS_DIR"/dev*.cfg # Check if filename exists in config files
+            grep -q /$prefix\\.fast5$ "$TMP_FILE" # Check if filename exists in temp files
 
             if [ $? -eq "0" ]; then # If the file has been processed
                 ((i_old ++))
@@ -128,48 +128,12 @@ while read filename; do
             else # Else it is new
                 ((i_new ++))
                 >&2 echo -e $YELLOW"new file ($i_new): $filename"$NORMAL
+
+                echo $filename # Output fast5 filename
+                TIME=$(date)
+                echo $filename"\t"${TIME} >> monitor_trace.log
             fi
 
         fi
-
-        fastq_filename_regex=$grandparent_dir/fastq_pass/$prefix\\.fastq
-        fastq_filename_glob=$grandparent_dir/fastq_pass/$prefix.fastq
-
-        if echo ${file_list[@]} | grep -wq $fastq_filename_regex; then # If the fastq file exists as well
-            echo $filename # Output fast5 filename
-            file_list=( "${file_list[@]/$fastq_filename_glob}" ) # Remove fastq filename from array
-
-        else # Else append the fast5 filename to the list
-            file_list+=( $filename )
-        fi
-
-    elif echo $filename | grep -q \\.fastq; then # If it a fastq file
-
-        if $RESUME; then # If resume option set
-            grep -q /$prefix\\.fastq$ "$RESULTS_DIR"/dev*.cfg # Check if filename exists in config files
-
-            if [ $? -eq "0" ]; then # If the file has been processed
-                ((i_old ++))
-                >&2 echo -e $RED"old file ($i_old): $filename"$NORMAL
-                continue # Wait for next input
-
-            else # Else it is new
-                ((i_new ++))
-                >&2 echo -e $YELLOW"new file ($i_new): $filename"$NORMAL
-            fi
-
-        fi
-
-        fast5_filename_regex=$grandparent_dir/fast5_pass/$prefix\\.fast5
-        fast5_filename_glob=$grandparent_dir/fast5_pass/$prefix.fast5
-
-        if echo ${file_list[@]} | grep -wq $fast5_filename_regex; then # If the fast5 file exists
-            echo $fast5_filename_glob # Output fast5 filename
-            file_list=( "${file_list[@]/$fast5_filename_glob}" ) # Remove fast5 filename from array
-
-        else # Else append the filename to the list
-            file_list+=( $filename )
-        fi
-    fi
 
 done
