@@ -282,7 +282,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     int64_t num_slow5_files = slow5_files.size();
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
-        WARNING("Only %d proceses will be used",iop);
+        INFO("Only %d proceses will be used",iop);
     }
     //create processes
     std::vector<pid_t> pids_v(iop);
