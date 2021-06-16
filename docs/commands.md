@@ -139,6 +139,9 @@ Retrieves records for specified read IDs from a SLOW5/BLOW5 file.
 
 `slow5tools split [OPTIONS] file1.blow5 -o out_dir`
 
+`slow5tools split [OPTIONS] blow5_dir1 -o out_dir`
+
+
 Splits a single a SLOW5/BLOW5 file into multiple separate files.
 This tool is useful for parallelising across array jobs / distributed systems.
 

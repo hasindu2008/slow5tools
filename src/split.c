@@ -69,7 +69,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
             continue;
         }
         if(read_group_count_i > 1 && metaSplitMethod.splitMethod!=GROUP_SPLIT){
-            ERROR("The file %s a multi read group file. Cannot use read split or file split", slow5_files[i].c_str());
+            ERROR("The file %s contains multiple read groups. You must first separate the read groups using -g. See https://slow5.page.link/faq for more info.", slow5_files[i].c_str());
             continue;
         }
 
@@ -291,7 +291,7 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
     int64_t num_slow5_files = slow5_files.size();
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
-        WARNING("Only %d proceses will be used",iop);
+        INFO("Only %d proceses will be used",iop);
     }
 
     //create processes
