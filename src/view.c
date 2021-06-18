@@ -39,8 +39,8 @@ struct view_fmt_meta {
     const char *ext;
 };
 static const struct view_fmt_meta VIEW_FORMAT_META[] = {
-    { VIEW_FORMAT_SLOW5_ASCII,  ASCII_NAME,     ASCII_EXTENSION     },
-    { VIEW_FORMAT_SLOW5_BINARY, BINARY_NAME,    BINARY_EXTENSION    },
+    { VIEW_FORMAT_SLOW5_ASCII,  SLOW5_ASCII_NAME,     SLOW5_ASCII_EXTENSION     },
+    { VIEW_FORMAT_SLOW5_BINARY, SLOW5_BINARY_NAME,    SLOW5_BINARY_EXTENSION    },
 };
 
 enum view_fmt name_to_view_fmt(const char *fmt_str) {
@@ -269,7 +269,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     if (arg_press_out != NULL) {
         if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
-            MESSAGE(stderr, "compression only available for output format '%s'", BINARY_NAME);
+            MESSAGE(stderr, "compression only available for output format '%s'", SLOW5_BINARY_NAME);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         } else {

@@ -839,23 +839,23 @@ void slow5_hdr_initialize(slow5_hdr *header, int lossy){
 
     struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
     if(lossy == 0) {
-        if(slow5_aux_meta_add(aux_meta, "channel_number", STRING)){
+        if(slow5_aux_meta_add(aux_meta, "channel_number", SLOW5_STRING)){
             ERROR("Could not initialize the record attribute '%s'", "channel_number");
             exit(EXIT_FAILURE);
         }
-        if(slow5_aux_meta_add(aux_meta, "median_before", DOUBLE)){
+        if(slow5_aux_meta_add(aux_meta, "median_before", SLOW5_DOUBLE)){
             ERROR("Could not initialize the record attribute '%s'", "median_before");
             exit(EXIT_FAILURE);
         }
-        if(slow5_aux_meta_add(aux_meta, "read_number", INT32_T)){
+        if(slow5_aux_meta_add(aux_meta, "read_number", SLOW5_INT32_T)){
             ERROR("Could not initialize the record attribute '%s'", "read_number");
             exit(EXIT_FAILURE);
         }
-        if(slow5_aux_meta_add(aux_meta, "start_mux", UINT8_T)){
+        if(slow5_aux_meta_add(aux_meta, "start_mux", SLOW5_UINT8_T)){
             ERROR("Could not initialize the record attribute '%s'", "start_mux");
             exit(EXIT_FAILURE);
         }
-        if(slow5_aux_meta_add(aux_meta, "start_time", UINT64_T)){
+        if(slow5_aux_meta_add(aux_meta, "start_time", SLOW5_UINT64_T)){
             ERROR("Could not initialize the record attribute '%s'", "start_time");
             exit(EXIT_FAILURE);
         }

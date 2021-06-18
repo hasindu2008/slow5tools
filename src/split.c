@@ -46,7 +46,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 
     readsCount->total_5 = args.endi-args.starti - 1;
     std::string extension = ".blow5";
-    if(format_out == FORMAT_ASCII){
+    if(format_out == SLOW5_FORMAT_ASCII){
         extension = ".slow5";
     }
     for (int i = args.starti; i < args.endi; i++) {
@@ -131,7 +131,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 press_free(press_ptr);
                 slow5_rec_free(read);
 
-                if(format_out == FORMAT_BINARY){
+                if(format_out == SLOW5_FORMAT_BINARY){
                     slow5_eof_fwrite(slow5File->fp);
                 }
                 slow5_close(slow5File);
@@ -215,7 +215,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 press_free(press_ptr);
                 slow5_rec_free(read);
 
-                if(format_out == FORMAT_BINARY){
+                if(format_out == SLOW5_FORMAT_BINARY){
                     slow5_eof_fwrite(slow5File->fp);
                 }
                 slow5_close(slow5File);
@@ -277,7 +277,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 slow5_rec_free(read);
                 slow5_close(slow5File_i);
 
-                if(format_out == FORMAT_BINARY){
+                if(format_out == SLOW5_FORMAT_BINARY){
                     slow5_eof_fwrite(slow5File->fp);
                 }
                 slow5_close(slow5File);
@@ -422,7 +422,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     };
 
 
-    enum slow5_fmt format_out = FORMAT_BINARY;
+    enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_GZIP;
     meta_split_method metaSplitMethod;
     metaSplitMethod.n = 0;
@@ -450,10 +450,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 exit(EXIT_SUCCESS);
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
-                    format_out = FORMAT_ASCII;
+                    format_out = SLOW5_FORMAT_ASCII;
                     pressMethod = COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
-                    format_out = FORMAT_BINARY;
+                    format_out = SLOW5_FORMAT_BINARY;
                 }else{
                     ERROR("Incorrect output format%s", "");
                     exit(EXIT_FAILURE);
@@ -508,7 +508,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     }
 
     // compression option is only effective with -b blow5
-    if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
+    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }

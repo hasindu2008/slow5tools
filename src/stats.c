@@ -112,11 +112,11 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     }
 
     std::string file_format = "file format error";
-    if(slow5File->format==FORMAT_UNKNOWN){
+    if(slow5File->format==SLOW5_FORMAT_UNKNOWN){
         file_format = "FORMAT_UNKNOWN";
-    }else if(slow5File->format==FORMAT_ASCII){
+    }else if(slow5File->format==SLOW5_FORMAT_ASCII){
         file_format = "FORMAT_ASCII";
-    }else if(slow5File->format==FORMAT_BINARY){
+    }else if(slow5File->format==SLOW5_FORMAT_BINARY){
         file_format = "FORMAT_BINARY";
     }
 

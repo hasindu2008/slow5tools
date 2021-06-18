@@ -197,7 +197,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     };
 
     // Default options
-    enum slow5_fmt format_out = FORMAT_BINARY;
+    enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_GZIP;
 
     // Input arguments
@@ -230,10 +230,10 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
-                    format_out = FORMAT_ASCII;
+                    format_out = SLOW5_FORMAT_ASCII;
                     pressMethod = COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
-                    format_out = FORMAT_BINARY;
+                    format_out = SLOW5_FORMAT_BINARY;
                 }else{
                     ERROR("Incorrect output format%s", "");
                     exit(EXIT_FAILURE);
@@ -273,7 +273,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
 
     // compression option is only effective with -t blow5
-    if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
+    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }
@@ -309,12 +309,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         extension = output_file.substr(output_file.length()-6, output_file.length());
     }
 
-    if(arg_fname_out && format_out==FORMAT_ASCII && extension!=".slow5"){
+    if(arg_fname_out && format_out==SLOW5_FORMAT_ASCII && extension!=".slow5"){
         ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
-    }else if(arg_fname_out && format_out==FORMAT_BINARY && extension!=".blow5"){
+    }else if(arg_fname_out && format_out==SLOW5_FORMAT_BINARY && extension!=".blow5"){
         ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -491,7 +491,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
     }
 
-    if(format_out == FORMAT_BINARY){
+    if(format_out == SLOW5_FORMAT_BINARY){
         slow5_eof_fwrite(slow5File->fp);
     }
     slow5_close(slow5File);
