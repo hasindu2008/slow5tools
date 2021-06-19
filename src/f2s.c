@@ -47,7 +47,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
     std::string slow5_path_outputdir_single_fast5;
     std::unordered_map<std::string, uint32_t> warning_map;
     std::string extension = ".blow5";
-    if(format_out==FORMAT_ASCII){
+    if(format_out==SLOW5_FORMAT_ASCII){
         extension = ".slow5";
     }
     if(output_dir){
@@ -81,11 +81,11 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                           slow5_path.c_str(), strerror(errno));
                     continue;
                 }
-                slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_ASCII);
+                slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), SLOW5_FORMAT_ASCII);
                 slow5_hdr_initialize(slow5File->header, lossy);
                 read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File, &warning_map);
 
-                if(format_out == FORMAT_BINARY){
+                if(format_out == SLOW5_FORMAT_BINARY){
                     slow5_eof_fwrite(slow5File->fp);
                 }
                 slow5_close(slow5File);
@@ -101,7 +101,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                               slow5_path_outputdir_single_fast5.c_str(), strerror(errno));
                         continue;
                     }
-                    slow5File_outputdir_single_fast5 = slow5_init_empty(slow5_file_pointer_outputdir_single_fast5, slow5_path_outputdir_single_fast5.c_str(), FORMAT_BINARY);
+                    slow5File_outputdir_single_fast5 = slow5_init_empty(slow5_file_pointer_outputdir_single_fast5, slow5_path_outputdir_single_fast5.c_str(), SLOW5_FORMAT_BINARY);
                     slow5_hdr_initialize(slow5File_outputdir_single_fast5->header, lossy);
                 }
                 read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
@@ -123,7 +123,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
                         return;
                     }
                 }
-                slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), FORMAT_BINARY);
+                slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), SLOW5_FORMAT_BINARY);
                 slow5_hdr_initialize(slow5File->header, lossy);
             }
             read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
@@ -132,13 +132,13 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
         H5Fclose(fast5_file.hdf5_file);
     }
     if(slow5_file_pointer_outputdir_single_fast5) {
-        if(format_out == FORMAT_BINARY){
+        if(format_out == SLOW5_FORMAT_BINARY){
             slow5_eof_fwrite(slow5File_outputdir_single_fast5->fp);
         }
         slow5_close(slow5File_outputdir_single_fast5);
     }
     if(!output_dir) {
-        if(format_out == FORMAT_BINARY){
+        if(format_out == SLOW5_FORMAT_BINARY){
             slow5_eof_fwrite(slow5File->fp);
         }
         slow5_close(slow5File); //if stdout was used stdout is now closed.
@@ -285,7 +285,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             {NULL, 0, NULL, 0 }
     };
 
-    enum slow5_fmt format_out = FORMAT_BINARY;
+    enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum press_method pressMethod = COMPRESS_GZIP;
 
     // Input arguments
@@ -303,10 +303,10 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         switch (opt) {
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
-                    format_out = FORMAT_ASCII;
+                    format_out = SLOW5_FORMAT_ASCII;
                     pressMethod = COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
-                    format_out = FORMAT_BINARY;
+                    format_out = SLOW5_FORMAT_BINARY;
                 }else{
                     ERROR("Incorrect output format%s", "");
                     exit(EXIT_FAILURE);
@@ -372,7 +372,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     // compression option is only effective with -b blow5
-    if(format_out==FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
+    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }
@@ -383,12 +383,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         output_file = std::string(arg_fname_out);
         extension = output_file.substr(output_file.length()-6, output_file.length());
     }
-    if(arg_fname_out && format_out==FORMAT_ASCII && extension!=".slow5"){
+    if(arg_fname_out && format_out==SLOW5_FORMAT_ASCII && extension!=".slow5"){
         ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
-    }else if(arg_fname_out && format_out==FORMAT_BINARY && extension!=".blow5"){
+    }else if(arg_fname_out && format_out==SLOW5_FORMAT_BINARY && extension!=".blow5"){
         ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);

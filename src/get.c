@@ -59,7 +59,7 @@ bool fetch_record(slow5_file_t *fp, const char *read_id,
         success = false;
 
     } else {
-        slow5_rec_fwrite(stdout,record,fp->header->aux_meta,FORMAT_ASCII,NULL);
+        slow5_rec_fwrite(stdout,record,fp->header->aux_meta,SLOW5_FORMAT_ASCII,NULL);
         slow5_rec_free(record);
     }
 
@@ -249,7 +249,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 if (record == NULL || len < 0) {
                     ret = EXIT_FAILURE;
                 } else {
-                    slow5_rec_fwrite(stdout,record,fp->header->aux_meta,FORMAT_ASCII,NULL);
+                    slow5_rec_fwrite(stdout,record,fp->header->aux_meta,SLOW5_FORMAT_ASCII,NULL);
                     slow5_rec_free(record);
                 }
             }
