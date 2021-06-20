@@ -121,10 +121,10 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     }
 
     std::string compression_method = "compression error";
-    if(slow5File->compress->method==COMPRESS_NONE){
-        compression_method = "COMPRESS_NONE";
-    }else if(slow5File->compress->method==COMPRESS_GZIP){
-        compression_method = "COMPRESS_GZIP";
+    if(slow5File->compress->method==SLOW5_COMPRESS_NONE){
+        compression_method = "SLOW5_COMPRESS_NONE";
+    }else if(slow5File->compress->method==SLOW5_COMPRESS_GZIP){
+        compression_method = "SLOW5_COMPRESS_GZIP";
     }
 
     unsigned int record_count = 0;

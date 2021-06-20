@@ -37,7 +37,7 @@
 static double init_realtime = 0;
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
-void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
+void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
     static size_t call_count = 0;
     slow5_file_t* slow5File = NULL;
     slow5_file_t* slow5File_outputdir_single_fast5 = NULL;
@@ -148,7 +148,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum press_method pressMethod, 
     }
 }
 
-void f2s_iop(enum slow5_fmt format_out, enum press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
+void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
     int64_t num_fast5_files = fast5_files.size();
     if (iop > num_fast5_files) {
         iop = num_fast5_files;
@@ -286,7 +286,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     };
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum press_method pressMethod = COMPRESS_GZIP;
+    enum slow5_press_method pressMethod = SLOW5_COMPRESS_GZIP;
 
     // Input arguments
     char *arg_dir_out = NULL;
@@ -304,7 +304,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = SLOW5_FORMAT_ASCII;
-                    pressMethod = COMPRESS_NONE;
+                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
@@ -314,9 +314,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 break;
             case 'c':
                 if(strcmp(optarg,"none")==0){
-                    pressMethod = COMPRESS_NONE;
+                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"gzip")==0){
-                    pressMethod = COMPRESS_GZIP;
+                    pressMethod = SLOW5_COMPRESS_GZIP;
                 }else{
                     ERROR("Incorrect compression type%s", "");
                     exit(EXIT_FAILURE);
@@ -372,7 +372,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     // compression option is only effective with -b blow5
-    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
+    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }
