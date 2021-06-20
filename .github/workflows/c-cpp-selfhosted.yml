@@ -19,7 +19,7 @@ jobs:
         submodules: recursive
         ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
     - name: build
-      run: autoreconf && ./configure && make -j8
+      run: autoreconf && ./configure && make clean && make -j8
     - name: test
       run: make test
   hdf5_compile:
@@ -34,7 +34,7 @@ jobs:
         submodules: recursive
         ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
     - name: build
-      run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
+      run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make clean && make -j8
     - name: test
       run: make test
     - name: valgrind
