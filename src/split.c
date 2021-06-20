@@ -42,7 +42,7 @@ typedef struct {
     size_t n;
 }meta_split_method;
 
-void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount, meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod, size_t lossy) {
+void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount, meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum slow5_press_method pressMethod, size_t lossy) {
 
     readsCount->total_5 = args.endi-args.starti - 1;
     std::string extension = ".blow5";
@@ -102,7 +102,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 slow5_hdr_initialize(slow5File->header, lossy);
                 slow5File->header->num_read_groups = 0;
 
-                khash_t(s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
+                khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
@@ -116,7 +116,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 size_t record_count = 0;
                 struct slow5_rec *read = NULL;
                 int ret;
-                struct press *press_ptr = press_init(pressMethod);
+                struct slow5_press *press_ptr = slow5_press_init(pressMethod);
                 while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
@@ -128,7 +128,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                         break;
                     }
                 }
-                press_free(press_ptr);
+                slow5_press_free(press_ptr);
                 slow5_rec_free(read);
 
                 if(format_out == SLOW5_FORMAT_BINARY){
@@ -191,7 +191,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 slow5_hdr_initialize(slow5File->header, lossy);
                 slow5File->header->num_read_groups = 0;
 
-                khash_t(s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
+                khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
@@ -203,7 +203,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 
                 struct slow5_rec *read = NULL;
                 int ret;
-                struct press *press_ptr = press_init(pressMethod);
+                struct slow5_press *press_ptr = slow5_press_init(pressMethod);
                 while ((number_of_records_per_file > 0) && (ret = slow5_get_next(&read, slow5File_i)) == 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
@@ -212,7 +212,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     }
                     number_of_records_per_file--;
                 }
-                press_free(press_ptr);
+                slow5_press_free(press_ptr);
                 slow5_rec_free(read);
 
                 if(format_out == SLOW5_FORMAT_BINARY){
@@ -249,7 +249,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 slow5_hdr_initialize(slow5File->header, lossy);
                 slow5File->header->num_read_groups = 0;
 
-                khash_t(s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
+                khash_t(slow5_s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
@@ -262,7 +262,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 
                 struct slow5_rec *read = NULL;
                 int ret;
-                struct press *press_ptr = press_init(pressMethod);
+                struct slow5_press *press_ptr = slow5_press_init(pressMethod);
                 while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
                     if(read->read_group == j){
                         read->read_group = 0; //since single read_group files are now created
@@ -273,7 +273,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                         }
                     }
                 }
-                press_free(press_ptr);
+                slow5_press_free(press_ptr);
                 slow5_rec_free(read);
                 slow5_close(slow5File_i);
 
@@ -287,7 +287,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 }
 
 void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
-        meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum press_method pressMethod, size_t lossy) {
+        meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum slow5_press_method pressMethod, size_t lossy) {
     int64_t num_slow5_files = slow5_files.size();
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
@@ -423,7 +423,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum press_method pressMethod = COMPRESS_GZIP;
+    enum slow5_press_method pressMethod = SLOW5_COMPRESS_GZIP;
     meta_split_method metaSplitMethod;
     metaSplitMethod.n = 0;
     metaSplitMethod.splitMethod = READS_SPLIT;
@@ -451,7 +451,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = SLOW5_FORMAT_ASCII;
-                    pressMethod = COMPRESS_NONE;
+                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
@@ -461,9 +461,9 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 'c':
                 if(strcmp(optarg,"none")==0){
-                    pressMethod = COMPRESS_NONE;
+                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"gzip")==0){
-                    pressMethod = COMPRESS_GZIP;
+                    pressMethod = SLOW5_COMPRESS_GZIP;
                 }else{
                     ERROR("Incorrect compression type%s", "");
                     exit(EXIT_FAILURE);
@@ -508,7 +508,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     }
 
     // compression option is only effective with -b blow5
-    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
+    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }

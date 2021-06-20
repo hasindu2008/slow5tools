@@ -42,7 +42,7 @@ typedef struct {
     std::vector<std::string> slow5_files;
     int64_t n_batch;    // number of files
     slow5_fmt format_out;
-    press_method compress_method;
+    slow5_press_method comslow5_press_method;
 } global_thread;
 
 /* argument wrapper for the multithreaded framework used for data processing */
@@ -78,7 +78,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
             exit(EXIT_FAILURE);
         }
         struct slow5_rec *read = NULL;
-        struct press* compress = press_init(pthreadArg->core->compress_method);
+        struct slow5_press* compress = slow5_press_init(pthreadArg->core->comslow5_press_method);
         int ret;
         while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
             read->read_group = pthreadArg->core->list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
@@ -89,7 +89,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
             }
         }
         slow5_rec_free(read);
-        press_free(compress);
+        slow5_press_free(compress);
         slow5_close(slow5File_i);
     }
     slow5_close(slow5File);
@@ -198,7 +198,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum press_method pressMethod = COMPRESS_GZIP;
+    enum slow5_press_method pressMethod = SLOW5_COMPRESS_GZIP;
 
     // Input arguments
     char *arg_fname_out = NULL;
@@ -231,7 +231,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = SLOW5_FORMAT_ASCII;
-                    pressMethod = COMPRESS_NONE;
+                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
@@ -241,9 +241,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 'c':
                 if(strcmp(optarg,"none")==0){
-                    pressMethod = COMPRESS_NONE;
+                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"gzip")==0){
-                    pressMethod = COMPRESS_GZIP;
+                    pressMethod = SLOW5_COMPRESS_GZIP;
                 }else{
                     ERROR("Incorrect compression type%s", "");
                     exit(EXIT_FAILURE);
@@ -273,7 +273,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
 
     // compression option is only effective with -t blow5
-    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=COMPRESS_NONE){
+    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }
@@ -406,7 +406,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 }
             }
             if(flag_run_id_found == 0){ // time to add a new read_group
-                khash_t(s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
+                khash_t(slow5_s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
                 int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg); //assumption0
                 if(new_read_group != read_group_count){ //sanity check
                     WARNING("New read group number is not equal to number of groups; something's wrong\n%s", "");
@@ -447,7 +447,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     core.slow5_files = slow5_files;
     core.n_batch = slow5_files.size();
     core.format_out = format_out;
-    core.compress_method = pressMethod;
+    core.comslow5_press_method = pressMethod;
 
     //measure read_group number assigning using multi-threads time
     realtime0 = slow5_realtime();

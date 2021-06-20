@@ -300,7 +300,7 @@ echo -e "${GREEN}testcase 17 passed${NC}"
 
 echo
 echo "------------------- f2s testcase 18 >>> format:multi-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
-if $SLOW5_EXEC f2s $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
+if $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5; then
     echo "${RED}testcase 18 failed ${NC}"
     exit 1
 fi
