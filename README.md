@@ -12,7 +12,7 @@ Detailed benchmarking experiments have shown that SLOW5 format is up to X-fold f
 
 <todo>
 <!--- [![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?token=pN7xnsxgLrRxbAn8WLVQ&branch=master)](https://travis-ci.com/hasindu2008/slow5) -->
-  
+
 [![SLOW5 C/C++ CI Local](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Local/badge.svg)](https://github.com/hasindu2008/slow5tools/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local%22)
 [![SLOW5 C/C++ CI Local OSX](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Local%20OSX/badge.svg)](https://github.com/hasindu2008/slow5tools/actions/workflows/c-cpp-selfhosted-mac.yml?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Local+OSX%22)
 [![SLOW5 C/C++ CI Github](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Github/badge.svg)](https://github.com/hasindu2008/slow5tools/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Github%22)
@@ -30,8 +30,8 @@ Binaries should work on most Linux distributions and the only dependency is `zli
 ## Building
 
 ### Building a release
-  
-  
+
+
 Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball. Quick example for Ubuntu :
 ```sh
 sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development libraries
@@ -50,9 +50,9 @@ On OS X : brew install hdf5
 
 If you skip `./configure` hdf5 will be compiled locally. It is a good option if you cannot install hdf5 library system wide. However, building hdf5 takes ages.
 
-  
+
 ### Building from GitHub
-  
+
 
 Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake`. To build from GitHub:
 
@@ -64,25 +64,25 @@ autoreconf
 ./configure
 make
 ```
-  
+
 If you want to locally build HDF5 (takes ages) and build slow5tools against that:
 ```
 git clone --recursive https://github.com/hasindu2008/slow5tools
-cd slow5tools  
+cd slow5tools
 autoreconf
 scripts/install-hdf5.sh         # download and compiles HDF5 in the current folder
-./configure --enable-localhdf5  
+./configure --enable-localhdf5
 make
-```  
- 
-  
+```
+
+
 
 ## Usage
 
 Visit the [man page](https://github.com/hasindu2008/slow5tools/blob/master/docs/commands.md) for all the commands and options.
 
 ### Examples
-  
+
 ```sh
 #convert a directory of fast5 files into .blow5 (compression enabled) using 8 I/O processes
 slow5tools f2s fast5_dir -d blow5_dir  -p 8
@@ -111,18 +111,8 @@ slow5tools split file.blow5 -d blow5_dir -r 4000
 slow5tools s2f blow5_dir -d fast5  -p 8
 
 ```
-  
-### Example workflows
-  
-To convert a FAST5 dataset to a single BLOW5 file and then convert back to FAST5:
-  
-```
-slow5tools f2s fast5_dir -d blow5_dir  -p 8
-slow5tools merge blow5_dir -o file.blow5 -t8
-rm -rf  blow5_dir
-slow5tools split file.blow5 -d blow5_dir -r 4000
-slow5tools s2f blow5_dir -d fast5  -p 8  
-```
+
+Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for example workflows.
 
 ## Acknowledgement
-Some code snippets have been taken from [Minimap2](https://github.com/lh3/minimap2) and [Samtools](http://samtools.sourceforge.net/).
+slow5tools uses [klib](https://github.com/attractivechaos/klib). Some code snippets have been taken from [Minimap2](https://github.com/lh3/minimap2) and [Samtools](http://samtools.sourceforge.net/).
