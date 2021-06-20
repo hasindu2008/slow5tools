@@ -80,8 +80,8 @@ enum view_fmt path_to_view_fmt(const char *fname) {
     return fmt;
 }
 
-slow5_slow5_press_method_t name_to_slow5_press_method(const char *name) {
-    slow5_slow5_press_method_t comp = (slow5_slow5_press_method_t) -1;
+slow5_press_method_t name_to_slow5_press_method(const char *name) {
+    slow5_press_method_t comp = (slow5_press_method_t) -1;
 
     if (strcmp(name, "none") == 0) {
         comp = SLOW5_COMPRESS_NONE;
@@ -138,7 +138,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     FILE *f_out = stdout;
     enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
     enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
-    slow5_slow5_press_method_t press_out = SLOW5_COMPRESS_GZIP;
+    slow5_press_method_t press_out = SLOW5_COMPRESS_GZIP;
 
     // Input arguments
     char *arg_fname_in = NULL;
@@ -275,7 +275,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         } else {
             press_out = name_to_slow5_press_method(arg_press_out);
 
-            if (press_out == (slow5_slow5_press_method_t) -1) {
+            if (press_out == (slow5_press_method_t) -1) {
                 MESSAGE(stderr, "invalid compression method -- '%s'", arg_press_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
