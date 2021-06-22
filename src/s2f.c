@@ -369,6 +369,9 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
 }
 
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
+    //todo - consider implementing this in later versions
+    INFO("[%s] Not Stored: Attribute read/pore_type is not stored.", SLOW5_FILE_FORMAT_SHORT);
+    INFO("[%s] Not Stored: Attribute read/Raw/end_reason is not stored.", SLOW5_FILE_FORMAT_SHORT);
 
     // Turn off HDF's exception printing, which is generally unhelpful for users
     H5Eset_auto(0, NULL, NULL);

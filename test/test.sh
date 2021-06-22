@@ -118,4 +118,15 @@ else
     fi
 fi
 
+echo_test 'split integrity test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/split_integrity_test.sh mem; then
+        fail
+    fi
+else
+    if ! ./test/split_integrity_test.sh; then
+        fail
+    fi
+fi
+
 exit $ret
