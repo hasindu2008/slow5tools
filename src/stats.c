@@ -130,7 +130,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     unsigned int record_count = 0;
     struct slow5_rec *read = NULL;
     int ret;
-    while ((ret = slow5_get_next(&read, slow5File)) == 0) {
+    while ((ret = slow5_get_next(&read, slow5File)) >= 0) {
         record_count++;
     }
     slow5_rec_free(read);

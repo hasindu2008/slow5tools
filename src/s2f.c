@@ -150,7 +150,7 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
     set_hdf5_attributes(file_id, ROOT, slow5File->header, slow5_record, &end_reason_enum_id);
 
     int ret;
-    if((ret = slow5_get_next(&slow5_record, slow5File)) != 0) {
+    if((ret = slow5_get_next(&slow5_record, slow5File)) < 0) {
         ERROR("Could not read the slow5 records. exiting... %s", "");
         exit(EXIT_FAILURE);
     }
@@ -182,11 +182,11 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
     while(1){
         if(i){
             ret = slow5_get_next(&slow5_record, slow5File);
-            if(ret == -1 || ret == -3) {
+            if(ret == SLOW5_ERR_ARG || ret == SLOW5_ERR_RECPARSE || ret == SLOW5_ERR_IO) {
                 ERROR("Could not read the slow5 records. exiting... %s", "");
                 exit(EXIT_FAILURE);
             }
-            if(ret == -2) { //end of file -2 ????
+            if(ret == SLOW5_ERR_EOF) {
                 break;
             }
 
