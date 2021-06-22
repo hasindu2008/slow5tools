@@ -31,7 +31,7 @@ wget -O $TARBALL $LINK || curl -o $TARBALL $LINK || die "Downloading dataset fro
 tar -xf $TARBALL -C $FAST5_DIR || die "Extracting $TARBALL failed"
 rm $TARBALL
 
-test_s2f_with_guppy.sh $FAST5_DIR $TEST_DIR $SLOW5TOOLS guppy_basecaller || exit 1
-test_f2s_s2f_integrity_test.sh $FAST5_DIR $TEST_DIR || exit 1
+$REL_PATH/test_s2f_with_guppy.sh $FAST5_DIR $TEST_DIR $SLOW5TOOLS guppy_basecaller || exit 1
+$REL_PATH/f2s_s2f_integrity_test.sh $FAST5_DIR $TEST_DIR || exit 1
 
 exit 0
