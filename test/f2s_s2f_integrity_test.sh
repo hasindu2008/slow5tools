@@ -1,12 +1,7 @@
 #!/bin/bash
 # Run f2s, s2f, and again f2s and check if first produced slow5s are same as the last set.
-Usage="f2s_s2f_integrity_test.sh"
-
-#Usage="f2s_s2f_integrity_test.sh [path to fast5 directory] [path to create a temporary directory] [path to slow5tools executable] [-c or --to (optional)]"
-#if [[ "$#" -lt 3 ]]; then
-#	echo "Usage: $Usage"
-#	exit 1
-#fi
+Usage1="f2s_s2f_integrity_test.sh"
+Usage2="f2s_s2f_integrity_test.sh [path to fast5 directory] [path to create a temporary directory][-c or --to (optional)]"
 
 # Relative path to "slow5/tests/"
 REL_PATH="$(dirname $0)/"
@@ -23,10 +18,14 @@ fi
 
 FAST5_DIR="$REL_PATH/data/raw/f2s_s2f_integrity/"
 TEMP_DIR="$REL_PATH/data/out/f2s_s2f_integrity/"
+if [[ "$#" -ge 2 ]]; then
+	FAST5_DIR=$1
+  TEMP_DIR="$2/f2s_s2f_integrity_test"
+fi
+
 F2S_atm1_OUTPUT="$TEMP_DIR/f2s_attempt1"
 S2F_OUTPUT="$TEMP_DIR/s2f"
 F2S_atm2_OUTPUT="$TEMP_DIR/f2s_attempt2"
-
 
 SLOW5_FORMAT=""
 if [[ "$#" -eq 4 ]]; then
