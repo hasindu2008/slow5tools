@@ -559,7 +559,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     //measure slow5 splitting time
     split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod, lossy);
-    fprintf(stderr, "[%s] Splitting %ld s/blow5 files using %d process - took %.3fs\n", __func__, slow5_files.size(), iop, slow5_realtime() - init_realtime);
+    fprintf(stderr, "[%s] Splitting %ld s/blow5 files took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
 }
