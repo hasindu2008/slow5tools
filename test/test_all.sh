@@ -26,6 +26,7 @@ test -d $TEST_DIR && rm -r "$TEST_DIR"
 mkdir "$TEST_DIR" || exit 1
 
 test -d $FAST5_DIR && rm -r $FAST5_DIR
+mkdir "$FAST5_DIR" || exit 1
 wget -O $TARBALL $LINK || curl -o $TARBALL $LINK || die "Downloading dataset from $LINK failed."
 tar -xf $TARBALL -C $FAST5_DIR || die "Extracting $TARBALL failed"
 rm $TARBALL
