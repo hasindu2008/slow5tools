@@ -123,10 +123,10 @@ slow5tools get [OPTIONS] file1.blow5 readid1 readid2 ....
 slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 ```
 
-* `-l, --list`:  
+* `-l, --list FILE`:  
    List of read ids provided as a single-column text file with one read id per line.
 * `-t, --threads INT`:  
-   Number of threads
+   Number of threads.
 * `-K, --batchsize`
    The batch size. This is the number of records to the memory at once. An increased batch size imrpoves multi-threaded performance at cost of higher RAM.
 *  `-h`, `--help`:  
