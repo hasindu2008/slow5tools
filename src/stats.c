@@ -137,10 +137,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
 
     fprintf(stdout, "file format\t%s\n", file_format.c_str());
     fprintf(stdout, "compression method\t%s\n", compression_method.c_str());
-
-//    uint32_t read_group_count_i = slow5File->header->num_read_groups;
     fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
-
     fprintf(stdout,"number of records\t%u\n", record_count);
 
     return EXIT_SUCCESS;
