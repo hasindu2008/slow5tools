@@ -63,7 +63,7 @@ slow5tools merge [OPTIONS] blow5_dir1 blow5_dir2 ...
 
 Merges multiple SLOW5/BLOW5 files to a single file.
 The input can be a list of SLOW5/BLOW5 files, a directory containing multiple SLOW5/BLOW5 files, or a list of directories. If a directory is provided, the tool recursively searches within for SLOW5/BLOW5 files (.slow5/blow5 extension) and merges their contents.
-If multiple samples (different run ids) are detected, the header and the *read_group* field will be modified accordingly, with each run id assigned a separate *read_group*. 
+If multiple samples (different run ids) are detected, the header and the *read_group* field will be modified accordingly, with each run id assigned a separate *read_group*.
 
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
@@ -79,7 +79,7 @@ If multiple samples (different run ids) are detected, the header and the *read_g
    Number of threads
 *  `-h, --help`:  
    Prints the help menu.
-   
+
 
 ### index
 
@@ -99,7 +99,7 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 `slow5tools view [OPTIONS] file.blow5`
 
 *  `--to format_type`:  
-   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5]. 
+   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `--from format_type`:
    Specifies the format of input files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [Default: autodetected based on the file extension otherwise].
 *  `-c, --compress compression_type`:  
@@ -130,7 +130,7 @@ Retrieves records for specified read IDs from a SLOW5/BLOW5 file.
    The batch size
 *  `-h`, `--help`:
    Prints the help menu.
- 
+
 - *TODO: incorporate get into view, rather than standalone tool*
 
 
@@ -145,7 +145,7 @@ Splits a single a SLOW5/BLOW5 file into multiple separate files.
 This tool is useful for parallelising across array jobs / distributed systems.
 
 *  `--to format_type`:  
-   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5]. 
+   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress compression_type`:  
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `--to blow5`.
 *  `-d, --out-dir STR`:  
@@ -153,9 +153,9 @@ This tool is useful for parallelising across array jobs / distributed systems.
 *  `-f, --files INT`:  
    Split the data into n files (where n = INT) in which all files have equal numbers of reads. Cannot be used together with `-r` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-n`.
 *  `-r, --reads INT`:  
-   Split the data into files containing n reads (where N = INT). Cannot be used together with `-f` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-r`.
+   Split the data into files containing N reads (where N = INT). Cannot be used together with `-f` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-r`.
 *  `-g, --groups`:  
-   Split the data into separate files for each read group (usually run id / sample name). The number of output files will equal the number of read groups in the input file. 
+   Split the data into separate files for each read group (usually run id / sample name). The number of output files will equal the number of read groups in the input file.
 *   `-l, --lossless`:  
     Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
 *  `-p, --iop INT`:  
@@ -164,7 +164,7 @@ This tool is useful for parallelising across array jobs / distributed systems.
    Prints the help menu.
 <!--
 *  `n, --num-reads INT`:
-   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file). 
+   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file).
 *  `l, --list FILE`:
    Split as per the mappings given in file containing a list of readID and filename pairs.
 -->
@@ -198,7 +198,7 @@ Note: different SLOW5 read groups cannot be converted to the a single FAST5 file
 Generates summary statistics describing a SLOW5/BLOW5 file such as:
 
 - if SLOW5 or BLOW5
-- vompression technique and compression level if applicable
+- compression technique and compression level if applicable
 - number of read groups
 - total number of reads
 

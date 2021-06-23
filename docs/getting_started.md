@@ -12,7 +12,7 @@ Detailed benchmarking experiments have shown that SLOW5 format is up to X-fold f
 
 ## Quick start
 
-If you are a Linux user and want to quickly try out download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
+If you are a Linux user and want to quickly try slow5tools out, download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
 ```sh
 VERSION=v0.0-alpha
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-binaries.tar.gz" && tar xvf slow5tools-$VERSION-binaries.tar.gz && cd slow5tools-$VERSION/
@@ -78,9 +78,9 @@ Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for
 
 ```sh
 #convert a directory of fast5 files into .blow5 (compression enabled) using 8 I/O processes
-slow5tools f2s fast5_dir -d blow5_dir  -p 8
+slow5tools f2s fast5_dir -d blow5_dir -p 8
 #convert a single fast5 file into a blow5 file(compression enabled)
-slow5tools f2s file.fast5 -o file.blow5  -p 1
+slow5tools f2s file.fast5 -o file.blow5 -p 1
 #merge all blow5 files in a directory into a single blow5 file using 8 threads
 slow5tools merge blow5_dir -o file.blow5 -t8
 
