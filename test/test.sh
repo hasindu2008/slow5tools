@@ -118,4 +118,15 @@ else
     fi
 fi
 
+echo_test 'f2s_s2f integrity test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/f2s_s2f_integrity_test.sh mem; then
+        fail
+    fi
+else
+    if ! ./test/f2s_s2f_integrity_test.sh; then
+        fail
+    fi
+fi
+
 exit $ret

@@ -117,7 +117,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
-                while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+                while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
                         ERROR("Could not write the record to %s\n", slow5_path.c_str());
@@ -151,7 +151,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
             int number_of_records = 0;
             struct slow5_rec *read = NULL;
             int ret;
-            while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+            while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                 number_of_records++;
             }
             slow5_rec_free(read);
@@ -204,7 +204,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
-                while ((number_of_records_per_file > 0) && (ret = slow5_get_next(&read, slow5File_i)) == 0) {
+                while ((number_of_records_per_file > 0) && (ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
                         ERROR("Could not write the record to %s\n", slow5_path.c_str());
@@ -263,7 +263,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
-                while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+                while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if(read->read_group == j){
                         read->read_group = 0; //since single read_group files are now created
                         if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
@@ -559,7 +559,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     //measure slow5 splitting time
     split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod, lossy);
-    fprintf(stderr, "[%s] Splitting %ld s/blow5 files using %d process - took %.3fs\n", __func__, slow5_files.size(), iop, slow5_realtime() - init_realtime);
+    fprintf(stderr, "[%s] Splitting %ld s/blow5 files took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
 }

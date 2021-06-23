@@ -238,6 +238,9 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
+    //todo - consider implementing this in later versions
+    INFO("[%s] Not Stored: Attribute read/pore_type is not stored.", SLOW5_FILE_FORMAT_SHORT);
+    INFO("[%s] Not Stored: Attribute read/Raw/end_reason is not stored.", SLOW5_FILE_FORMAT_SHORT);
 
     // Turn off HDF's exception printing, which is generally unhelpful for users
     // This can cause a 'still reachable' memory leak on a valgrind check

@@ -80,7 +80,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
         struct slow5_rec *read = NULL;
         struct slow5_press* compress = slow5_press_init(pthreadArg->core->comslow5_press_method);
         int ret;
-        while ((ret = slow5_get_next(&read, slow5File_i)) == 0) {
+        while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
             read->read_group = pthreadArg->core->list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
             if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, pthreadArg->core->format_out, compress) == -1) {
                 slow5_rec_free(read);
