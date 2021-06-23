@@ -9,7 +9,6 @@ NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 
-OUTPUT_DIR="$REL_PATH/data/out/f2s_output"
 test -d  $OUTPUT_DIR
 rm -r $OUTPUT_DIR
 mkdir $OUTPUT_DIR
