@@ -100,7 +100,9 @@ int main(const int argc, char **argv){
     } else {
         const struct command cmds[] = {
             {"f2s", f2s_main},
+            {"fast5toslow5", f2s_main},
             {"s2f", s2f_main},
+            {"slow5tofast5", s2f_main},
             {"merge", merge_main},
             {"split", split_main},
             {"index", index_main},
