@@ -246,23 +246,26 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     if (fmt_out == VIEW_FORMAT_UNKNOWN) {
         if (arg_fname_out == NULL) {
             // Error
-            MESSAGE(stderr, "missing output file or format%s", "");
-            fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
+            //MESSAGE(stderr, "missing output file or format%s", "");
+            //fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+            //EXIT_MSG(EXIT_FAILURE, argv, meta);
+            //return EXIT_FAILURE;
+            fmt_out = VIEW_FORMAT_SLOW5_ASCII;
         }
 
-        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("auto detecting output file format%s","");
-        }
+        else{
+            if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
+                VERBOSE("auto detecting output file format%s","");
+            }
 
-        fmt_out = path_to_view_fmt(arg_fname_out);
+            fmt_out = path_to_view_fmt(arg_fname_out);
 
-        // Error
-        if (fmt_out == VIEW_FORMAT_UNKNOWN) {
-            MESSAGE(stderr, "cannot detect file format -- '%s'", arg_fname_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
+            // Error
+            if (fmt_out == VIEW_FORMAT_UNKNOWN) {
+                MESSAGE(stderr, "cannot detect file format -- '%s'", arg_fname_out);
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
+                return EXIT_FAILURE;
+            }
         }
     }
 

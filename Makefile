@@ -123,13 +123,13 @@ binary: distclean
 
 install: $(BINARY)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	mkdir -p $(DESTDIR)$(PREFIX)/share/man/man1
+#mkdir -p $(DESTDIR)$(PREFIX)/share/man/man1
 	cp -f $(BINARY) $(DESTDIR)$(PREFIX)/bin
-	gzip < docs/slow5tools.1 > $(DESTDIR)$(PREFIX)/share/man/man1/slow5tools.1.gz
+#gzip < docs/slow5tools.1 > $(DESTDIR)$(PREFIX)/share/man/man1/slow5tools.1.gz
 
 uninstall:
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(BINARY) \
-		$(DESTDIR)$(PREFIX)/share/man/man1/slow5tools.1.gz
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(BINARY)
+#rm -f $(DESTDIR)$(PREFIX)/share/man/man1/slow5tools.1.gz
 
 test: $(BINARY)
 	./test/test.sh
