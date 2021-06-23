@@ -120,7 +120,7 @@ Retrieves records for specified read IDs from a SLOW5/BLOW5 file.
 
 ```
 slow5tools get [OPTIONS] file1.blow5 readid1 readid2 ....
-slow5tools get [OPTIONS] file1.blow5 --list readids.txt`
+slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 ```
 
 * `-l, --list`:  
