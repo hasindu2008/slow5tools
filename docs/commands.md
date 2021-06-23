@@ -17,7 +17,7 @@
 * `get`:  
          Retrieve records for specified read IDs from a SLOW5/BLOW5 file.
 * `stats`:  
-         Generate summary statistics describing a SLOW5/BLOW5 file.
+         Prints summary statistics describing a SLOW5/BLOW5 file.
 
 
 
@@ -99,7 +99,7 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 `slow5tools view [OPTIONS] file.blow5`
 
 *  `--to format_type`:  
-   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
+   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: slow5].
 *  `--from format_type`:
    Specifies the format of input files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [Default: autodetected based on the file extension otherwise].
 *  `-c, --compress compression_type`:  
@@ -111,27 +111,26 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 
 - *TODO: implement multi-threading in view*
 - *TODO: if '-' is specified as the file, read from stdin*
-- *TODO: view specified field only*
+- *TODO: view specified field/s only*
 - *TODO: view header only*
 
 ### get
 
 Retrieves records for specified read IDs from a SLOW5/BLOW5 file.
 
-`slow5tools get [OPTIONS] file1.blow5 readid1 readid2 ....`
+```
+slow5tools get [OPTIONS] file1.blow5 readid1 readid2 ....
+slow5tools get [OPTIONS] file1.blow5 --list readids.txt`
+```
 
-`slow5tools get [OPTIONS] file1.blow5 --list readids.txt`
-
-* `-l, --list`:
+* `-l, --list`:  
    List of read ids provided as a single-column text file with one read id per line.
-* `-t, --threads INT`:
+* `-t, --threads INT`:  
    Number of threads
 * `-K, --batchsize`
-   The batch size
-*  `-h`, `--help`:
+   The batch size. This is the number of records to the memory at once. An increased batch size imrpoves multi-threaded performance at cost of higher RAM.
+*  `-h`, `--help`:  
    Prints the help menu.
-
-- *TODO: incorporate get into view, rather than standalone tool*
 
 
 ### split
@@ -195,10 +194,10 @@ Note: different SLOW5 read groups cannot be converted to the a single FAST5 file
 
 `slow5tools stats [OPTIONS] file1.slow5/file1.blow5`
 
-Generates summary statistics describing a SLOW5/BLOW5 file such as:
+Prints summary statistics describing a SLOW5/BLOW5 file such as:
 
-- if SLOW5 or BLOW5
-- compression technique and compression level if applicable
+- if the file is SLOW5 or BLOW5
+- compression method if applicable
 - number of read groups
 - total number of reads
 
