@@ -48,7 +48,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     // No arguments given
     if (argc <= 1) {
 
-        fprintf(stdout, "slow5 version\t%s\n", SLOW5_FILE_FORMAT_SHORT);
+        fprintf(stdout, "slow5 library version\t%s\n", SLOW5_LIB_VERSION);
 
         std::string hdf5_environment = "";
         #ifdef HAVE_HDF5_SERIAL_HDF5_H
@@ -66,7 +66,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
 
         unsigned major, minor, release;
         H5get_libversion(&major, &minor, &release);
-        fprintf(stdout, "hdf5 version\t%u.%u.%u\n", major, minor, release);
+        fprintf(stdout, "hdf5 library version\t%u.%u.%u\n", major, minor, release);
         fprintf(stdout, "hdf5_macro_activated\t%s\n", hdf5_environment.c_str());
         //    free(&major);free(&minor);free(&release);H5dont_atexit();H5garbage_collect();H5close();
         return EXIT_SUCCESS;
