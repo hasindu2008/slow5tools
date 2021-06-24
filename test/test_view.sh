@@ -74,6 +74,8 @@ ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -t blow5 -c none > "$OUT/one
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -t slow5 > "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" > "$OUT/one_fast5/out_1_default.slow5"
+my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -t blow5 > "$OUT/one_fast5/out_1_default_gzip.blow5"
 my_diff "$EXP/one_fast5/exp_1_default_gzip.blow5" "$OUT/one_fast5/out_1_default_gzip.blow5" -q
@@ -81,12 +83,16 @@ ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -t blow5 -c none > "$OUT/one
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -t slow5 > "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" > "$OUT/one_fast5/out_1_default.slow5"
+my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
 ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -t blow5 > "$OUT/one_fast5/out_1_default_gzip.blow5"
 my_diff "$EXP/one_fast5/exp_1_default_gzip.blow5" "$OUT/one_fast5/out_1_default_gzip.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -t blow5 -c none > "$OUT/one_fast5/out_1_default.blow5"
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -t slow5 > "$OUT/one_fast5/out_1_default.slow5"
+my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" > "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
 ## One fast5 lossless

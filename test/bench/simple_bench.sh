@@ -2,7 +2,7 @@
 # Extract read entries given read ids
 # Benchmark over 1,2,4,8,16,32 threads
 
-SLOW5TOOLS_PATH='/home/hasindu/hasindu2008.git/slow5/slow5tools'
+SLOW5TOOLS_PATH='slow5tools'
 
 DATA_DIR='/data/slow5-testdata/GZFN211103/'
 READID_FILE="$DATA_DIR/reads.list"
@@ -67,7 +67,7 @@ i=1
 while [ "$i" -le "32" ]; do
    clean_fscache
    echo "Extracting with $i threads"
-   command time -v "$SLOW5TOOLS_PATH" extract "-t$i" "$SLOW5_FILE" < "$READID_FILE" > /dev/null 2> "slow5.bench.stderr$i"
+   command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$SLOW5_FILE" < "$READID_FILE" > /dev/null 2> "slow5.bench.stderr$i"
    i=$((i*2))
 done
 
@@ -77,7 +77,7 @@ i=1
 while [ "$i" -le "32" ]; do
    clean_fscache
    echo "Extracting with $i threads"
-   command time -v "$SLOW5TOOLS_PATH" extract "-t$i" "$BLOW5_FILE" < "$READID_FILE" > /dev/null 2> "blow5.bench.stderr$i"
+   command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$BLOW5_FILE" < "$READID_FILE" > /dev/null 2> "blow5.bench.stderr$i"
    i=$((i*2))
 done
 
@@ -87,7 +87,7 @@ i=1
 while [ "$i" -le "32" ]; do
     clean_fscache
     echo "Extracting with $i threads"
-    command time -v "$SLOW5TOOLS_PATH" extract "-t$i" "$CLOW5_FILE" < "$READID_FILE" > /dev/null 2> "clow5.bench.stderr$i"
+    command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$CLOW5_FILE" < "$READID_FILE" > /dev/null 2> "clow5.bench.stderr$i"
     i=$((i*2))
 done
 
