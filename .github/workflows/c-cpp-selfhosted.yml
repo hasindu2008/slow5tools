@@ -33,9 +33,15 @@ jobs:
       with:
         submodules: recursive
         ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
-    - name: build
+    - name: build-gcc
       run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make clean && make -j8
-    - name: test
+    - name: test-gcc
       run: make test
-    - name: valgrind
+    - name: valgrind-gcc
+      run: ./test/test.sh mem
+    - name: build-clang
+      run: make clean && make -j8 CC=clang CXX=clang++
+    - name: test-clang
+      run: make test
+    - name: valgrind-clang
       run: ./test/test.sh mem
