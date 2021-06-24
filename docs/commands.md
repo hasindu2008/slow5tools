@@ -128,7 +128,11 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 * `-t, --threads INT`:  
    Number of threads.
 * `-K, --batchsize`
-   The batch size. This is the number of records to the memory at once. An increased batch size imrpoves multi-threaded performance at cost of higher RAM.
+   The batch size. This is the number of records on the memory at once. An increased batch size imrpoves multi-threaded performance at cost of higher RAM.
+*  `--to format_type`:  
+   Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
+*  `-c, --compress compression_type`:  
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `--to blow5`.
 *  `-h`, `--help`:  
    Prints the help menu.
 

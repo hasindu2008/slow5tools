@@ -38,7 +38,7 @@ fi
 echo
 echo "------------------- slow5tools get testcase 1 -------------------"
 
-if ! $SLOW5_EXEC get $SLOW5_DIR/example2.slow5 r1 > $OUTPUT_DIR/extracted_reads.txt; then
+if ! $SLOW5_EXEC get $SLOW5_DIR/example2.slow5 r1 --to slow5 > $OUTPUT_DIR/extracted_reads.txt; then
     echo "${RED}testcase 1 failed ${NC}"
     exit 1
 fi
@@ -52,7 +52,7 @@ echo -e "${GREEN}testcase 1 passed${NC}"
 echo
 echo "------------------- slow5tools get testcase 2 -------------------"
 
-if ! $SLOW5_EXEC get $SLOW5_DIR/example2.slow5 r1 r5 r3> $OUTPUT_DIR/extracted_reads2.txt; then
+if ! $SLOW5_EXEC get $SLOW5_DIR/example2.slow5 r1 r5 r3 --to slow5 > $OUTPUT_DIR/extracted_reads2.txt; then
     echo "${RED}testcase 2 failed ${NC}"
     exit 1
 fi
@@ -62,5 +62,19 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 echo -e "${GREEN}testcase 2 passed${NC}"
+
+echo
+echo "------------------- slow5tools get testcase 3 -------------------"
+
+if ! $SLOW5_EXEC get $SLOW5_DIR/example2.slow5 --list $SLOW5_DIR/list.txt --to slow5 > $OUTPUT_DIR/extracted_reads3.txt; then
+    echo "${RED}testcase 2 failed ${NC}"
+    exit 1
+fi
+diff -s $EXP_SLOW5_DIR/expected_extracted_reads3.txt $OUTPUT_DIR/extracted_reads3.txt &>/dev/null
+if [ $? -ne 0 ]; then
+    echo -e "${RED}ERROR: diff failed for 'slow5tools get testcase 2'${NC}"
+    exit 1
+fi
+echo -e "${GREEN}testcase 3 passed${NC}"
 
 exit
