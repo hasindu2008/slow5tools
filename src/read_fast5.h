@@ -91,7 +91,6 @@ typedef struct {
     int32_t starti;
     int32_t endi;
     int32_t proc_index;
-    std::string slow5_file;
 }proc_arg_t;
 
 union attribute_data {

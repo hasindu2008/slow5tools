@@ -295,8 +295,14 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
     }
 
     //create processes
-    pid_t pids[iop];
-    proc_arg_t proc_args[iop];
+//    pid_t pids[iop];
+//    proc_arg_t proc_args[iop];
+    pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
+    proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof*proc_args);
+    if(!pids || !proc_args){
+        ERROR("allocating memory on heap failed. Exiting..%s","");
+        return;
+    }
 
     int32_t t;
     int32_t i = 0;
@@ -318,7 +324,8 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
 
     if(iop==1){
         split_child_worker(proc_args[0], slow5_files, output_dir, meta, readsCount, metaSplitMethod, format_out, pressMethod, lossy);
-//        goto skip_forking;
+        free(proc_args);
+        free(pids);
         return;
     }
 
@@ -373,6 +380,8 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
             exit(EXIT_FAILURE);
         }
     }
+    free(proc_args);
+    free(pids);
 }
 
 int split_main(int argc, char **argv, struct program_meta *meta){
