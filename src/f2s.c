@@ -159,11 +159,9 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
 //    pid_t pids[iop];
 //    proc_arg_t proc_args[iop];
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
-    proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof*proc_args);
-    if(!pids || !proc_args){
-        ERROR("allocating memory on heap failed. Exiting..%s","");
-        return;
-    }
+    proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof(proc_arg_t));
+    MALLOC_CHK(pids);
+    MALLOC_CHK(proc_args);
 
     int32_t t;
     int32_t i = 0;

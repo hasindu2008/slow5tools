@@ -295,14 +295,10 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
     }
 
     //create processes
-//    pid_t pids[iop];
-//    proc_arg_t proc_args[iop];
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
-    proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof*proc_args);
-    if(!pids || !proc_args){
-        ERROR("allocating memory on heap failed. Exiting..%s","");
-        return;
-    }
+    proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof(proc_arg_t));
+    MALLOC_CHK(pids);
+    MALLOC_CHK(proc_args);
 
     int32_t t;
     int32_t i = 0;

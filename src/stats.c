@@ -48,7 +48,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     // No arguments given
     if (argc <= 1) {
 
-//        fprintf(stdout, "slow5 library version\t%s\n", SLOW5_LIB_VERSION);
+        fprintf(stdout, "slow5 library version\t%s\n", SLOW5_LIB_VERSION);
 
         std::string hdf5_environment = "";
         #ifdef HAVE_HDF5_SERIAL_HDF5_H
