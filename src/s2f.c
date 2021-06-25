@@ -285,10 +285,10 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
         INFO("Only %d proceses will be used",iop);
     }
     //create processes
-    std::vector<pid_t> pids_v(iop);
-    std::vector<proc_arg_t> proc_args_v(iop);
-    pid_t *pids = pids_v.data();
-    proc_arg_t *proc_args = proc_args_v.data();
+    pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
+    proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof(proc_arg_t));
+    MALLOC_CHK(pids);
+    MALLOC_CHK(proc_args);
 
     int32_t t;
     int32_t i = 0;
@@ -310,7 +310,8 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
 
     if(iop==1){
         s2f_child_worker(proc_args[0], slow5_files, output_dir, meta, readsCount);
-//        goto skip_forking;
+        free(proc_args);
+        free(pids);
         return;
     }
 
@@ -365,7 +366,8 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
             exit(EXIT_FAILURE);
         }
     }
-//    skip_forking:
+    free(proc_args);
+    free(pids);
 }
 
 int s2f_main(int argc, char **argv, struct program_meta *meta) {

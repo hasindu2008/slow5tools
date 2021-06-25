@@ -156,8 +156,12 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
     }
 
     //create processes
-    pid_t pids[iop];
-    proc_arg_t proc_args[iop];
+//    pid_t pids[iop];
+//    proc_arg_t proc_args[iop];
+    pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
+    proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof(proc_arg_t));
+    MALLOC_CHK(pids);
+    MALLOC_CHK(proc_args);
 
     int32_t t;
     int32_t i = 0;
@@ -179,7 +183,8 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
 
     if(iop==1){
         f2s_child_worker(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, proc_args[0], fast5_files, output_dir, meta, readsCount, arg_fname_out);
-//        goto skip_forking;
+        free(proc_args);
+        free(pids);
         return;
     }
 
@@ -234,7 +239,8 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
             exit(EXIT_FAILURE);
         }
     }
-    return;
+    free(proc_args);
+    free(pids);
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {

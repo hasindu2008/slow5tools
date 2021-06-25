@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run f2s, s2f, and again f2s and check if first produced slow5s are same as the last set.
 Usage1="f2s_s2f_integrity_test.sh"
-Usage2="f2s_s2f_integrity_test.sh [path to fast5 directory] [path to create a temporary directory][-c or --to (optional)]"
+Usage2="f2s_s2f_integrity_test.sh [path to fast5 directory] [path to create a temporary directory][-c or --to (optional) [clean_fscache -f (optional)]"
 
 # Relative path to "slow5/tests/"
 REL_PATH="$(dirname $0)/"
@@ -39,7 +39,9 @@ mkdir "$F2S_atm1_OUTPUT" || exit 1
 mkdir "$S2F_OUTPUT" || exit 1
 mkdir "$F2S_atm2_OUTPUT" || exit 1
 
-clean_fscache
+if [[ $* == *-f* ]];then
+  clean_fscache
+fi
 echo "-------------------f2s attempt 1-------------------"
 echo
 if ! $SLOW5_EXEC f2s $FAST5_DIR -d $F2S_atm1_OUTPUT --iop 64 $SLOW5_FORMAT; then
@@ -47,7 +49,9 @@ if ! $SLOW5_EXEC f2s $FAST5_DIR -d $F2S_atm1_OUTPUT --iop 64 $SLOW5_FORMAT; then
     exit 1
 fi
 
-clean_fscache
+if [[ $* == *-f* ]];then
+  clean_fscache
+fi
 echo
 echo "-------------------s2f attempt-------------------"
 echo
@@ -56,7 +60,9 @@ if ! $SLOW5_EXEC s2f $F2S_atm1_OUTPUT -d $S2F_OUTPUT --iop 64; then
     exit 1
 fi
 
-clean_fscache
+if [[ $* == *-f* ]];then
+  clean_fscache
+fi
 echo
 echo "-------------------f2s attempt 2-------------------"
 echo

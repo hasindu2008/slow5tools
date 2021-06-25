@@ -42,7 +42,7 @@ typedef struct {
     std::vector<std::string> slow5_files;
     int64_t n_batch;    // number of files
     slow5_fmt format_out;
-    slow5_press_method comslow5_press_method;
+    slow5_press_method press_method;
 } global_thread;
 
 /* argument wrapper for the multithreaded framework used for data processing */
@@ -78,7 +78,7 @@ void merge_slow5(pthread_arg* pthreadArg) {
             exit(EXIT_FAILURE);
         }
         struct slow5_rec *read = NULL;
-        struct slow5_press* compress = slow5_press_init(pthreadArg->core->comslow5_press_method);
+        struct slow5_press* compress = slow5_press_init(pthreadArg->core->press_method);
         int ret;
         while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
             read->read_group = pthreadArg->core->list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
@@ -447,7 +447,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     core.slow5_files = slow5_files;
     core.n_batch = slow5_files.size();
     core.format_out = format_out;
-    core.comslow5_press_method = pressMethod;
+    core.press_method = pressMethod;
 
     //measure read_group number assigning using multi-threads time
     realtime0 = slow5_realtime();

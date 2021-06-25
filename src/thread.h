@@ -28,11 +28,13 @@
 typedef struct {
     int32_t num_thread;
     slow5_file_t *fp;
+    slow5_fmt format_out;
+    slow5_press_method press_method;
 } core_t;
 
 struct Record {
-    slow5_rec_t *buf;
     int len;
+    void* buffer;
 };
 
 /* data structure for a batch of reads*/
