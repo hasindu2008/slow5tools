@@ -16,7 +16,6 @@ jobs:
       run: sudo apt-get install -y software-properties-common && sudo add-apt-repository ppa:git-core/ppa && sudo apt-get update -y && sudo apt-get install git -y
     - uses: actions/checkout@v2
       with:
-        ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
         submodules: recursive
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make
@@ -35,7 +34,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
     - name: build
@@ -49,7 +47,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev valgrind
     - name: build
@@ -65,7 +62,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
     - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
     - name: build-gcc
@@ -83,7 +79,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
     - name: install packages
       run: brew install hdf5 autoconf automake
     - name: build
@@ -98,7 +93,8 @@ jobs:
     - uses: docker://multiarch/ubuntu-core:arm64-bionic
       with:
         args: 'uname -a'
-    - uses: actions/checkout@v1
+      with:
+        submodules: recursive
     - uses: docker://multiarch/ubuntu-core:arm64-bionic
       with:
         args: >
