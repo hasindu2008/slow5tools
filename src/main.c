@@ -15,7 +15,7 @@
 // TODO put all in header file
 
 #define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
-#define SLOW5TOOLS_VERSION "%s " "0.1" "\n" // TODO change
+#define SLOW5TOOLS_VERSION "%s " "0.1.0" "\n" // TODO change
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
