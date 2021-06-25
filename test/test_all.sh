@@ -23,15 +23,16 @@ LINK=https://cloudstor.aarnet.edu.au/plus/s/9afW5kgWy1w8ZpQ/download
 TARBALL=download_dataset
 
 test -d $TEST_DIR && rm -r "$TEST_DIR"
-mkdir "$TEST_DIR" || exit 1
+mkdir "$TEST_DIR" || die "Creating $TEST_DIR failed"
 
 test -d $FAST5_DIR && rm -r $FAST5_DIR
-mkdir "$FAST5_DIR" || exit 1
+mkdir "$FAST5_DIR" || die "Creating $FAST5_DIR failed"
+
 wget -O $TARBALL $LINK || curl -o $TARBALL $LINK || die "Downloading dataset from $LINK failed."
 tar -xf $TARBALL -C $FAST5_DIR || die "Extracting $TARBALL failed"
 rm $TARBALL
 
-$REL_PATH/test_s2f_with_guppy.sh $FAST5_DIR $TEST_DIR $SLOW5TOOLS guppy_basecaller || exit 1
-$REL_PATH/f2s_s2f_integrity_test.sh $FAST5_DIR $TEST_DIR || exit 1
+$REL_PATH/test_s2f_with_guppy.sh $FAST5_DIR $TEST_DIR $SLOW5TOOLS guppy_basecaller || die "test_s2f_with_guppy failed"
+$REL_PATH/f2s_s2f_integrity_test.sh $FAST5_DIR $TEST_DIR || die "f2s_s2f_integrity_test failed"
 
 exit 0
