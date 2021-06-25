@@ -145,7 +145,7 @@ release: distclean
 	tar xf slow5tools-$(VERSION)-x86_64-linux-binaries.tar.gz
 	mv slow5tools-$(VERSION)/slow5tools slow5tools
 	test/test.sh
-#test/test.sh mem
+	test/test.sh mem
 
 install: $(BINARY)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
