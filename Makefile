@@ -137,13 +137,13 @@ release: distclean
 	make -j8
 	mkdir -p slow5tools-$(VERSION)
 	mkdir slow5tools-$(VERSION)/docs
-	mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux
+	mv slow5tools slow5tools-$(VERSION)/
 	cp -r README.md LICENSE slow5tools-$(VERSION)/
 	cp -r docs/commands.md slow5tools-$(VERSION)/docs/
-	tar -zcf slow5tools-$(VERSION)-binaries.tar.gz slow5tools-$(VERSION)
+	tar -zcf slow5tools-$(VERSION)-x86_64-linux-binaries.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
-	tar xf slow5tools-$(VERSION)-binaries.tar.gz
-	mv slow5tools-$(VERSION)/slow5tools_x86_64_linux slow5tools
+	tar xf slow5tools-$(VERSION)-x86_64-linux-binaries.tar.gz
+	mv slow5tools-$(VERSION)/slow5tools slow5tools
 	test/test.sh
 	test/test.sh mem
 
