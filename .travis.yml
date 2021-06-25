@@ -7,7 +7,7 @@ jobs:
     apt:
       packages:
         - zlib1g-dev
-  # include:
+  include:
   #   - name: "Ubuntu 14"
   #     dist: trusty
   #     addons:
