@@ -58,8 +58,6 @@ jobs:
       run: make test
     - name: test valgrind
       run: ./test/test.sh mem
-    - name: valgrind
-      run: ./test/test.sh mem
   ubuntu_20:
     name: Ubuntu 20
     runs-on: ubuntu-20.04
@@ -69,12 +67,14 @@ jobs:
         submodules: recursive
         ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install zlib1g-dev
-    - name: install packages
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
-    - name: build
+    - name: build-gcc
       run: autoreconf && ./configure && make -j8
-    - name: test
+    - name: test-gcc
+      run: make test
+    - name: build-clang
+      run: autoreconf && ./configure && make CC=clang CXX=clang++ -j8
+    - name: test-clang
       run: make test
   os_x:
     name: OSX
@@ -90,17 +90,33 @@ jobs:
       run: autoreconf --install  && ./configure && make -j8
     - name: test
       run: make test
-  os_x2:
-    name: OSX hdf5 hdf5 install script
-    runs-on: macos-10.15
+  arm64:
+    name: ubuntu arm
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - run: docker run --rm --privileged multiarch/qemu-user-static:register --reset
+    - uses: docker://multiarch/ubuntu-core:arm64-bionic
       with:
-        submodules: recursive
-        ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
-    - name: install packages
-      run: brew install gcc autoconf automake
-    - name: build
-      run: autoreconf --install && CC=gcc CXX=g++ CFLAGS="-Wno-implicit-function-declaration" ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
-    - name: test
-      run: make test
+        args: 'uname -a'
+    - uses: actions/checkout@v1
+    - uses: docker://multiarch/ubuntu-core:arm64-bionic
+      with:
+        args: >
+          bash -c "apt-get update &&
+          apt-get install -y zlib1g-dev gcc make zlib1g-dev libhdf5-dev g++ autoconf automake &&
+          ldd --version && gcc --version &&
+          autoreconf && ./configure && make && make test
+  # os_x2:
+  #   name: OSX hdf5 hdf5 install script
+  #   runs-on: macos-10.15
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     with:
+  #       submodules: recursive
+  #       ssh-key: ${{ secrets.SUBMODULE_CONTENT_PULL_KEY }}
+  #   - name: install packages
+  #     run: brew install gcc autoconf automake
+  #   - name: build
+  #     run: autoreconf --install && CC=gcc CXX=g++ CFLAGS="-Wno-implicit-function-declaration" ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
+  #   - name: test
+  #     run: make test
