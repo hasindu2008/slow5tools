@@ -47,7 +47,7 @@ When only one FAST5 file is being converted, `-o` specifies a single FILE to whi
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
 *   `-l, --lossless STR`:  
-    Retain information in auxilliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize.
+    Retain information in auxilliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize. *IMPORTANT: Two recently introduced fields in latest FAST5 are not stored even if -l true is specified : 1. pore_type which is an empty attribute and 2. end_reason which is still not consistent*.
 * `-a, --allow`:  
    By default f2s will not accept an indiviudal multi-fast5 file or an indiviudal single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an indiviudal multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user is happy to lose the original run IDs.
 *  `-h, --help`:  
@@ -124,13 +124,17 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 ```
 
 * `-l, --list FILE`:  
-   List of read ids provided as a single-column text file with one read id per line.
+         List of read ids provided as a single-column text file with one read id per line.
 * `-t, --threads INT`:  
-   Number of threads.
-* `-K, --batchsize`
-   The batch size. This is the number of records to the memory at once. An increased batch size imrpoves multi-threaded performance at cost of higher RAM.
+         Number of threads.
+* `-K, --batchsize`:  
+         The batch size. This is the number of records on the memory at once. An increased batch size improves multi-threaded performance at cost of higher RAM.
+*  `--to format_type`:  
+         Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
+*  `-c, --compress compression_type`: 
+          Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `gzip` for gzip-based compression [default value: gzip]. Assumes `--to blow5`.
 *  `-h`, `--help`:  
-   Prints the help menu.
+         Prints the help menu.
 
 
 ### split
