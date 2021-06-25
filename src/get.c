@@ -124,7 +124,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethod = SLOW5_COMPRESS_GZIP;
 
-    size_t read_id_batch_capacity = READ_ID_BATCH_CAPACITY;
+    int64_t read_id_batch_capacity = READ_ID_BATCH_CAPACITY;
 
     int opt;
     // Parse options
@@ -259,14 +259,14 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         core.press_method = pressMethod;
 
         db_t db = { 0 };
-        size_t cap_ids = READ_ID_INIT_CAPACITY;
+        int64_t cap_ids = READ_ID_INIT_CAPACITY;
         db.read_id = (char **) malloc(cap_ids * sizeof *db.read_id);
         db.read_record = (struct Record *) malloc(cap_ids * sizeof *db.read_record);
 
         bool end_of_file = false;
         while (!end_of_file) {
 
-            size_t num_ids = 0;
+            int64_t num_ids = 0;
 
             while (num_ids < read_id_batch_capacity) {
 
@@ -309,7 +309,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     num_ids - db.n_err, db.n_err);
 
             // Print records
-            for (size_t i = 0; i < num_ids; ++ i) {
+            for (int64_t i = 0; i < num_ids; ++ i) {
                 void *buffer = db.read_record[i].buffer;
                 int len = db.read_record[i].len;
 
