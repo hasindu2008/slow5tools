@@ -2,9 +2,9 @@ name: SLOW5 C/C++ CI Github
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, dev ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, dev ]
 
 jobs:
   ubuntu_14:
