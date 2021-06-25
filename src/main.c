@@ -163,7 +163,7 @@ int main(const int argc, char **argv){
                     if (meta.verbosity_level >= LOG_GOSSIP) {
                         VERBOSE("displaying version information%s","");
                     }
-                    fprintf(stdout, SLOW5TOOLS_VERSION, argv[0]);
+                    fprintf(stdout, SLOW5TOOLS_VERSION, "slow5tools");
 
                     ret = EXIT_SUCCESS;
                     break_flag = true;
