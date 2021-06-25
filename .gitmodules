@@ -1,6 +1,0 @@
-[submodule "slow5lib"]
-	path = slow5lib
-	url = git@github.com:hasindu2008/slow5lib.git
-[submodule "Submod"]
-	url = https://github.com/hasindu2008/slow5lib.git
-	branch = master
