@@ -1,0 +1,31 @@
+---
+name: "tagged-release"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  ubuntu_14:
+    name: ubuntu_14
+    runs-on: ubuntu-16.04
+    container: ubuntu:14.04
+    steps:
+    - name: install git
+      run: sudo apt-get install -y software-properties-common && sudo add-apt-repository ppa:git-core/ppa && sudo apt-get update -y && sudo apt-get install git -y
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make
+    - name: env
+      run: lsb_release -a &&  ldd --version && gcc --version && g++ --version
+    - name: build
+      run: make release
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        prerelease: false
+        files: |
+          *.tar.gz

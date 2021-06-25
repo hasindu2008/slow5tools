@@ -121,6 +121,32 @@ binary: distclean
 	tar -zcf slow5tools-$(VERSION)-binaries.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 
+release: distclean
+	mkdir -p slow5tools-$(VERSION)
+	mkdir -p slow5tools-$(VERSION)/scripts slow5tools-$(VERSION)/docs slow5tools-$(VERSION)/slow5lib
+	autoreconf
+	cp -r README.md LICENSE Makefile configure.ac config.mk.in \
+		installdeps.mk configure build src slow5tools-$(VERSION)
+	cp scripts/install-hdf5.sh slow5tools-$(VERSION)/scripts
+	cp -r docs/commands.md slow5tools-$(VERSION)/docs/
+	cp -r slow5lib/lib slow5lib/include slow5lib/src  slow5lib/Makefile slow5lib/LICENSE slow5tools-$(VERSION)/slow5lib
+	tar -zcf slow5tools-$(VERSION)-release.tar.gz slow5tools-$(VERSION)
+	rm -rf slow5tools-$(VERSION)
+	scripts/install-hdf5.sh
+	./configure --enable-localhdf5
+	make -j8
+	mkdir -p slow5tools-$(VERSION)
+	mkdir slow5tools-$(VERSION)/docs
+	mv slow5tools slow5tools-$(VERSION)/slow5tools_x86_64_linux
+	cp -r README.md LICENSE slow5tools-$(VERSION)/
+	cp -r docs/commands.md slow5tools-$(VERSION)/docs/
+	tar -zcf slow5tools-$(VERSION)-binaries.tar.gz slow5tools-$(VERSION)
+	rm -rf slow5tools-$(VERSION)
+	tar xf slow5tools-$(VERSION)-binaries.tar.gz
+	mv slow5tools-$(VERSION)/slow5tools_x86_64_linux slow5tools
+	test/test.sh
+	test/test.sh mem
+
 install: $(BINARY)
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 #mkdir -p $(DESTDIR)$(PREFIX)/share/man/man1
