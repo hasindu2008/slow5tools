@@ -26,7 +26,7 @@
     "\n" \
     "OPTIONS:\n" \
     "    --to [format_type]                 output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
-    "    -c, --compress [compression_type]  convert to compressed blow5. [default: gzip]\n" \
+    "    -c, --compress [compression_type]  convert to compressed blow5. [default: zlib]\n" \
     "    -d, --out-dir [STR]                output directory where slow5files are written to\n" \
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -p, --iop [INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
@@ -324,7 +324,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             case 'c':
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
-                }else if(strcmp(optarg,"gzip")==0){
+                }else if(strcmp(optarg,"zlib")==0){
                     pressMethod = SLOW5_COMPRESS_GZIP;
                 }else{
                     ERROR("Incorrect compression type%s", "");

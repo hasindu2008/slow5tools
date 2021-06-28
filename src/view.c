@@ -13,7 +13,7 @@
     "OPTIONS:\n" \
     "    -f, --from=[FORMAT]        specify input file format\n" \
     "    -t, --to=[FORMAT]          specify output file format\n" \
-    "    -c, --compress=[METHOD]    specify output compression method -- gzip (only available for format blow5)\n" \
+    "    -c, --compress=[METHOD]    specify output compression method -- zlib (only available for format blow5)\n" \
     "    -o, --output=[FILE]        output to FILE -- stdout\n" \
     "    -h, --help                 display this message and exit\n" \
     "FORMATS:\n" \
@@ -22,7 +22,7 @@
     "    fast5  (not implemented yet)\n" \
     "METHODS:\n" \
     "    none\n" \
-    "    gzip -- default\n"
+    "    zlib -- default\n"
 
 enum view_fmt {
     // The first formats must match the order of enum slow5_fmt
@@ -85,7 +85,7 @@ slow5_press_method_t name_to_slow5_press_method(const char *name) {
 
     if (strcmp(name, "none") == 0) {
         comp = SLOW5_COMPRESS_NONE;
-    } else if (strcmp(name, "gzip") == 0) {
+    } else if (strcmp(name, "zlib") == 0) {
         comp = SLOW5_COMPRESS_GZIP;
     }
 
