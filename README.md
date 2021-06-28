@@ -14,6 +14,8 @@ Detailed benchmarking experiments have shown that SLOW5 format is up to X-fold f
 <!--- [![Build Status](https://travis-ci.com/hasindu2008/slow5.svg?token=pN7xnsxgLrRxbAn8WLVQ&branch=master)](https://travis-ci.com/hasindu2008/slow5) -->
 
 [![SLOW5 C/C++ CI Github](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Github/badge.svg)](https://github.com/hasindu2008/slow5tools/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Github%22)
+  
+Full documentation: https://hasindu2008.github.io/slow5tools  
 
 ## Quick start
 
