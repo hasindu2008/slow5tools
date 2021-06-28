@@ -7,3 +7,5 @@
 [Example workflows](workflows.md)
 
 [Frequently asked questions](faq.md)
+
+[SLOW5 specification](https://github.com/hasindu2008/slow5specs)
