@@ -13,17 +13,16 @@ if [[ "$#" -lt 4 ]]; then
 	exit 1
 fi
 
-# terminate script
-die() {
-	echo "$1" >&2
-	echo
-	exit 1
-}
-
-
 NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+
+# terminate script
+die() {
+    echo -e "${RED}$1${NC}" >&2
+    echo
+    exit 1
+}
 
 FAST5_DIR=$1
 TEST_DIR=$2/s2f_with_guppy_test
