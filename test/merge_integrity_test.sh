@@ -15,6 +15,13 @@ NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 
+# terminate script
+die() {
+    echo -e "${RED}$1${NC}" >&2
+    echo
+    exit 1
+}
+
 if [ "$1" = 'mem' ]; then
     SLOW5_EXEC="valgrind --leak-check=full --error-exitcode=1 $REL_PATH/../slow5tools"
 else
@@ -22,25 +29,18 @@ else
 fi
 
 OUTPUT_DIR="$REL_PATH/data/out/merge"
-test -d  $OUTPUT_DIR
-rm -r $OUTPUT_DIR
-mkdir $OUTPUT_DIR
+test -d  $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
+mkdir $OUTPUT_DIR || die "Creating $OUTPUT_DIR failed"
 
 INPUT_FILE=$REL_PATH/data/exp/merge/slow5s
 INPUT_FILES="$INPUT_FILE/rg0.slow5 $INPUT_FILE/rg1.slow5 $INPUT_FILE/rg2.slow5 $INPUT_FILE/rg3.slow5"
 
 echo "-------------------tesetcase 0: slow5tools version-------------------"
-if ! $SLOW5_EXEC --version; then
-    echo -e "${RED}tesetcase 0: slow5tools version failed${NC}"
-    exit 1
-fi
+$SLOW5_EXEC --version || die "tesetcase 0: slow5tools version failed"
 
 echo
 echo "-------------------tesetcase 1: lossless merging-------------------"
-if ! $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --to slow5; then
-    echo -e "${RED}tesetcase 1: lossless merging failed${NC}"
-    exit 1
-fi
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --to slow5 || die "tesetcase 1: lossless merging failed"
 echo "comparing merged_output and merged_expected"
 sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $OUTPUT_DIR/merged_expected_sorted.slow5
 sort $OUTPUT_DIR/merged_output.slow5 > $OUTPUT_DIR/merged_output_sorted.slow5

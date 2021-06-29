@@ -8,16 +8,17 @@
 
 Usage="test_all.sh [link optional]"
 
-# terminate script
-die() {
-	echo "$1" >&2
-	echo
-	exit 1
-}
 
 NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+
+# terminate script
+die() {
+    echo -e "${RED}$1${NC}" >&2
+    echo
+    exit 1
+}
 
 SLOW5TOOLS=./slow5tools
 GUPPY_BASECALLER=guppy_basecaller
@@ -41,5 +42,7 @@ rm $TARBALL
 
 $REL_PATH/test_s2f_with_guppy.sh $FAST5_DIR $TEST_DIR $SLOW5TOOLS guppy_basecaller || die "test_s2f_with_guppy failed"
 $REL_PATH/f2s_s2f_integrity_test.sh $FAST5_DIR $TEST_DIR || die "f2s_s2f_integrity_test failed"
+
+rm -r $TEST_DIR || die "Removing $TEST_DIR failed"
 
 exit 0
