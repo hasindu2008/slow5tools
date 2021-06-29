@@ -26,7 +26,7 @@
     "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
     "    -c, --compress [compression_type]  convert to compressed blow5 [default: zlib]\n" \
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
-    "    ---tmp-prefix [STR]                path to crete a directory to write temporary files"                   \
+    "    ---tmp-prefix [STR]                path to crete a directory to write temporary files\n"                   \
     "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
     "    -t, --threads [INT]                number of threads [default: 4]\n"        \
     "    -h, --help                         display this message and exit\n" \
