@@ -20,7 +20,7 @@
     "\n" \
     "OPTIONS:\n" \
     "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
-    "    -c, --compress [compression_type]  convert to compressed blow5 [default: gzip]\n" \
+    "    -c, --compress [compression_type]  convert to compressed blow5 [default: zlib]\n" \
     "    -d, --out-dir [STR]                output directory where files are written to\n" \
     "    -f, --files [INT]                  split reads into n files evenly\n"              \
     "    -r, --reads [INT]                  split into n reads, i.e., each file will have n reads\n"              \
@@ -467,7 +467,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'c':
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
-                }else if(strcmp(optarg,"gzip")==0){
+                }else if(strcmp(optarg,"zlib")==0){
                     pressMethod = SLOW5_COMPRESS_GZIP;
                 }else{
                     ERROR("Incorrect compression type%s", "");

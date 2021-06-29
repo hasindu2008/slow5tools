@@ -25,3 +25,5 @@ unit_test_out.txt
 data/big/
 data/out/merge/
 data/out/split/
+data/out/slow5tools_get/
+test_all_dir/

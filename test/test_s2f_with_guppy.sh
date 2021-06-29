@@ -13,6 +13,14 @@ if [[ "$#" -lt 4 ]]; then
 	exit 1
 fi
 
+# terminate script
+die() {
+	echo "$1" >&2
+	echo
+	exit 1
+}
+
+
 NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -29,27 +37,27 @@ GUPPY_OUTPUT_S2F=$TEST_DIR/guppy_output_s2f
 
 # create test directory
 test -d  $TEST_DIR && rm -r $TEST_DIR
-mkdir $TEST_DIR
+mkdir $TEST_DIR || die "mkdir $TEST_DIR failed"
 
 IOP=40
 
-$SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP
-$SLOWTOOLS s2f $F2S_OUTPUT_DIR -d $S2F_OUTPUT_DIR --iop $IOP
+$SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP || die "slow5tools f2s failed"
+$SLOWTOOLS s2f $F2S_OUTPUT_DIR -d $S2F_OUTPUT_DIR --iop $IOP || die "slow5tools s2f failed"
 
-$GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $FAST5_DIR -s $GUPPY_OUTPUT_ORIGINAL -r --device cuda:all
-$GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $S2F_OUTPUT_DIR -s $GUPPY_OUTPUT_S2F -r --device cuda:all
+$GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $FAST5_DIR -s $GUPPY_OUTPUT_ORIGINAL -r --device cuda:all || die "Guppy failed"
+$GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $S2F_OUTPUT_DIR -s $GUPPY_OUTPUT_S2F -r --device cuda:all || die "Guppy failed"
 
 PASS_FAIL_STRUCTURE=0
 
 if test -d $GUPPY_OUTPUT_S2F/pass; then
     PASS_FAIL_STRUCTURE=1
 
-    cat $GUPPY_OUTPUT_S2F/pass/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_s2f_pass_sorted.fastq
-    cat $GUPPY_OUTPUT_ORIGINAL/pass/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_original_pass_sorted.fastq
+    cat $GUPPY_OUTPUT_S2F/pass/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_s2f_pass_sorted.fastq || die "Cat failed"
+    cat $GUPPY_OUTPUT_ORIGINAL/pass/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_original_pass_sorted.fastq || die "Cat failed"
 
     echo "diff sorted pass files"
     diff guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq &>/dev/null
-    
+
 
     if [ $? -ne 0 ]; then
       echo -e "${RED}ERROR: diff failed for guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq files ${NC}"
@@ -86,6 +94,8 @@ if [ $PASS_FAIL_STRUCTURE -eq 0 ]; then
     fi
     echo -e "${GREEN}diff passed${NC}"
 fi
+
+rm -f guppy_output_original_sorted.fastq guppy_output_s2f_sorted.fastq
 
 exit
 

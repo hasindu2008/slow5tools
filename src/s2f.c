@@ -217,7 +217,7 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
         hsize_t maxdims[] = {H5S_UNLIMITED};
         hid_t dataspace_id = H5Screate_simple(1, dims, maxdims);
 
-        //Create the dataset creation property list, add the gzip compression filter and set the chunk size.
+        //Create the dataset creation property list, add the zlib compression filter and set the chunk size.
         hsize_t chunk[] = {nsample};
         hid_t dcpl = H5Pcreate (H5P_DATASET_CREATE);
         status = H5Pset_chunk (dcpl, 1, chunk);

@@ -114,16 +114,16 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     if(slow5File->format==SLOW5_FORMAT_UNKNOWN){
         file_format = "FORMAT_UNKNOWN";
     }else if(slow5File->format==SLOW5_FORMAT_ASCII){
-        file_format = "FORMAT_ASCII";
+        file_format = "SLOW5 ASCII";
     }else if(slow5File->format==SLOW5_FORMAT_BINARY){
-        file_format = "FORMAT_BINARY";
+        file_format = "BLOW5";
     }
 
     std::string compression_method = "compression error";
     if(slow5File->compress->method==SLOW5_COMPRESS_NONE){
-        compression_method = "SLOW5_COMPRESS_NONE";
+        compression_method = "none";
     }else if(slow5File->compress->method==SLOW5_COMPRESS_GZIP){
-        compression_method = "SLOW5_COMPRESS_GZIP";
+        compression_method = "zlib";
     }
 
     unsigned int record_count = 0;

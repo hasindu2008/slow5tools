@@ -8,6 +8,13 @@
 
 Usage="test_all.sh [link optional]"
 
+# terminate script
+die() {
+	echo "$1" >&2
+	echo
+	exit 1
+}
+
 NC='\033[0m' # No Color
 RED='\033[0;31m'
 GREEN='\033[0;32m'
