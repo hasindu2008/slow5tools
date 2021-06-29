@@ -32,17 +32,23 @@ if [ ! -e "$BLOW5_FILE" ]; then
     echo 'Creating blow5'
 	test -d tmp/ && rm -rf tmp/
 	mkdir tmp/
-    command time -v "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -d tmp/ --iop 64  2> f2s.blow5.stderr
-    command time -v "$SLOW5TOOLS_PATH"  merge -t64 tmp/ -o "$BLOW5_FILE" 2>> f2s.blow5.stderr
+    command time -v "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -d tmp/ --iop 64 --to blow5 -c none 2> f2s.blow5.stderr
+    command time -v "$SLOW5TOOLS_PATH"  merge -t64 tmp/ -o "$BLOW5_FILE" --to blow5 -c none 2>> f2s.blow5.stderr
 	rm -rf tmp/
 fi
 if [ ! -e "$SLOW5_FILE" ]; then
     echo 'Creating slow5'
-    command time -v "$SLOW5TOOLS_PATH" view "$BLOW5_FILE" --to slow5 > "$SLOW5_FILE" 2> f2s.slow5.stderr
+    command time -v "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -d tmp/ --iop 64  --to slow5 2> f2s.slow5.stderr
+    command time -v "$SLOW5TOOLS_PATH"  merge -t64 tmp/ -o "$SLOW5_FILE" --to slow5  2>> f2s.slow5.stderr
+     rm -rf tmp/	
+    #command time -v "$SLOW5TOOLS_PATH" view "$BLOW5_FILE" --to slow5 > "$SLOW5_FILE" 2> f2s.slow5.stderr
 fi
 if [ ! -e "$CLOW5_FILE" ]; then
     echo 'Creating clow5'
-    command time -v "$SLOW5TOOLS_PATH" view "$BLOW5_FILE" --to blow5 -c gzip > "$CLOW5_FILE" 2> f2s.clow5.stderr
+    command time -v "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -d tmp/ --iop 64 --to blow5 -c zlib 2> f2s.clow5.stderr
+    command time -v "$SLOW5TOOLS_PATH"  merge -t64 tmp/ -o "$CLOW5_FILE" --to blow5 -c zlib 2>> f2s.clow5.stderr
+    rm -rf tmp/
+    #command time -v "$SLOW5TOOLS_PATH" view "$BLOW5_FILE" --to blow5 -c zlib > "$CLOW5_FILE" 2> f2s.clow5.stderr
 fi
 
 # Create index files if not already there
