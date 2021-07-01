@@ -8,7 +8,7 @@ SLOW5 is a new file format for signal data from Oxford Nanopore Technologies (ON
 
 SLOW5 is a simple tab-separated values (TSV) file encoding metadata and time-series signal data for one nanopore read per line, with global metadata stored in a file header. Parallel file access is facilitated by an accompanying index file, also in TSV format, that specifies the position of each read (in Bytes) within the main SLOW5 file. SLOW5 can be encoded in human-readable ASCII format, or a more compact and efficient binary format (BLOW5) - this is analogous to the seminal SAM/BAM format for storing DNA sequence alignments. The BLOW5 binary format can be compressed using standard zlib compression, thereby minimising the data storage footprint while still permitting efficient parallel access.
 
-Detailed benchmarking experiments have shown that SLOW5 format is up to X-fold faster and X% smaller than FAST5 [SLOW5 paper].
+[Detailed benchmarking experiments have shown that SLOW5 format is up to an order of magnitude and 25% smaller than FAST5](https://www.biorxiv.org/content/10.1101/2021.06.29.450255v1).
 
 ## Quick start
 
