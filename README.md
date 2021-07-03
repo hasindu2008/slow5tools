@@ -102,7 +102,7 @@ slow5tools index file.blow5
 slow5tools get file.blow5 readid1 readid2
 
 #split a blow5 file into separate blow5 files based on the read groups
-slow5tools split file.blow5 -d blow5_dir -r
+slow5tools split file.blow5 -d blow5_dir -g
 #split a blow5 file (single read group) into separate blow5 files such that there are 4000 reads in one file
 slow5tools split file.blow5 -d blow5_dir -r 4000
 
