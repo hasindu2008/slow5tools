@@ -39,19 +39,21 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
     if (record == NULL || len < 0) {
         fprintf(stderr, "Error locating %s\n", id);
         ++ db->n_err;
-    }else{
-        size_t record_size;
-        struct slow5_press* compress = slow5_press_init(core->press_method);
-        db->read_record[i].buffer = slow5_rec_to_mem(record,core->fp->header->aux_meta, core->format_out, compress, &record_size);
-        db->read_record[i].len = record_size;
+    }else {
+        if (core->benchmark == false){
+            size_t record_size;
+            struct slow5_press* compress = slow5_press_init(core->press_method);
+            db->read_record[i].buffer = slow5_rec_to_mem(record,core->fp->header->aux_meta, core->format_out, compress, &record_size);
+            db->read_record[i].len = record_size;
+            slow5_press_free(compress);
+        }
         slow5_rec_free(record);
-        slow5_press_free(compress);
     }
     free(id);
 }
 
 bool fetch_record(slow5_file_t *fp, const char *read_id,
-        char **argv, struct program_meta *meta, slow5_fmt format_out, slow5_press_method press_method) {
+        char **argv, struct program_meta *meta, slow5_fmt format_out, slow5_press_method press_method, bool benchmark) {
 
     bool success = true;
 
@@ -66,10 +68,12 @@ bool fetch_record(slow5_file_t *fp, const char *read_id,
         success = false;
 
     } else {
-        struct slow5_press* compress = slow5_press_init(press_method);
-        slow5_rec_fwrite(stdout,record,fp->header->aux_meta, format_out, compress);
+        if (benchmark == false){
+            struct slow5_press* compress = slow5_press_init(press_method);
+            slow5_rec_fwrite(stdout,record,fp->header->aux_meta, format_out, compress);
+            slow5_press_free(compress);
+        }
         slow5_rec_free(record);
-        slow5_press_free(compress);
     }
 
     return success;
@@ -110,10 +114,12 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         {"list", required_argument, NULL, 'l'},  //2
         {"threads", required_argument, NULL, 't' }, //3
         {"help", no_argument, NULL, 'h' }, //4
+        {"benchmark", no_argument, NULL, 'e' }, //5
         {NULL, 0, NULL, 0 }
     };
 
     bool read_stdin = false;
+    bool benchmark = false;
 
     // Default options
     int32_t num_threads = DEFAULT_NUM_THREADS;
@@ -129,7 +135,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     int opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:K:l:t:h", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:K:l:t:he", long_opts, NULL)) != -1) {
 
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
@@ -160,6 +166,9 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 break;
             case 't':
                 arg_num_threads = optarg;
+                break;
+            case 'e':
+                benchmark = true;
                 break;
             case 'K':
                 read_id_batch_capacity = atoi(optarg);
@@ -258,6 +267,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         core.fp = fp;
         core.format_out = format_out;
         core.press_method = pressMethod;
+        core.benchmark = benchmark;
 
         db_t db = { 0 };
         int64_t cap_ids = READ_ID_INIT_CAPACITY;
@@ -310,18 +320,19 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     num_ids - db.n_err, db.n_err);
 
             // Print records
-            for (int64_t i = 0; i < num_ids; ++ i) {
-                void *buffer = db.read_record[i].buffer;
-                int len = db.read_record[i].len;
+            if(benchmark == false){
+                for (int64_t i = 0; i < num_ids; ++ i) {
+                    void *buffer = db.read_record[i].buffer;
+                    int len = db.read_record[i].len;
 
-                if (buffer == NULL || len < 0) {
-                    ret = EXIT_FAILURE;
-                } else {
-                    fwrite(buffer,1,len,stdout);
-                    free(buffer);
+                    if (buffer == NULL || len < 0) {
+                        ret = EXIT_FAILURE;
+                    } else {
+                        fwrite(buffer,1,len,stdout);
+                        free(buffer);
+                    }
                 }
             }
-
         }
 
         // Print total time to read slow5
@@ -334,7 +345,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     } else {
 
         for (int i = optind + 1; i < argc; ++ i){
-            bool success = fetch_record(fp, argv[i], argv, meta, format_out, pressMethod);
+            bool success = fetch_record(fp, argv[i], argv, meta, format_out, pressMethod, benchmark);
             if (!success) {
                 ret = EXIT_FAILURE;
             }

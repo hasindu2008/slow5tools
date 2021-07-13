@@ -30,6 +30,7 @@ typedef struct {
     slow5_file_t *fp;
     slow5_fmt format_out;
     slow5_press_method press_method;
+    bool benchmark;
 } core_t;
 
 struct Record {
