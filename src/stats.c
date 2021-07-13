@@ -20,7 +20,7 @@
     "\n" \
     "If no argument is given details about slow5tools is printed\n" \
     "OPTIONS:\n" \
-    "    -h, -  -help         display this message and exit\n" \
+    "    -h, --help         display this message and exit\n" \
 
 
 
@@ -126,18 +126,26 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         compression_method = "zlib";
     }
 
+    fprintf(stdout, "file format\t%s\n", file_format.c_str());
+    fprintf(stdout, "compression method\t%s\n", compression_method.c_str());
+    fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
+
+    INFO("counting number of slow5 records...%s","");
+
     unsigned int record_count = 0;
     struct slow5_rec *read = NULL;
     int ret;
     while ((ret = slow5_get_next(&read, slow5File)) >= 0) {
         record_count++;
     }
+    if(ret != SLOW5_ERR_EOF){
+        ERROR("Error reading the file.%s","");
+        return EXIT_FAILURE;
+    }
     slow5_rec_free(read);
     slow5_close(slow5File);
 
-    fprintf(stdout, "file format\t%s\n", file_format.c_str());
-    fprintf(stdout, "compression method\t%s\n", compression_method.c_str());
-    fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
+
     fprintf(stdout,"number of records\t%u\n", record_count);
 
     return EXIT_SUCCESS;
