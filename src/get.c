@@ -39,13 +39,14 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
     if (record == NULL || len < 0) {
         fprintf(stderr, "Error locating %s\n", id);
         ++ db->n_err;
+    }else{
+        size_t record_size;
+        struct slow5_press* compress = slow5_press_init(core->press_method);
+        db->read_record[i].buffer = slow5_rec_to_mem(record,core->fp->header->aux_meta, core->format_out, compress, &record_size);
+        db->read_record[i].len = record_size;
+        slow5_rec_free(record);
+        slow5_press_free(compress);
     }
-    size_t record_size;
-    struct slow5_press* compress = slow5_press_init(core->press_method);
-    db->read_record[i].buffer = slow5_rec_to_mem(record,core->fp->header->aux_meta, core->format_out, compress, &record_size);
-    db->read_record[i].len = record_size;
-    slow5_rec_free(record);
-    slow5_press_free(compress);
     free(id);
 }
 
