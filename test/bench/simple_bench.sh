@@ -4,8 +4,12 @@
 
 SLOW5TOOLS_PATH='slow5tools'
 
-DATA_DIR='/data/slow5-testdata/GZFN211103/'
+DATA_DIR='/data/slow5-testdata/NA12878_prom_subsample/'
 READID_FILE="$DATA_DIR/reads.list"
+
+#to generate READID_FILE
+#samtools view -F4 reads.bam | awk '{print $1}' > ${READID_FILE}
+
 
 FAST5_DIR="$DATA_DIR/fast5"
 SLOW5_FILE="$DATA_DIR/slow5/bench.slow5"
@@ -40,7 +44,7 @@ if [ ! -e "$SLOW5_FILE" ]; then
     echo 'Creating slow5'
     command time -v "$SLOW5TOOLS_PATH" f2s "$FAST5_DIR" -d tmp/ --iop 64  --to slow5 2> f2s.slow5.stderr
     command time -v "$SLOW5TOOLS_PATH"  merge -t64 tmp/ -o "$SLOW5_FILE" --to slow5  2>> f2s.slow5.stderr
-     rm -rf tmp/	
+     rm -rf tmp/
     #command time -v "$SLOW5TOOLS_PATH" view "$BLOW5_FILE" --to slow5 > "$SLOW5_FILE" 2> f2s.slow5.stderr
 fi
 if [ ! -e "$CLOW5_FILE" ]; then
@@ -73,7 +77,7 @@ i=1
 while [ "$i" -le "32" ]; do
    clean_fscache
    echo "Extracting with $i threads"
-   command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$SLOW5_FILE" < "$READID_FILE" > /dev/null 2> "slow5.bench.stderr$i"
+   command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$SLOW5_FILE" --benchmark < "$READID_FILE" > /dev/null 2> "slow5.bench.stderr$i"
    i=$((i*2))
 done
 
@@ -83,7 +87,7 @@ i=1
 while [ "$i" -le "32" ]; do
    clean_fscache
    echo "Extracting with $i threads"
-   command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$BLOW5_FILE" < "$READID_FILE" > /dev/null 2> "blow5.bench.stderr$i"
+   command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$BLOW5_FILE" --benchmark < "$READID_FILE" > /dev/null 2> "blow5.bench.stderr$i"
    i=$((i*2))
 done
 
@@ -93,7 +97,7 @@ i=1
 while [ "$i" -le "32" ]; do
     clean_fscache
     echo "Extracting with $i threads"
-    command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$CLOW5_FILE" < "$READID_FILE" > /dev/null 2> "clow5.bench.stderr$i"
+    command time -v "$SLOW5TOOLS_PATH" get "-t$i" "$CLOW5_FILE" --benchmark < "$READID_FILE" > /dev/null 2> "clow5.bench.stderr$i"
     i=$((i*2))
 done
 
