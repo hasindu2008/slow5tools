@@ -202,13 +202,20 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 WARNING("tracking_id_run_id attribute value could not be set in the slow5 header %s", "");
             }
         }else if(*(operator_data->flag_allow_run_id_mismatch)){
-            if(*(operator_data->warning_flag_allow_run_id_mismatch)==WARNING_LIMIT){
-                WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT);
+            std::string key = "rm_" + std::string(name); //runid mismatch
+            auto search = operator_data->warning_map->find(key);
+            if (search != operator_data->warning_map->end()) {
+                if(search->second < WARNING_LIMIT){
+                    search->second = search->second+1;
+                    WARNING("[%s] Mismatch: Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header.", SLOW5_FILE_FORMAT_SHORT);
+                }else if(search->second == WARNING_LIMIT){
+                    WARNING("[%s] Mismatch: Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT);
+                    search->second = WARNING_LIMIT+1;
+                }
+            } else {
+                WARNING("[%s] Mismatch: Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header.", SLOW5_FILE_FORMAT_SHORT);
+                operator_data->warning_map->insert({key,1});
             }
-            else if(*(operator_data->warning_flag_allow_run_id_mismatch)<WARNING_LIMIT){
-                WARNING("[%s] Different run_ids found in a single fast5 file. Arbitrary run_id will be set in slow5 header.", SLOW5_FILE_FORMAT_SHORT);
-            }
-            *(operator_data->warning_flag_allow_run_id_mismatch) = *(operator_data->warning_flag_allow_run_id_mismatch) + 1;
         }else{
             ERROR("Different run_ids found in a single fast5 file. Cannot create a single header slow5/blow5. Please use --out-dir option.If you are using single-fast5 files make sure they have the same run_id%s", "");
             exit(EXIT_FAILURE);
@@ -585,7 +592,6 @@ read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, slow5_press_method pr
     int flag_run_id = 0;
     int flag_lossy = lossy;
     size_t zero0 = 0;
-    size_t zero2 = 0;
 
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
@@ -594,7 +600,6 @@ read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, slow5_press_method pr
     tracker.flag_write_header = &write_header_flag;
     tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
     tracker.nreads = &zero0;
-    tracker.warning_flag_allow_run_id_mismatch = &zero2;
     tracker.slow5_record = slow5_rec_init();
     tracker.group_name = "";
 
