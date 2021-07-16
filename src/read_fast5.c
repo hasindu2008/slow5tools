@@ -208,7 +208,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
     }
     else if(strcmp("duration",name)==0 && H5Tclass==H5T_INTEGER){
-        operator_data->slow5_record->len_raw_signal = value.attr_int;
+//        operator_data->slow5_record->len_raw_signal = value.attr_int;
     }
     else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
         if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "read_number", &value.attr_int) != 0){
@@ -533,7 +533,7 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
         H5Dclose(dset);
         return -1;
     }
-
+    slow5_record->len_raw_signal = h5_nsample;
     slow5_record->raw_signal = (int16_t *) malloc(h5_nsample * sizeof *(slow5_record->raw_signal));
     hid_t status = H5Dread(dset, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, slow5_record->raw_signal);
 
