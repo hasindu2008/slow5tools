@@ -71,7 +71,6 @@ struct operator_obj {
     int *flag_allow_run_id_mismatch;
     hsize_t* num_read_groups;
     size_t* nreads;
-    size_t* warning_flag_allow_run_id_mismatch;
     slow5_file_t* slow5File;
     std::unordered_map<std::string, uint32_t>* warning_map;
 };
