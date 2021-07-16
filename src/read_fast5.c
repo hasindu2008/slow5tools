@@ -108,7 +108,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 }
             }
             if (value.attr_string && !value.attr_string[0]) {
-                std::string key = "em_" + std::string(name);
+                std::string key = "em_" + std::string(name); //empty
                 auto search = operator_data->warning_map->find(key);
                 if (search != operator_data->warning_map->end()) {
                     if(search->second < WARNING_LIMIT){
@@ -171,7 +171,20 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         } else if (H5Tclass == H5T_FLOAT) {
             char buf[50];
             sprintf(buf,"%.1f", value.attr_double);
-            WARNING("Converting the attribute %s/%s from H5T_FLOAT to string ",operator_data->group_name,name);
+            std::string key = "co_" + std::string(name); //convert
+            auto search = operator_data->warning_map->find(key);
+            if (search != operator_data->warning_map->end()) {
+                if(search->second < WARNING_LIMIT){
+                    search->second = search->second+1;
+                    WARNING("[%s] Convert: Converting the attribute %s/%s from H5T_FLOAT to string", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
+                }else if(search->second == WARNING_LIMIT){
+                    WARNING("[%s] Convert: Converting the attribute %s/%s from H5T_FLOAT to string. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
+                    search->second = WARNING_LIMIT+1;
+                }
+            } else {
+                WARNING("[%s] Convert: Converting the attribute %s/%s from H5T_FLOAT to string", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
+                operator_data->warning_map->insert({key,1});
+            }
             if(slow5_hdr_set("file_version", buf, 0, operator_data->slow5File->header) == -1){
                 WARNING("file_version attribute value could not be set in the slow5 header %s", "");
             }
@@ -483,7 +496,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
     }else{
         if(strcmp("read_number",name) && strcmp("start_mux",name) && strcmp("start_time",name) && strcmp("median_before",name) && strcmp("channel_number",name)){
-            std::string key = "ns_" + std::string(name);
+            std::string key = "ns_" + std::string(name); //notstored
             auto search = operator_data->warning_map->find(key);
             if (search != operator_data->warning_map->end()) {
                 if(search->second < WARNING_LIMIT){
