@@ -217,7 +217,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 operator_data->warning_map->insert({key,1});
             }
         }else{
-            ERROR("Different run_ids found in a single fast5 file. Cannot create a single header slow5/blow5. Please use --out-dir option.If you are using single-fast5 files make sure they have the same run_id%s", "");
+            ERROR("Different run_ids found in a single fast5 file. Cannot create a single header slow5/blow5. Please consider --allow option.%s", "");
             exit(EXIT_FAILURE);
         }
     }
