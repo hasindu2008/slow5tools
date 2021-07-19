@@ -147,7 +147,12 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     H5Aclose(attribute);
 
     if(H5Tclass==H5T_STRING){
+        if (strcmp(value.attr_string,".")==0){
+            ERROR("Attribute '%s' has '%s' as a value", name, value.attr_string);
+            exit(EXIT_FAILURE);
+        }
         size_t index = 0;
+
         while(value.attr_string[index]){
             int result = isspace(value.attr_string[index]);
             if (result && value.attr_string[index]!=' '){
