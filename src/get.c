@@ -5,6 +5,7 @@
 #include "thread.h"
 #include "cmd.h"
 #include "misc.h"
+#include <string>
 
 #define DEFAULT_NUM_THREADS (4)
 
@@ -23,6 +24,7 @@
     "    -c, --compress [compression_type]  convert to compressed blow5. [default: zlib]\n" \
     "    --to [format_type]                 output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
     "    -K --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
+    "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -l --list [FILE]                   list of read ids provided as a single-column text file with one read id per line.\n" \
     "    -h, --help                         display this message and exit.\n" \
 
@@ -52,8 +54,8 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
     free(id);
 }
 
-bool fetch_record(slow5_file_t *fp, const char *read_id,
-        char **argv, struct program_meta *meta, slow5_fmt format_out, slow5_press_method press_method, bool benchmark) {
+bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_meta *meta, slow5_fmt format_out,
+                  slow5_press_method press_method, bool benchmark, FILE *slow5_file_pointer) {
 
     bool success = true;
 
@@ -70,7 +72,7 @@ bool fetch_record(slow5_file_t *fp, const char *read_id,
     } else {
         if (benchmark == false){
             struct slow5_press* compress = slow5_press_init(press_method);
-            slow5_rec_fwrite(stdout,record,fp->header->aux_meta, format_out, compress);
+            slow5_rec_fwrite(slow5_file_pointer,record,fp->header->aux_meta, format_out, compress);
             slow5_press_free(compress);
         }
         slow5_rec_free(record);
@@ -111,10 +113,11 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         {"to", required_argument, NULL, 'b'},    //0
         {"compress", required_argument, NULL, 'c'},  //1
         {"batchsize", required_argument, NULL, 'K'},  //2
-        {"list", required_argument, NULL, 'l'},  //2
-        {"threads", required_argument, NULL, 't' }, //3
-        {"help", no_argument, NULL, 'h' }, //4
-        {"benchmark", no_argument, NULL, 'e' }, //5
+        {"output", required_argument, NULL, 'o'}, //3
+        {"list", required_argument, NULL, 'l'},  //4
+        {"threads", required_argument, NULL, 't' }, //5
+        {"help", no_argument, NULL, 'h' }, //6
+        {"benchmark", no_argument, NULL, 'e' }, //7
         {NULL, 0, NULL, 0 }
     };
 
@@ -127,6 +130,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     // Input arguments
     char *arg_num_threads = NULL;
     char *arg_fname_out = NULL;
+    char *arg_fname_in = NULL;
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethod = SLOW5_COMPRESS_GZIP;
@@ -135,7 +139,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     int opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:K:l:t:he", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:b:c:K:l:t:he", long_opts, NULL)) != -1) {
 
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
@@ -170,6 +174,9 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
             case 'e':
                 benchmark = true;
                 break;
+            case 'o':
+                arg_fname_out = optarg;
+                break;
             case 'K':
                 read_id_batch_capacity = atoi(optarg);
                 if(read_id_batch_capacity < 0){
@@ -180,7 +187,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 }
                 break;
             case 'l':
-                arg_fname_out = optarg;
+                arg_fname_in = optarg;
                 break;
             case 'h':
                 if (meta->verbosity_level >= LOG_VERBOSE) {
@@ -197,10 +204,41 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    std::string output_file;
+    std::string extension;
+    if(arg_fname_out){
+        output_file = std::string(arg_fname_out);
+        extension = output_file.substr(output_file.length()-6, output_file.length());
+    }
+
+    if(arg_fname_out && format_out==SLOW5_FORMAT_ASCII && extension!=".slow5"){
+        ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }else if(arg_fname_out && format_out==SLOW5_FORMAT_BINARY && extension!=".blow5"){
+        ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+
     // compression option is only effective with -b blow5
     if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
         ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
+    }
+
+    FILE* slow5_file_pointer = stdout;
+    if(arg_fname_out){
+        slow5_file_pointer = fopen(arg_fname_out, "wb");
+        if (!slow5_file_pointer) {
+            ERROR("Output file %s could not be opened - %s.", arg_fname_out, strerror(errno));
+            return EXIT_FAILURE;
+        }
+    }else{
+        std::string stdout_s = "stdout";
+        arg_fname_out = &stdout_s[0];
     }
 
     // Parse num threads argument
@@ -232,18 +270,22 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     FILE* read_list_in = stdin;
-    if(arg_fname_out){
-        read_list_in = fopen(arg_fname_out, "r");
+    if(arg_fname_in){
+        read_list_in = fopen(arg_fname_in, "r");
         if (!read_list_in) {
-            ERROR("Output file %s could not be opened - %s.", arg_fname_out, strerror(errno));
+            ERROR("Output file %s could not be opened - %s.", arg_fname_in, strerror(errno));
             return EXIT_FAILURE;
         }
     }
 
     char *f_in_name = argv[optind];
 
-    slow5_file_t *fp = slow5_open(f_in_name, "r");
-    int ret_idx = slow5_idx_load(fp);
+    slow5_file_t *slow5file = slow5_open(f_in_name, "r");
+    if(slow5_hdr_fwrite(slow5_file_pointer, slow5file->header, format_out, pressMethod) == -1){
+        ERROR("Could not read the read ids from %s\n", arg_fname_in);
+        exit(EXIT_FAILURE);
+    }
+    int ret_idx = slow5_idx_load(slow5file);
 
     if (ret_idx < 0) {
         // TODO change these to MESSAGE?
@@ -264,7 +306,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         // Setup multithreading structures
         core_t core;
         core.num_thread = num_threads;
-        core.fp = fp;
+        core.fp = slow5file;
         core.format_out = format_out;
         core.press_method = pressMethod;
         core.benchmark = benchmark;
@@ -328,7 +370,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     if (buffer == NULL || len < 0) {
                         ret = EXIT_FAILURE;
                     } else {
-                        fwrite(buffer,1,len,stdout);
+                        fwrite(buffer,1,len,slow5_file_pointer);
                         free(buffer);
                     }
                 }
@@ -345,14 +387,15 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     } else {
 
         for (int i = optind + 1; i < argc; ++ i){
-            bool success = fetch_record(fp, argv[i], argv, meta, format_out, pressMethod, benchmark);
+            bool success = fetch_record(slow5file, argv[i], argv, meta, format_out, pressMethod, benchmark,
+                                        slow5_file_pointer);
             if (!success) {
                 ret = EXIT_FAILURE;
             }
         }
     }
 
-    slow5_close(fp);
+    slow5_close(slow5file);
     fclose(read_list_in);
 
     EXIT_MSG(ret, argv, meta);

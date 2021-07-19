@@ -272,12 +272,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
     }
 
-    // compression option is only effective with -t blow5
-    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
-        ERROR("Compression option is only effective with SLOW5 binary format%s","");
-        return EXIT_FAILURE;
-    }
-
     // Parse num threads argument
     if (arg_num_threads != NULL) {
         char *endptr;
@@ -318,6 +312,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+
+    // compression option is only effective with -t blow5
+    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
+        ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }
 
