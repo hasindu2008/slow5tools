@@ -33,6 +33,8 @@
 
 static double init_realtime = 0;
 
+int delete_directory(std::string output_dir);
+
 /* core data structure that has information that are global to all the threads */
 typedef struct {
     int32_t num_thread;
@@ -331,8 +333,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     if(arg_temp_dir){
         output_dir = std::string(arg_temp_dir);
     }
-//    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
-
+    //    fprintf(stderr, "output_file=%s output_dir=%s\n",output_file.c_str(),output_dir.c_str());
     //create tmp-prefix directory
     struct stat st = {0};
     if (stat(output_dir.c_str(), &st) == -1) {
@@ -386,12 +387,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         if(lossy==0 && slow5File_i->header->aux_meta == NULL){
             ERROR("[Skip file]: %s has no auxiliary fields. Specify -l false to merge files with no auxiliary fields.", files[i].c_str());
             slow5_close(slow5File_i);
-            int del = rmdir(output_dir.c_str());
-            if (del) {
-                ERROR("Deleting temp directory failed%s\n", "");
-                perror("");
-                return EXIT_FAILURE;
-            }
+            delete_directory(output_dir);
             return EXIT_FAILURE;
         }
 
@@ -428,6 +424,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     if(slow5_files.size()==0){
         WARNING("No proper slow5/blow5 files found. Exiting...%s","");
+        delete_directory(output_dir);
         return EXIT_SUCCESS;
     }
 
@@ -504,13 +501,20 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     fprintf(stderr, "[%s] Concatinating blow5s - took %.3fs\n", __func__, slow5_realtime() - realtime0);
 
+    if(delete_directory(output_dir)==EXIT_FAILURE){
+        return EXIT_FAILURE;
+    }
+
+    EXIT_MSG(EXIT_SUCCESS, argv, meta);
+    return EXIT_SUCCESS;
+}
+
+int delete_directory(std::string output_dir) {
     int del = rmdir(output_dir.c_str());
     if (del) {
         ERROR("Deleting temp directory failed%s\n", "");
         perror("");
         return EXIT_FAILURE;
     }
-
-    EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
 }
