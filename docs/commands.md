@@ -105,7 +105,7 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 *  `-c, --compress compression_type`:  
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
 *  `-o FILE`, `--output FILE`:  
-   Outputs merged data to FILE [default value: stdout]
+   Outputs data to FILE [default value: stdout]
 *  `-h`, `--help`:  
    Prints the help menu.
 
@@ -133,6 +133,8 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
          Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
 *  `-c, --compress compression_type`:
           Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
+*  `-o FILE`, `--output FILE`:  
+   Outputs data to FILE [default value: stdout]          
 *  `-h`, `--help`:  
          Prints the help menu.
 
