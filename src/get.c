@@ -22,7 +22,7 @@
     "OPTIONS:\n" \
     "    -t, --threads=[INT]                number of threads -- 4\n" \
     "    -c, --compress [compression_type]  convert to compressed blow5. [default: zlib]\n" \
-    "    --to [format_type]                 output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
+    "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
     "    -K --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -l --list [FILE]                   list of read ids provided as a single-column text file with one read id per line.\n" \

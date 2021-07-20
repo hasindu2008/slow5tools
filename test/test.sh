@@ -129,24 +129,24 @@ else
     fi
 fi
 
-echo_test 'slow5tools_index_test'
+echo_test 'index_test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/slow5tools_index_test.sh mem; then
+    if ! ./test/index_test.sh mem; then
         fail
     fi
 else
-    if ! ./test/slow5tools_index_test.sh; then
+    if ! ./test/index_test.sh; then
         fail
     fi
 fi
 
-echo_test 'slow5tools_get_test'
+echo_test 'get_test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/slow5tools_get_test.sh mem; then
+    if ! ./test/get_test.sh mem; then
         fail
     fi
 else
-    if ! ./test/slow5tools_get_test.sh; then
+    if ! ./test/get_test.sh; then
         fail
     fi
 fi

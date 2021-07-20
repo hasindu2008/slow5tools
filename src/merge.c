@@ -236,7 +236,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
                     ERROR("Incorrect output format%s", "");
-                    exit(EXIT_FAILURE);
+                    return EXIT_FAILURE;
                 }
                 break;
             case 'c':
@@ -246,7 +246,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                     pressMethod = SLOW5_COMPRESS_GZIP;
                 }else{
                     ERROR("Incorrect compression type%s", "");
-                    exit(EXIT_FAILURE);
+                    return EXIT_FAILURE;
                 }
                 break;
             case 'l':
@@ -256,7 +256,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                     lossy = 1;
                 }else{
                     ERROR("Incorrect argument%s", "");
-                    exit(EXIT_FAILURE);
+                    return EXIT_FAILURE;
                 }
                 break;
             case 'o':
@@ -384,9 +384,15 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             continue;
         }
         if(lossy==0 && slow5File_i->header->aux_meta == NULL){
-            WARNING("[Skip file]: %s has no auxiliary fields. Hence not merged.", files[i].c_str());
+            ERROR("[Skip file]: %s has no auxiliary fields. Specify -l false to merge files with no auxiliary fields.", files[i].c_str());
             slow5_close(slow5File_i);
-            exit(EXIT_FAILURE);
+            int del = rmdir(output_dir.c_str());
+            if (del) {
+                ERROR("Deleting temp directory failed%s\n", "");
+                perror("");
+                return EXIT_FAILURE;
+            }
+            return EXIT_FAILURE;
         }
 
         int64_t read_group_count_i = slow5File_i->header->num_read_groups; // number of read_groups in ith slow5file
@@ -422,7 +428,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     if(slow5_files.size()==0){
         WARNING("No proper slow5/blow5 files found. Exiting...%s","");
-        exit(EXIT_SUCCESS);
+        return EXIT_SUCCESS;
     }
 
     fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
@@ -430,7 +436,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     //now write the header to the slow5File. Use Binary non compress method for fast writing
     if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){
         ERROR("Could not write the header to %s\n", arg_fname_out);
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     size_t num_slow5s = slow5_files.size();
@@ -487,7 +493,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         if (del) {
             ERROR("Deleting temporary file %s failed\n", slow5_files[i].c_str());
             perror("");
-            exit(EXIT_FAILURE);
+            return EXIT_FAILURE;
         }
     }
 
@@ -502,7 +508,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     if (del) {
         ERROR("Deleting temp directory failed%s\n", "");
         perror("");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
