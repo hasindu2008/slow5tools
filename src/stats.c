@@ -122,7 +122,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     std::string compression_method = "compression error";
     if(slow5File->compress->method==SLOW5_COMPRESS_NONE){
         compression_method = "none";
-    }else if(slow5File->compress->method==SLOW5_COMPRESS_GZIP){
+    }else if(slow5File->compress->method==SLOW5_COMPRESS_ZLIB){
         compression_method = "zlib";
     }
 

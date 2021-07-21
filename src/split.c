@@ -428,7 +428,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method pressMethod = SLOW5_COMPRESS_GZIP;
+    enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
     meta_split_method metaSplitMethod;
     metaSplitMethod.n = 0;
     metaSplitMethod.splitMethod = READS_SPLIT;
@@ -468,7 +468,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
-                    pressMethod = SLOW5_COMPRESS_GZIP;
+                    pressMethod = SLOW5_COMPRESS_ZLIB;
                 }else{
                     ERROR("Incorrect compression type%s", "");
                     exit(EXIT_FAILURE);

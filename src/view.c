@@ -86,7 +86,7 @@ slow5_press_method_t name_to_slow5_press_method(const char *name) {
     if (strcmp(name, "none") == 0) {
         comp = SLOW5_COMPRESS_NONE;
     } else if (strcmp(name, "zlib") == 0) {
-        comp = SLOW5_COMPRESS_GZIP;
+        comp = SLOW5_COMPRESS_ZLIB;
     }
 
     return comp;
@@ -138,7 +138,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     FILE *f_out = stdout;
     enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
     enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
-    slow5_press_method_t press_out = SLOW5_COMPRESS_GZIP;
+    slow5_press_method_t press_out = SLOW5_COMPRESS_ZLIB;
 
     // Input arguments
     char *arg_fname_in = NULL;

@@ -200,7 +200,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method pressMethod = SLOW5_COMPRESS_GZIP;
+    enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
 
     // Input arguments
     char *arg_fname_out = NULL;
@@ -245,7 +245,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
-                    pressMethod = SLOW5_COMPRESS_GZIP;
+                    pressMethod = SLOW5_COMPRESS_ZLIB;
                 }else{
                     ERROR("Incorrect compression type%s", "");
                     return EXIT_FAILURE;
