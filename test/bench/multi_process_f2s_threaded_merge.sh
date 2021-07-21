@@ -113,7 +113,7 @@ MERGED_OUTPUT_DIR=$TEST_DIR/merged_compressed_blow5s
 test -d  $MERGED_OUTPUT_DIR && rm -r $MERGED_OUTPUT_DIR
 mkdir $MERGED_OUTPUT_DIR
 echo "-------------SLOW5_FORMAT:$SLOW5_FORMAT_compressed---------" >> $LOG
-EXTRA_FLAGS="-c gzip"
+EXTRA_FLAGS="-c zlib"
 slow5_f2s_merge_varied_processes_threads
 # remove f2s or merge output if necessary
 rm -r $F2S_OUTPUT_DIR

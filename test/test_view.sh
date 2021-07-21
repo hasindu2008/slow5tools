@@ -46,30 +46,30 @@ pass=0
 
 ## One fast5 default
 # All slow5 -> all slow5
-ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -o "$OUT/one_fast5/out_1_default_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_default_gzip.blow5" "$OUT/one_fast5/out_1_default_gzip.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -o "$OUT/one_fast5/out_1_default_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_default_zlib.blow5" "$OUT/one_fast5/out_1_default_zlib.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -o "$OUT/one_fast5/out_1_default.blow5" -c none
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -o "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
-ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -o "$OUT/one_fast5/out_1_default_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_default_gzip.blow5" "$OUT/one_fast5/out_1_default_gzip.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -o "$OUT/one_fast5/out_1_default_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_default_zlib.blow5" "$OUT/one_fast5/out_1_default_zlib.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -o "$OUT/one_fast5/out_1_default.blow5" -c none
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -o "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
-ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -o "$OUT/one_fast5/out_1_default_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_default_gzip.blow5" "$OUT/one_fast5/out_1_default_gzip.blow5" -q
-ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -o "$OUT/one_fast5/out_1_default.blow5" -c none
+ex "$S5T" view "$EXP/one_fast5/exp_1_default_zlib.blow5" -o "$OUT/one_fast5/out_1_default_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_default_zlib.blow5" "$OUT/one_fast5/out_1_default_zlib.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default_zlib.blow5" -o "$OUT/one_fast5/out_1_default.blow5" -c none
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
-ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -o "$OUT/one_fast5/out_1_default.slow5"
+ex "$S5T" view "$EXP/one_fast5/exp_1_default_zlib.blow5" -o "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
 # All slow5 -> all slow5 different options
-ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -t blow5 > "$OUT/one_fast5/out_1_default_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_default_gzip.blow5" "$OUT/one_fast5/out_1_default_gzip.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -t blow5 > "$OUT/one_fast5/out_1_default_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_default_zlib.blow5" "$OUT/one_fast5/out_1_default_zlib.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -t blow5 -c none > "$OUT/one_fast5/out_1_default.blow5"
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" -t slow5 > "$OUT/one_fast5/out_1_default.slow5"
@@ -77,8 +77,8 @@ my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.slow5" > "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
-ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -t blow5 > "$OUT/one_fast5/out_1_default_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_default_gzip.blow5" "$OUT/one_fast5/out_1_default_gzip.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -t blow5 > "$OUT/one_fast5/out_1_default_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_default_zlib.blow5" "$OUT/one_fast5/out_1_default_zlib.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -t blow5 -c none > "$OUT/one_fast5/out_1_default.blow5"
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" -t slow5 > "$OUT/one_fast5/out_1_default.slow5"
@@ -86,36 +86,36 @@ my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5
 ex "$S5T" view "$EXP/one_fast5/exp_1_default.blow5" > "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
-ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -t blow5 > "$OUT/one_fast5/out_1_default_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_default_gzip.blow5" "$OUT/one_fast5/out_1_default_gzip.blow5" -q
-ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -t blow5 -c none > "$OUT/one_fast5/out_1_default.blow5"
+ex "$S5T" view "$EXP/one_fast5/exp_1_default_zlib.blow5" -t blow5 > "$OUT/one_fast5/out_1_default_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_default_zlib.blow5" "$OUT/one_fast5/out_1_default_zlib.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_default_zlib.blow5" -t blow5 -c none > "$OUT/one_fast5/out_1_default.blow5"
 my_diff "$EXP/one_fast5/exp_1_default.blow5" "$OUT/one_fast5/out_1_default.blow5" -q
-ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" -t slow5 > "$OUT/one_fast5/out_1_default.slow5"
+ex "$S5T" view "$EXP/one_fast5/exp_1_default_zlib.blow5" -t slow5 > "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
-ex "$S5T" view "$EXP/one_fast5/exp_1_default_gzip.blow5" > "$OUT/one_fast5/out_1_default.slow5"
+ex "$S5T" view "$EXP/one_fast5/exp_1_default_zlib.blow5" > "$OUT/one_fast5/out_1_default.slow5"
 my_diff "$EXP/one_fast5/exp_1_default.slow5" "$OUT/one_fast5/out_1_default.slow5" -q
 
 ## One fast5 lossless
 # All slow5 -> all slow5
-ex "$S5T" view "$EXP/one_fast5/exp_1_lossless.slow5" -o "$OUT/one_fast5/out_1_lossless_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_lossless_gzip.blow5" "$OUT/one_fast5/out_1_lossless_gzip.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_lossless.slow5" -o "$OUT/one_fast5/out_1_lossless_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_lossless_zlib.blow5" "$OUT/one_fast5/out_1_lossless_zlib.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_lossless.slow5" -o "$OUT/one_fast5/out_1_lossless.blow5" -c none
 my_diff "$EXP/one_fast5/exp_1_lossless.blow5" "$OUT/one_fast5/out_1_lossless.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_lossless.slow5" -o "$OUT/one_fast5/out_1_lossless.slow5"
 my_diff "$EXP/one_fast5/exp_1_lossless.slow5" "$OUT/one_fast5/out_1_lossless.slow5" -q
 
-ex "$S5T" view "$EXP/one_fast5/exp_1_lossless.blow5" -o "$OUT/one_fast5/out_1_lossless_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_lossless_gzip.blow5" "$OUT/one_fast5/out_1_lossless_gzip.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_lossless.blow5" -o "$OUT/one_fast5/out_1_lossless_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_lossless_zlib.blow5" "$OUT/one_fast5/out_1_lossless_zlib.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_lossless.blow5" -o "$OUT/one_fast5/out_1_lossless.blow5" -c none
 my_diff "$EXP/one_fast5/exp_1_lossless.blow5" "$OUT/one_fast5/out_1_lossless.blow5" -q
 ex "$S5T" view "$EXP/one_fast5/exp_1_lossless.blow5" -o "$OUT/one_fast5/out_1_lossless.slow5"
 my_diff "$EXP/one_fast5/exp_1_lossless.slow5" "$OUT/one_fast5/out_1_lossless.slow5" -q
 
-ex "$S5T" view "$EXP/one_fast5/exp_1_lossless_gzip.blow5" -o "$OUT/one_fast5/out_1_lossless_gzip.blow5"
-my_diff "$EXP/one_fast5/exp_1_lossless_gzip.blow5" "$OUT/one_fast5/out_1_lossless_gzip.blow5" -q
-ex "$S5T" view "$EXP/one_fast5/exp_1_lossless_gzip.blow5" -o "$OUT/one_fast5/out_1_lossless.blow5" -c none
+ex "$S5T" view "$EXP/one_fast5/exp_1_lossless_zlib.blow5" -o "$OUT/one_fast5/out_1_lossless_zlib.blow5"
+my_diff "$EXP/one_fast5/exp_1_lossless_zlib.blow5" "$OUT/one_fast5/out_1_lossless_zlib.blow5" -q
+ex "$S5T" view "$EXP/one_fast5/exp_1_lossless_zlib.blow5" -o "$OUT/one_fast5/out_1_lossless.blow5" -c none
 my_diff "$EXP/one_fast5/exp_1_lossless.blow5" "$OUT/one_fast5/out_1_lossless.blow5" -q
-ex "$S5T" view "$EXP/one_fast5/exp_1_lossless_gzip.blow5" -o "$OUT/one_fast5/out_1_lossless.slow5"
+ex "$S5T" view "$EXP/one_fast5/exp_1_lossless_zlib.blow5" -o "$OUT/one_fast5/out_1_lossless.slow5"
 my_diff "$EXP/one_fast5/exp_1_lossless.slow5" "$OUT/one_fast5/out_1_lossless.slow5" -q
 
 echo "$pass/$tot"

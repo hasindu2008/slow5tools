@@ -350,14 +350,14 @@ void make_blow5_lossless_aux_array(void) {
     fclose(fp);
 }
 
-void make_gzip_blow5_lossless(void) {
+void make_zlib_blow5_lossless(void) {
 
-    FILE *fp = fopen("test/data/exp/one_fast5/exp_1_lossless_gzip.blow5", "w");
+    FILE *fp = fopen("test/data/exp/one_fast5/exp_1_lossless_zlib.blow5", "w");
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_lossless.slow5", "r");
 
     char magic[] = BINARY_MAGIC_NUMBER;
     struct slow5_version version = BINARY_VERSION;
-    press_method_t comp = COMPRESS_GZIP;
+    press_method_t comp = COMPRESS_zlib;
 
     fwrite(magic, sizeof *magic, sizeof magic, fp);
     fwrite(&version.major, sizeof version.major, 1, fp);
@@ -419,25 +419,25 @@ void make_gzip_blow5_lossless(void) {
 
     struct slow5_rec *read = NULL;
     slow5_get_next(&read, s5p);
-    struct press *gzip = press_init(COMPRESS_GZIP);
-    slow5_rec_fwrite(fp, read, s5p->header->aux_meta, FORMAT_BINARY, gzip);
+    struct press *zlib = press_init(COMPRESS_zlib);
+    slow5_rec_fwrite(fp, read, s5p->header->aux_meta, FORMAT_BINARY, zlib);
 
     slow5_eof_fwrite(fp);
 
-    press_free(gzip);
+    press_free(zlib);
     slow5_close(s5p);
     slow5_rec_free(read);
     fclose(fp);
 }
 
-void make_gzip_blow5_lossless_aux_array(void) {
+void make_zlib_blow5_lossless_aux_array(void) {
 
-    FILE *fp = fopen("test/data/exp/aux_array/exp_lossless_gzip.blow5", "w");
+    FILE *fp = fopen("test/data/exp/aux_array/exp_lossless_zlib.blow5", "w");
     struct slow5_file *s5p = slow5_open("test/data/exp/aux_array/exp_lossless.slow5", "r");
 
     char magic[] = BINARY_MAGIC_NUMBER;
     struct slow5_version version = BINARY_VERSION;
-    press_method_t comp = COMPRESS_GZIP;
+    press_method_t comp = COMPRESS_zlib;
 
     fwrite(magic, sizeof *magic, sizeof magic, fp);
     fwrite(&version.major, sizeof version.major, 1, fp);
@@ -499,26 +499,26 @@ void make_gzip_blow5_lossless_aux_array(void) {
 
     struct slow5_rec *read = NULL;
     slow5_get_next(&read, s5p);
-    struct press *gzip = press_init(COMPRESS_GZIP);
-    slow5_rec_fwrite(fp, read, s5p->header->aux_meta, FORMAT_BINARY, gzip);
+    struct press *zlib = press_init(COMPRESS_zlib);
+    slow5_rec_fwrite(fp, read, s5p->header->aux_meta, FORMAT_BINARY, zlib);
 
     slow5_eof_fwrite(fp);
 
-    press_free(gzip);
+    press_free(zlib);
     slow5_close(s5p);
     slow5_rec_free(read);
     fclose(fp);
 }
 
 
-void make_gzip_blow5(void) {
+void make_zlib_blow5(void) {
 
-    FILE *fp = fopen("test/data/exp/one_fast5/exp_1_default_gzip.blow5", "w");
+    FILE *fp = fopen("test/data/exp/one_fast5/exp_1_default_zlib.blow5", "w");
     struct slow5_file *s5p = slow5_open("test/data/exp/one_fast5/exp_1_default.slow5", "r");
 
     char magic[] = BINARY_MAGIC_NUMBER;
     struct slow5_version version = BINARY_VERSION;
-    press_method_t comp = COMPRESS_GZIP;
+    press_method_t comp = COMPRESS_zlib;
 
     fwrite(magic, sizeof *magic, sizeof magic, fp);
     fwrite(&version.major, sizeof version.major, 1, fp);
@@ -581,26 +581,26 @@ void make_gzip_blow5(void) {
     struct slow5_rec *read = NULL;
     slow5_get_next(&read, s5p);
 
-    struct press *gzip = press_init(COMPRESS_GZIP);
-    slow5_rec_fwrite(fp, read, NULL, FORMAT_BINARY, gzip);
+    struct press *zlib = press_init(COMPRESS_zlib);
+    slow5_rec_fwrite(fp, read, NULL, FORMAT_BINARY, zlib);
 
     char eof[] = BINARY_EOF;
     fwrite(eof, sizeof *eof, sizeof eof, fp);
 
     slow5_close(s5p);
-    press_free(gzip);
+    press_free(zlib);
     slow5_rec_free(read);
     fclose(fp);
 }
 
-void make_gzip_blow5_two_rg(void) {
+void make_zlib_blow5_two_rg(void) {
 
-    FILE *fp = fopen("test/data/exp/two_rg/exp_default_gzip.blow5", "w");
+    FILE *fp = fopen("test/data/exp/two_rg/exp_default_zlib.blow5", "w");
     struct slow5_file *s5p = slow5_open("test/data/exp/two_rg/exp_default.slow5", "r");
 
     char magic[] = BINARY_MAGIC_NUMBER;
     struct slow5_version version = BINARY_VERSION;
-    press_method_t comp = COMPRESS_GZIP;
+    press_method_t comp = COMPRESS_zlib;
 
     fwrite(magic, sizeof *magic, sizeof magic, fp);
     fwrite(&version.major, sizeof version.major, 1, fp);
@@ -660,19 +660,19 @@ void make_gzip_blow5_two_rg(void) {
     fwrite(&hdr_size, sizeof hdr_size, 1, fp);
     fwrite(header, sizeof *header, hdr_size, fp);
 
-    struct press *gzip = press_init(COMPRESS_GZIP);
+    struct press *zlib = press_init(COMPRESS_zlib);
     struct slow5_rec *read = NULL;
 
     slow5_get_next(&read, s5p);
-    slow5_rec_fwrite(fp, read, NULL, FORMAT_BINARY, gzip);
+    slow5_rec_fwrite(fp, read, NULL, FORMAT_BINARY, zlib);
     slow5_get_next(&read, s5p);
-    slow5_rec_fwrite(fp, read, NULL, FORMAT_BINARY, gzip);
+    slow5_rec_fwrite(fp, read, NULL, FORMAT_BINARY, zlib);
 
     char eof[] = BINARY_EOF;
     fwrite(eof, sizeof *eof, sizeof eof, fp);
 
     slow5_close(s5p);
-    press_free(gzip);
+    press_free(zlib);
     slow5_rec_free(read);
     fclose(fp);
 }
@@ -805,15 +805,15 @@ void make_blow5_two_rg(void) {
 int main(void) {
 
     make_blow5();
-    make_gzip_blow5();
+    make_zlib_blow5();
     make_blow5_two_rg();
-    make_gzip_blow5_two_rg();
+    make_zlib_blow5_two_rg();
 
     make_blow5_lossless();
-    make_gzip_blow5_lossless();
+    make_zlib_blow5_lossless();
 
     make_blow5_lossless_aux_array();
-    make_gzip_blow5_lossless_aux_array();
+    make_zlib_blow5_lossless_aux_array();
 
     return 0;
 }
