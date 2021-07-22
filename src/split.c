@@ -135,7 +135,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     slow5_eof_fwrite(slow5File->fp);
                 }
                 slow5_close(slow5File);
-                if(ret != 0){
+                if(ret == SLOW5_ERR_EOF){
                     break;
                 }
                 file_count++;

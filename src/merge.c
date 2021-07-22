@@ -96,7 +96,6 @@ void merge_slow5(pthread_arg* pthreadArg) {
     }
     slow5_close(slow5File);
 
-    return;
 }
 
 void* pthread_single_merge(void* voidargs) {

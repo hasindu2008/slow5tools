@@ -145,19 +145,20 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
     initialize_end_reason(&end_reason_enum_id);
     struct slow5_rec *slow5_record = NULL;
 
-    int ret = slow5_get_next(&slow5_record, slow5File);;
-    if(ret == SLOW5_ERR_ARG || ret == SLOW5_ERR_RECPARSE || ret == SLOW5_ERR_IO) {
-        ERROR("Could not read the slow5 records. exiting... %s", "");
-        exit(EXIT_FAILURE);
+    int ret = slow5_get_next(&slow5_record, slow5File);
+    if(ret < 0){
+        if(ret == SLOW5_ERR_EOF){
+            WARNING("No record found. Conversion skipped.%s", "");
+            return;
+        }else{
+            ERROR("Could not read the slow5 records. exiting... %s", "");
+            exit(EXIT_FAILURE);
+        }
     }
-    if(ret == SLOW5_ERR_EOF) {
-        WARNING("No record found. Conversion skipped.%s", "");
-        return;
-    }
+
     /* Create a new file using default properties. */
     file_id = H5Fcreate(FAST5_FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     set_hdf5_attributes(file_id, ROOT, slow5File->header, slow5_record, &end_reason_enum_id);
-
 
     // create first read group
     const char* read_tag = "read_";
@@ -186,12 +187,13 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
     while(1){
         if(i){
             ret = slow5_get_next(&slow5_record, slow5File);
-            if(ret == SLOW5_ERR_ARG || ret == SLOW5_ERR_RECPARSE || ret == SLOW5_ERR_IO) {
-                ERROR("Could not read the slow5 records. exiting... %s", "");
-                exit(EXIT_FAILURE);
-            }
-            if(ret == SLOW5_ERR_EOF) {
-                break;
+            if(ret < 0){
+                if(ret == SLOW5_ERR_EOF){
+                    break;
+                }else{
+                    ERROR("Could not read the slow5 records. exiting... %s", "");
+                    exit(EXIT_FAILURE);
+                }
             }
 
             // create read group
