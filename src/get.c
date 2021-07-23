@@ -281,6 +281,10 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     char *f_in_name = argv[optind];
 
     slow5_file_t *slow5file = slow5_open(f_in_name, "r");
+    if (!slow5file) {
+        ERROR("cannot open %s. \n", f_in_name);
+        exit(EXIT_FAILURE);
+    }
     if(slow5_hdr_fwrite(slow5_file_pointer, slow5file->header, format_out, pressMethod) == -1){
         ERROR("Could not read the read ids from %s\n", arg_fname_in);
         exit(EXIT_FAILURE);

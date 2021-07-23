@@ -135,7 +135,14 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     slow5_eof_fwrite(slow5File->fp);
                 }
                 slow5_close(slow5File);
-                if(ret != 0){
+                if(ret == SLOW5_ERR_EOF){
+                    if(record_count==0){
+                        int del = remove(slow5_path.c_str());
+                        if (del) {
+                            WARNING("Deleting additional file %s failed\n", slow5_path.c_str());
+                            perror("");
+                        }
+                    }
                     break;
                 }
                 file_count++;
