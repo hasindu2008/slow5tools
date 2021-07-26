@@ -298,8 +298,8 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
     int64_t num_slow5_files = slow5_files.size();
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
-        INFO("Only %d proceses will be used",iop);
     }
+    INFO("%d proceses will be used",iop);
 
     //create processes
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));

@@ -152,8 +152,8 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
     int64_t num_fast5_files = fast5_files.size();
     if (iop > num_fast5_files) {
         iop = num_fast5_files;
-        INFO("Only %d proceses will be used",iop);
     }
+    INFO("%d proceses will be used",iop);
 
     //create processes
 //    pid_t pids[iop];
