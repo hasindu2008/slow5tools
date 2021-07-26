@@ -296,6 +296,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
+    int compression_set = 0;
 
     // Input arguments
     char *arg_dir_out = NULL;
@@ -321,6 +322,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 }
                 break;
             case 'c':
+                compression_set = 1;
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
@@ -368,6 +370,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
+    }
+    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
+        pressMethod = SLOW5_COMPRESS_NONE;
     }
 
     if(arg_fname_out && arg_dir_out){

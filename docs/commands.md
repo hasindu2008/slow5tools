@@ -39,7 +39,7 @@ Note: it is not recommended to run f2s on a mixture of both multi-FAST5 and sing
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
+   Specifies the compression method used for BLOW5 output, i.e., SLOW5 output is uncompressed. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
 *  `-d, --out-dir STR`:  
    Specifies name/location of the output directory (required option unless converting only one FAST5 file). If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-o, --output FILE`:  
@@ -68,7 +68,7 @@ If multiple samples (different run ids) are detected, the header and the *read_g
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
 *  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
+   Specifies the compression method used for BLOW5 output, i.e., SLOW5 output is uncompressed. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
 *  `-o, --output FILE`:  
    Outputs merged data to FILE [default value: stdout]
 *  `--tmp-prefix` STR:  
@@ -132,7 +132,7 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 *  `--to format_type`:  
          Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
 *  `-c, --compress compression_type`:
-          Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
+          Specifies the compression method used for BLOW5 output, i.e., SLOW5 output is uncompressed. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
 *  `-o FILE`, `--output FILE`:  
    Outputs data to FILE [default value: stdout]          
 *  `-h`, `--help`:  
@@ -152,7 +152,7 @@ This tool is useful for parallelising across array jobs / distributed systems.
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
 *  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
+   Specifies the compression method used for BLOW5 output, i.e., SLOW5 output is uncompressed. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. Assumes `--to blow5`.
 *  `-d, --out-dir STR`:  
    Output directory where the split files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-f, --files INT`:  

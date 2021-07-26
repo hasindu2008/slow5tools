@@ -433,9 +433,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {NULL, 0, NULL, 0 }
     };
 
-
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
+    int compression_set = 0;
+
     meta_split_method metaSplitMethod;
     metaSplitMethod.n = 0;
     metaSplitMethod.splitMethod = READS_SPLIT;
@@ -471,6 +472,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 }
                 break;
             case 'c':
+                compression_set = 1;
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
@@ -516,6 +518,9 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
+    }
+    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
+        pressMethod = SLOW5_COMPRESS_NONE;
     }
 
     // compression option is only effective with -b blow5
