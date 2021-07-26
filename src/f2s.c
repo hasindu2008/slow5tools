@@ -304,7 +304,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "c:hb:o:d:l:ap:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:ho:p:l:d:a", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -313,7 +313,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = SLOW5_FORMAT_ASCII;
-                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
@@ -382,7 +381,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // compression option is only effective with -b blow5
     if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
-        ERROR("Compression option is only effective with SLOW5 binary format%s","");
+        ERROR("Compression is only available with SLOW5 binary format. Set compression method to 'none' when using SLOW5 ASCII format%s","");
         return EXIT_FAILURE;
     }
 

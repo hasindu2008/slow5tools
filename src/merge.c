@@ -232,7 +232,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = SLOW5_FORMAT_ASCII;
-                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
@@ -316,9 +315,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    // compression option is only effective with -t blow5
+    // compression option is only effective with -b blow5
     if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
-        ERROR("Compression option is only effective with SLOW5 binary format%s","");
+        ERROR("Compression is only available with SLOW5 binary format. Set compression method to 'none' when using SLOW5 ASCII format%s","");
         return EXIT_FAILURE;
     }
 
