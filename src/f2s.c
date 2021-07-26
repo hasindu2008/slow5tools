@@ -441,7 +441,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
     f2s_iop(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
-    fprintf(stderr, "[%s] Converting %ld fast5 files using %d process - took %.3fs\n", __func__, fast5_files.size(), iop, slow5_realtime() - init_realtime);
+    fprintf(stderr, "[%s] Converting %ld fast5 files took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;

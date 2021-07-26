@@ -487,7 +487,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     //measure s2f conversion time
     init_realtime = slow5_realtime();
     s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
-    fprintf(stderr, "[%s] Converting %ld s/blow5 files using %d process - took %.3fs\n", __func__, slow5_files.size(), iop, slow5_realtime() - init_realtime);
+    fprintf(stderr, "[%s] Converting %ld s/blow5 files took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
 }
