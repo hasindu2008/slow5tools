@@ -522,10 +522,9 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
         pressMethod = SLOW5_COMPRESS_NONE;
     }
-
     // compression option is only effective with -b blow5
-    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
-        ERROR("Compression is only available with SLOW5 binary format. Set compression method to 'none' when using SLOW5 ASCII format%s","");
+    if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
+        ERROR("%s","Compression option (-c) is only available for SLOW5 binary format.");
         return EXIT_FAILURE;
     }
 
