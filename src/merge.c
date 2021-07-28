@@ -200,6 +200,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     // Default options
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
+    int compression_set = 0;
 
     // Input arguments
     char *arg_fname_out = NULL;
@@ -232,7 +233,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = SLOW5_FORMAT_ASCII;
-                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
@@ -241,6 +241,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 }
                 break;
             case 'c':
+                compression_set = 1;
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
@@ -271,6 +272,14 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
+    }
+    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
+        pressMethod = SLOW5_COMPRESS_NONE;
+    }
+    // compression option is only effective with -b blow5
+    if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
+        ERROR("%s","Compression option (-c) is only available for SLOW5 binary format.");
+        return EXIT_FAILURE;
     }
 
     // Parse num threads argument
@@ -313,12 +322,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }
-
-    // compression option is only effective with -t blow5
-    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
-        ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }
 

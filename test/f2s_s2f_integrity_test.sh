@@ -51,21 +51,21 @@ if [[ $* == *-f* ]];then
 fi
 echo "-------------------f2s attempt 1-------------------"
 echo
-$SLOW5_EXEC f2s $FAST5_DIR -d $F2S_atm1_OUTPUT --iop 64 $SLOW5_FORMAT || die "f2s attempt 1 failed"
+$SLOW5_EXEC f2s $FAST5_DIR -d $F2S_atm1_OUTPUT --iop 64 $SLOW5_FORMAT 2>/dev/null || die "f2s attempt 1 failed"
 if [[ $* == *-f* ]];then
   clean_fscache
 fi
 echo
 echo "-------------------s2f attempt-------------------"
 echo
-$SLOW5_EXEC s2f $F2S_atm1_OUTPUT -d $S2F_OUTPUT --iop 64 || die "s2f failed"
+$SLOW5_EXEC s2f $F2S_atm1_OUTPUT -d $S2F_OUTPUT --iop 64 2>/dev/null || die "s2f failed"
 if [[ $* == *-f* ]];then
   clean_fscache
 fi
 echo
 echo "-------------------f2s attempt 2-------------------"
 echo
-$SLOW5_EXEC f2s $S2F_OUTPUT -d $F2S_atm2_OUTPUT --iop 64 $SLOW5_FORMAT || die "f2s attempt 2 failed"
+$SLOW5_EXEC f2s $S2F_OUTPUT -d $F2S_atm2_OUTPUT --iop 64 $SLOW5_FORMAT 2>/dev/null || die "f2s attempt 2 failed"
 echo "running diff on f2s attempt 1 and f2s attempt 2"
 diff -s $F2S_atm1_OUTPUT $F2S_atm2_OUTPUT &>/dev/null
 

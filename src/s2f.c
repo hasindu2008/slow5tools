@@ -288,8 +288,8 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     int64_t num_slow5_files = slow5_files.size();
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
-        INFO("Only %d proceses will be used",iop);
     }
+    INFO("%d proceses will be used",iop);
     //create processes
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
     proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof(proc_arg_t));
@@ -487,7 +487,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     //measure s2f conversion time
     init_realtime = slow5_realtime();
     s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
-    fprintf(stderr, "[%s] Converting %ld s/blow5 files using %d process - took %.3fs\n", __func__, slow5_files.size(), iop, slow5_realtime() - init_realtime);
+    fprintf(stderr, "[%s] Converting %ld s/blow5 files took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
 }

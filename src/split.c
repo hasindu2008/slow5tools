@@ -298,8 +298,8 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
     int64_t num_slow5_files = slow5_files.size();
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
-        INFO("Only %d proceses will be used",iop);
     }
+    INFO("%d proceses will be used",iop);
 
     //create processes
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
@@ -433,9 +433,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {NULL, 0, NULL, 0 }
     };
 
-
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
+    int compression_set = 0;
+
     meta_split_method metaSplitMethod;
     metaSplitMethod.n = 0;
     metaSplitMethod.splitMethod = READS_SPLIT;
@@ -463,7 +464,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = SLOW5_FORMAT_ASCII;
-                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
@@ -472,6 +472,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 }
                 break;
             case 'c':
+                compression_set = 1;
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
@@ -518,10 +519,12 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
-
+    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
+        pressMethod = SLOW5_COMPRESS_NONE;
+    }
     // compression option is only effective with -b blow5
-    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
-        ERROR("Compression option is only effective with SLOW5 binary format%s","");
+    if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
+        ERROR("%s","Compression option (-c) is only available for SLOW5 binary format.");
         return EXIT_FAILURE;
     }
 

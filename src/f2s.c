@@ -152,8 +152,8 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
     int64_t num_fast5_files = fast5_files.size();
     if (iop > num_fast5_files) {
         iop = num_fast5_files;
-        INFO("Only %d proceses will be used",iop);
     }
+    INFO("%d proceses will be used",iop);
 
     //create processes
 //    pid_t pids[iop];
@@ -296,6 +296,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
+    int compression_set = 0;
 
     // Input arguments
     char *arg_dir_out = NULL;
@@ -304,7 +305,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "c:hb:o:d:l:ap:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:ho:p:l:d:a", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -313,7 +314,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             case 'b':
                 if(strcmp(optarg,"slow5")==0){
                     format_out = SLOW5_FORMAT_ASCII;
-                    pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"blow5")==0){
                     format_out = SLOW5_FORMAT_BINARY;
                 }else{
@@ -322,6 +322,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 }
                 break;
             case 'c':
+                compression_set = 1;
                 if(strcmp(optarg,"none")==0){
                     pressMethod = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
@@ -370,6 +371,14 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 return EXIT_FAILURE;
         }
     }
+    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
+        pressMethod = SLOW5_COMPRESS_NONE;
+    }
+    // compression option is only effective with -b blow5
+    if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
+        ERROR("%s","Compression option (-c) is only available for SLOW5 binary format.");
+        return EXIT_FAILURE;
+    }
 
     if(arg_fname_out && arg_dir_out){
         ERROR("output file name and output directory both cannot be set%s","");
@@ -377,12 +386,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
     if(iop>1 && !arg_dir_out){
         ERROR("output directory should be specified when using multiprocessing iop=%d",iop);
-        return EXIT_FAILURE;
-    }
-
-    // compression option is only effective with -b blow5
-    if(format_out==SLOW5_FORMAT_ASCII && pressMethod!=SLOW5_COMPRESS_NONE){
-        ERROR("Compression option is only effective with SLOW5 binary format%s","");
         return EXIT_FAILURE;
     }
 
@@ -441,7 +444,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
     f2s_iop(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
-    fprintf(stderr, "[%s] Converting %ld fast5 files using %d process - took %.3fs\n", __func__, fast5_files.size(), iop, slow5_realtime() - init_realtime);
+    fprintf(stderr, "[%s] Converting %ld fast5 files took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
