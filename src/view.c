@@ -515,7 +515,7 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
 
     INFO("time_get_to_mem\t%.3fs", time_get_to_mem);
     INFO("time_depress_parse\t%.3fs", time_parse);
-    INFO("time_get_to_rec\t%.3fs", time_rec_to_mem);
+    INFO("time_rec_to_mem\t%.3fs", time_rec_to_mem);
     INFO("time_write\t%.3fs", time_write);
 
     /*
