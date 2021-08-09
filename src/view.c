@@ -23,7 +23,7 @@
     "    -o, --output=[FILE]        output to FILE -- stdout\n" \
     "    -h, --help                 display this message and exit\n"                                               \
     "    -@, --threads [INT]        number of threads [default: 4]\n"                                              \
-    "    -K --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
+    "    -K --batchsize             the number of records on the memory at once. [default: 4096]\n" \
     "FORMATS:\n" \
     "    slow5\n" \
     "    blow5\n" \
@@ -51,7 +51,7 @@ static const struct view_fmt_meta VIEW_FORMAT_META[] = {
     { VIEW_FORMAT_SLOW5_BINARY, SLOW5_BINARY_NAME,    SLOW5_BINARY_EXTENSION    },
 };
 
-struct Record {
+struct raw_record {
     int len;
     void* buffer;
 };
@@ -59,11 +59,13 @@ struct Record {
 typedef struct {
     int32_t num_thread;
     std::string output_dir;
-    std::vector<std::vector<size_t>> list;
-    int lossy;
-    int64_t n_batch;    // number of files
+    std::vector<char *> mem_records;
+    std::vector<size_t> mem_bytes;
+    std::vector<raw_record>raw_records;
+    int64_t n_batch; // number of records
     slow5_fmt format_out;
     slow5_press_method_t press_method;
+    slow5_file *from;
 } global_thread;
 
 /* argument wrapper for the multithreaded framework used for data processing */
@@ -75,6 +77,100 @@ typedef struct {
 } pthread_arg;
 
 int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size);
+
+void depress_parse_rec_to_mem(pthread_arg *ptr);
+
+void pthread_data_view(global_thread *core);
+
+/* process all reads in the given batch db */
+void work_data_view(global_thread* core){
+    if (core->num_thread == 1) {
+        pthread_arg pt_args;
+        pt_args.core = core;
+        pt_args.thread_index = 0;
+        pt_args.starti = 0;
+        pt_args.endi = core->n_batch;
+        depress_parse_rec_to_mem(&pt_args);
+    }
+    else {
+        pthread_data_view(core);
+    }
+}
+
+void* pthread_single_view(void* voidargs) {
+    pthread_arg* args = (pthread_arg*)voidargs;
+    depress_parse_rec_to_mem(args);
+    pthread_exit(0);
+}
+
+void pthread_data_view(global_thread * core){
+    //create threads
+    pthread_t tids[core->num_thread];
+    pthread_arg pt_args[core->num_thread];
+    int32_t t, ret;
+    int32_t i = 0;
+    int32_t num_thread = core->num_thread;
+    int32_t step = (core->n_batch + num_thread - 1) / num_thread;
+    //todo : check for higher num of threads than the data
+    //current works but many threads are created despite
+
+    //set the data structures
+    for (t = 0; t < num_thread; t++) {
+        pt_args[t].core = core;
+        pt_args[t].starti = i;
+        i += step;
+        if (i > core->n_batch) {
+            pt_args[t].endi = core->n_batch;
+        } else {
+            pt_args[t].endi = i;
+        }
+        pt_args[t].thread_index=t;
+    }
+
+    //create threads
+    for(t = 0; t < core->num_thread; t++){
+        ret = pthread_create(&tids[t], NULL, pthread_single_view,
+                             (void*)(&pt_args[t]));
+        NEG_CHK(ret);
+    }
+
+    //pthread joining
+    for (t = 0; t < core->num_thread; t++) {
+        int ret = pthread_join(tids[t], NULL);
+        NEG_CHK(ret);
+    }
+}
+
+void depress_parse_rec_to_mem(pthread_arg *ptr) {
+    int32_t starti = ptr->starti;
+    int32_t endi = ptr->endi;
+//        realtime = slow5_realtime();
+    std::vector<struct slow5_rec *> read_records;
+    struct slow5_rec *read = NULL;
+    for (int32_t i = starti; i < endi; i++) {
+        if (slow5_rec_depress_parse(&ptr->core->mem_records[i], &ptr->core->mem_bytes[i], NULL, &read, ptr->core->from) != 0) {
+            exit(EXIT_FAILURE);
+        } else {
+            read_records.push_back(read);
+            free(ptr->core->mem_records[i]);
+            read = NULL;
+        }
+    }
+
+    struct slow5_press *press_ptr = slow5_press_init(ptr->core->press_method);
+    size_t len;
+    for (int32_t i = starti; i < endi; i++) {
+        if ((ptr->core->raw_records[i].buffer = slow5_rec_to_mem(read_records[i-starti], ptr->core->from->header->aux_meta, ptr->core->format_out, press_ptr, &len)) == NULL) {
+            slow5_press_free(press_ptr);
+            slow5_rec_free(read_records[i-starti]);
+            exit(EXIT_FAILURE);
+        }
+        ptr->core->raw_records[i].len = len;
+        slow5_rec_free(read_records[i-starti]);
+    }
+    slow5_press_free(press_ptr);
+}
+
 enum view_fmt name_to_view_fmt(const char *fmt_str) {
     enum view_fmt fmt = VIEW_FORMAT_UNKNOWN;
 
@@ -467,40 +563,23 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
             }
         }
         time_get_to_mem += slow5_realtime() - realtime;
-        realtime = slow5_realtime();
-        std::vector<struct slow5_rec *> read_records;
-        struct slow5_rec *read = NULL;
-        for (size_t i = 0; i < mem_records.size(); i++) {
-            if (slow5_rec_depress_parse(&mem_records[i], &mem_bytes[i], NULL, &read, from) != 0) {
-                return EXIT_FAILURE;
-            } else {
-                read_records.push_back(read);
-                free(mem_records[i]);
-                read = NULL;
-            }
-        }
-        time_parse += slow5_realtime() - realtime;
-        realtime = slow5_realtime();
 
-        std::vector<Record>db(record_count);
-        struct slow5_press *press_ptr = slow5_press_init(to_compress);
-        size_t len;
-        for (size_t i = 0; i < read_records.size(); i++) {
-            if ((db[i].buffer = slow5_rec_to_mem(read_records[i], from->header->aux_meta, to_format, press_ptr, &len)) == NULL) {
-                slow5_press_free(press_ptr);
-                slow5_rec_free(read_records[i]);
-                return EXIT_FAILURE;
-            }
-            db[i].len = len;
-            slow5_rec_free(read_records[i]);
-        }
-        slow5_press_free(press_ptr);
-        time_rec_to_mem += slow5_realtime() - realtime;
-        realtime = slow5_realtime();
 
-        for (size_t i = 0; i < db.size(); i++) {
-            fwrite(db[i].buffer,1,db[i].len,to_fp);
-            free(db[i].buffer);
+        global_thread core;
+        core.num_thread = num_threads;
+        core.mem_records = mem_records;
+        core.mem_bytes = mem_bytes;
+        core.raw_records = std::vector<raw_record>(record_count);
+        core.n_batch = record_count;
+        core.format_out = to_format;
+        core.press_method = to_compress;
+        core.from = from;
+
+        work_data_view(&core);
+
+        for (int64_t i = 0; i < record_count; i++) {
+            fwrite(core.raw_records[i].buffer,1,core.raw_records[i].len,to_fp);
+            free(core.raw_records[i].buffer);
         }
         time_write += slow5_realtime() - realtime;
         if(flag_end_of_file == 1){
@@ -517,48 +596,6 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
     INFO("time_depress_parse\t%.3fs", time_parse);
     INFO("time_rec_to_mem\t%.3fs", time_rec_to_mem);
     INFO("time_write\t%.3fs", time_write);
-
-    /*
-    // Setup multithreading structures
-    global_thread core;
-    core.num_thread = num_threads;
-    core.list = list;
-    core.lossy = lossy;
-    core.n_batch = slow5_files.size();
-    core.format_out = to_format;
-    core.press_method = to_compress;
-
-    //measure read_group number assigning using multi-threads time
-    realtime0 = slow5_realtime();
-
-    // Fetch records for read ids in the batch
-    work_data(&core);
-
-    fprintf(stderr, "[%s] Assigning new read group numbers using %ld threads - took %.3fs\n", __func__, num_threads, slow5_realtime() - realtime0);
-
-    //
-    struct slow5_rec *read = NULL;
-    int ret;
-    struct slow5_press *press_ptr = slow5_press_init(to_compress);
-    while ((ret = slow5_get_next(&read, from)) == 0) {
-        if (slow5_rec_fwrite(to_fp, read, from->header->aux_meta, to_format, press_ptr) == -1) {
-            slow5_press_free(press_ptr);
-            slow5_rec_free(read);
-            return -2;
-        }
-    }
-    slow5_press_free(press_ptr);
-    slow5_rec_free(read);
-    if (ret != SLOW5_ERR_EOF) {
-        return -2;
-    }
-
-    if (to_format == SLOW5_FORMAT_BINARY) {
-        if (slow5_eof_fwrite(to_fp) == -1) {
-            return -2;
-        }
-    }
-    */
 
     return 0;
 }
