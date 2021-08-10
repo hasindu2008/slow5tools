@@ -1,3 +1,9 @@
+/**
+ * @file thread.c
+ * @brief multi-thread implementation skeleton
+ * @author Hasindu Gamaarachchi (hasindu@garvan.org.au)
+ * @date 27/02/2021
+ */
 #include "thread.h"
 
 /**********************************
@@ -105,17 +111,17 @@ void pthread_db(core_t* core, db_t* db, void (*func)(core_t*,db_t*,int)){
 }
 
 /* process all reads in the given batch db */
-void work_db(core_t* core, db_t* db){
+void work_db(core_t* core, db_t* db, void (*func)(core_t*,db_t*,int)){
 
     if (core->num_thread == 1) {
         int32_t i=0;
         for (i = 0; i < db->n_batch; i++) {
-            work_per_single_read(core,db,i);
+            func(core,db,i);
         }
 
     }
 
     else {
-        pthread_db(core,db,work_per_single_read);
+        pthread_db(core,db,func);
     }
 }

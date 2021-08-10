@@ -1,6 +1,9 @@
-//
-// Created by Hiruna Samarkoon on 2021-01-20.
-//
+/**
+ * @file split.c
+ * @brief split a SLOW5 in different ways
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
+ * @date 27/02/2021
+ */
 
 #include <getopt.h>
 #include <sys/wait.h>

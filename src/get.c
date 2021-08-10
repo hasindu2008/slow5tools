@@ -1,3 +1,9 @@
+/**
+ * @file get.c
+ * @brief get read(record) given the read_id from a SLOW5 file
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au) Sasha Jenner (jenner.sasha@gmail.com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
+ * @date 27/02/2021
+ */
 #include <getopt.h>
 #include <stdio.h>
 
@@ -28,7 +34,7 @@
     "    -l --list [FILE]                   list of read ids provided as a single-column text file with one read id per line.\n" \
     "    -h, --help                         display this message and exit.\n" \
 
-void work_per_single_read(core_t *core, db_t *db, int32_t i) {
+void work_per_single_read_get(core_t *core, db_t *db, int32_t i) {
 
     char *id = db->read_id[i];
 
@@ -321,7 +327,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         db_t db = { 0 };
         int64_t cap_ids = READ_ID_INIT_CAPACITY;
         db.read_id = (char **) malloc(cap_ids * sizeof *db.read_id);
-        db.read_record = (struct Record *) malloc(cap_ids * sizeof *db.read_record);
+        db.read_record = (raw_record_t*) malloc(cap_ids * sizeof *db.read_record);
 
         bool end_of_file = false;
         while (!end_of_file) {
@@ -348,7 +354,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     // Double read id list capacity
                     cap_ids *= 2;
                     db.read_id = (char **) realloc(db.read_id, cap_ids * sizeof *db.read_id);
-                    db.read_record = (struct Record *) realloc(db.read_record, cap_ids * sizeof *db.read_record);
+                    db.read_record = (raw_record_t*) realloc(db.read_record, cap_ids * sizeof *db.read_record);
                 }
                 db.read_id[num_ids] = curr_id;
                 ++ num_ids;
@@ -360,7 +366,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
             double start = slow5_realtime();
 
             // Fetch records for read ids in the batch
-            work_db(&core, &db);
+            work_db(&core, &db, work_per_single_read_get);
 
             double end = slow5_realtime();
             read_time += end - start;

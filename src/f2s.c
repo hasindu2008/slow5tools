@@ -1,7 +1,9 @@
-//
-// Sasha Jenner
-// Hiruna Samarakoon
-//
+/**
+ * @file f2s.c
+ * @brief fast5 to slow5 conversion
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au) Sasha Jenner (jenner.sasha@gmail.com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
+ * @date 27/02/2021
+ */
 #include <getopt.h>
 #include <sys/wait.h>
 

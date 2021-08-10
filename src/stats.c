@@ -1,6 +1,9 @@
-//
-// Created by Hiruna Samarkoon on 2021-06-01.
-//
+/**
+ * @file stats.c
+ * @brief summarize a SLOW5 file
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
+ * @date 27/02/2021
+ */
 
 #include <getopt.h>
 #include <sys/wait.h>

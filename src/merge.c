@@ -1,6 +1,9 @@
-//
-// Created by Hiruna Samarakoon on 2021-01-16.
-//
+/**
+ * @file merge.c
+ * @brief merge two or more SLOW5 files
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
+ * @date 27/02/2021
+ */
 #include <getopt.h>
 #include <sys/wait.h>
 
