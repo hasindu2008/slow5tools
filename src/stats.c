@@ -13,6 +13,7 @@
 #include "cmd.h"
 #include "slow5_extra.h"
 #include "read_fast5.h"
+#include "misc.h"
 #include <slow5/slow5_press.h>
 
 
@@ -136,16 +137,21 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     INFO("counting number of slow5 records...%s","");
 
     int64_t record_count = 0;
-    struct slow5_rec *read = NULL;
-    int ret;
-    while ((ret = slow5_get_next(&read, slow5File)) >= 0) {
+    size_t bytes;
+    char *mem;
+    double time_get_to_mem = slow5_realtime();
+    while ((mem = (char *) slow5_get_next_mem(&bytes, slow5File))) {
+        free(mem);
         record_count++;
     }
-    if(ret != SLOW5_ERR_EOF){
+    if (slow5_errno != SLOW5_ERR_EOF) {
         ERROR("Error reading the file.%s","");
         return EXIT_FAILURE;
     }
-    slow5_rec_free(read);
+    if (meta->verbosity_level >= LOG_DEBUG) {
+        DEBUG("time_get_to_mem\t%.3fs", slow5_realtime()-time_get_to_mem);
+    }
+
     slow5_close(slow5File);
 
     fprintf(stdout,"number of records\t%" PRId64 "\n", record_count);

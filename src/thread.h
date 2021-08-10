@@ -46,8 +46,8 @@ typedef struct {
     //for get
     char **read_id;     // the list of read ids (input)
     //for view
-    char** mem_records; // list of get_to_mem() records
-    size_t* mem_bytes; // lengths of get_to_mem() records
+    char** mem_records; // list of slow5_get_next_mem() records
+    size_t* mem_bytes; // lengths of slow5_get_next_mem() records
 } db_t;
 
 /* argument wrapper for the multithreaded framework used for data processing */
