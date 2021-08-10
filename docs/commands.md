@@ -106,6 +106,8 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-o FILE`, `--output FILE`:  
    Outputs data to FILE [default value: stdout]
+* `-t, --threads INT`:  
+   Number of threads
 *  `-h`, `--help`:  
    Prints the help menu.
 
