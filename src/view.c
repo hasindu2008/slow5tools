@@ -90,6 +90,8 @@ slow5_press_method_t name_to_slow5_press_method(const char *name) {
         comp = SLOW5_COMPRESS_ZLIB;
     } else if (strcmp(name, "svb-zd") == 0) {
         comp = SLOW5_COMPRESS_SVB_ZD;
+    } else if (strcmp(name, "zstd") == 0) {
+        comp = SLOW5_COMPRESS_ZSTD;
     }
 
     return comp;
