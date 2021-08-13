@@ -1,4 +1,4 @@
-
+// definitions used for FAST5 to SLOW5 conversion
 #ifndef HAVE_CONFIG_H
     #define HAVE_CONFIG_H
     #include "config.h"

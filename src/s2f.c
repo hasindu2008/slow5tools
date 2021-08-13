@@ -1,6 +1,9 @@
-//
-// Created by Hiruna Samarkoon on 2020-12-29.
-//
+/**
+ * @file s2f.c
+ * @brief SLOW5 to FAST5 conversion
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
+ * @date 27/02/2021
+ */
 
 #include <getopt.h>
 #include <sys/wait.h>

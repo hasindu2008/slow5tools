@@ -1,6 +1,9 @@
-//
-// Created by shan on 2020-12-22.
-//
+/**
+ * @file read_fast5.c
+ * @brief supplementary code for FAST5 to SLOW5 conversion
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
+ * @date 27/02/2021
+ */
 
 #include <string>
 #include <vector>

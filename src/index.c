@@ -1,3 +1,9 @@
+/**
+ * @file index.c
+ * @brief index a SLOW5 file
+ * @author Sasha Jenner (jenner.sasha@gmail.com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
+ * @date 27/02/2021
+ */
 #include <stdio.h>
 #include <getopt.h>
 

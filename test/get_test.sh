@@ -62,14 +62,24 @@ echo -e "${GREEN}testcase 2 passed${NC}"
 echo
 echo "------------------- slow5tools get testcase 3 -------------------"
 
-$SLOW5_EXEC get "$SLOW5_DIR/example2.slow5" --list "$SLOW5_DIR/list.txt" --to slow5 > "$OUTPUT_DIR/extracted_reads3.txt" || die "testcase 2 failed"
+$SLOW5_EXEC get "$SLOW5_DIR/example2.slow5" --list "$SLOW5_DIR/list.txt" --to slow5 > "$OUTPUT_DIR/extracted_reads3.txt" || die "testcase 3 failed"
 diff -s "$EXP_SLOW5_DIR/expected_extracted_reads3.txt" "$OUTPUT_DIR/extracted_reads3.txt" &>/dev/null
 if [ $? -ne 0 ]; then
-    echo -e "${RED}ERROR: diff failed for 'slow5tools get testcase 2'${NC}"
+    echo -e "${RED}ERROR: diff failed for 'slow5tools get testcase 3'${NC}"
     exit 1
 fi
 echo -e "${GREEN}testcase 3 passed${NC}"
 
-rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
+echo
+echo "------------------- slow5tools get testcase 4 -------------------"
 
+$SLOW5_EXEC get "$SLOW5_DIR/example2.slow5" -t 2 r1 r5 r3 --to slow5 > "$OUTPUT_DIR/extracted_reads2.txt" || die "testcase 4 failed"
+diff -s "$EXP_SLOW5_DIR/expected_extracted_reads2.txt" "$OUTPUT_DIR/extracted_reads2.txt" &>/dev/null
+if [ $? -ne 0 ]; then
+    echo -e "${RED}ERROR: diff failed for 'slow5tools get testcase 4'${NC}"
+    exit 1
+fi
+echo -e "${GREEN}testcase 4 passed${NC}"
+
+rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 exit 0
