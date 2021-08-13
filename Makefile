@@ -29,8 +29,8 @@ VERSION = `git describe --tags`
 
 .PHONY: clean distclean format test install uninstall slow5lib
 
-$(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN) slow5lib/lib/libslow5.a
-	$(CXX) $(CFLAGS) $(OBJ_BIN) slow5lib/lib/libslow5.a $(LDFLAGS) -o $@
+$(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN) slow5lib/lib/libslow5.a slow5lib/streamvbyte/libstreamvbyte.so.0.0.1
+	$(CXX) $(CFLAGS) $(OBJ_BIN) slow5lib/lib/libslow5.a slow5lib/streamvbyte/libstreamvbyte.so.0.0.1 $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/main.o: src/main.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
