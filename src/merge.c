@@ -199,7 +199,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    slow5_press_method_t pressMethod_tmp = SLOW5_COMPRESS_ZLIB | (SLOW5_COMPRESS_SVB_ZD << 4);
+    slow5_press_method_t pressMethod_tmp = SLOW5_COMPRESS_ZSTD | (SLOW5_COMPRESS_SVB_ZD << 4);
     enum slow5_press_method pressMethod = (enum slow5_press_method) pressMethod_tmp;
     int compression_set = 0;
 
