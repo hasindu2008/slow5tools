@@ -7,7 +7,7 @@ AR 		 = ar
 CPPFLAGS += -I slow5lib/include/ -I slow5lib/src
 CFLAGS   += -g -rdynamic -Wall -O2
 LANGFLAG 	 = -x c++ -std=c++11
-LDFLAGS  += $(LIBS) -lpthread -lz
+LDFLAGS  += $(LIBS) -lpthread -lz -lzstd
 BUILD_DIR = build
 
 BINARY = slow5tools
