@@ -17,6 +17,7 @@
 #include "read_fast5.h"
 #include "slow5_extra.h"
 #include "misc.h"
+#include "thread.h"
 
 #define DEFAULT_NUM_THREADS (4)
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
@@ -38,126 +39,37 @@ static double init_realtime = 0;
 
 int delete_directory(std::string output_dir);
 
-/* core data structure that has information that are global to all the threads */
-typedef struct {
-    int32_t num_thread;
-    std::string output_dir;
-    std::vector<std::vector<size_t>> list;
-    int lossy;
-    std::vector<std::string> slow5_files;
-    int64_t n_batch;    // number of files
-    slow5_fmt format_out;
-    slow5_press_method press_method;
-} global_thread;
-
-/* argument wrapper for the multithreaded framework used for data processing */
-typedef struct {
-    global_thread * core;
-    int32_t starti;
-    int32_t endi;
-    int32_t thread_index;
-} pthread_arg;
-
-void merge_slow5(pthread_arg* pthreadArg) {
-//    fprintf(stderr, "thread index = %d\n", pthreadArg->thread_index);
-    std::string out = pthreadArg->core->output_dir;
-    out += "/" + std::to_string(pthreadArg->thread_index) + ".blow5";
+void rewrite_records(core_t *core, db_t *db, int32_t i){
+    std::string out = db->output_dir;
+    out += "/" + std::to_string(i) + ".blow5";
     const char* output_path = out.c_str();
-
-    FILE* slow5_file_pointer = stdout;
-    if(output_path){
-        slow5_file_pointer = NULL;
-        slow5_file_pointer = fopen(output_path, "w");
-        if (!slow5_file_pointer) {
-            ERROR("Output file %s could not be opened - %s.", output_path, strerror(errno));
+    FILE* slow5_file_pointer = fopen(output_path, "a");
+    if (!slow5_file_pointer) {
+        ERROR("Output file %s could not be opened - %s.", output_path, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, core->format_out);
+    slow5_hdr_initialize(slow5File->header, core->lossy);
+    slow5_file_t *slow5File_i = slow5_open(db->slow5_files[i].c_str(), "r");
+    if (!slow5File_i) {
+        ERROR("cannot open %s. skipping...\n", db->slow5_files[i].c_str());
+        exit(EXIT_FAILURE);
+    }
+    struct slow5_rec *read = NULL;
+    struct slow5_press* compress = slow5_press_init(core->press_method);
+    int ret;
+    while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
+        read->read_group = db->list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
+        if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, core->format_out, compress) == -1) {
+            slow5_rec_free(read);
+            ERROR("Could not write records to temp file %s\n", output_path);
             exit(EXIT_FAILURE);
         }
     }
-    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, output_path, pthreadArg->core->format_out);
-    slow5_hdr_initialize(slow5File->header, pthreadArg->core->lossy);
-
-    for(int32_t i=pthreadArg->starti; i<pthreadArg->endi; i++) { //iterate over slow5files
-        slow5_file_t *slow5File_i = slow5_open(pthreadArg->core->slow5_files[i].c_str(), "r");
-        if (!slow5File_i) {
-            ERROR("cannot open %s. skipping...\n", pthreadArg->core->slow5_files[i].c_str());
-            exit(EXIT_FAILURE);
-        }
-        struct slow5_rec *read = NULL;
-        struct slow5_press* compress = slow5_press_init(pthreadArg->core->press_method);
-        int ret;
-        while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
-            read->read_group = pthreadArg->core->list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
-            if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, pthreadArg->core->format_out, compress) == -1) {
-                slow5_rec_free(read);
-                ERROR("Could not write records to temp file %s\n", output_path);
-                exit(EXIT_FAILURE);
-            }
-        }
-        slow5_rec_free(read);
-        slow5_press_free(compress);
-        slow5_close(slow5File_i);
-    }
+    slow5_rec_free(read);
+    slow5_press_free(compress);
+    slow5_close(slow5File_i);
     slow5_close(slow5File);
-
-}
-
-void* pthread_single_merge(void* voidargs) {
-    pthread_arg* args = (pthread_arg*)voidargs;
-    merge_slow5(args);
-    pthread_exit(0);
-}
-
-void pthread_data(global_thread * core){
-    //create threads
-    pthread_t tids[core->num_thread];
-    pthread_arg pt_args[core->num_thread];
-    int32_t t, ret;
-    int32_t i = 0;
-    int32_t num_thread = core->num_thread;
-    int32_t step = (core->n_batch + num_thread - 1) / num_thread;
-    //todo : check for higher num of threads than the data
-    //current works but many threads are created despite
-
-    //set the data structures
-    for (t = 0; t < num_thread; t++) {
-        pt_args[t].core = core;
-        pt_args[t].starti = i;
-        i += step;
-        if (i > core->n_batch) {
-            pt_args[t].endi = core->n_batch;
-        } else {
-            pt_args[t].endi = i;
-        }
-        pt_args[t].thread_index=t;
-    }
-
-    //create threads
-    for(t = 0; t < core->num_thread; t++){
-        ret = pthread_create(&tids[t], NULL, pthread_single_merge,
-                             (void*)(&pt_args[t]));
-        NEG_CHK(ret);
-    }
-
-    //pthread joining
-    for (t = 0; t < core->num_thread; t++) {
-        int ret = pthread_join(tids[t], NULL);
-        NEG_CHK(ret);
-    }
-}
-
-/* process all reads in the given batch db */
-void work_data(global_thread* core){
-    if (core->num_thread == 1) {
-        pthread_arg pt_args;
-        pt_args.core = core;
-        pt_args.thread_index = 0;
-        pt_args.starti = 0;
-        pt_args.endi = core->slow5_files.size();
-        merge_slow5(&pt_args);
-    }
-    else {
-        pthread_data(core);
-    }
 }
 
 int merge_main(int argc, char **argv, struct program_meta *meta){
@@ -445,24 +357,23 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     if(num_threads >= num_slow5s){
         num_threads = num_slow5s;
     }
-
     // Setup multithreading structures
-    global_thread core;
+    core_t core;
     core.num_thread = num_threads;
-    core.output_dir = output_dir;
-    core.list = list;
-    core.lossy = lossy;
-    core.slow5_files = slow5_files;
-    core.n_batch = slow5_files.size();
     core.format_out = format_out;
     core.press_method = pressMethod;
+    core.lossy = lossy;
+
+    db_t db = { 0 };
+    db.n_batch = slow5_files.size();
+    db.slow5_files = slow5_files;
+    db.list = list;
+    db.output_dir = output_dir;
 
     //measure read_group number assigning using multi-threads time
     realtime0 = slow5_realtime();
 
-    // Fetch records for read ids in the batch
-    work_data(&core);
-
+    work_db(&core,&db,rewrite_records);
     fprintf(stderr, "[%s] Assigning new read group numbers using %ld threads - took %.3fs\n", __func__, num_threads, slow5_realtime() - realtime0);
 
     slow5_files.clear();
