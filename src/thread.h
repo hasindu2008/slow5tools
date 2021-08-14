@@ -36,6 +36,7 @@ typedef struct {
     bool benchmark;
     //for merge
     int lossy;
+    int slow5_file_index;
 } core_t;
 
 typedef struct{

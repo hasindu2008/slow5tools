@@ -78,36 +78,6 @@ void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
     slow5_press_free(press_ptr);
     db->read_record[i].len = len;
     slow5_rec_free(read);
-    //
-/*
-    int32_t starti = ptr->starti;
-    int32_t endi = ptr->endi;
-//        realtime = slow5_realtime();
-    std::vector<struct slow5_rec *> read_records;
-    struct slow5_rec *read = NULL;
-    for (int32_t i = starti; i < endi; i++) {
-        if (slow5_rec_depress_parse(&ptr->core->mem_records[i], &ptr->core->mem_bytes[i], NULL, &read, ptr->core->from) != 0) {
-            exit(EXIT_FAILURE);
-        } else {
-            read_records.push_back(read);
-            free(ptr->core->mem_records[i]);
-            read = NULL;
-        }
-    }
-
-    struct slow5_press *press_ptr = slow5_press_init(ptr->core->press_method);
-    size_t len;
-    for (int32_t i = starti; i < endi; i++) {
-        if ((ptr->core->raw_records[i].buffer = slow5_rec_to_mem(read_records[i-starti], ptr->core->from->header->aux_meta, ptr->core->format_out, press_ptr, &len)) == NULL) {
-            slow5_press_free(press_ptr);
-            slow5_rec_free(read_records[i-starti]);
-            exit(EXIT_FAILURE);
-        }
-        ptr->core->raw_records[i].len = len;
-        slow5_rec_free(read_records[i-starti]);
-    }
-    slow5_press_free(press_ptr);
-    */
 }
 
 enum view_fmt name_to_view_fmt(const char *fmt_str) {
@@ -482,8 +452,6 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
         db.mem_bytes = (size_t *) malloc(batch_size * sizeof *db.read_id);
 
         int64_t record_count = 0;
-//        std::vector<char *> mem_records;
-//        std::vector<size_t> mem_bytes;
         size_t bytes;
         char *mem;
         double realtime = slow5_realtime();
