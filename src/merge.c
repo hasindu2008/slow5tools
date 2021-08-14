@@ -403,12 +403,13 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    size_t num_slow5s = slow5_files.size();
-    if(num_threads >= num_slow5s){
-        num_threads = num_slow5s;
-    }
-
     if(parallel_files) {
+        INFO("%s", "Using parallel files");
+        size_t num_slow5s = slow5_files.size();
+        if(num_threads >= num_slow5s){
+            num_threads = num_slow5s;
+        }
+
         // Setup multithreading structures
         core_t core;
         core.num_thread = num_threads;
