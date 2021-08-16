@@ -167,8 +167,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
 
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -244,8 +244,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
                 }
                 break;
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
@@ -274,7 +274,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         if (*endptr == '\0') {
             num_threads = ret;
         } else {
-            MESSAGE(stderr, "invalid number of threads -- '%s'", arg_num_threads);
+            ERROR("invalid number of threads -- '%s'", arg_num_threads);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -284,29 +284,29 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Parse format arguments
     if (arg_fmt_in != NULL) {
-        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("parsing input format%s","");
+        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("parsing input format%s","");
         }
 
         fmt_in = name_to_view_fmt(arg_fmt_in);
 
         // An error occured
         if (fmt_in == VIEW_FORMAT_UNKNOWN) {
-            MESSAGE(stderr, "invalid input format -- '%s'", arg_fmt_in);
+            ERROR("invalid input format -- '%s'", arg_fmt_in);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         }
     }
     if (arg_fmt_out != NULL) {
-        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("parsing output format%s","");
+        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("parsing output format%s","");
         }
 
         fmt_out = name_to_view_fmt(arg_fmt_out);
 
         // An error occured
         if (fmt_out == VIEW_FORMAT_UNKNOWN) {
-            MESSAGE(stderr, "invalid output format -- '%s'", arg_fmt_out);
+            ERROR("invalid output format -- '%s'", arg_fmt_out);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         }
@@ -314,12 +314,12 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Check for an input file to parse
     if (optind >= argc) { // TODO use stdin if no file given
-        MESSAGE(stderr, "missing input file%s", "");
+        ERROR("missing input file%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     } else if (optind != argc - 1) { // TODO handle more than 1 file?
-        MESSAGE(stderr, ">1 input file%s", "");
+        ERROR(">1 input file%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -329,39 +329,34 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Autodetect input/output formats
     if (fmt_in == VIEW_FORMAT_UNKNOWN) {
-        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("auto detecting input file format%s","");
+        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("auto detecting input file format%s","");
         }
 
         fmt_in = path_to_view_fmt(arg_fname_in);
 
         // Error
         if (fmt_in == VIEW_FORMAT_UNKNOWN) {
-            MESSAGE(stderr, "cannot detect file format -- '%s'", arg_fname_in);
+            ERROR("cannot detect file format -- '%s'", arg_fname_in);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         }
     }
     if (fmt_out == VIEW_FORMAT_UNKNOWN) {
         if (arg_fname_out == NULL) {
-            // Error
-            //MESSAGE(stderr, "missing output file or format%s", "");
-            //fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-            //EXIT_MSG(EXIT_FAILURE, argv, meta);
-            //return EXIT_FAILURE;
             fmt_out = VIEW_FORMAT_SLOW5_ASCII;
         }
 
         else{
-            if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
-                VERBOSE("auto detecting output file format%s","");
+            if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+                DEBUG("auto detecting output file format%s","");
             }
 
             fmt_out = path_to_view_fmt(arg_fname_out);
 
             // Error
             if (fmt_out == VIEW_FORMAT_UNKNOWN) {
-                MESSAGE(stderr, "cannot detect file format -- '%s'", arg_fname_out);
+                ERROR("cannot detect file format -- '%s'", arg_fname_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
             }
@@ -371,14 +366,14 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     if (arg_press_out != NULL) {
         if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
-            MESSAGE(stderr, "compression only available for output format '%s'", SLOW5_BINARY_NAME);
+            ERROR("compression only available for output format '%s'", SLOW5_BINARY_NAME);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         } else {
             press_out = name_to_slow5_press_method(arg_press_out);
 
             if (press_out == (slow5_press_method_t) -1) {
-                MESSAGE(stderr, "invalid compression method -- '%s'", arg_press_out);
+                ERROR("invalid compression method -- '%s'", arg_press_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
             }
@@ -387,8 +382,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Parse output argument
     if (arg_fname_out != NULL) {
-        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("opening output file%s","");
+        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("opening output file%s","");
         }
         // Create new file or
         // Truncate existing file
@@ -443,8 +438,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Close output file
     if (arg_fname_out != NULL) {
-        if (meta != NULL && meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("closing output file%s","");
+        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("closing output file%s","");
         }
 
         if (fclose(f_out) == EOF) {

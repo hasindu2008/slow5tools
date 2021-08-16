@@ -145,7 +145,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
         }
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
-    if(meta->verbosity_level >= LOG_VERBOSE){
+    if(meta->verbosity_level >= LOG_DEBUG){
         fprintf(stderr, "Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
 }
@@ -155,7 +155,7 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
     if (iop > num_fast5_files) {
         iop = num_fast5_files;
     }
-    INFO("%d proceses will be used",iop);
+    VERBOSE("%d proceses will be used",iop);
 
     //create processes
 //    pid_t pids[iop];
@@ -246,9 +246,6 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
 }
 
 int f2s_main(int argc, char **argv, struct program_meta *meta) {
-    //todo - consider implementing this in later versions
-    INFO("[%s] Not Stored: Attribute read/pore_type is not stored.", SLOW5_FILE_FORMAT_SHORT);
-    INFO("[%s] Not Stored: Attribute read/Raw/end_reason is not stored.", SLOW5_FILE_FORMAT_SHORT);
 
     // Turn off HDF's exception printing, which is generally unhelpful for users
     // This can cause a 'still reachable' memory leak on a valgrind check
@@ -260,8 +257,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
         fprintf(stderr, DEBUG_PREFIX "argv=[",
                 __FILE__, __func__, __LINE__);
@@ -348,8 +345,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 flag_allow_run_id_mismatch = 1;
                 break;
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
@@ -411,7 +408,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        MESSAGE(stderr, "missing fast5 files or directories%s", "");
+        ERROR("%s", "missing fast5 files or directories");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;

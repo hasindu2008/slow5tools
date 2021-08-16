@@ -165,8 +165,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
 
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -224,8 +224,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
@@ -293,7 +293,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         if (*endptr == '\0') {
             num_threads = ret;
         } else {
-            MESSAGE(stderr, "invalid number of threads -- '%s'", arg_num_threads);
+            ERROR("invalid number of threads -- '%s'", arg_num_threads);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -303,7 +303,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        MESSAGE(stderr, "missing slow5 files or directories%s", "");
+        ERROR("missing slow5 files or directories%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;

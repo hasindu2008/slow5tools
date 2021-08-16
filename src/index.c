@@ -25,8 +25,8 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
 
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -65,8 +65,8 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
 
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
@@ -81,7 +81,7 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        MESSAGE(stderr, "missing slow5 or blow5 file%s", "");
+        ERROR("missing slow5 or blow5 file%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -89,7 +89,7 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
 
     // Check for only one file
     } else if (optind < argc - 1) {
-        MESSAGE(stderr, "too many files given%s", "");
+        ERROR("too many files given%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);

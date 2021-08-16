@@ -66,7 +66,7 @@ bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_me
     bool success = true;
 
     int len = 0;
-    fprintf(stderr, "Fetching %s\n", read_id);
+    //fprintf(stderr, "Fetching %s\n", read_id);
     slow5_rec_t *record=NULL;
 
     len = slow5_get(read_id, &record,fp);
@@ -91,8 +91,8 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
 
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -197,8 +197,8 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 arg_fname_in = optarg;
                 break;
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
@@ -258,7 +258,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         if (*endptr == '\0') {
             num_threads = ret;
         } else {
-            MESSAGE(stderr, "invalid number of threads -- '%s'", arg_num_threads);
+            ERROR("invalid number of threads -- '%s'", arg_num_threads);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -268,7 +268,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        MESSAGE(stderr, "missing slow5 or blow5 file%s", "");
+        ERROR("missing slow5 or blow5 file%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -301,9 +301,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     int ret_idx = slow5_idx_load(slow5file);
 
     if (ret_idx < 0) {
-        // TODO change these to MESSAGE?
-        fprintf(stderr, "Error loading index file for %s\n",
-                f_in_name);
+        ERROR("Error loading index file for %s\n", f_in_name);
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -371,7 +369,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
             double end = slow5_realtime();
             read_time += end - start;
 
-            MESSAGE(stderr, "Fetched %ld reads - %ld failed",
+            VERBOSE("Fetched %ld reads - %ld failed",
                     num_ids - db.n_err, db.n_err);
 
             // Print records
@@ -391,7 +389,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         // Print total time to read slow5
-        MESSAGE(stderr, "read time = %.3f sec", read_time);
+        VERBOSE("read time = %.3f sec", read_time);
 
         // Free everything
         free(db.read_id);

@@ -292,7 +292,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
     }
-    INFO("%d proceses will be used",iop);
+    VERBOSE("%d proceses will be used",iop);
     //create processes
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
     proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof(proc_arg_t));
@@ -380,9 +380,6 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
 }
 
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
-    //todo - consider implementing this in later versions
-    INFO("[%s] Not Stored: Attribute read/pore_type is not stored.", SLOW5_FILE_FORMAT_SHORT);
-    INFO("[%s] Not Stored: Attribute read/Raw/end_reason is not stored.", SLOW5_FILE_FORMAT_SHORT);
 
     // Turn off HDF's exception printing, which is generally unhelpful for users
     H5Eset_auto(0, NULL, NULL);
@@ -391,8 +388,8 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
 
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -436,8 +433,8 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 

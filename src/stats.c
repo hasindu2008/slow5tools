@@ -32,8 +32,8 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
 
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -93,7 +93,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
+                if (meta->verbosity_level >= LOG_DEBUG) {
                     VERBOSE("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
