@@ -58,23 +58,23 @@ else
     exit 1
 fi
 
-#echo
-#echo "-------------------tetcase 2: lossy merging-------------------"
-#$SLOW5_EXEC merge -l false $INPUT_FILES -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5 || die "tetcase 2: lossy merging failed"
-#echo "comparing lossy_merged_output and lossy_merged_expected"
-#sort $REL_PATH/data/exp/merge/lossy_merged_expected.slow5 > $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 || die "sort failed"
-#sort $OUTPUT_DIR/lossy_merged_output.slow5 > $OUTPUT_DIR/lossy_merged_output_sorted.slow5 || die "sort failed"
-#rm $OUTPUT_DIR/lossy_merged_output.slow5 || die "remove $OUTPUT_DIR/lossy_merged_output.slow5 failed"
-#cmp -s $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 $OUTPUT_DIR/lossy_merged_output_sorted.slow5
-#if [ $? -eq 0 ]; then
-#    echo -e "${GREEN}SUCCESS: lossy merged files are consistent!${NC}"
-#elif [ $? -eq 1 ]; then
-#    echo -e "${RED}FAILURE: lossy merged files are not consistent${NC}"
-#    exit 1
-#else
-#    echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
-#    exit 1
-#fi
+echo
+echo "-------------------tetcase 2: lossy merging-------------------"
+$SLOW5_EXEC merge -l false $INPUT_FILES -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5 || die "tetcase 2: lossy merging failed"
+echo "comparing lossy_merged_output and lossy_merged_expected"
+sort $REL_PATH/data/exp/merge/lossy_merged_expected.slow5 > $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 || die "sort failed"
+sort $OUTPUT_DIR/lossy_merged_output.slow5 > $OUTPUT_DIR/lossy_merged_output_sorted.slow5 || die "sort failed"
+rm $OUTPUT_DIR/lossy_merged_output.slow5 || die "remove $OUTPUT_DIR/lossy_merged_output.slow5 failed"
+cmp -s $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 $OUTPUT_DIR/lossy_merged_output_sorted.slow5
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}SUCCESS: lossy merged files are consistent!${NC}"
+elif [ $? -eq 1 ]; then
+    echo -e "${RED}FAILURE: lossy merged files are not consistent${NC}"
+    exit 1
+else
+    echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
+fi
 
 echo
 echo "-------------------tesetcase 3: lossless merging with threads-------------------"
