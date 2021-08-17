@@ -73,6 +73,7 @@ struct operator_obj {
     size_t* nreads;
     slow5_file_t* slow5File;
     std::unordered_map<std::string, uint32_t>* warning_map;
+    int *primary_fields_count;
 };
 
 //implemented in read_fast5.c

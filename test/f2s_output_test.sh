@@ -189,8 +189,7 @@ echo -e "${GREEN}testcase 22 passed${NC}"
 echo
 echo "------------------- f2s testcase 23 >>> primary field missing fast5-------------------"
 mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
-$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/offset_missing.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/offset_missing.slow5 --to slow5 2>/dev/null || die "testcase 23 failed"
-diff -s $EXP_SLOW5_DIR/unusual_fast5/offset_missing.slow5 $OUTPUT_DIR/unusual_fast5/offset_missing.slow5 2>/dev/null || die "ERROR: diff failed for primary field missing fast5"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/offset_missing.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/offset_missing.slow5 --to slow5 2>/dev/null && die "testcase 23 failed"
 echo -e "${GREEN}testcase 23 passed${NC}"
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
