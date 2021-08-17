@@ -15,6 +15,8 @@
 
 #define WARNING_LIMIT 1
 #define PRIMARY_FIELD_COUNT 7 //without read_group number
+#define H5Z_FILTER_VBZ 32020 //We need to find out what the numerical value for this is
+
 // Operator function to be called by H5Aiterate.
 herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data);
 // Operator function to be called by H5Literate.
@@ -367,6 +369,17 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
     hid_t status = H5Dread(dset, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, slow5_record->raw_signal);
 
     if (status < 0) {
+        hid_t dcpl = H5Dget_create_plist (dset);
+        unsigned int flags;
+        size_t nelmts = 1; //number of elements in cd_values
+        unsigned int values_out[1] = {99};
+        char filter_name[80];
+        H5Z_filter_t filter_id = H5Pget_filter2 (dcpl, (unsigned) 0, &flags, &nelmts, values_out, sizeof(filter_name) - 1, filter_name, NULL);
+        H5Pclose (dcpl);
+        if(filter_id == H5Z_FILTER_VBZ){
+            fprintf(stderr, "The fast5 file is compressed with VBZ but the required plugin is not loaded. Please read the instructions here: https://github.com/nanoporetech/vbz_compression/issues/5\n");
+        }
+//            exit(EXIT_FAILURE);
         WARNING("Failed to read raw data from dataset %s.", name);
         H5Sclose(space);
         H5Dclose(dset);
