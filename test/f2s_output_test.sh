@@ -217,10 +217,24 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
 
 echo
 TESTCASE_NO=24
-echo "------------------- f2s testcase $TESTCASE_NO >>> primary field missing fast5-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_first_read_group_tracking_id fast5-------------------"
 mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
-$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/offset_missing.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/offset_missing.slow5 --to slow5 2>/dev/null && die "testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_first_read_group_tracking_id.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 2>/dev/null && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
+
+#echo this testcase is not implemented in f2s
+#TESTCASE_NO=25
+#echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_first_read_group_read fast5-------------------"
+#mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
+#$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_first_read_group_read.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 2>/dev/null && die "testcase $TESTCASE_NO failed"
+#echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
+
+#echo this testcase is not implemented in f2s
+#TESTCASE_NO=26
+#echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_fifth_read_group_read fast5-------------------"
+#mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
+#$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_fifth_read_group_read.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 2>/dev/null && die "testcase $TESTCASE_NO failed"
+#echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 

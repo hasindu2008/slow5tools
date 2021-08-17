@@ -433,7 +433,7 @@ read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, slow5_press_method pr
         H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
         //        todo: compare header values with the previous singlefast5
         if(*(tracker.flag_run_id) != 1){
-            ERROR("run_id is not set%s", ".");
+            ERROR("run_id information is missing in the %s.", tracker.fast5_path);
             exit(EXIT_FAILURE);
         }
         if(write_header_flag == 0){
@@ -545,7 +545,7 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                                 exit(EXIT_FAILURE);
                             }
                             if(*(operator_data->flag_run_id) != 1){
-                                ERROR("run_id is not set%s", ".");
+                                ERROR("run_id information is missing in the %s.", operator_data->fast5_path);
                                 exit(EXIT_FAILURE);
                             }
                             if(*(operator_data->flag_write_header) == 0){
