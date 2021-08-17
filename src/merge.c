@@ -50,7 +50,8 @@ void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
 
     struct slow5_press *press_ptr = slow5_press_init(core->press_method);
     size_t len;
-    if ((db->read_record[i].buffer = slow5_rec_to_mem(read, core->fp->header->aux_meta, core->format_out, press_ptr, &len)) == NULL) {
+//    core->fp->header->aux_meta
+    if ((db->read_record[i].buffer = slow5_rec_to_mem(read, NULL, core->format_out, press_ptr, &len)) == NULL) {
         slow5_press_free(press_ptr);
         slow5_rec_free(read);
         exit(EXIT_FAILURE);
@@ -335,6 +336,10 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         ERROR("File '%s' could not be opened - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
         return EXIT_FAILURE;
     }
+    if(lossy){
+        slow5_aux_meta_free(from->header->aux_meta);
+        from->header->aux_meta = NULL;
+    }
 
     while(1) {
 
@@ -405,9 +410,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                     ERROR("File '%s' could not be opened - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
                     return EXIT_FAILURE;
                 }
+                if(lossy){
+                    slow5_aux_meta_free(from->header->aux_meta);
+                    from->header->aux_meta = NULL;
+                }
             }
         }
-
     }
     if (meta->verbosity_level >= LOG_DEBUG) {
         DEBUG("time_get_to_mem\t%.3fs", time_get_to_mem);
