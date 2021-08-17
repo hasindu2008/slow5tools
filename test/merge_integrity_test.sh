@@ -35,6 +35,8 @@ mkdir $OUTPUT_DIR || die "Creating $OUTPUT_DIR failed"
 INPUT_FILE=$REL_PATH/data/exp/merge/slow5s
 INPUT_FILES="$INPUT_FILE/rg0.slow5 $INPUT_FILE/rg1.slow5 $INPUT_FILE/rg2.slow5 $INPUT_FILE/rg3.slow5"
 
+NUM_THREADS=2
+
 echo "-------------------tesetcase 0: slow5tools version-------------------"
 $SLOW5_EXEC --version || die "tesetcase 0: slow5tools version failed"
 
@@ -73,6 +75,25 @@ else
     echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
     exit 1
 fi
+
+echo
+echo "-------------------tesetcase 3: lossless merging with threads-------------------"
+$SLOW5_EXEC merge -t $NUM_THREADS $INPUT_FILES -o $OUTPUT_DIR/merged_output_using_threads.slow5 --to slow5 || die "tesetcase 3: lossless merging using threads failed"
+echo "comparing merged_output_using_threads and merged_expected"
+sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $OUTPUT_DIR/merged_expected_sorted.slow5 || die "sort failed"
+sort $OUTPUT_DIR/merged_output_using_threads.slow5 > $OUTPUT_DIR/merged_output_using_threads_sorted.slow5 || die "sort failed"
+rm $OUTPUT_DIR/merged_output_using_threads.slow5  || die "remove $OUTPUT_DIR/merged_output_using_threads.slow5 failed"
+cmp -s $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_using_threads_sorted.slow5
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}SUCCESS: merged files are consistent!${NC}"
+elif [ $? -eq 1 ]; then
+    echo -e "${RED}FAILURE: merged files are not consistent${NC}"
+    exit 1
+else
+    echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
+fi
+
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
