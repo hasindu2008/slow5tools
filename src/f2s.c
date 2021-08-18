@@ -448,13 +448,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
     if(lossy){
-        WARNING("[%s] Flag 'lossy' is set. Hence, auxiliary fields are not stored", SLOW5_FILE_FORMAT_SHORT);
+        WARNING("%s","Flag 'lossy' is set. Hence, auxiliary fields are not stored");
     }
 
     //measure file listing time
     init_realtime = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
-        list_all_items(argv[i], fast5_files, 0, FAST5_EXTENSION);
+        list_all_items(argv[i], fast5_files, 0, ".fast5");
     }
     VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
 
