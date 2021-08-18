@@ -8,6 +8,8 @@
 #include <string.h>
 #include <slow5/slow5.h>
 #include "error.h"
+#include <vector>
+#include <string>
 
 /**********************************
  * what you may have to modify *
@@ -30,7 +32,11 @@ typedef struct {
     slow5_file_t *fp;
     slow5_fmt format_out;
     slow5_press_method_t press_method;
+    //for view
     bool benchmark;
+    //for merge
+    int lossy;
+    int slow5_file_index;
 } core_t;
 
 typedef struct{
@@ -48,6 +54,10 @@ typedef struct {
     //for view
     char** mem_records; // list of slow5_get_next_mem() records
     size_t* mem_bytes; // lengths of slow5_get_next_mem() records
+    //for merge
+    std::vector<std::string> slow5_files;
+    std::vector<std::vector<size_t>> list;
+    std::string output_dir;
 } db_t;
 
 /* argument wrapper for the multithreaded framework used for data processing */
