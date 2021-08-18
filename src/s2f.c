@@ -365,7 +365,7 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
 
 void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
     for (int i = args.starti; i < args.endi; i++) {
-        fprintf(stderr, "Converting %s to fast5\n", slow5_files[i].c_str());
+        VERBOSE("Converting %s to fast5", slow5_files[i].c_str());
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
             ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
@@ -582,15 +582,15 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], slow5_files, 0, NULL);
     }
-    VERBOSE("%ld slow5 files found - took %.3fs\n",slow5_files.size(), slow5_realtime() - realtime0);
+    VERBOSE("%ld slow5 files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
     if(slow5_files.size()==0){
-        WARNING("No proper slow5/blow5 files found. Exiting...%s","");
-        return EXIT_SUCCESS;
+        ERROR("No slow5/blow5 files found. Exiting...%s","");
+        return EXIT_FAILURE;
     }
     //measure s2f conversion time
     init_realtime = slow5_realtime();
     s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
-    VERBOSE("Converting %ld s/blow5 files took %.3fs\n", slow5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Converting %ld s/blow5 files took %.3fs", slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
 }
