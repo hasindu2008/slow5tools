@@ -164,7 +164,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
     if(meta->verbosity_level >= LOG_DEBUG){
-        fprintf(stderr, "Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
+        INFO("Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
 }
 
@@ -456,12 +456,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], fast5_files, 0, FAST5_EXTENSION);
     }
-    fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
 
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
     f2s_iop(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
-    fprintf(stderr, "[%s] Converting %ld fast5 files took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Converting %ld fast5 files took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;

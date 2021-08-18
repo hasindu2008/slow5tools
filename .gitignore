@@ -23,6 +23,10 @@
 *.log
 *.sql
 *.sqlite
+.idea
+cmake-build-debug/
+prebuilt-hdf5/
+test/data/out
 
 # OS generated files #
 ######################

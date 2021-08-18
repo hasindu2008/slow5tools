@@ -72,7 +72,7 @@ bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_me
     len = slow5_get(read_id, &record,fp);
 
     if (record == NULL || len < 0) {
-        fprintf(stderr, "Error locating %s\n", read_id);
+        WARNING("Error locating %s", read_id);
         success = false;
 
     } else {

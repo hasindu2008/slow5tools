@@ -134,7 +134,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     fprintf(stdout, "compression method\t%s\n", compression_method.c_str());
     fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
 
-    INFO("counting number of slow5 records...%s","");
+    VERBOSE("counting number of slow5 records...%s","");
 
     int64_t record_count = 0;
     size_t bytes;

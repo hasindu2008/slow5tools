@@ -28,9 +28,11 @@ static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std
 //other functions
 int group_check(struct operator_obj *od, haddr_t target_addr);
 
+void search_and_warn(operator_obj *operator_data, std::string key, const char *warn_message);
+
 int print_slow5_header(operator_obj* operator_data) {
     if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
-        fprintf(stderr, "Could not write the header\n");
+        ERROR("%s","Could not write the header");
         return -1;
     }
     return 0;
@@ -38,7 +40,7 @@ int print_slow5_header(operator_obj* operator_data) {
 
 int print_record(operator_obj* operator_data) {
     if(slow5_rec_fwrite(operator_data->slow5File->fp, operator_data->slow5_record, operator_data->slow5File->header->aux_meta, operator_data->format_out, operator_data->press_ptr) == -1){
-        fprintf(stderr, "Could not write the record %s\n", operator_data->slow5_record->read_id);
+        ERROR("Could not write the record %s", operator_data->slow5_record->read_id);
         return -1;
     }
     return 0;
@@ -62,7 +64,7 @@ fast5_file_t fast5_open(const char* filename) {
             int minor;
             int ret = sscanf(version_str.c_str(), "%d.%d", &major, &minor);
             if(ret != 2) {
-                fprintf(stderr, "Could not parse version string %s\n", version_str.c_str());
+                ERROR("Could not parse version string %s", version_str.c_str());
                 exit(EXIT_FAILURE);
             }
 
@@ -120,19 +122,9 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             }
             if (value.attr_string && !value.attr_string[0]) {
                 std::string key = "em_" + std::string(name); //empty
-                auto search = operator_data->warning_map->find(key);
-                if (search != operator_data->warning_map->end()) {
-                    if(search->second < WARNING_LIMIT){
-                        search->second = search->second+1;
-                        WARNING("[%s] Empty: Attribute value of %s/%s is an empty string", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
-                    }else if(search->second == WARNING_LIMIT){
-                        WARNING("[%s] Empty: Attribute value of %s/%s is an empty string. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
-                        search->second = WARNING_LIMIT+1;
-                    }
-                } else {
-                    WARNING("[%s] Empty: Attribute value of %s/%s is an empty string", SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name);
-                    operator_data->warning_map->insert({key,1});
-                }
+                char warn_message[300];
+                sprintf(warn_message,"Empty: Attribute %s/%s is an empty string",operator_data->group_name, name);
+                search_and_warn(operator_data,key,warn_message);
 
                 if(flag_value_string){ // hack to skip the free() at the bottom of the function
                     free(value.attr_string);
@@ -214,9 +206,13 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             WARNING("median_before auxiliary attribute value could not be set in the slow5 record %s", "");
         }
     }
-//    else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
+    else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
 //        operator_data->slow5_record->end_reason = value.attr_uint8_t;
-//    }
+        std::string key = "ns_" + std::string(name); //not stored
+        char warn_message[300];
+        sprintf(warn_message,"Not stored: Attribute %s/%s is not stored yet until we confirm from ONT about its datatype", operator_data->group_name,name);
+        search_and_warn(operator_data,key,warn_message);
+    }
 //            CHANNEL_ID
     else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING && *(operator_data->flag_lossy) == 0){
         if(slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "channel_number", value.attr_string) != 0){
@@ -240,8 +236,14 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         operator_data->slow5_record->sampling_rate = value.attr_double;
     }
 
+    int flag_root_context_tracking = 0;
+    int flag_raw_channel_id = 0;
+    if(strcmp(operator_data->group_name,"Raw")==0 || strcmp(operator_data->group_name,"channel_id")==0){
+        flag_raw_channel_id = 1;
+    }
     // if group is ROOT or CONTEXT_TAGS or TRACKING_ID create an attribute in the header and store value
     if(strcmp(operator_data->group_name,"/")==0 || strcmp(operator_data->group_name,"context_tags")==0 || strcmp(operator_data->group_name,"tracking_id")==0){
+        flag_root_context_tracking = 1;
         if (H5Tclass != H5T_STRING) {
             flag_value_string = 1;
             size_t storage_size = 50;
@@ -260,23 +262,11 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("%s", "This should not be printed");
                     return -1;
             }
+            DEBUG("%s","convert error");
             std::string key = "co_" + std::string(name); //convert
-            auto search = operator_data->warning_map->find(key);
-            if (search != operator_data->warning_map->end()) {
-                if (search->second < WARNING_LIMIT) {
-                    search->second = search->second + 1;
-                    WARNING("[%s] Convert: Converting the attribute %s/%s from %s to string",
-                            SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name, h5t_class.c_str());
-                } else if (search->second == WARNING_LIMIT) {
-                    WARNING("[%s] Convert: Converting the attribute %s/%s from %s to string. This warning is suppressed now onwards.",
-                            SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name, h5t_class.c_str());
-                    search->second = WARNING_LIMIT + 1;
-                }
-            } else {
-                WARNING("[%s] Convert: Converting the attribute %s/%s from %s to string",
-                        SLOW5_FILE_FORMAT_SHORT, operator_data->group_name, name, h5t_class.c_str());
-                operator_data->warning_map->insert({key, 1});
-            }
+            char warn_message[300];
+            sprintf(warn_message,"Convert: Converting the attribute %s/%s from %s to string",operator_data->group_name, name, h5t_class.c_str());
+            search_and_warn(operator_data,key,warn_message);
         }
 
         int flag_attribute_exists = 0;
@@ -312,19 +302,9 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             if(flag_existing_attr_value_mismatch){
                 if(*(operator_data->flag_allow_run_id_mismatch)){
                     std::string key = "rm_" + std::string(name); //runid mismatch
-                    auto search = operator_data->warning_map->find(key);
-                    if (search != operator_data->warning_map->end()) {
-                        if(search->second < WARNING_LIMIT){
-                            search->second = search->second+1;
-                            WARNING("[%s] Mismatch: Different run_ids found in a single fast5 file. First read run_id will be set in slow5 header.", SLOW5_FILE_FORMAT_SHORT);
-                        }else if(search->second == WARNING_LIMIT){
-                            WARNING("[%s] Mismatch: Different run_ids found in a single fast5 file. First read run_id will be set in slow5 header. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT);
-                            search->second = WARNING_LIMIT+1;
-                        }
-                    } else {
-                        WARNING("[%s] Mismatch: Different run_ids found in a single fast5 file. First read run_id will be set in slow5 header.", SLOW5_FILE_FORMAT_SHORT);
-                        operator_data->warning_map->insert({key,1});
-                    }
+                    char warn_message[300];
+                    sprintf(warn_message,"Mismatch: Different run_ids found in a single fast5 file. First seen run_id will be set in slow5 header");
+                    search_and_warn(operator_data,key,warn_message);
                 }else{
                     ERROR("Different run_ids found in a single fast5 file. Cannot create a single header slow5/blow5. Please consider --allow option.%s", "");
                     return -1;
@@ -333,10 +313,44 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
     }
 
+    if(flag_raw_channel_id==0 && flag_root_context_tracking==0){
+        int flag_pore_type = 0;
+        if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
+            flag_pore_type = 1;
+            std::string key = "ns_" + std::string(name); //not stored
+            char warn_message[300];
+            sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
+            search_and_warn(operator_data,key,warn_message);
+        }
+        if(strcmp("run_id",name) && flag_pore_type==0){
+            std::string key = "al_" + std::string(name); //alert
+            char warn_message[300];
+            sprintf(warn_message,"Alert: Attribute %s/%s is not observed in the read group before. Please report to us: https://github.com/hasindu2008/slow5tools/issues",operator_data->group_name,name);
+            search_and_warn(operator_data,key,warn_message);
+        }
+
+    }
+
     if(flag_value_string){
         free(value.attr_string);
     }
     return return_val;
+}
+
+void search_and_warn(operator_obj *operator_data, std::string key, const char *warn_message) {
+    auto search = operator_data->warning_map->find(key);
+    if (search != operator_data->warning_map->end()) {
+        if(search->second < WARNING_LIMIT){
+            search->second = search->second+1;
+            WARNING("[%s] %s.", SLOW5_FILE_FORMAT_SHORT, warn_message);
+        }else if(search->second == WARNING_LIMIT){
+            WARNING("[%s] %s. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, warn_message);
+            search->second = WARNING_LIMIT+1;
+        }
+    } else {
+        WARNING("[%s] %s.", SLOW5_FILE_FORMAT_SHORT,warn_message);
+        operator_data->warning_map->insert({key,1});
+    }
 }
 
 int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
@@ -783,7 +797,7 @@ static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std
     attribute = H5Aopen(group, attribute_name.c_str(), H5P_DEFAULT);
     if(attribute < 0) {
 #ifdef DEBUG_FAST5_IO
-        fprintf(stderr, "could not open attribute: %s\n", attribute_name.c_str());
+        DEBUG("could not open attribute: %s", attribute_name.c_str());
 #endif
         goto close_attr;
     }
@@ -792,14 +806,14 @@ static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std
     attribute_type = H5Aget_type(attribute);
     if(attribute_type < 0) {
 #ifdef DEBUG_FAST5_IO
-        fprintf(stderr, "failed to get attribute type %s\n", attribute_name.c_str());
+        DEBUG("failed to get attribute type %s", attribute_name.c_str());
 #endif
         goto close_type;
     }
 
     if(H5Tget_class(attribute_type) != H5T_STRING) {
 #ifdef DEBUG_FAST5_IO
-        fprintf(stderr, "attribute %s is not a string\n", attribute_name.c_str());
+        DEBUG("attribute %s is not a string", attribute_name.c_str());
 #endif
         goto close_type;
     }
@@ -817,7 +831,7 @@ static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std
         char* buffer;
         ret = H5Aread(attribute, native_type, &buffer);
         if(ret < 0) {
-            fprintf(stderr, "error reading attribute %s\n", attribute_name.c_str());
+            ERROR("error reading attribute %s", attribute_name.c_str());
             exit(EXIT_FAILURE);
         }
         out = buffer;
