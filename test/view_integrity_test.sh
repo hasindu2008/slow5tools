@@ -33,7 +33,7 @@ mkdir "$OUTPUT_DIR" || die "Failed creating $OUTPUT_DIR"
 REL_PATH="$(dirname $0)/" 
 SLOW5TOOLS=$REL_PATH/../slow5tools
 
-NUM_THREADS=4
+NUM_THREADS=40
 BATCH_SIZE=10000
 
 $SLOW5TOOLS view --from blow5 --to slow5 "$BLOW5_FILE" -o "$OUTPUT_DIR/view.slow5" -t $NUM_THREADS -K $BATCH_SIZE
