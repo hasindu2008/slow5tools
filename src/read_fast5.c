@@ -156,7 +156,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
     if(H5Tclass==H5T_STRING){
         if (strcmp(value.attr_string,".")==0){
-            ERROR("Attribute '%s' has '%s' as a value", name, value.attr_string);
+            ERROR("Attribute '%s' has '%s' as a value which is reserved in slow5 for repreenting empty fields. This is something we haven't seen bofore. Please open a github issue with an example of the fast5 file so we can implement special handling of such fields.", name, value.attr_string);
             return -1;
         }
         size_t index = 0;
@@ -164,7 +164,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         while(value.attr_string[index]){
             int result = isspace(value.attr_string[index]);
             if (result && value.attr_string[index]!=' '){
-                ERROR("Attribute '%s' has a value '%s' with white spaces", name, value.attr_string);
+                ERROR("Attribute '%s' has a value '%s' with only a single white space. This is something we haven't seen bofore. Please open a github issue with an example of the fast5 file so we can implement special handling of such fields.", name, value.attr_string);
                 return -1;
             }
             index++;
@@ -379,9 +379,9 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
         H5Z_filter_t filter_id = H5Pget_filter2 (dcpl, (unsigned) 0, &flags, &nelmts, values_out, sizeof(filter_name) - 1, filter_name, NULL);
         H5Pclose (dcpl);
         if(filter_id == H5Z_FILTER_VBZ){
-            WARNING("The fast5 file is compressed with VBZ but the required plugin is not loaded. Please read the instructions here: https://github.com/nanoporetech/vbz_compression/issues/5\n%s","");
+            ERROR("The fast5 file is compressed with VBZ but the required plugin is not loaded. Please read the instructions here: https://hasindu2008.github.io/slow5tools/faq.html%s","");
         }
-        WARNING("Failed to read raw data from dataset %s.", name);
+        ERROR("Failed to read raw data from dataset %s.", name);
         H5Sclose(space);
         H5Dclose(dset);
         return -1;

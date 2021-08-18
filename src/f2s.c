@@ -244,17 +244,17 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
 //                STDERR("child process %d exited, status=%d", pids[t], WEXITSTATUS(status));
 //            }
             if(WEXITSTATUS(status)!=0){
-                ERROR("child process %d exited with status=%d",pids[t], WEXITSTATUS(status));
+                VERBOSE("child process %d exited with status=%d",pids[t], WEXITSTATUS(status));
                 exit(EXIT_FAILURE);
             }
         }
         else {
             if (WIFSIGNALED(status)) {
-                ERROR("child process %d killed by signal %d", pids[t], WTERMSIG(status));
+                VERBOSE("child process %d killed by signal %d", pids[t], WTERMSIG(status));
             } else if (WIFSTOPPED(status)) {
-                ERROR("child process %d stopped by signal %d", pids[t], WSTOPSIG(status));
+                VERBOSE("child process %d stopped by signal %d", pids[t], WSTOPSIG(status));
             } else {
-                ERROR("child process %d did not exit propoerly: status %d", pids[t], status);
+                VERBOSE("child process %d did not exit propoerly: status %d", pids[t], status);
             }
             exit(EXIT_FAILURE);
         }

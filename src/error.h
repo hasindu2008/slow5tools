@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #define STDERR_PREFIX "[%s] "
-#define VERBOSE_PREFIX "[%s::INFO] "
+#define VERBOSE_PREFIX "[%s] "
 #define DEBUG_PREFIX "[%s(%s:%d)::DEBUG] "
 #define WARNING_PREFIX "[%s::WARNING]\033[1;33m "
 #define ERROR_PREFIX "[%s::ERROR]\033[1;31m "
