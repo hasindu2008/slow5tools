@@ -192,32 +192,33 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
 
 echo
 TESTCASE_NO=21
-echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:directory process:single_process output:stdout run_id_conflicts allowed-------------------"
 $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/single_fast5 --iop 1 --to slow5 --allow > $OUTPUT_DIR/stdout.slow5 2>/dev/null || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
 
 echo
 rm $OUTPUT_DIR/single-fast5-output/*
 TESTCASE_NO=22
-echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:directory process:single_process output:directory run_id_conflicts-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:directory process:single_process output:directory run_id_conflicts allowed-------------------"
 $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/single_fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 --to slow5 --allow 2>/dev/null || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
 
 echo
 TESTCASE_NO=23
-echo "------------------- f2s testcase $TESTCASE_NO: format:multi-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO: format:multi-fast5 input:directory process:single_process output:stdout run_id_conflicts allowed-------------------"
 $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --to slow5 --allow > $OUTPUT_DIR/stdout.slow5 2>/dev/null || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
 
 echo
 TESTCASE_NO=24
-echo "------------------- f2s testcase $TESTCASE_NO: format:single_and_multi-fast5 input:directory process:single_process output:stdout run_id_conflicts-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO: format:single_and_multi-fast5 input:directory process:single_process output:stdout run_id_conflicts allowed-------------------"
 $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --to slow5 --allow > $OUTPUT_DIR/stdout.slow5 2>/dev/null || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
 
 echo
 TESTCASE_NO=25
-echo "------------------- f2s testcase $TESTCASE_NO: format:single_and_multi-fast5 input:directory process:single_process output:directory run_id_conflicts-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO: format:single_and_multi-fast5 input:directory process:single_process output:directory run_id_conflicts allowed-------------------"
+test -d "$OUTPUT_DIR/single_and_multi-fast5" && rm -r "$OUTPUT_DIR/single_and_multi-fast5"
 $SLOW5_EXEC_WITHOUT_VALGRIND f2s $FAST5_DIR/run_id_conflicts/single_fast5 $FAST5_DIR/run_id_conflicts/multi_fast5 --iop 1 --allow -d $OUTPUT_DIR/single_and_multi-fast5 2>/dev/null || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}"
 

@@ -32,16 +32,19 @@ mkdir "$OUTPUT_DIR" || die "Failed creating $OUTPUT_DIR"
 # Relative path to "slow5tools/tests/"
 REL_PATH="$(dirname $0)/"
 SLOW5TOOLS=$REL_PATH/../slow5tools
+if [ "$3" = 'mem' ]; then
+    SLOW5TOOLS="valgrind --leak-check=full --error-exitcode=1 $SLOW5TOOLS"
+fi
 
 NUM_THREADS=4
 BATCH_SIZE=10000
 
-$SLOW5TOOLS f2s -p1 --to blow5 -c none -o "$OUTPUT_DIR/f2s.blow5" "$FAST5_FILE"
-$SLOW5TOOLS view --from blow5 --to slow5 "$OUTPUT_DIR/f2s.blow5" -o "$OUTPUT_DIR/view.slow5" -t $NUM_THREADS -K $BATCH_SIZE
-$SLOW5TOOLS view --from slow5 --to blow5 -c none "$OUTPUT_DIR/view.slow5" -o "$OUTPUT_DIR/view.blow5" -t $NUM_THREADS -K $BATCH_SIZE
+$SLOW5TOOLS f2s -p1 --to blow5 -c none -o "$OUTPUT_DIR/f2s.blow5" "$FAST5_FILE" 2>/dev/null
+$SLOW5TOOLS view --from blow5 --to slow5 "$OUTPUT_DIR/f2s.blow5" -o "$OUTPUT_DIR/view.slow5" -t $NUM_THREADS -K $BATCH_SIZE 2>/dev/null
+$SLOW5TOOLS view --from slow5 --to blow5 -c none "$OUTPUT_DIR/view.slow5" -o "$OUTPUT_DIR/view.blow5" -t $NUM_THREADS -K $BATCH_SIZE 2>/dev/null
 
 cmp "$OUTPUT_DIR/view.blow5" "$OUTPUT_DIR/f2s.blow5" || die "Files are different. view_integrity_test failed"
-info "Files are same. Success!"
+info "Files are the same. Success!"
 
 rm -r "$OUTPUT_DIR" || die "Could not delete $OUTPUT_DIR"
 info "done"

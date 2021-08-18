@@ -40,7 +40,7 @@ $SLOW5TOOLS view --from blow5 --to slow5 "$BLOW5_FILE" -o "$OUTPUT_DIR/view.slow
 $SLOW5TOOLS view --from slow5 --to blow5 -c none "$OUTPUT_DIR/view.slow5" -o "$OUTPUT_DIR/view.blow5" -t $NUM_THREADS -K $BATCH_SIZE
 
 cmp "$OUTPUT_DIR/view.blow5" "$BLOW5_FILE" || die "Files are different. view_integrity_test failed"
-info "Files are same. Success!"
+info "Files are the same. Success!"
 
 rm -r "$OUTPUT_DIR" || die "Could not delete $OUTPUT_DIR"
 info "done"

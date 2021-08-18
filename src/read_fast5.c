@@ -170,9 +170,15 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             index++;
         }
     }
+    if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
+        std::string key = "ns_" + std::string(name); //not stored
+        char warn_message[300];
+        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
+        search_and_warn(operator_data,key,warn_message);
+    }
 
 //            RAW
-    if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
+    else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
         if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_time", &value.attr_int) != 0){
             WARNING("start_time auxiliary attribute value could not be set in the slow5 record %s", "");
         }
@@ -236,14 +242,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         operator_data->slow5_record->sampling_rate = value.attr_double;
     }
 
-    int flag_root_context_tracking = 0;
-    int flag_raw_channel_id = 0;
-    if(strcmp(operator_data->group_name,"Raw")==0 || strcmp(operator_data->group_name,"channel_id")==0){
-        flag_raw_channel_id = 1;
-    }
     // if group is ROOT or CONTEXT_TAGS or TRACKING_ID create an attribute in the header and store value
     if(strcmp(operator_data->group_name,"/")==0 || strcmp(operator_data->group_name,"context_tags")==0 || strcmp(operator_data->group_name,"tracking_id")==0){
-        flag_root_context_tracking = 1;
         if (H5Tclass != H5T_STRING) {
             flag_value_string = 1;
             size_t storage_size = 50;
@@ -313,23 +313,9 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
     }
 
-    if(flag_raw_channel_id==0 && flag_root_context_tracking==0){
-        int flag_pore_type = 0;
-        if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
-            flag_pore_type = 1;
-            std::string key = "ns_" + std::string(name); //not stored
-            char warn_message[300];
-            sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
-            search_and_warn(operator_data,key,warn_message);
-        }
-        if(strcmp("run_id",name) && flag_pore_type==0){
-            std::string key = "al_" + std::string(name); //alert
-            char warn_message[300];
-            sprintf(warn_message,"Alert: Attribute %s/%s is not observed in the read group before. Please report to us: https://github.com/hasindu2008/slow5tools/issues",operator_data->group_name,name);
-            search_and_warn(operator_data,key,warn_message);
-        }
 
-    }
+
+
 
     if(flag_value_string){
         free(value.attr_string);
