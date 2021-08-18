@@ -12,6 +12,7 @@
 #include "error.h"
 #include "slow5_extra.h"
 #include "read_fast5.h"
+#include "cmd.h"
 
 #define WARNING_LIMIT 1
 #define PRIMARY_FIELD_COUNT 7 //without read_group number
@@ -32,7 +33,7 @@ void search_and_warn(operator_obj *operator_data, std::string key, const char *w
 
 int print_slow5_header(operator_obj* operator_data) {
     if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
-        ERROR("%s","Could not write the header");
+        ERROR("%s","Could not write the slow5 header");
         return -1;
     }
     return 0;
@@ -40,7 +41,7 @@ int print_slow5_header(operator_obj* operator_data) {
 
 int print_record(operator_obj* operator_data) {
     if(slow5_rec_fwrite(operator_data->slow5File->fp, operator_data->slow5_record, operator_data->slow5File->header->aux_meta, operator_data->format_out, operator_data->press_ptr) == -1){
-        ERROR("Could not write the record %s", operator_data->slow5_record->read_id);
+        ERROR("Could not write the slow5 record %s", operator_data->slow5_record->read_id);
         return -1;
     }
     return 0;
@@ -64,7 +65,7 @@ fast5_file_t fast5_open(const char* filename) {
             int minor;
             int ret = sscanf(version_str.c_str(), "%d.%d", &major, &minor);
             if(ret != 2) {
-                ERROR("Could not parse version string %s", version_str.c_str());
+                ERROR("Could not parse the fast5 version string %s", version_str.c_str());
                 exit(EXIT_FAILURE);
             }
 
@@ -123,7 +124,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             if (value.attr_string && !value.attr_string[0]) {
                 std::string key = "em_" + std::string(name); //empty
                 char warn_message[300];
-                sprintf(warn_message,"Empty: Attribute %s/%s is an empty string",operator_data->group_name, name);
+                sprintf(warn_message,"Attribute %s/%s is an empty string",operator_data->group_name, name);
                 search_and_warn(operator_data,key,warn_message);
 
                 if(flag_value_string){ // hack to skip the free() at the bottom of the function
@@ -147,7 +148,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             break;
         default:
             h5t_class = "UNKNOWN";
-            ERROR("f2s cannot handle H5TClass of the atttribute %s/%s\n", operator_data->group_name, name);
+            ERROR("f2s cannot handle H5TClass of the atttribute %s/%s.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->group_name, name);
             return -1;
     }
     H5Tclose(native_type);
@@ -156,7 +157,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
     if(H5Tclass==H5T_STRING){
         if (strcmp(value.attr_string,".")==0){
-            ERROR("Attribute '%s' has '%s' as a value which is reserved in slow5 for repreenting empty fields. This is something we haven't seen bofore. Please open a github issue with an example of the fast5 file so we can implement special handling of such fields.", name, value.attr_string);
+            ERROR("Attribute '%s' in %s has '%s' as a value which is reserved in slow5 for representing empty fields. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
             return -1;
         }
         size_t index = 0;
@@ -164,7 +165,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         while(value.attr_string[index]){
             int result = isspace(value.attr_string[index]);
             if (result && value.attr_string[index]!=' '){
-                ERROR("Attribute '%s' has a value '%s' with only a single white space. This is something we haven't seen bofore. Please open a github issue with an example of the fast5 file so we can implement special handling of such fields.", name, value.attr_string);
+                ERROR("Attribute '%s' in %s has a value '%s' with only a single white space. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
                 return -1;
             }
             index++;
@@ -328,13 +329,13 @@ void search_and_warn(operator_obj *operator_data, std::string key, const char *w
     if (search != operator_data->warning_map->end()) {
         if(search->second < WARNING_LIMIT){
             search->second = search->second+1;
-            WARNING("[%s] %s.", SLOW5_FILE_FORMAT_SHORT, warn_message);
+            WARNING("slow5tools-v%s: %s.", SLOW5TOOLS_VERSION, warn_message);
         }else if(search->second == WARNING_LIMIT){
-            WARNING("[%s] %s. This warning is suppressed now onwards.", SLOW5_FILE_FORMAT_SHORT, warn_message);
+            WARNING("slow5tools-v%s: %s. This warning is suppressed now onwards.",SLOW5TOOLS_VERSION, warn_message);
             search->second = WARNING_LIMIT+1;
         }
     } else {
-        WARNING("[%s] %s.", SLOW5_FILE_FORMAT_SHORT,warn_message);
+        WARNING("slow5tools-v%s: %s.",SLOW5TOOLS_VERSION, warn_message);
         operator_data->warning_map->insert({key,1});
     }
 }

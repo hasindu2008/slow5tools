@@ -23,14 +23,6 @@
 #endif
 #include <unordered_map>
 
-#define VERSION "0.1"
-#define FAST5_NAME "fast5"
-#define FAST5_EXTENSION "." FAST5_NAME
-#define SLOW5_NAME "slow5"
-#define SLOW5_EXTENSION "." SLOW5_NAME
-#define SLOW5_FILE_FORMAT_SHORT SLOW5_NAME "v" VERSION
-#define SLOW5_NAME "slow5"
-
 KHASH_MAP_INIT_STR(warncount, uint32_t)
 
 typedef struct {

@@ -15,7 +15,6 @@
 // TODO put all in header file
 
 #define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
-#define SLOW5TOOLS_VERSION "%s " "0.1.0-dirty" "\n" // TODO change
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
@@ -163,7 +162,7 @@ int main(const int argc, char **argv){
                     if (meta.verbosity_level >= LOG_DEBUG) {
                         DEBUG("displaying version information%s","");
                     }
-                    fprintf(stdout, SLOW5TOOLS_VERSION, "slow5tools");
+                    fprintf(stdout, "slow5tools %s\n", SLOW5TOOLS_VERSION);
 
                     ret = EXIT_SUCCESS;
                     break_flag = true;
