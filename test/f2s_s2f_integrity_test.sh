@@ -34,7 +34,7 @@ F2S_atm1_OUTPUT="$TEMP_DIR/f2s_attempt1"
 S2F_OUTPUT="$TEMP_DIR/s2f"
 F2S_atm2_OUTPUT="$TEMP_DIR/f2s_attempt2"
 
-SLOW5_FORMAT=""
+SLOW5_FORMAT="--to slow5"
 if [[ "$#" -eq 4 ]]; then
     SLOW5_FORMAT=$4
 fi

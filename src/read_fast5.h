@@ -73,6 +73,7 @@ struct operator_obj {
     size_t* nreads;
     slow5_file_t* slow5File;
     std::unordered_map<std::string, uint32_t>* warning_map;
+    int *primary_fields_count;
 };
 
 //implemented in read_fast5.c
@@ -83,7 +84,7 @@ fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 std::vector< std::string > list_directory(const std::string& file_name);
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
-void slow5_hdr_initialize(slow5_hdr *header, int lossy);
+int slow5_hdr_initialize(slow5_hdr *header, int lossy);
 
 // args for processes
 typedef struct {

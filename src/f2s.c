@@ -40,6 +40,7 @@ static double init_realtime = 0;
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
 void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
+    int ret = 0;
     static size_t call_count = 0;
     slow5_file_t* slow5File = NULL;
     slow5_file_t* slow5File_outputdir_single_fast5 = NULL;
@@ -84,9 +85,14 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
                     continue;
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), SLOW5_FORMAT_ASCII);
-                slow5_hdr_initialize(slow5File->header, lossy);
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File, &warning_map);
-
+                ret = slow5_hdr_initialize(slow5File->header, lossy);
+                if(ret<0){
+                    exit(EXIT_FAILURE);
+                }
+                ret = read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File, &warning_map);
+                if(ret<0){
+                    exit(EXIT_FAILURE);
+                }
                 if(format_out == SLOW5_FORMAT_BINARY){
                     slow5_eof_fwrite(slow5File->fp);
                 }
@@ -104,10 +110,16 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
                         continue;
                     }
                     slow5File_outputdir_single_fast5 = slow5_init_empty(slow5_file_pointer_outputdir_single_fast5, slow5_path_outputdir_single_fast5.c_str(), SLOW5_FORMAT_BINARY);
-                    slow5_hdr_initialize(slow5File_outputdir_single_fast5->header, lossy);
+                    ret = slow5_hdr_initialize(slow5File_outputdir_single_fast5->header, lossy);
+                    if(ret<0){
+                        exit(EXIT_FAILURE);
+                    }
                 }
-                read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
+                ret = read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
                            slow5File_outputdir_single_fast5, &warning_map);
+                if(ret<0){
+                    exit(EXIT_FAILURE);
+                }
             }
         }
         else{ // output dir not set hence, writing to stdout
@@ -126,10 +138,16 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
                     }
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), SLOW5_FORMAT_BINARY);
-                slow5_hdr_initialize(slow5File->header, lossy);
+                ret = slow5_hdr_initialize(slow5File->header, lossy);
+                if(ret<0){
+                    exit(EXIT_FAILURE);
+                }
             }
-            read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
+            ret = read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
                        slow5File, &warning_map);
+            if(ret<0){
+                exit(EXIT_FAILURE);
+            }
         }
         H5Fclose(fast5_file.hdf5_file);
     }
@@ -146,7 +164,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
     if(meta->verbosity_level >= LOG_DEBUG){
-        fprintf(stderr, "Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
+        INFO("Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
     }
 }
 
@@ -438,12 +456,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], fast5_files, 0, FAST5_EXTENSION);
     }
-    fprintf(stderr, "[%s] %ld fast5 files found - took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
 
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
     f2s_iop(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
-    fprintf(stderr, "[%s] Converting %ld fast5 files took %.3fs\n", __func__, fast5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Converting %ld fast5 files took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
