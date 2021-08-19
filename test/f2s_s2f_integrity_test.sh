@@ -65,7 +65,7 @@ fi
 echo
 echo "-------------------f2s attempt 2-------------------"
 echo
-$SLOW5_EXEC f2s "$S2F_OUTPUT" -d "$F2S_atm2_OUTPUT" --iop 64 $SLOW5_FORMAT || die "f2s attempt 2 failed"
+$SLOW5_EXEC f2s "$S2F_OUTPUT" -d "$F2S_atm2_OUTPUT" --iop 64 $SLOW5_FORMAT 2>/dev/null || die "f2s attempt 2 failed"
 echo "running diff on f2s attempt 1 and f2s attempt 2"
 echo "du -hs $F2S_atm1_OUTPUT"
 du -hs "$F2S_atm1_OUTPUT"
