@@ -9,7 +9,7 @@
 #define LOG_DEBUG   5
 #define LOG_TRACE   6
 
-#define SLOW5TOOLS_VERSION "0.1.0-dirty"
+#define SLOW5TOOLS_VERSION "0.2.0"
 
 struct program_meta {
     int verbosity_level;
