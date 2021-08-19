@@ -263,7 +263,6 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("%s", "This should not be printed");
                     return -1;
             }
-            DEBUG("%s","convert error");
             std::string key = "co_" + std::string(name); //convert
             char warn_message[300];
             sprintf(warn_message,"Convert: Converting the attribute %s/%s from %s to string",operator_data->group_name, name, h5t_class.c_str());
