@@ -315,7 +315,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     if(slow5_files.size()==0){
         ERROR("No slow5/blow5 files found for conversion. Exiting...%s","");
-        return EXIT_SUCCESS;
+        return EXIT_FAILURE;
     }
 
     fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);

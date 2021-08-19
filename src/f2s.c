@@ -457,7 +457,10 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         list_all_items(argv[i], fast5_files, 0, ".fast5");
     }
     VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
-
+    if(fast5_files.size()==0){
+        ERROR("No fast5 files found. Exiting...%s","");
+        return EXIT_FAILURE;
+    }
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
     f2s_iop(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);

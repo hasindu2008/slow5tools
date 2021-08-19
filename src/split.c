@@ -576,7 +576,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     VERBOSE("%ld slow5 files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
     if(slow5_files.size()==0){
         ERROR("No slow5/blow5 files found. Exiting...%s","");
-        return EXIT_SUCCESS;
+        return EXIT_FAILURE;
     }
     //measure slow5 splitting time
     split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod, lossy);

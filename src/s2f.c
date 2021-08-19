@@ -585,7 +585,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     VERBOSE("%ld slow5 files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
     if(slow5_files.size()==0){
         ERROR("No slow5/blow5 files found. Exiting...%s","");
-        return EXIT_SUCCESS;
+        return EXIT_FAILURE;
     }
     //measure s2f conversion time
     init_realtime = slow5_realtime();
