@@ -12,6 +12,7 @@
 @exp_script_purpose	sequencing_run
 @exp_start_time	1468544279
 @experiment_kit	genomic_dna
+@file_version	0.0
 @filename	minion2_20160714_fnfab23716_mn16454_mux_scan_chip86_human_1d_rapid_tuned_58403
 @flow_cell_id	FAB23716
 @heatsink_temp	34.0039063

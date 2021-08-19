@@ -40,7 +40,7 @@ if [[ "$#" -eq 4 ]]; then
 fi
 
 test -d "$TEMP_DIR" && rm -r "$TEMP_DIR"
-mkdir "$TEMP_DIR" || die "Creating $TEST_DIR failed"
+mkdir "$TEMP_DIR" || die "Creating $TEMP_DIR failed"
 mkdir "$F2S_atm1_OUTPUT" || die "Creating $F2S_atm1_OUTPUT failed"
 mkdir "$S2F_OUTPUT" || die "Creating $S2F_OUTPUT failed"
 mkdir "$F2S_atm2_OUTPUT" || die "Creating $F2S_atm2_OUTPUT failed"
@@ -65,7 +65,7 @@ fi
 echo
 echo "-------------------f2s attempt 2-------------------"
 echo
-$SLOW5_EXEC f2s "$S2F_OUTPUT" -d "$F2S_atm2_OUTPUT" --iop 64 $SLOW5_FORMAT 2>/dev/null || die "f2s attempt 2 failed"
+$SLOW5_EXEC f2s "$S2F_OUTPUT" -d "$F2S_atm2_OUTPUT" --iop 64 $SLOW5_FORMAT || die "f2s attempt 2 failed"
 echo "running diff on f2s attempt 1 and f2s attempt 2"
 echo "du -hs $F2S_atm1_OUTPUT"
 du -hs "$F2S_atm1_OUTPUT"
@@ -75,7 +75,12 @@ echo "ls $F2S_atm1_OUTPUT | wc"
 ls "$F2S_atm1_OUTPUT" | wc
 echo "ls $F2S_atm2_OUTPUT | wc"
 ls "$F2S_atm2_OUTPUT" | wc
-diff -s "$F2S_atm1_OUTPUT" "$F2S_atm2_OUTPUT" &>/dev/null
+echo "f2s might not create the same exact header lines (starting with '@') from after s2f fast5s"
+echo "Running diff only on lines starting with '@'"
+diff --ignore-matching-lines=?@ "$F2S_atm1_OUTPUT" "$F2S_atm2_OUTPUT"
+echo
+echo "Again running diff (ignoring header lines starting with '@'"
+diff --ignore-matching-lines=@ "$F2S_atm1_OUTPUT" "$F2S_atm2_OUTPUT" > /dev/null
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: f2s and s2f conversions are consistent!${NC}"

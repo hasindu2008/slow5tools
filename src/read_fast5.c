@@ -244,7 +244,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 
     // if group is ROOT or CONTEXT_TAGS or TRACKING_ID create an attribute in the header and store value
-    if(strcmp(operator_data->group_name,"/")==0 || strcmp(operator_data->group_name,"context_tags")==0 || strcmp(operator_data->group_name,"tracking_id")==0){
+    if(strcmp(operator_data->group_name,"")==0 || strcmp(operator_data->group_name,"context_tags")==0 || strcmp(operator_data->group_name,"tracking_id")==0){
         if (H5Tclass != H5T_STRING) {
             flag_value_string = 1;
             size_t storage_size = 50;
