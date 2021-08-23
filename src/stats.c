@@ -8,7 +8,6 @@
 #include <getopt.h>
 #include <sys/wait.h>
 #include <string>
-#include <vector>
 #include "error.h"
 #include "cmd.h"
 #include "slow5_extra.h"
