@@ -414,7 +414,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
     if (meta->verbosity_level >= LOG_DEBUG) {
         DEBUG("time_get_to_mem\t%.3fs", time_get_to_mem);
-        DEBUG("time_depress_parse\t%.3fs", time_thread_execution);
+        DEBUG("time_thread_execution\t%.3fs", time_thread_execution);
         DEBUG("time_write\t%.3fs", time_write);
     }
 
