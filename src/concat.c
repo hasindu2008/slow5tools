@@ -201,7 +201,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
     std::string run_id;
     size_t num_files = slow5_files.size();
     for(size_t i=0; i<num_files; i++) { //iterate over slow5files
-        slow5_file_t *slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
+        slow5_file_t *slow5File_i = slow5_open(slow5_files[i].c_str(), "r+");
         if (!slow5File_i) {
             ERROR("[Skip file]: cannot open %s. skipping...\n", slow5_files[i].c_str());
             continue;
@@ -286,19 +286,42 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
             }
             slow5_close(slow5File_i);
         }else{
-            struct slow5_rec *read = NULL;
-            struct slow5_press* compress = slow5_press_init(pressMethod);
-            int ret;
-            while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
-                if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, format_out, compress) == -1) {
-                    slow5_rec_free(read);
-                    ERROR("Could not write records to the file %s\n", arg_fname_out);
-                    exit(EXIT_FAILURE);
-                }
+//            DEBUG("%d",101);
+            int64_t pos = ftell(slow5File_i->fp);
+            fseek(slow5File_i->fp, -5, SEEK_END); //slow5 EOF file "5WOLB"
+            off_t  length = ftell(slow5File_i->fp);
+            if(ftruncate(fileno(slow5File_i->fp),length) != 0){
+                ERROR("Truncating file %s failed.", slow5_files[i].c_str());
+                return EXIT_FAILURE;
             }
-            slow5_rec_free(read);
-            slow5_press_free(compress);
+            fseek(slow5File_i->fp, pos, SEEK_SET);
+
+            // BUFSIZE default is 8192 bytes
+            //writing to reads to the output
+            // BUFSIZE of 1 means one chareter at time
+            // good values should fit to blocksize, like 1024 or 4096
+            // higher values reduce number of system calls
+            char buf[BUFSIZ];
+            size_t size;
+            while ((size = fread(buf, 1, BUFSIZ, slow5File_i->fp))) {
+                fwrite(buf, 1, size, slow5File->fp);
+            }
             slow5_close(slow5File_i);
+
+//            struct slow5_rec *read = NULL;
+//            struct slow5_press* compress = slow5_press_init(pressMethod);
+//            int ret;
+//            while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
+//                if (slow5_rec_fwrite(slow5File->fp, read, slow5File->header->aux_meta, format_out, compress) == -1) {
+//                    slow5_rec_free(read);
+//                    ERROR("Could not write records to the file %s\n", arg_fname_out);
+//                    exit(EXIT_FAILURE);
+//                }
+//            }
+//            slow5_rec_free(read);
+//            slow5_press_free(compress);
+//            slow5_close(slow5File_i);
+
         }
     }
 
