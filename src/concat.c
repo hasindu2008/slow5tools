@@ -62,6 +62,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
     char *arg_fname_out = NULL;
     std::string format =  "low5";
     int lossy = 0;
+    int output_file_set = 0;
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     slow5_press_method_t pressMethod = SLOW5_COMPRESS_ZLIB;
@@ -98,6 +99,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
     if(arg_fname_out){
         output_file = std::string(arg_fname_out);
         extension = output_file.substr(output_file.length()-6, output_file.length());
+        output_file_set = 1;
     }
 
     // Check for remaining files to parse
@@ -155,12 +157,12 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
             pressMethod = slow5File_i->compress->method;
             num_read_groups = slow5File_i->header->num_read_groups;
 
-            if(arg_fname_out && format_out==SLOW5_FORMAT_ASCII && extension!=".slow5"){
+            if(output_file_set && format_out==SLOW5_FORMAT_ASCII && extension!=".slow5"){
                 ERROR("Output file extension '%s' does not match with the input file format:FORMAT_ASCII", extension.c_str());
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
-            }else if(arg_fname_out && format_out==SLOW5_FORMAT_BINARY && extension!=".blow5"){
+            }else if(output_file_set && format_out==SLOW5_FORMAT_BINARY && extension!=".blow5"){
                 ERROR("Output file extension '%s' does not match with the input file format:FORMAT_BINARY", extension.c_str());
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
