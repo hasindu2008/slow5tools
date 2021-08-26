@@ -700,7 +700,7 @@ std::vector< std::string > list_directory(const std::string& file_name)
 // given a directory path, recursively find all files
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
     if(extension){
-        STDERR("Looking for '%s' files in %s", extension, path.c_str());
+        STDERR("Looking for *'%s' files in %s", extension, path.c_str());
     }
     if (is_directory(path)) {
         std::vector< std::string > dir_list = list_directory(path);

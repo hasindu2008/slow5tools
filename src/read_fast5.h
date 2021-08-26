@@ -1,4 +1,6 @@
 // definitions used for FAST5 to SLOW5 conversion
+#include <vector>
+
 #ifndef HAVE_CONFIG_H
     #define HAVE_CONFIG_H
     #include "config.h"

@@ -2,9 +2,9 @@
 
 ## COMMANDS
 
-* `f2s`:  
+* `fast5toslow5` or `f2s`:  
          Convert FAST5 files to SLOW5/BLOW5 format.
-* `s2f`:  
+* `slow5tofast5` or `s2f`:  
          Convert SLOW5/BLOW5 files to FAST5 format.
 * `view`:  
          View the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats and compressions.
@@ -47,9 +47,9 @@ When only one FAST5 file is being converted, `-o` specifies a single FILE to whi
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
 *   `-l, --lossless STR`:  
-    Retain information in auxilliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize. *IMPORTANT: Two recently introduced fields in latest FAST5 are not stored even if -l true is specified : 1. pore_type which is an empty attribute and 2. end_reason which is still not consistent*.
+    Retain information in auxiliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize. *IMPORTANT: Two recently introduced fields in latest FAST5 are not stored even if -l true is specified until we conform from ONT what these are: 1. pore_type which is an empty attribute and 2. end_reason which is still not consistent*.
 * `-a, --allow`:  
-   By default f2s will not accept an indiviudal multi-fast5 file or an indiviudal single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an indiviudal multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user is happy to lose the original run IDs.
+   By default f2s will not accept an individual multi-fast5 file or an individual single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an individual multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurrence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user is happy to lose the original run IDs.
 *  `-h, --help`:  
    Prints the help menu.
 
@@ -71,12 +71,15 @@ If multiple samples (different run ids) are detected, the header and the *read_g
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-o, --output FILE`:  
    Outputs merged data to FILE [default value: stdout]
-*  `--tmp-prefix` STR:  
+<!-- *  `--tmp-prefix` STR:  
     Write temporary files to the directory specified by STR [default value: ./slow5_timestamp_pid]. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
+-->    
 *   `-l, --lossless`:  
-    Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
+    Retain information in auxiliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce file size.
 * `-t, --threads INT`:  
-   Number of threads
+   Number of threads [default value: 4].
+* `-K, --batchsize INT`:  
+  The batch size. This is the number of records on the memory at once [default value: 4096].   An increased batch size improves multi-threaded performance at cost of higher RAM.
 *  `-h, --help`:  
    Prints the help menu.
 
@@ -107,16 +110,12 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 *  `-o FILE`, `--output FILE`:  
    Outputs data to FILE [default value: stdout]
 * `-K, --batchsize`:  
-         The batch size. This is the number of records on the memory at once. An increased batch size improves multi-threaded performance at cost of higher RAM.
+         The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 * `-t, --threads INT`:  
-   Number of threads
+   Number of threads [default value: 4].
 *  `-h`, `--help`:  
    Prints the help menu.
 
-- *TODO: implement multi-threading in view*
-- *TODO: if '-' is specified as the file, read from stdin*
-- *TODO: view specified field/s only*
-- *TODO: view header only*
 
 ### get
 
@@ -130,9 +129,9 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 * `-l, --list FILE`:  
          List of read ids provided as a single-column text file with one read id per line.
 * `-t, --threads INT`:  
-         Number of threads.
+         Number of threads [default value: 4].
 * `-K, --batchsize`:  
-         The batch size. This is the number of records on the memory at once. An increased batch size improves multi-threaded performance at cost of higher RAM.
+         The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 *  `--to format_type`:  
          Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
 *  `-c, --compress compression_type`:
@@ -217,6 +216,6 @@ Prints summary statistics describing a SLOW5/BLOW5 file such as:
 *  `-V, --version`:  
     Print the slow5tools version number.
 *  `-v INT, --verbose INT`:
-    Set the verbosity level (0-7) [default value: 3]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-gossip, 6-debug, 7-trace.
+    Set the verbosity level (0-7) [default value: 3]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-debug, 6-trace.
 *  `-h, --help`:  
     Prints the help menu.

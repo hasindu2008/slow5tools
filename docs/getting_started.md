@@ -14,7 +14,7 @@ SLOW5 is a simple tab-separated values (TSV) file encoding metadata and time-ser
 
 If you are a Linux user on x86_64 architecture and want to quickly try slow5tools out, download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
 ```sh
-VERSION=v0.1.0
+VERSION=v0.2.0
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-x86_64-linux-binaries.tar.gz" && tar xvf slow5tools-$VERSION-x86_64-linux-binaries.tar.gz && cd slow5tools-$VERSION/
 ./slow5tools
 ```
@@ -28,7 +28,7 @@ Binaries should work on most Linux distributions and the only dependency is `zli
 Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball. Quick example for Ubuntu :
 ```sh
 sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development libraries
-VERSION=v0.1.0
+VERSION=v0.2.0
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-release.tar.gz" && tar xvf slow5tools-$VERSION-release.tar.gz && cd slow5tools-$VERSION/
 ./configure
 make
@@ -96,7 +96,7 @@ slow5tools index file.blow5
 slow5tools get file.blow5 readid1 readid2
 
 #split a blow5 file into separate blow5 files based on the read groups
-slow5tools split file.blow5 -d blow5_dir -r
+slow5tools split file.blow5 -d blow5_dir -g
 #split a blow5 file (single read group) into separate blow5 files such that there are 4000 reads in one file
 slow5tools split file.blow5 -d blow5_dir -r 4000
 

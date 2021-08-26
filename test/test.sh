@@ -165,5 +165,15 @@ else
     fi
 fi
 
+echo_test 'concat_test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/concat_test.sh mem ; then
+        fail
+    fi
+else
+    if ! ./test/concat_test.sh ; then
+        fail
+    fi
+fi
 
 exit $ret

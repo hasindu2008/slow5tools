@@ -405,6 +405,9 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    if (format_out == SLOW5_FORMAT_BINARY) {
+        slow5_eof_fwrite(slow5file->fp);
+    }
     slow5_close(slow5file);
     fclose(read_list_in);
 
