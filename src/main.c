@@ -34,6 +34,8 @@
     "    get                   display the read entry for each specified read id.\n" \
     "    view                  view the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats and compressions.\n" \
     "    stats                 prints statistics of a SLOW5/BLOW5 file to the stdout\n" \
+    "    concat                quickly concatenate SLOW5/BLOW5 files of same type\n" \
+    "    quickcheck            quickly checks if a SLOW5/BLOW5 file is intact\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
 
@@ -53,6 +55,7 @@ int (get_main)(int, char **, struct program_meta *);
 int (view_main)(int, char **, struct program_meta *);
 int (stats_main)(int, char **, struct program_meta *);
 int (concat_main)(int, char **, struct program_meta *);
+int (quickcheck_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
 void segv_handler(int sig) {
@@ -110,6 +113,7 @@ int main(const int argc, char **argv){
             {"view", view_main},
             {"stats", stats_main},
             {"concat", concat_main},
+            {"quickcheck", quickcheck_main}
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
