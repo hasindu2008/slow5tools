@@ -245,7 +245,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     for (int i = optind; i < argc; ++i) {
         list_all_items(argv[i], files, 0, NULL);
     }
-    fprintf(stderr, "[%s] %ld files found - took %.3fs\n", __func__, files.size(), slow5_realtime() - realtime0);
+    VERBOSE("%ld files found - took %.3fs\n", files.size(), slow5_realtime() - realtime0);
+
+    if(files.size()==0){
+        ERROR("No slow5/blow5 files found for conversion. Exiting...%s","");
+        return EXIT_FAILURE;
+    }
 
     //determine new read group numbers
     //measure read_group number allocation time
@@ -288,10 +293,18 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
         for(int64_t j=0; j<read_group_count_i; j++){
             char* run_id_j = slow5_hdr_get("run_id", j, slow5File_i->header); // run_id of the jth read_group of the ith slow5file
+            if(!run_id_j){
+                ERROR("No run_id information found in %s.", files[i].c_str());
+                return EXIT_FAILURE;
+            }
             int64_t read_group_count = slow5File->header->num_read_groups; //since this might change during iterating; cannot know beforehand
             size_t flag_run_id_found = 0;
             for(int64_t k=0; k<read_group_count; k++){
                 char* run_id_k = slow5_hdr_get("run_id", k, slow5File->header);
+                if(!run_id_k){
+                    ERROR("No run_id information found in %s.", files[i].c_str());
+                    return EXIT_FAILURE;
+                }
                 if(strcmp(run_id_j,run_id_k) == 0){
                     flag_run_id_found = 1;
                     list[index][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
@@ -302,7 +315,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
                 int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg); //assumption0
                 if(new_read_group != read_group_count){ //sanity check
-                    WARNING("New read group number is not equal to number of groups; something's wrong\n%s", "");
+                    ERROR("New read group number is not equal to number of groups; something's wrong\n%s", "");
+                    return EXIT_FAILURE;
                 }
                 list[index][j] = new_read_group;
             }
@@ -320,7 +334,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
 
-    //now write the header to the slow5File. Use Binary non compress method for fast writing
+    //now write the header to the slow5File.
     if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){
         ERROR("Could not write the header to %s\n", arg_fname_out);
         return EXIT_FAILURE;

@@ -22,6 +22,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/merge.o \
 	  $(BUILD_DIR)/split.o \
 	  $(BUILD_DIR)/stats.o \
+	  $(BUILD_DIR)/concat.o \
 
 
 PREFIX = /usr/local
@@ -63,6 +64,9 @@ $(BUILD_DIR)/split.o: src/split.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/stats.o: src/stats.c src/error.h
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/concat.o: src/concat.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 slow5lib/lib/libslow5.a:
