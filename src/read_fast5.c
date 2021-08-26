@@ -122,11 +122,12 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 }
             }
             if (value.attr_string && !value.attr_string[0]) {
+                /*
                 std::string key = "em_" + std::string(name); //empty
                 char warn_message[300];
                 sprintf(warn_message,"Attribute %s/%s is an empty string",operator_data->group_name, name);
                 search_and_warn(operator_data,key,warn_message);
-
+                */
                 if(flag_value_string){ // hack to skip the free() at the bottom of the function
                     free(value.attr_string);
                     flag_value_string = 0;
@@ -328,10 +329,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 
     if(flag_new_group_or_new_attribute_read_group){
-        ERROR("Alert: Attribute %s/%s in %s is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->group_name, operator_data->fast5_path);
-        return -1;
+        WARNING("Alert: Attribute %s/%s in %s is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->group_name, operator_data->fast5_path);
     }
-
 
     if(flag_value_string){
         free(value.attr_string);
