@@ -144,15 +144,16 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     FILE *f_out = stdout;
     enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
     enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
-    slow5_press_method_t press_out = SLOW5_COMPRESS_ZLIB | (SLOW5_COMPRESS_SVB_ZD << 4);
+    slow5_press_method_t record_press_out = SLOW5_COMPRESS_ZLIB;
+    slow5_press_method_t signal_press_out = SLOW5_COMPRESS_SVB_ZD;
 
     // Input arguments
     char *arg_fname_in = NULL;
     char *arg_fname_out = NULL;
     char *arg_fmt_in = NULL;
     char *arg_fmt_out = NULL;
-    char *arg_press_out = NULL;
-    char *arg_sig_press_out = NULL;
+    char *arg_record_press_out = NULL;
+    char *arg_signal_press_out = NULL;
 
     int opt;
     int longindex = 0;
@@ -165,10 +166,10 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
         switch (opt) {
             case 's':
-                arg_sig_press_out = optarg;
+                arg_signal_press_out = optarg;
                 break;
             case 'c':
-                arg_press_out = optarg;
+                arg_record_press_out = optarg;
                 break;
             case 'f':
                 arg_fmt_in = optarg;
@@ -280,34 +281,32 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
 
-    if (arg_press_out != NULL) {
+    if (arg_record_press_out != NULL) {
         if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
             MESSAGE(stderr, "compression only available for output format '%s'", SLOW5_BINARY_NAME);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         } else {
-            press_out &= 0xf0;
-            press_out |= name_to_slow5_press_method(arg_press_out);
+            record_press_out = name_to_slow5_press_method(arg_record_press_out);
 
-            if (press_out == (slow5_press_method_t) -1) {
-                MESSAGE(stderr, "invalid compression method -- '%s'", arg_press_out);
+            if (record_press_out == (slow5_press_method_t) -1) {
+                MESSAGE(stderr, "invalid compression method -- '%s'", arg_record_press_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
             }
         }
     }
 
-    if (arg_sig_press_out != NULL) {
+    if (arg_signal_press_out != NULL) {
         if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
             MESSAGE(stderr, "compression only available for output format '%s'", SLOW5_BINARY_NAME);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         } else {
-            press_out &= 0x0f;
-            press_out |= (name_to_slow5_press_method(arg_sig_press_out) << 4);
+            signal_press_out = name_to_slow5_press_method(arg_signal_press_out);
 
-            if (press_out == (slow5_press_method_t) -1) {
-                MESSAGE(stderr, "invalid compression method -- '%s'", arg_press_out);
+            if (signal_press_out == (slow5_press_method_t) -1) {
+                MESSAGE(stderr, "invalid compression method -- '%s'", arg_signal_press_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
             }
@@ -349,7 +348,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         // TODO if output is the same format just duplicate file
-        if (slow5_convert(s5p, f_out, (enum slow5_fmt) fmt_out, press_out) != 0) {
+        if (slow5_convert(s5p, f_out, (enum slow5_fmt) fmt_out, record_press_out, signal_press_out) != 0) {
             ERROR("Conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
         }

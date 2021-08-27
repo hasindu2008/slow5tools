@@ -119,10 +119,11 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         file_format = "BLOW5";
     }
 
+    /* TODO print separate information for record and signal compression */
     std::string compression_method = "compression error";
-    if(slow5File->compress->method==SLOW5_COMPRESS_NONE){
+    if(slow5File->compress->record_press->method==SLOW5_COMPRESS_NONE){
         compression_method = "none";
-    }else if(slow5File->compress->method==SLOW5_COMPRESS_ZLIB){
+    }else if(slow5File->compress->record_press->method==SLOW5_COMPRESS_ZLIB){
         compression_method = "zlib";
     }
 

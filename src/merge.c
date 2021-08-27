@@ -44,7 +44,7 @@ typedef struct {
     std::vector<std::string> slow5_files;
     int64_t n_batch;    // number of files
     slow5_fmt format_out;
-    slow5_press_method press_method;
+    struct slow5_press *comp;
 } global_thread;
 
 /* argument wrapper for the multithreaded framework used for data processing */
@@ -80,7 +80,8 @@ void merge_slow5(pthread_arg* pthreadArg) {
             exit(EXIT_FAILURE);
         }
         struct slow5_rec *read = NULL;
-        struct slow5_press* compress = slow5_press_init(pthreadArg->core->press_method);
+        struct slow5_press* compress = pthreadArg->core->comp;
+
         int ret;
         while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
             read->read_group = pthreadArg->core->list[i][read->read_group]; //write records of the ith slow5file with the updated read_group value
@@ -191,6 +192,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {"threads", required_argument, NULL, 't' }, //1
             {"to", required_argument, NULL, 'b'},    //2
             {"compress", required_argument, NULL, 'c'},  //3
+            /* TODO add signal compression */
             { "lossless", required_argument, NULL, 'l'}, //4
             {"output", required_argument, NULL, 'o'}, //5
             {"tmp-prefix", required_argument, NULL, 'f'}, //6
@@ -199,8 +201,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    slow5_press_method_t pressMethod_tmp = SLOW5_COMPRESS_ZSTD | (SLOW5_COMPRESS_SVB_ZD << 4);
-    enum slow5_press_method pressMethod = (enum slow5_press_method) pressMethod_tmp;
+    enum slow5_press_method pressMethodRecord = SLOW5_COMPRESS_ZSTD;
+    enum slow5_press_method pressMethodSignal = SLOW5_COMPRESS_SVB_ZD;
     int compression_set = 0;
 
     // Input arguments
@@ -244,9 +246,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 'c':
                 compression_set = 1;
                 if(strcmp(optarg,"none")==0){
-                    pressMethod = SLOW5_COMPRESS_NONE;
+                    pressMethodRecord = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
-                    pressMethod = SLOW5_COMPRESS_ZLIB;
+                    pressMethodRecord = SLOW5_COMPRESS_ZLIB;
                 }else{
                     ERROR("Incorrect compression type%s", "");
                     return EXIT_FAILURE;
@@ -275,7 +277,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
     }
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
-        pressMethod = SLOW5_COMPRESS_NONE;
+        pressMethodRecord = SLOW5_COMPRESS_NONE;
+        pressMethodSignal = SLOW5_COMPRESS_SVB_ZD;
     }
     // compression option is only effective with -b blow5
     if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
@@ -434,7 +437,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
 
     //now write the header to the slow5File. Use Binary non compress method for fast writing
-    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){
+    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethodRecord, pressMethodSignal) == -1){
         ERROR("Could not write the header to %s\n", arg_fname_out);
         return EXIT_FAILURE;
     }
@@ -453,7 +456,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     core.slow5_files = slow5_files;
     core.n_batch = slow5_files.size();
     core.format_out = format_out;
-    core.press_method = pressMethod;
+    core.comp = slow5_press_init(pressMethodRecord, pressMethodSignal); /* TODO check this isn't NULL */
 
     //measure read_group number assigning using multi-threads time
     realtime0 = slow5_realtime();

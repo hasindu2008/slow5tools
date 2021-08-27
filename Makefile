@@ -29,8 +29,10 @@ VERSION = `git describe --tags`
 
 .PHONY: clean distclean format test install uninstall slow5lib
 
+# TODO make the libstreamvbyte shared library accessed dynamically (-Wl,-rpath='$$ORIGIN' doesn't seem to work)
+# or make libstreamvbyte a static library
 $(BINARY): src/config.h $(HDF5_LIB) $(OBJ_BIN) slow5lib/lib/libslow5.a slow5lib/streamvbyte/libstreamvbyte.so.0.0.1
-	$(CXX) $(CFLAGS) $(OBJ_BIN) slow5lib/lib/libslow5.a /home/sasjen/slow5tools/slow5lib/streamvbyte/libstreamvbyte.so.0.0.1 $(LDFLAGS) -o $@
+	$(CXX) $(CFLAGS) $(OBJ_BIN) slow5lib/lib/libslow5.a slow5lib/streamvbyte/libstreamvbyte.so.0.0.1 $(LDFLAGS) -o $@
 
 $(BUILD_DIR)/main.o: src/main.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@

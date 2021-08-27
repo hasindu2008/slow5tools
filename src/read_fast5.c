@@ -24,7 +24,7 @@ static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std
 int group_check(struct operator_obj *od, haddr_t target_addr);
 
 void print_slow5_header(operator_obj* operator_data) {
-    if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
+    if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod, SLOW5_COMPRESS_NONE) == -1){ /* TODO add signal compression */
         fprintf(stderr, "Could not write the header\n");
         exit(EXIT_FAILURE);
     }
@@ -588,7 +588,8 @@ read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, slow5_press_method pr
     tracker.fast5_file = fast5_file;
     tracker.format_out = format_out;
     tracker.pressMethod = pressMethod;
-    tracker.press_ptr = slow5_press_init(pressMethod);
+    tracker.press_ptr = slow5_press_init(pressMethod, SLOW5_COMPRESS_NONE); /* TODO add signal compression */
+
     tracker.fast5_path = fast5_file->fast5_path;
     tracker.slow5File = slow5File;
 
