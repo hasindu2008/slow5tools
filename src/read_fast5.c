@@ -122,11 +122,12 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 }
             }
             if (value.attr_string && !value.attr_string[0]) {
+                /*
                 std::string key = "em_" + std::string(name); //empty
                 char warn_message[300];
                 sprintf(warn_message,"Attribute %s/%s is an empty string",operator_data->group_name, name);
                 search_and_warn(operator_data,key,warn_message);
-
+                */
                 if(flag_value_string){ // hack to skip the free() at the bottom of the function
                     free(value.attr_string);
                     flag_value_string = 0;
@@ -155,6 +156,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     H5Tclose(attribute_type);
     H5Aclose(attribute);
 
+    int flag_new_group_or_new_attribute_read_group = 1;
+
     if(H5Tclass==H5T_STRING){
         if (strcmp(value.attr_string,".")==0){
             ERROR("Attribute '%s' in %s has '%s' as a value which is reserved in slow5 for representing empty fields. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
@@ -180,24 +183,29 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
 //            RAW
     else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
+        flag_new_group_or_new_attribute_read_group = 0;
         if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_time", &value.attr_int) != 0){
             WARNING("start_time auxiliary attribute value could not be set in the slow5 record %s", "");
         }
     }
     else if(strcmp("duration",name)==0 && H5Tclass==H5T_INTEGER){
+        flag_new_group_or_new_attribute_read_group = 0;
 //        operator_data->slow5_record->len_raw_signal = value.attr_int;
     }
     else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
+        flag_new_group_or_new_attribute_read_group = 0;
         if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "read_number", &value.attr_int) != 0){
             WARNING("read_number auxiliary attribute value could not be set in the slow5 record %s", "");
         }
     }
     else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
+        flag_new_group_or_new_attribute_read_group = 0;
         if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_mux", &value.attr_int) != 0){
             WARNING("start_mux auxiliary attribute value could not be set in the slow5 record %s", "");
         }
     }
     else if(strcmp("read_id",name)==0 && H5Tclass==H5T_STRING){
+        flag_new_group_or_new_attribute_read_group = 0;
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         //make sure read_id has a proper starting character
         if(isalpha(value.attr_string[0]) || isdigit(value.attr_string[0])){
@@ -209,6 +217,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
     }
     else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT && *(operator_data->flag_lossy) == 0){
+        flag_new_group_or_new_attribute_read_group = 0;
         if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "median_before", &value.attr_double) != 0){
             WARNING("median_before auxiliary attribute value could not be set in the slow5 record %s", "");
         }
@@ -222,29 +231,35 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 //            CHANNEL_ID
     else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING && *(operator_data->flag_lossy) == 0){
+        flag_new_group_or_new_attribute_read_group = 0;
         if(slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "channel_number", value.attr_string) != 0){
             WARNING("channel_number auxiliary attribute value could not be set in the slow5 record %s", "");
         }
     }
     else if(strcmp("digitisation",name)==0 && H5Tclass==H5T_FLOAT){
+        flag_new_group_or_new_attribute_read_group = 0;
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->digitisation = value.attr_double;
     }
     else if(strcmp("offset",name)==0 && H5Tclass==H5T_FLOAT){
+        flag_new_group_or_new_attribute_read_group = 0;
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->offset = value.attr_double;
     }
     else if(strcmp("range",name)==0 && H5Tclass==H5T_FLOAT){
+        flag_new_group_or_new_attribute_read_group = 0;
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->range = value.attr_double;
     }
     else if(strcmp("sampling_rate",name)==0 && H5Tclass==H5T_FLOAT){
+        flag_new_group_or_new_attribute_read_group = 0;
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->sampling_rate = value.attr_double;
     }
 
-    // if group is ROOT or CONTEXT_TAGS or TRACKING_ID create an attribute in the header and store value
-    if(strcmp(operator_data->group_name,"")==0 || strcmp(operator_data->group_name,"context_tags")==0 || strcmp(operator_data->group_name,"tracking_id")==0){
+    // if group is ROOT or CONTEXT_TAGS or TRACKING_ID or attribute is 'run_id' create an attribute in the header and store value
+    if(strcmp(name,"run_id")==0 || strcmp(operator_data->group_name,"")==0 || strcmp(operator_data->group_name,"context_tags")==0 || strcmp(operator_data->group_name,"tracking_id")==0){
+        flag_new_group_or_new_attribute_read_group = 0;
         if (H5Tclass != H5T_STRING) {
             flag_value_string = 1;
             size_t storage_size = 50;
@@ -313,9 +328,9 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
     }
 
-
-
-
+    if(flag_new_group_or_new_attribute_read_group){
+        WARNING("Alert: Attribute %s/%s in %s is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->group_name, operator_data->fast5_path);
+    }
 
     if(flag_value_string){
         free(value.attr_string);
@@ -460,7 +475,7 @@ int read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, slow5_press_metho
         }
         //        todo: compare header values with the previous singlefast5
         if(*(tracker.flag_run_id) != 1){
-            ERROR("run_id information is missing in the %s.", tracker.fast5_path);
+            ERROR("run_id information is missing in the %s in read_id %s.", tracker.fast5_path, tracker.slow5_record->read_id);
             return -1;
         }
         if(write_header_flag == 0){
@@ -583,7 +598,7 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                                 return -1;
                             }
                             if(*(operator_data->flag_run_id) != 1){
-                                ERROR("run_id information is missing in the %s.", operator_data->fast5_path);
+                                ERROR("run_id information is missing in the %s in read_id %s.", operator_data->fast5_path, operator_data->slow5_record->read_id);
                                 return -1;
                             }
                             if(*(operator_data->flag_write_header) == 0){
@@ -595,11 +610,16 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                         }
                         *(operator_data->nreads) = *(operator_data->nreads) + 1;
                         if(*(operator_data->primary_fields_count) == PRIMARY_FIELD_COUNT){
+                            if(*(operator_data->flag_run_id) != 1){
+                                ERROR("run_id information is missing in the %s in read_id %s.", operator_data->fast5_path, operator_data->slow5_record->read_id);
+                                return -1;
+                            }
                             int ret = print_record(operator_data);
                             if(ret < 0){
                                 return ret;
                             }
                             *(operator_data->primary_fields_count) = 0;
+                            *(operator_data->flag_run_id) = 0;
                         }else{
                             ERROR("A primary attribute is missing in the %s. Check the fast5 files", operator_data->fast5_path);
                             return -1;
