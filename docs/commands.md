@@ -145,8 +145,8 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 ### split
 
 ```
-slow5tools split [OPTIONS] file1.blow5 -o out_dir
-slow5tools split [OPTIONS] blow5_dir1 -o out_dir
+slow5tools split [OPTIONS] file1.blow5 -d out_dir
+slow5tools split [OPTIONS] blow5_dir1 -d out_dir
 ```
 
 Splits a single a SLOW5/BLOW5 file into multiple separate files.
@@ -181,10 +181,10 @@ This tool is useful for parallelising across array jobs / distributed systems.
 ### slow5tofast5 (or s2f)
 
 ```
-slow5tools slow5tofast5 [OPTIONS] file1.blow5 -o fast5_dir
-slow5tools slow5tofast5 [OPTIONS] blow5_dir1 -o fast5_dir
-slow5tools slow5tofast5 [OPTIONS] file1.blow5 file2.blow5 ... -o fast5_dir
-slow5tools slow5tofast5 [OPTIONS] blow5_dir1 blow5_dir2 ... -o fast5_dir
+slow5tools slow5tofast5 [OPTIONS] file1.blow5 -d fast5_dir
+slow5tools slow5tofast5 [OPTIONS] blow5_dir1 -d fast5_dir
+slow5tools slow5tofast5 [OPTIONS] file1.blow5 file2.blow5 ... -d fast5_dir
+slow5tools slow5tofast5 [OPTIONS] blow5_dir1 blow5_dir2 ... -d fast5_dir
 ```
 
 Converts SLOW5/BLOW5 files to FAST5 format.
