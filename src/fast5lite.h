@@ -84,7 +84,7 @@ static inline  std::vector<std::string> fast5_get_multi_read_groups(fast5_file_t
     H5G_info_t group_info;
     int ret = H5Gget_info_by_name(fh.hdf5_file, "/", &group_info, H5P_DEFAULT);
     if(ret < 0) {
-        fprintf(stderr, "error getting group info\n");
+        ERROR("%s","error getting group info\n");
         exit(EXIT_FAILURE);
     }
 

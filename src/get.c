@@ -1,3 +1,9 @@
+/**
+ * @file get.c
+ * @brief get read(record) given the read_id from a SLOW5 file
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au) Sasha Jenner (jenner.sasha@gmail.com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
+ * @date 27/02/2021
+ */
 #include <getopt.h>
 #include <stdio.h>
 
@@ -28,7 +34,7 @@
     "    -l --list [FILE]                   list of read ids provided as a single-column text file with one read id per line.\n" \
     "    -h, --help                         display this message and exit.\n" \
 
-void work_per_single_read(core_t *core, db_t *db, int32_t i) {
+void work_per_single_read_get(core_t *core, db_t *db, int32_t i) {
 
     char *id = db->read_id[i];
 
@@ -44,8 +50,7 @@ void work_per_single_read(core_t *core, db_t *db, int32_t i) {
     }else {
         if (core->benchmark == false){
             size_t record_size;
-            slow5_press_method_t method = {core->press_method, SLOW5_COMPRESS_NONE};
-            struct slow5_press* compress = slow5_press_init(method); /* TODO add signal compression */
+            struct slow5_press* compress = slow5_press_init(core->press_method); /* TODO add signal compression */
             db->read_record[i].buffer = slow5_rec_to_mem(record,core->fp->header->aux_meta, core->format_out, compress, &record_size);
             db->read_record[i].len = record_size;
             slow5_press_free(compress);
@@ -61,13 +66,13 @@ bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_me
     bool success = true;
 
     int len = 0;
-    fprintf(stderr, "Fetching %s\n", read_id);
+    //fprintf(stderr, "Fetching %s\n", read_id);
     slow5_rec_t *record=NULL;
 
     len = slow5_get(read_id, &record,fp);
 
     if (record == NULL || len < 0) {
-        fprintf(stderr, "Error locating %s\n", read_id);
+        WARNING("Error locating %s", read_id);
         success = false;
 
     } else {
@@ -87,8 +92,8 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
 
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -193,8 +198,8 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 arg_fname_in = optarg;
                 break;
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
@@ -254,7 +259,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         if (*endptr == '\0') {
             num_threads = ret;
         } else {
-            MESSAGE(stderr, "invalid number of threads -- '%s'", arg_num_threads);
+            ERROR("invalid number of threads -- '%s'", arg_num_threads);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
 
             EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -264,7 +269,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        MESSAGE(stderr, "missing slow5 or blow5 file%s", "");
+        ERROR("missing slow5 or blow5 file%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -298,9 +303,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     int ret_idx = slow5_idx_load(slow5file);
 
     if (ret_idx < 0) {
-        // TODO change these to MESSAGE?
-        fprintf(stderr, "Error loading index file for %s\n",
-                f_in_name);
+        ERROR("Error loading index file for %s\n", f_in_name);
 
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -318,13 +321,13 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         core.num_thread = num_threads;
         core.fp = slow5file;
         core.format_out = format_out;
-        core.press_method = pressMethod;
+        core.press_method = method;
         core.benchmark = benchmark;
 
         db_t db = { 0 };
         int64_t cap_ids = READ_ID_INIT_CAPACITY;
         db.read_id = (char **) malloc(cap_ids * sizeof *db.read_id);
-        db.read_record = (struct Record *) malloc(cap_ids * sizeof *db.read_record);
+        db.read_record = (raw_record_t*) malloc(cap_ids * sizeof *db.read_record);
 
         bool end_of_file = false;
         while (!end_of_file) {
@@ -351,7 +354,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     // Double read id list capacity
                     cap_ids *= 2;
                     db.read_id = (char **) realloc(db.read_id, cap_ids * sizeof *db.read_id);
-                    db.read_record = (struct Record *) realloc(db.read_record, cap_ids * sizeof *db.read_record);
+                    db.read_record = (raw_record_t*) realloc(db.read_record, cap_ids * sizeof *db.read_record);
                 }
                 db.read_id[num_ids] = curr_id;
                 ++ num_ids;
@@ -363,12 +366,12 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
             double start = slow5_realtime();
 
             // Fetch records for read ids in the batch
-            work_db(&core, &db);
+            work_db(&core, &db, work_per_single_read_get);
 
             double end = slow5_realtime();
             read_time += end - start;
 
-            MESSAGE(stderr, "Fetched %ld reads - %ld failed",
+            VERBOSE("Fetched %ld reads - %ld failed",
                     num_ids - db.n_err, db.n_err);
 
             // Print records
@@ -388,7 +391,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         // Print total time to read slow5
-        MESSAGE(stderr, "read time = %.3f sec", read_time);
+        VERBOSE("read time = %.3f sec", read_time);
 
         // Free everything
         free(db.read_id);
@@ -404,6 +407,9 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    if (format_out == SLOW5_FORMAT_BINARY) {
+        slow5_eof_fwrite(slow5file->fp);
+    }
     slow5_close(slow5file);
     fclose(read_list_in);
 

@@ -1,6 +1,9 @@
-//
-// Created by Hiruna Samarkoon on 2021-01-20.
-//
+/**
+ * @file split.c
+ * @brief split a SLOW5 in different ways
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
+ * @date 27/02/2021
+ */
 
 #include <getopt.h>
 #include <sys/wait.h>
@@ -308,7 +311,7 @@ void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir,
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
     }
-    INFO("%d proceses will be used",iop);
+    VERBOSE("%d proceses will be used",iop);
 
     //create processes
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
@@ -401,8 +404,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
         fprintf(stderr, DEBUG_PREFIX "argv=[",
                 __FILE__, __func__, __LINE__);
@@ -463,8 +466,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
@@ -567,11 +570,11 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     std::vector<std::string> slow5_files;
 
     if(metaSplitMethod.splitMethod==READS_SPLIT){
-        MESSAGE(stderr, "an input slow5 file will be split such that each output file has %lu reads", metaSplitMethod.n);
+        VERBOSE("an input slow5 file will be split such that each output file has %lu reads", metaSplitMethod.n);
     }else if(metaSplitMethod.splitMethod==FILE_SPLIT){
-        MESSAGE(stderr, "an input slow5 file will be split into %lu output files", metaSplitMethod.n);
+        VERBOSE("an input slow5 file will be split into %lu output files", metaSplitMethod.n);
     } else{
-        MESSAGE(stderr, "an input multi read group slow5 files will be split into single read group slow5 files %s","");
+        VERBOSE("an input multi read group slow5 files will be split into single read group slow5 files %s","");
     }
 
     //measure file listing time
@@ -579,11 +582,14 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], slow5_files, 0, NULL);
     }
-    fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
-
+    VERBOSE("%ld slow5 files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
+    if(slow5_files.size()==0){
+        ERROR("No slow5/blow5 files found. Exiting...%s","");
+        return EXIT_FAILURE;
+    }
     //measure slow5 splitting time
     split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod, lossy);
-    fprintf(stderr, "[%s] Splitting %ld s/blow5 files took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Splitting %ld s/blow5 files took %.3fs",slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
 }

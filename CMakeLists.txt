@@ -33,6 +33,7 @@ set_source_files_properties(src/split.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/thread.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/view.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/stats.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/concat.c PROPERTIES LANGUAGE CXX)
 
 set(f2s src/f2s.c)
 set(get src/get.c)
@@ -45,10 +46,11 @@ set(split src/split.c)
 set(thread src/thread.c)
 set(view src/view.c)
 set(stats src/stats.c)
+set(concat src/concat.c)
 
 set(hdf5-static "${PROJECT_SOURCE_DIR}/prebuilt-hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
-add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats})
+add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${concat})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/slow5lib)
 

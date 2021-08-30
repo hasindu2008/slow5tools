@@ -10,17 +10,17 @@ SLOW5 is a simple tab-separated values (TSV) file encoding metadata and time-ser
 
 Detailed benchmarking experiments have shown that SLOW5 format is an order of magnitude faster and 25% smaller than FAST5.
 
-[![GitHub Downloads](https://img.shields.io/github/downloads/hasindu2008/slow5tools/total?logo=GitHub)](https://github.com/hasindu2008/slow5tools/releases) 
+[![GitHub Downloads](https://img.shields.io/github/downloads/hasindu2008/slow5tools/total?logo=GitHub)](https://github.com/hasindu2008/slow5tools/releases)
 [![SLOW5 C/C++ CI Github](https://github.com/hasindu2008/slow5tools/workflows/SLOW5%20C/C++%20CI%20Github/badge.svg)](https://github.com/hasindu2008/slow5tools/actions?query=workflow%3A%22SLOW5+C%2FC%2B%2B+CI+Github%22)
-  
+
 Full documentation: https://hasindu2008.github.io/slow5tools   
 Pre-print: https://www.biorxiv.org/content/10.1101/2021.06.29.450255v1
 
 ## Quick start
 
-If you are a Linux user on x86_64 architecture and want to quickly try out download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
+If you are a Linux user on x86_64 architecture and want to quickly try slow5tools out, download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
 ```sh
-VERSION=v0.1.0
+VERSION=v0.2.0
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-x86_64-linux-binaries.tar.gz" && tar xvf slow5tools-$VERSION-x86_64-linux-binaries.tar.gz && cd slow5tools-$VERSION/
 ./slow5tools
 ```
@@ -34,7 +34,7 @@ Binaries should work on most Linux distributions and the only dependency is `zli
 Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball. Quick example for Ubuntu :
 ```sh
 sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development libraries
-VERSION=v0.1.0
+VERSION=v0.2.0
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-release.tar.gz" && tar xvf slow5tools-$VERSION-release.tar.gz && cd slow5tools-$VERSION/
 ./configure
 make
@@ -78,15 +78,15 @@ make
 
 ## Usage
 
-Visit the [man page](https://github.com/hasindu2008/slow5tools/blob/master/docs/commands.md) for all the commands and options.
+Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options.
 
 ### Examples
 
 ```sh
 #convert a directory of fast5 files into .blow5 (compression enabled) using 8 I/O processes
-slow5tools f2s fast5_dir -d blow5_dir  -p 8
+slow5tools f2s fast5_dir -d blow5_dir -p 8
 #convert a single fast5 file into a blow5 file(compression enabled)
-slow5tools f2s file.fast5 -o file.blow5  -p 1
+slow5tools f2s file.fast5 -o file.blow5 -p 1
 #merge all blow5 files in a directory into a single blow5 file using 8 threads
 slow5tools merge blow5_dir -o file.blow5 -t8
 

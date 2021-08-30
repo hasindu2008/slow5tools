@@ -6,9 +6,10 @@
 #define LOG_WARN    2
 #define LOG_INFO    3
 #define LOG_VERBOSE 4
-#define LOG_GOSSIP  5
-#define LOG_DEBUG   6
-#define LOG_TRACE   7
+#define LOG_DEBUG   5
+#define LOG_TRACE   6
+
+#define SLOW5TOOLS_VERSION "0.2.0-dirty"
 
 struct program_meta {
     int verbosity_level;
@@ -24,8 +25,8 @@ struct command {
 static inline void exit_msg(const int exit_code, char **argv, struct program_meta *meta,
                             const char *file, const char *func, const int line) {
     if (meta != NULL) {
-        if (meta->verbosity_level >= LOG_GOSSIP) {
-            VERBOSE("exiting with %s",
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("exiting with %s",
                     exit_code == EXIT_SUCCESS ? "SUCCESS" :
                     exit_code == EXIT_FAILURE ? "FAILURE" :
                     "UNKNOWN OUTCOME");

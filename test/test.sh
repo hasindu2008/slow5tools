@@ -151,4 +151,29 @@ else
     fi
 fi
 
+echo_test 'f2s_view_diff_test'
+FAST5_FILE=./test/data/raw/f2s_view_diff/sss_median_before_edited.fast5
+OUTPUT_DIR=./test/data/out/f2s_view_diff
+INPUT_ARGS="$FAST5_FILE $OUTPUT_DIR"
+if [ $mem -eq 1 ]; then
+    if ! ./test/f2s_view_diff_test.sh $INPUT_ARGS mem ; then
+        fail
+    fi
+else
+    if ! ./test/f2s_view_diff_test.sh $INPUT_ARGS ; then
+        fail
+    fi
+fi
+
+echo_test 'concat_test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/concat_test.sh mem ; then
+        fail
+    fi
+else
+    if ! ./test/concat_test.sh ; then
+        fail
+    fi
+fi
+
 exit $ret

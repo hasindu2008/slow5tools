@@ -22,6 +22,8 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/merge.o \
 	  $(BUILD_DIR)/split.o \
 	  $(BUILD_DIR)/stats.o \
+	  $(BUILD_DIR)/concat.o \
+	  $(BUILD_DIR)/quickcheck.o \
 
 
 PREFIX = /usr/local
@@ -66,6 +68,13 @@ $(BUILD_DIR)/split.o: src/split.c src/error.h
 
 $(BUILD_DIR)/stats.o: src/stats.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/concat.o: src/concat.c src/error.h
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/quickcheck.o: src/quickcheck.c src/error.h
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
 
 slow5lib/lib/libslow5.a:
 	make -C slow5lib
@@ -129,7 +138,7 @@ release: distclean
 	autoreconf
 	cp -r README.md LICENSE Makefile configure.ac config.mk.in \
 		installdeps.mk configure build src slow5tools-$(VERSION)
-	cp scripts/install-hdf5.sh slow5tools-$(VERSION)/scripts
+	cp scripts/install-hdf5.sh scripts/install-vbz.sh slow5tools-$(VERSION)/scripts
 	cp -r docs/commands.md slow5tools-$(VERSION)/docs/
 	cp -r slow5lib/lib slow5lib/include slow5lib/src  slow5lib/Makefile slow5lib/LICENSE slow5tools-$(VERSION)/slow5lib
 	tar -zcf slow5tools-$(VERSION)-release.tar.gz slow5tools-$(VERSION)
@@ -138,10 +147,11 @@ release: distclean
 	./configure --enable-localhdf5
 	make -j8
 	mkdir -p slow5tools-$(VERSION)
-	mkdir slow5tools-$(VERSION)/docs
+	mkdir slow5tools-$(VERSION)/docs slow5tools-$(VERSION)/scripts
 	mv slow5tools slow5tools-$(VERSION)/
 	cp -r README.md LICENSE slow5tools-$(VERSION)/
 	cp -r docs/commands.md slow5tools-$(VERSION)/docs/
+	cp -r scripts/install-vbz.sh slow5tools-$(VERSION)/scripts/
 	tar -zcf slow5tools-$(VERSION)-x86_64-linux-binaries.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 	tar xf slow5tools-$(VERSION)-x86_64-linux-binaries.tar.gz

@@ -16,15 +16,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-//#include "slow5_error.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-//#define MIN(A,B) ( ( (A) < (B) ) ? (A) : (B) )
-//#define MAX(A,B) ( ( (A) > (B) ) ? (A) : (B) )
-
 
 // Timing
 
@@ -55,35 +50,6 @@ static inline long slow5_peakrss(void) {
 #endif
 
 }
-
-
-// Other
-
-// Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
-// From https://www.mbeckler.org/blog/?p=114
-static inline void slow5_print_size(const char* name, uint64_t bytes)
-{
-    const char* suffixes[7];
-    suffixes[0] = "B";
-    suffixes[1] = "KB";
-    suffixes[2] = "MB";
-    suffixes[3] = "GB";
-    suffixes[4] = "TB";
-    suffixes[5] = "PB";
-    suffixes[6] = "EB";
-    uint64_t s = 0; // which suffix to use
-    double count = bytes;
-    while (count >= 1024 && s < 7)
-    {
-        s++;
-        count /= 1024;
-    }
-    if (count - floor(count) == 0.0)
-        fprintf(stderr, "[%s] %s : %d %s\n", __func__ , name, (int)count, suffixes[s]);
-    else
-        fprintf(stderr, "[%s] %s : %.1f %s\n", __func__, name, count, suffixes[s]);
-}
-
 
 #ifdef __cplusplus
 }

@@ -1,3 +1,5 @@
+// definitions used for FAST5 to SLOW5 conversion
+#include <vector>
 
 #ifndef HAVE_CONFIG_H
     #define HAVE_CONFIG_H
@@ -22,14 +24,6 @@
 #    include <hdf5.h>
 #endif
 #include <unordered_map>
-
-#define VERSION "0.1"
-#define FAST5_NAME "fast5"
-#define FAST5_EXTENSION "." FAST5_NAME
-#define SLOW5_NAME "slow5"
-#define SLOW5_EXTENSION "." SLOW5_NAME
-#define SLOW5_FILE_FORMAT_SHORT SLOW5_NAME "v" VERSION
-#define SLOW5_NAME "slow5"
 
 KHASH_MAP_INIT_STR(warncount, uint32_t)
 
@@ -56,7 +50,7 @@ struct operator_obj {
     struct program_meta *meta;
     FILE *f_out;
     enum slow5_fmt format_out;
-    enum slow5_press_method pressMethod;
+    slow5_press_method_t pressMethod;
     slow5_press_t* press_ptr;
     const char *fast5_path;
     fast5_file_t* fast5_file;
@@ -73,6 +67,7 @@ struct operator_obj {
     size_t* nreads;
     slow5_file_t* slow5File;
     std::unordered_map<std::string, uint32_t>* warning_map;
+    int *primary_fields_count;
 };
 
 //implemented in read_fast5.c
@@ -83,7 +78,7 @@ fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 std::vector< std::string > list_directory(const std::string& file_name);
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
-void slow5_hdr_initialize(slow5_hdr *header, int lossy);
+int slow5_hdr_initialize(slow5_hdr *header, int lossy);
 
 // args for processes
 typedef struct {

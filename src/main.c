@@ -15,7 +15,6 @@
 // TODO put all in header file
 
 #define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
-#define SLOW5TOOLS_VERSION "%s " "0.1.0-dirty" "\n" // TODO change
 #define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
@@ -35,6 +34,8 @@
     "    get                   display the read entry for each specified read id.\n" \
     "    view                  view the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats and compressions.\n" \
     "    stats                 prints statistics of a SLOW5/BLOW5 file to the stdout\n" \
+    "    concat                quickly concatenate SLOW5/BLOW5 files of same type\n" \
+    "    quickcheck            quickly checks if a SLOW5/BLOW5 file is intact\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
 
@@ -53,6 +54,8 @@ int (index_main)(int, char **, struct program_meta *);
 int (get_main)(int, char **, struct program_meta *);
 int (view_main)(int, char **, struct program_meta *);
 int (stats_main)(int, char **, struct program_meta *);
+int (concat_main)(int, char **, struct program_meta *);
+int (quickcheck_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
 void segv_handler(int sig) {
@@ -109,6 +112,8 @@ int main(const int argc, char **argv){
             {"get", get_main},
             {"view", view_main},
             {"stats", stats_main},
+            {"concat", concat_main},
+            {"quickcheck", quickcheck_main}
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
@@ -131,8 +136,8 @@ int main(const int argc, char **argv){
 
             switch (opt) {
                 case 'h':
-                    if (meta.verbosity_level >= LOG_GOSSIP) {
-                        VERBOSE("displaying large help message%s","");
+                    if (meta.verbosity_level >= LOG_DEBUG) {
+                        DEBUG("displaying large help message%s","");
                     }
                     fprintf(stdout, HELP_LARGE_MSG, argv[0], argv[0]);
                     exit(EXIT_SUCCESS);
@@ -141,8 +146,8 @@ int main(const int argc, char **argv){
                     //break;
                 case 'v':
                     meta.verbosity_level = atoi(optarg);
-                    if (meta.verbosity_level >= LOG_GOSSIP) {
-                        VERBOSE("printing the arguments given%s","");
+                    if (meta.verbosity_level >= LOG_DEBUG) {
+                        DEBUG("printing the arguments given%s","");
                     }
 
                     if (meta.verbosity_level >= LOG_DEBUG) {
@@ -160,10 +165,10 @@ int main(const int argc, char **argv){
                     }
                     break;
                 case 'V':
-                    if (meta.verbosity_level >= LOG_GOSSIP) {
-                        VERBOSE("displaying version information%s","");
+                    if (meta.verbosity_level >= LOG_DEBUG) {
+                        DEBUG("displaying version information%s","");
                     }
-                    fprintf(stdout, SLOW5TOOLS_VERSION, "slow5tools");
+                    fprintf(stdout, "slow5tools %s\n", SLOW5TOOLS_VERSION);
 
                     ret = EXIT_SUCCESS;
                     break_flag = true;
@@ -217,8 +222,8 @@ int main(const int argc, char **argv){
                         slow5_set_exit_condition(SLOW5_EXIT_ON_ERR);
 
                         // Calling command program
-                        if (meta.verbosity_level >= LOG_GOSSIP) {
-                            VERBOSE("using command '%s'", cmds[i].name);
+                        if (meta.verbosity_level >= LOG_DEBUG) {
+                            DEBUG("using command '%s'", cmds[i].name);
                         }
                         ret = cmds[i].main(argc - optind_copy, cmd_argv + optind_copy, &meta);
 
@@ -228,7 +233,7 @@ int main(const int argc, char **argv){
 
                 // No command found
                 if (!cmd_found) {
-                    MESSAGE(stderr, "invalid command -- '%s'", argv[optind_copy]);
+                    ERROR("invalid command -- '%s'", argv[optind_copy]);
                     fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                     ret = EXIT_FAILURE;
 
@@ -241,7 +246,7 @@ int main(const int argc, char **argv){
 
             // No remaining non-option arguments
             } else {
-                MESSAGE(stderr, "missing command%s", "");
+                ERROR("missing command%s", "");
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 ret = EXIT_FAILURE;
             }
@@ -250,10 +255,10 @@ int main(const int argc, char **argv){
 
     if(ret==EXIT_SUCCESS){
         fprintf(stderr, "\n");
-        if (meta.verbosity_level >= LOG_GOSSIP) {
-            VERBOSE("printing command given%s", "");
+        if (meta.verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing command given%s", "");
         }
-        fprintf(stderr, "cmd: ");
+        fprintf(stderr, "[%s] cmd: ",__func__);
         for (int i = 0; i < argc; ++ i) {
             fprintf(stderr, "%s", argv[i]);
             if (i == argc - 1) {
@@ -263,10 +268,10 @@ int main(const int argc, char **argv){
             }
         }
 
-        if (meta.verbosity_level >= LOG_GOSSIP) {
-            VERBOSE("printing resource use%s", "");
+        if (meta.verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing resource use%s", "");
         }
-        MESSAGE(stderr, "real time = %.3f sec | CPU time = %.3f sec | peak RAM = %.3f GB",
+        VERBOSE("real time = %.3f sec | CPU time = %.3f sec | peak RAM = %.3f GB",
                 slow5_realtime() - init_realtime, slow5_cputime(), slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
     }
 

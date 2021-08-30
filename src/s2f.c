@@ -1,6 +1,9 @@
-//
-// Created by Hiruna Samarkoon on 2020-12-29.
-//
+/**
+ * @file s2f.c
+ * @brief SLOW5 to FAST5 conversion
+ * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
+ * @date 27/02/2021
+ */
 
 #include <getopt.h>
 #include <sys/wait.h>
@@ -40,15 +43,22 @@ void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid
 void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *header, slow5_rec_t* slow5_record, hid_t* end_reason_enum_id) {
 //    todo- check return values
     int err;
+    char file_type[] = "multi-read";
     switch (group_flag) {
+        char* attribute_value;
         case ROOT:
-            add_attribute(group_id,"file_type",slow5_hdr_get("file_type",0,header),H5T_C_S1);
-            add_attribute(group_id,"file_version", slow5_hdr_get("file_version",0,header), H5T_C_S1);
+            // s2f creates multi-read fast5 files
+            add_attribute(group_id,"file_type", file_type, H5T_C_S1);
+
+            if((attribute_value=slow5_hdr_get("file_version",0,header))){
+                add_attribute(group_id,"file_version", attribute_value, H5T_C_S1);
+            }
             break;
         case READ:
             // add read attributes
-            add_attribute(group_id,"run_id",slow5_hdr_get("run_id",0,header),H5T_C_S1);
-//            add_attribute(group_id,"pore_type",slow5_hdr_get("pore_type",0,header),H5T_C_S1);
+            if((attribute_value=slow5_hdr_get("run_id",0,header))){
+                add_attribute(group_id,"run_id",attribute_value,H5T_C_S1);
+            }
             break;
         case RAW:
             // add Raw attributes
@@ -70,56 +80,150 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             break;
         case CONTEXT_TAGS:
             // add context_tags attributes
-            add_attribute(group_id,"sample_frequency",slow5_hdr_get("sample_frequency",0,header),H5T_C_S1);
-            add_attribute(group_id,"barcoding_enabled",slow5_hdr_get("barcoding_enabled",0,header),H5T_C_S1);
-            add_attribute(group_id,"experiment_duration_set",slow5_hdr_get("experiment_duration_set",0,header),H5T_C_S1);
-            add_attribute(group_id,"experiment_type",slow5_hdr_get("experiment_type",0,header),H5T_C_S1);
-            add_attribute(group_id,"local_basecalling",slow5_hdr_get("local_basecalling",0,header),H5T_C_S1);
-            add_attribute(group_id,"package",slow5_hdr_get("package",0,header),H5T_C_S1);
-            add_attribute(group_id,"package_version",slow5_hdr_get("package_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"sequencing_kit",slow5_hdr_get("sequencing_kit",0,header),H5T_C_S1);
-            add_attribute(group_id,"filename",slow5_hdr_get("filename",0,header),H5T_C_S1);
-            add_attribute(group_id,"experiment_kit",slow5_hdr_get("experiment_kit",0,header),H5T_C_S1);
-            add_attribute(group_id,"user_filename_input",slow5_hdr_get("user_filename_input",0,header),H5T_C_S1);
+            if((attribute_value=slow5_hdr_get("sample_frequency",0,header))){
+                add_attribute(group_id,"sample_frequency",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("barcoding_enabled",0,header))){
+                add_attribute(group_id,"barcoding_enabled",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("experiment_duration_set",0,header))){
+                add_attribute(group_id,"experiment_duration_set",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("experiment_type",0,header))){
+                add_attribute(group_id,"experiment_type",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("local_basecalling",0,header))){
+                add_attribute(group_id,"local_basecalling",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("package",0,header))){
+                add_attribute(group_id,"package",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("package_version",0,header))){
+                add_attribute(group_id,"package_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("sequencing_kit",0,header))){
+                add_attribute(group_id,"sequencing_kit",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("filename",0,header))){
+                add_attribute(group_id,"filename",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("experiment_kit",0,header))){
+                add_attribute(group_id,"experiment_kit",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("user_filename_input",0,header))){
+                add_attribute(group_id,"user_filename_input",attribute_value,H5T_C_S1);
+            }
             break;
         case TRACKING_ID:
             // add tracking_id attributes
-            add_attribute(group_id,"asic_id",slow5_hdr_get("asic_id",0,header),H5T_C_S1);
-            add_attribute(group_id,"asic_id_eeprom",slow5_hdr_get("asic_id_eeprom",0,header),H5T_C_S1);
-            add_attribute(group_id,"asic_temp",slow5_hdr_get("asic_temp",0,header),H5T_C_S1);
-            add_attribute(group_id,"auto_update",slow5_hdr_get("auto_update",0,header),H5T_C_S1);
-            add_attribute(group_id,"auto_update_source",slow5_hdr_get("auto_update_source",0,header),H5T_C_S1);
-            add_attribute(group_id,"bream_is_standard",slow5_hdr_get("bream_is_standard",0,header),H5T_C_S1);
-            add_attribute(group_id,"device_id",slow5_hdr_get("device_id",0,header),H5T_C_S1);
-            add_attribute(group_id,"exp_script_name",slow5_hdr_get("exp_script_name",0,header),H5T_C_S1);
-            add_attribute(group_id,"exp_script_purpose",slow5_hdr_get("exp_script_purpose",0,header),H5T_C_S1);
-            add_attribute(group_id,"exp_start_time",slow5_hdr_get("exp_start_time",0,header),H5T_C_S1);
-            add_attribute(group_id,"flow_cell_id",slow5_hdr_get("flow_cell_id",0,header),H5T_C_S1);
-            add_attribute(group_id,"heatsink_temp",slow5_hdr_get("heatsink_temp",0,header),H5T_C_S1);
-            add_attribute(group_id,"hostname",slow5_hdr_get("hostname",0,header),H5T_C_S1);
-            add_attribute(group_id,"installation_type",slow5_hdr_get("installation_type",0,header),H5T_C_S1);
-            add_attribute(group_id,"local_firmware_file",slow5_hdr_get("local_firmware_file",0,header),H5T_C_S1);
-            add_attribute(group_id,"operating_system",slow5_hdr_get("operating_system",0,header),H5T_C_S1);
-            add_attribute(group_id,"protocol_run_id",slow5_hdr_get("protocol_run_id",0,header),H5T_C_S1);
-            add_attribute(group_id,"protocols_version",slow5_hdr_get("protocols_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"run_id",slow5_hdr_get("run_id",0,header),H5T_C_S1);
-            add_attribute(group_id,"usb_config",slow5_hdr_get("usb_config",0,header),H5T_C_S1);
-            add_attribute(group_id,"version",slow5_hdr_get("version",0,header),H5T_C_S1);
-            add_attribute(group_id,"asic_version",slow5_hdr_get("asic_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"configuration_version",slow5_hdr_get("configuration_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"device_type",slow5_hdr_get("device_type",0,header),H5T_C_S1);
-            add_attribute(group_id,"distribution_status",slow5_hdr_get("distribution_status",0,header),H5T_C_S1);
-            add_attribute(group_id,"distribution_version",slow5_hdr_get("distribution_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"flow_cell_product_code",slow5_hdr_get("flow_cell_product_code",0,header),H5T_C_S1);
-            add_attribute(group_id,"guppy_version",slow5_hdr_get("guppy_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"protocol_group_id",slow5_hdr_get("protocol_group_id",0,header),H5T_C_S1);
-            add_attribute(group_id,"sample_id",slow5_hdr_get("sample_id",0,header),H5T_C_S1);
-            add_attribute(group_id,"bream_core_version",slow5_hdr_get("bream_core_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"bream_ont_version",slow5_hdr_get("bream_ont_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"bream_prod_version",slow5_hdr_get("bream_prod_version",0,header),H5T_C_S1);
-            add_attribute(group_id,"bream_rnd_version",slow5_hdr_get("bream_rnd_version",0,header),H5T_C_S1);
+            if((attribute_value=slow5_hdr_get("asic_id",0,header))){
+                add_attribute(group_id,"asic_id",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("asic_id_eeprom",0,header))){
+                add_attribute(group_id,"asic_id_eeprom",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("asic_temp",0,header))){
+                add_attribute(group_id,"asic_temp",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("auto_update",0,header))){
+                add_attribute(group_id,"auto_update",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("auto_update_source",0,header))){
+                add_attribute(group_id,"auto_update_source",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("bream_is_standard",0,header))){
+                add_attribute(group_id,"bream_is_standard",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("device_id",0,header))){
+                add_attribute(group_id,"device_id",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("exp_script_name",0,header))){
+                add_attribute(group_id,"exp_script_name",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("exp_script_purpose",0,header))){
+                add_attribute(group_id,"exp_script_purpose",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("exp_start_time",0,header))){
+                add_attribute(group_id,"exp_start_time",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("flow_cell_id",0,header))){
+                add_attribute(group_id,"flow_cell_id",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("heatsink_temp",0,header))){
+                add_attribute(group_id,"heatsink_temp",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("hostname",0,header))){
+                add_attribute(group_id,"hostname",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("installation_type",0,header))){
+                add_attribute(group_id,"installation_type",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("local_firmware_file",0,header))){
+                add_attribute(group_id,"local_firmware_file",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("operating_system",0,header))){
+                add_attribute(group_id,"operating_system",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("protocol_run_id",0,header))){
+                add_attribute(group_id,"protocol_run_id",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("protocols_version",0,header))){
+                add_attribute(group_id,"protocols_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("run_id",0,header))){
+                add_attribute(group_id,"run_id",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("usb_config",0,header))){
+                add_attribute(group_id,"usb_config",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("version",0,header))){
+                add_attribute(group_id,"version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("asic_version",0,header))){
+                add_attribute(group_id,"asic_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("configuration_version",0,header))){
+                add_attribute(group_id,"configuration_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("device_type",0,header))){
+                add_attribute(group_id,"device_type",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("distribution_status",0,header))){
+                add_attribute(group_id,"distribution_status",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("distribution_version",0,header))){
+                add_attribute(group_id,"distribution_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("flow_cell_product_code",0,header))){
+                add_attribute(group_id,"flow_cell_product_code",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("guppy_version",0,header))){
+                add_attribute(group_id,"guppy_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("protocol_group_id",0,header))){
+                add_attribute(group_id,"protocol_group_id",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("sample_id",0,header))){
+                add_attribute(group_id,"sample_id",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("bream_core_version",0,header))){
+                add_attribute(group_id,"bream_core_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("bream_ont_version",0,header))){
+                add_attribute(group_id,"bream_ont_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("bream_prod_version",0,header))){
+                add_attribute(group_id,"bream_prod_version",attribute_value,H5T_C_S1);
+            }
+            if((attribute_value=slow5_hdr_get("bream_rnd_version",0,header))){
+                add_attribute(group_id,"bream_rnd_version",attribute_value,H5T_C_S1);
+            }
             break;
+        default:
+            ERROR("%s","Incorrect group name");
+            exit(EXIT_FAILURE);
     }
+
 }
 
 void initialize_end_reason(hid_t* end_reason_enum_id) {
@@ -137,7 +241,6 @@ void initialize_end_reason(hid_t* end_reason_enum_id) {
 }
 
 void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
-
     hid_t   file_id;
     hid_t group_read, group_raw, group_channel_id, group_tracking_id, group_context_tags;
     herr_t  status;
@@ -262,7 +365,7 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
 
 void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
     for (int i = args.starti; i < args.endi; i++) {
-        fprintf(stderr, "Converting %s to fast5\n", slow5_files[i].c_str());
+        VERBOSE("Converting %s to fast5", slow5_files[i].c_str());
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
             ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
@@ -289,7 +392,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
     }
-    INFO("%d proceses will be used",iop);
+    VERBOSE("%d proceses will be used",iop);
     //create processes
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
     proc_arg_t* proc_args = (proc_arg_t*)malloc(iop*sizeof(proc_arg_t));
@@ -377,9 +480,6 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
 }
 
 int s2f_main(int argc, char **argv, struct program_meta *meta) {
-    //todo - consider implementing this in later versions
-    INFO("[%s] Not Stored: Attribute read/pore_type is not stored.", SLOW5_FILE_FORMAT_SHORT);
-    INFO("[%s] Not Stored: Attribute read/Raw/end_reason is not stored.", SLOW5_FILE_FORMAT_SHORT);
 
     // Turn off HDF's exception printing, which is generally unhelpful for users
     H5Eset_auto(0, NULL, NULL);
@@ -388,8 +488,8 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_VERBOSE) {
-            VERBOSE("printing the arguments given%s","");
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("printing the arguments given%s","");
         }
 
         fprintf(stderr, DEBUG_PREFIX "argv=[",
@@ -433,8 +533,8 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_VERBOSE) {
-                    VERBOSE("displaying large help message%s","");
+                if (meta->verbosity_level >= LOG_DEBUG) {
+                    DEBUG("displaying large help message%s","");
                 }
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
@@ -482,12 +582,15 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], slow5_files, 0, NULL);
     }
-    fprintf(stderr, "[%s] %ld slow5 files found - took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - realtime0);
-
+    VERBOSE("%ld slow5 files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
+    if(slow5_files.size()==0){
+        ERROR("No slow5/blow5 files found. Exiting...%s","");
+        return EXIT_FAILURE;
+    }
     //measure s2f conversion time
     init_realtime = slow5_realtime();
     s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
-    fprintf(stderr, "[%s] Converting %ld s/blow5 files took %.3fs\n", __func__, slow5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Converting %ld s/blow5 files took %.3fs", slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
 }
