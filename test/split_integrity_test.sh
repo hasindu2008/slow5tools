@@ -36,7 +36,7 @@ mkdir "$OUTPUT_DIR" || die "Creating $OUTPUT_DIR failed"
 
 $SLOW5_EXEC split -g $REL_PATH/data/raw/split/multi_group_slow5s/rg.slow5 -d $OUTPUT_DIR/splitted_groups_slow5s --to slow5 || die "testcase 1: splitting groups failed"
 echo "comparing group split: output and expected"
-diff $REL_PATH/data/exp/split/expected_slow5s $OUTPUT_DIR/splitted_groups_slow5s &>/dev/null
+diff $REL_PATH/data/exp/split/expected_group_split_slow5s $OUTPUT_DIR/splitted_groups_slow5s &>/dev/null
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: splitting groups worked properly!${NC}"
 elif [ $? -eq 1 ]; then

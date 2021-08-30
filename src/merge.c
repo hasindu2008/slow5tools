@@ -14,6 +14,7 @@
 #include "error.h"
 #include "cmd.h"
 #include <slow5/slow5.h>
+#include <map>
 #include "read_fast5.h"
 #include "slow5_extra.h"
 #include "misc.h"
@@ -271,8 +272,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         arg_fname_out = &stdout_s[0];
     }
 
+    std::map<std::string, enum slow5_aux_type> set_aux_attr_pairs;
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, arg_fname_out, format_out);
-    slow5_hdr_initialize(slow5File->header, lossy);
+    int ret = slow5_hdr_initialize(slow5File->header, lossy);
+    if(ret<0){
+        exit(EXIT_FAILURE);
+    }
     slow5File->header->num_read_groups = 0;
     std::vector<std::vector<size_t>> list;
     size_t index = 0;
@@ -288,6 +293,13 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             ERROR("[Skip file]: %s has no auxiliary fields. Specify -l false to merge files with no auxiliary fields.", files[i].c_str());
             slow5_close(slow5File_i);
             return EXIT_FAILURE;
+        }
+        if(lossy==0){
+            slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
+            uint32_t num_aux_attrs = aux_ptr->num;
+            for(uint32_t r=0; r<num_aux_attrs; r++){
+                set_aux_attr_pairs.insert({std::string(aux_ptr->attrs[r]),aux_ptr->types[r]});
+            }
         }
 
         int64_t read_group_count_i = slow5File_i->header->num_read_groups; // number of read_groups in ith slow5file
@@ -328,6 +340,15 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         index++;
         slow5_files.push_back(files[i]);
 
+    }
+
+    if(lossy==0){
+        for( const auto& n :set_aux_attr_pairs){
+            if(slow5_aux_meta_add(slow5File->header->aux_meta, n.first.c_str(), n.second)){
+                ERROR("Could not initialize the record attribute '%s'", n.first.c_str());
+                return -1;
+            }
+        }
     }
 
     if(slow5_files.size()==0){
