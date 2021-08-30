@@ -341,7 +341,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     if(lossy==0){
         for( const auto& n :set_aux_attr_pairs){
-            DEBUG("%s", n.first.c_str());
             if(slow5_aux_meta_add(slow5File->header->aux_meta, n.first.c_str(), n.second)){
                 ERROR("Could not initialize the record attribute '%s'", n.first.c_str());
                 return -1;
