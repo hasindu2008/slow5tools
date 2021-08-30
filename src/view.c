@@ -81,8 +81,8 @@ enum view_fmt path_to_view_fmt(const char *fname) {
     return fmt;
 }
 
-slow5_press_method_t name_to_slow5_press_method(const char *name) {
-    slow5_press_method_t comp = (slow5_press_method_t) -1;
+enum slow5_press_method name_to_slow5_press_method(const char *name) {
+    enum slow5_press_method comp = (enum slow5_press_method) -1;
 
     if (strcmp(name, "none") == 0) {
         comp = SLOW5_COMPRESS_NONE;
@@ -144,8 +144,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     FILE *f_out = stdout;
     enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
     enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
-    slow5_press_method_t record_press_out = SLOW5_COMPRESS_ZLIB;
-    slow5_press_method_t signal_press_out = SLOW5_COMPRESS_SVB_ZD;
+    enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
+    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_SVB_ZD;
 
     // Input arguments
     char *arg_fname_in = NULL;
@@ -289,7 +289,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         } else {
             record_press_out = name_to_slow5_press_method(arg_record_press_out);
 
-            if (record_press_out == (slow5_press_method_t) -1) {
+            if (record_press_out == (enum slow5_press_method) -1) {
                 MESSAGE(stderr, "invalid compression method -- '%s'", arg_record_press_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
@@ -305,7 +305,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         } else {
             signal_press_out = name_to_slow5_press_method(arg_signal_press_out);
 
-            if (signal_press_out == (slow5_press_method_t) -1) {
+            if (signal_press_out == (enum slow5_press_method) -1) {
                 MESSAGE(stderr, "invalid compression method -- '%s'", arg_signal_press_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
@@ -348,7 +348,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         // TODO if output is the same format just duplicate file
-        if (slow5_convert(s5p, f_out, (enum slow5_fmt) fmt_out, record_press_out, signal_press_out) != 0) {
+        slow5_press_method_t press_out = {record_press_out,signal_press_out} ;
+        if (slow5_convert(s5p, f_out, (enum slow5_fmt) fmt_out, press_out) != 0) {
             ERROR("Conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
         }

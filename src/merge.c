@@ -437,7 +437,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
 
     //now write the header to the slow5File. Use Binary non compress method for fast writing
-    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethodRecord, pressMethodSignal) == -1){
+    slow5_press_method_t method = {pressMethodRecord, pressMethodSignal};
+    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, method) == -1){
         ERROR("Could not write the header to %s\n", arg_fname_out);
         return EXIT_FAILURE;
     }
@@ -456,7 +457,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     core.slow5_files = slow5_files;
     core.n_batch = slow5_files.size();
     core.format_out = format_out;
-    core.comp = slow5_press_init(pressMethodRecord, pressMethodSignal); /* TODO check this isn't NULL */
+    core.comp = slow5_press_init(method); /* TODO check this isn't NULL */
 
     //measure read_group number assigning using multi-threads time
     realtime0 = slow5_realtime();
