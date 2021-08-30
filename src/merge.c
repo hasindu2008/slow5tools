@@ -14,7 +14,7 @@
 #include "error.h"
 #include "cmd.h"
 #include <slow5/slow5.h>
-#include <unordered_map>
+#include <map>
 #include "read_fast5.h"
 #include "slow5_extra.h"
 #include "misc.h"
@@ -269,7 +269,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         arg_fname_out = &stdout_s[0];
     }
 
-    std::unordered_map<std::string, enum slow5_aux_type> set_aux_attr_pairs;
+    std::map<std::string, enum slow5_aux_type> set_aux_attr_pairs;
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, arg_fname_out, format_out);
     int ret = slow5_hdr_initialize(slow5File->header, lossy);
     if(ret<0){
