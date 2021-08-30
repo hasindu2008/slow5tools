@@ -10,7 +10,6 @@
 RED='\033[0;31m' ; GREEN='\033[0;32m' ; NC='\033[0m' # No Color
 die() { echo -e "${RED}$1${NC}" >&2 ; echo ; exit 1 ; } # terminate script
 info() {  echo ; echo -e "${GREEN}$1${NC}" >&2 ; }
-
 # Relative path to "slow5/tests/"
 REL_PATH="$(dirname $0)/" 
 
@@ -36,39 +35,47 @@ $SLOW5TOOLS concat "$RAW_DIR/slow5s/" > "$OUTPUT_DIR/output.slow5" || die "testc
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
 TESTCASE=2
+rm "$OUTPUT_DIR/output.*"
 info "testcase:$TESTCASE - concat two blow5s. output-stdout"
 $SLOW5TOOLS concat "$RAW_DIR/blow5s/" > "$OUTPUT_DIR/output.blow5" || die "testcase:$TESTCASE slow5tools concat failed"
 $SLOW5TOOLS view "$OUTPUT_DIR/output.blow5" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools view failed"
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
 TESTCASE=3
+rm "$OUTPUT_DIR/output.*"
 info "testcase:$TESTCASE - concat two slow5s. output-file"
 $SLOW5TOOLS concat "$RAW_DIR/slow5s/" -o "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools concat failed"
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
 TESTCASE=4
+rm "$OUTPUT_DIR/output.*"
 info "testcase:$TESTCASE - concat two blow5s. output-file"
 $SLOW5TOOLS concat "$RAW_DIR/blow5s/" -o "$OUTPUT_DIR/output.blow5" || die "testcase:$TESTCASE slow5tools concat failed"
 $SLOW5TOOLS view "$OUTPUT_DIR/output.blow5" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools view failed"
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
 TESTCASE=5
+rm "$OUTPUT_DIR/output.*"
 info "testcase:$TESTCASE - concat two slow5s. output-file. wrong file extension"
 $SLOW5TOOLS concat "$RAW_DIR/slow5s/" -o "$OUTPUT_DIR/output.blow5" && die "testcase:$TESTCASE slow5tools concat failed"
 
 TESTCASE=6
+rm "$OUTPUT_DIR/output.*"
 info "testcase:$TESTCASE - concat two blow5s. output-file. wrong file extension"
 $SLOW5TOOLS concat "$RAW_DIR/blow5s/" -o "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools concat failed"
 
 TESTCASE=7
+rm "$OUTPUT_DIR/output.*"
 info "testcase:$TESTCASE - concat different format files"
 $SLOW5TOOLS concat "$RAW_DIR/mixed_format/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools concat failed"
 
 TESTCASE=8
+rm "$OUTPUT_DIR/output.*"
 info "testcase:$TESTCASE - concat different compression types files"
 $SLOW5TOOLS concat "$RAW_DIR/mixed_compression/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools concat failed"
 
 TESTCASE=9
+rm "$OUTPUT_DIR/output.*"
 EXP_SLOW5_FILE="$REL_PATH/data/exp/concat/expected_multi_group.slow5"
 info "testcase:$TESTCASE - concat multi_read_group files"
 $SLOW5TOOLS concat "$RAW_DIR/multi_read_group/" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools concat failed"
