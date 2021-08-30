@@ -5,6 +5,7 @@
 # concat blow5 files
 # convert concatenated blow5 to slow5
 # compare slow5s against the expected
+# additional error catching testcases
 
 RED='\033[0;31m' ; GREEN='\033[0;32m' ; NC='\033[0m' # No Color
 die() { echo -e "${RED}$1${NC}" >&2 ; echo ; exit 1 ; } # terminate script
@@ -20,7 +21,7 @@ mkdir "$OUTPUT_DIR" || die "Failed creating $OUTPUT_DIR"
 #commands ...
 
 RAW_DIR="$REL_PATH/data/raw/concat"
-EXP_SLOW5_FILE="$REL_PATH/data/exp/concat/output.slow5"
+EXP_SLOW5_FILE="$REL_PATH/data/exp/concat/expected_single_group.slow5"
 SLOW5TOOLS_WITHOUT_VALGRIND=$REL_PATH/../slow5tools
 
 if [ "$1" = 'mem' ]; then
@@ -67,10 +68,14 @@ TESTCASE=8
 info "testcase:$TESTCASE - concat different compression types files"
 $SLOW5TOOLS concat "$RAW_DIR/mixed_compression/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools concat failed"
 
+TESTCASE=9
+EXP_SLOW5_FILE="$REL_PATH/data/exp/concat/expected_multi_group.slow5"
+info "testcase:$TESTCASE - concat multi_read_group files"
+$SLOW5TOOLS concat "$RAW_DIR/multi_read_group/" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools concat failed"
+diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
 info "all $TESTCASE testcases passed"
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
-info "$(date)"
 info "done"
 exit 0
 # If you want to log to the same file: command1 >> log_file 2>&1

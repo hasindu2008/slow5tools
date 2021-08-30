@@ -169,6 +169,18 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
             }
 
+            if(lossy==0){
+                struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
+                slow5File->header->aux_meta = aux_meta;
+                slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
+                uint32_t num_aux_attrs = aux_ptr->num;
+                for(uint32_t r=0; r<num_aux_attrs; r++){
+                    if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])){
+                        ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
+                        return EXIT_FAILURE;
+                    }
+                }
+            }
             //set run_ids
             for(uint32_t j=0; j<num_read_groups; j++){
                 char* temp = slow5_hdr_get("run_id", 0, slow5File_i->header);
@@ -188,10 +200,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
                     return EXIT_FAILURE;
                 }
             }
-            int ret = slow5_hdr_initialize(slow5File->header, lossy);
-            if(ret<0){
-                exit(EXIT_FAILURE);
-            }
+
             slow5File->header->num_read_groups = num_read_groups;
             //now write the header to the slow5File.
             if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){
