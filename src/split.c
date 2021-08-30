@@ -107,7 +107,16 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     exit(EXIT_FAILURE);
                 }
                 slow5File->header->num_read_groups = 0;
-
+                if(lossy==0){
+                    slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
+                    uint32_t num_aux_attrs = aux_ptr->num;
+                    for(uint32_t r=0; r<num_aux_attrs; r++){
+                        if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])){
+                            ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
@@ -206,7 +215,16 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     exit(EXIT_FAILURE);
                 }
                 slow5File->header->num_read_groups = 0;
-
+                if(lossy==0){
+                    slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
+                    uint32_t num_aux_attrs = aux_ptr->num;
+                    for(uint32_t r=0; r<num_aux_attrs; r++){
+                        if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])){
+                            ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
@@ -267,7 +285,16 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     exit(EXIT_FAILURE);
                 }
                 slow5File->header->num_read_groups = 0;
-
+                if(lossy==0){
+                    slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
+                    uint32_t num_aux_attrs = aux_ptr->num;
+                    for(uint32_t r=0; r<num_aux_attrs; r++){
+                        if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])){
+                            ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());

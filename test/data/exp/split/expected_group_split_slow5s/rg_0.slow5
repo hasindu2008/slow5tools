@@ -1,4 +1,4 @@
-#slow5_version	0.1.0
+#slow5_version	0.2.0
 #num_read_groups	1
 @asic_id	420170566
 @asic_id_eeprom	2043896
@@ -42,7 +42,7 @@
 @protocol_group_id	.
 @protocol_run_id	3eecebf6-325f-4ac5-b896-a7588f2b2324
 @protocols_version	1.1.21
-@run_id	2cc960b63c07619b4bf2917507d447479a21da66
+@run_id	0cc960b63c07619b4bf2917507d447479a21da66
 @sample_frequency	4000
 @sample_id	.
 @sequencing_kit	.
