@@ -109,8 +109,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method pressMethodRecord = SLOW5_COMPRESS_ZSTD;
-    enum slow5_press_method pressMethodSignal = SLOW5_COMPRESS_SVB_ZD;
+    enum slow5_press_method pressMethodRecord = SLOW5_COMPRESS_ZLIB;
+    enum slow5_press_method pressMethodSignal = SLOW5_COMPRESS_NONE;
     int compression_set = 0;
 
     // Input arguments
@@ -192,7 +192,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
         pressMethodRecord = SLOW5_COMPRESS_NONE;
-        pressMethodSignal = SLOW5_COMPRESS_SVB_ZD;
+        pressMethodSignal = SLOW5_COMPRESS_NONE;
     }
     // compression option is only effective with -b blow5
     if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
