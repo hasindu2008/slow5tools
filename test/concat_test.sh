@@ -76,7 +76,6 @@ diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff 
 
 info "all $TESTCASE testcases passed"
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
-info "done"
 exit 0
 # If you want to log to the same file: command1 >> log_file 2>&1
 # If you want different files: command1 >> log_file 2>> err_file
