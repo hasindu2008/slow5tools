@@ -63,6 +63,7 @@ struct operator_obj {
     int *flag_lossy;
     int *flag_write_header;
     int *flag_allow_run_id_mismatch;
+    int *flag_header_is_written;
     hsize_t* num_read_groups;
     size_t* nreads;
     slow5_file_t* slow5File;
