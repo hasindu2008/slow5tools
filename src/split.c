@@ -102,7 +102,10 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, lossy);
+                int ret0 = slow5_hdr_initialize(slow5File->header, lossy);
+                if(ret0<0){
+                    exit(EXIT_FAILURE);
+                }
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
@@ -198,7 +201,10 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, lossy);
+                int ret0 = slow5_hdr_initialize(slow5File->header, lossy);
+                if(ret0<0){
+                    exit(EXIT_FAILURE);
+                }
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
@@ -256,7 +262,10 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, lossy);
+                int ret0 = slow5_hdr_initialize(slow5File->header, lossy);
+                if(ret0<0){
+                    exit(EXIT_FAILURE);
+                }
                 slow5File->header->num_read_groups = 0;
 
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file

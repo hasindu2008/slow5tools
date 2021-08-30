@@ -188,7 +188,10 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
                     return EXIT_FAILURE;
                 }
             }
-            slow5_hdr_initialize(slow5File->header, lossy);
+            int ret = slow5_hdr_initialize(slow5File->header, lossy);
+            if(ret<0){
+                exit(EXIT_FAILURE);
+            }
             slow5File->header->num_read_groups = num_read_groups;
             //now write the header to the slow5File.
             if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){
