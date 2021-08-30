@@ -27,7 +27,7 @@
     "    --from=[FORMAT]            specify input file format\n" \
     "    --to=[FORMAT]              specify output file format\n" \
     "    -c, --compress=[METHOD]    specify output compression method -- zlib (only available for format blow5)\n" \
-    "    -s, --sig-compress=[METHOD]    specify output compression method -- svb-zd (only available for format blow5)\n" \
+    "    -s, --sig-compress=[METHOD]    specify output compression method -- none (only available for format blow5)\n" \
     "    -o, --output=[FILE]        output to FILE -- stdout\n" \
     "    -h, --help                 display this message and exit\n"                                               \
     "    -t, --threads [INT]        number of threads [default: 4]\n"                                              \
@@ -183,7 +183,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
     enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
     enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
-    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_SVB_ZD;
+    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
 
     // Input arguments
     char *arg_fname_in = NULL;
