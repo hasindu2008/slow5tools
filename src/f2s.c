@@ -26,8 +26,9 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --to [format_type]                 output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
-    "    -c, --compress [compression_type]  convert to compressed blow5. [default: zlib]\n" \
+    "    --to=[FORMAT]                      specify output file format\n" \
+    "    -c, --compress=[REC_METHOD]        specify record compression method -- zlib (only available for format blow5)\n" \
+    "    -s, --sig-compress=[SIG_METHOD]    specify signal compression method -- none (only available for format blow5)\n" \
     "    -d, --out-dir [STR]                output directory where slow5files are written to\n" \
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -p, --iop [INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
@@ -36,10 +37,9 @@
     "    -h, --help                         display this message and exit\n" \
     HELP_FORMATS_METHODS
 
-static double init_realtime = 0;
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
-void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
+void f2s_child_worker(enum slow5_fmt format_out, slow5_press_method_t press_out, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
     int ret = 0;
     static size_t call_count = 0;
     slow5_file_t* slow5File = NULL;
@@ -89,7 +89,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
                 if(ret<0){
                     exit(EXIT_FAILURE);
                 }
-                ret = read_fast5(&fast5_file, format_out, pressMethod, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File, &warning_map);
+                ret = read_fast5(&fast5_file, format_out, press_out, lossy, 0, flag_allow_run_id_mismatch, meta, slow5File, &warning_map);
                 if(ret<0){
                     exit(EXIT_FAILURE);
                 }
@@ -115,7 +115,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
                         exit(EXIT_FAILURE);
                     }
                 }
-                ret = read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
+                ret = read_fast5(&fast5_file, format_out, press_out, lossy, call_count++, flag_allow_run_id_mismatch, meta,
                            slow5File_outputdir_single_fast5, &warning_map);
                 if(ret<0){
                     exit(EXIT_FAILURE);
@@ -143,7 +143,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
                     exit(EXIT_FAILURE);
                 }
             }
-            ret = read_fast5(&fast5_file, format_out, pressMethod, lossy, call_count++, flag_allow_run_id_mismatch, meta,
+            ret = read_fast5(&fast5_file, format_out, press_out, lossy, call_count++, flag_allow_run_id_mismatch, meta,
                        slow5File, &warning_map);
             if(ret<0){
                 exit(EXIT_FAILURE);
@@ -168,7 +168,7 @@ void f2s_child_worker(enum slow5_fmt format_out, enum slow5_press_method pressMe
     }
 }
 
-void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int lossy, int flag_allow_run_id_mismatch, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
+void f2s_iop(enum slow5_fmt format_out, slow5_press_method_t press_out, int lossy, int flag_allow_run_id_mismatch, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
     int64_t num_fast5_files = fast5_files.size();
     if (iop > num_fast5_files) {
         iop = num_fast5_files;
@@ -202,7 +202,7 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
     }
 
     if(iop==1){
-        f2s_child_worker(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, proc_args[0], fast5_files, output_dir, meta, readsCount, arg_fname_out);
+        f2s_child_worker(format_out, press_out, lossy, flag_allow_run_id_mismatch, proc_args[0], fast5_files, output_dir, meta, readsCount, arg_fname_out);
         free(proc_args);
         free(pids);
         return;
@@ -219,7 +219,7 @@ void f2s_iop(enum slow5_fmt format_out, enum slow5_press_method pressMethod, int
             exit(EXIT_FAILURE);
         }
         if(pids[t]==0){ //child
-            f2s_child_worker(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, proc_args[t], fast5_files, output_dir, meta, readsCount, arg_fname_out);
+            f2s_child_worker(format_out, press_out, lossy, flag_allow_run_id_mismatch, proc_args[t], fast5_files, output_dir, meta, readsCount, arg_fname_out);
             exit(EXIT_SUCCESS);
         }
         if(pids[t]>0){ //parent
@@ -302,27 +302,31 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     static struct option long_opts[] = {
             {"to", required_argument, NULL, 'b'},    //0
             {"compress", required_argument, NULL, 'c'},  //1
-            {"help", no_argument, NULL, 'h'},  //2
-            {"output", required_argument, NULL, 'o'},   //3
-            { "iop", required_argument, NULL, 'p'}, //4
-            { "lossless", required_argument, NULL, 'l'}, //4
-            { "out-dir", required_argument, NULL, 'd'}, //5
-            { "allow", no_argument, NULL, 'a'}, //6
+            {"sig-compress",    required_argument,  NULL, 's'}, //2
+            {"help", no_argument, NULL, 'h'},  //3
+            {"output", required_argument, NULL, 'o'},   //4
+            { "iop", required_argument, NULL, 'p'}, //5
+            { "lossless", required_argument, NULL, 'l'}, //6
+            { "out-dir", required_argument, NULL, 'd'}, //7
+            { "allow", no_argument, NULL, 'a'}, //8
             {NULL, 0, NULL, 0 }
     };
 
+    enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
+    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
     int compression_set = 0;
 
     // Input arguments
     char *arg_dir_out = NULL;
     char *arg_fname_out = NULL;
+    char *arg_record_press_out = NULL;
+    char *arg_signal_press_out = NULL;
 
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:ho:p:l:d:a", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:s:ho:p:l:d:a", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -338,16 +342,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                     exit(EXIT_FAILURE);
                 }
                 break;
+            case 's':
+                compression_set = 1;
+                arg_signal_press_out = optarg;
+                break;
             case 'c':
                 compression_set = 1;
-                if(strcmp(optarg,"none")==0){
-                    pressMethod = SLOW5_COMPRESS_NONE;
-                }else if(strcmp(optarg,"zlib")==0){
-                    pressMethod = SLOW5_COMPRESS_ZLIB;
-                }else{
-                    ERROR("Incorrect compression type%s", "");
-                    exit(EXIT_FAILURE);
-                }
+                arg_record_press_out = optarg;
                 break;
             case 'l':
                 if(strcmp(optarg,"true")==0){
@@ -389,12 +390,30 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
-        pressMethod = SLOW5_COMPRESS_NONE;
+        record_press_out = SLOW5_COMPRESS_NONE;
     }
     // compression option is only effective with -b blow5
     if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
-        ERROR("%s","Compression option (-c) is only available for SLOW5 binary format.");
+        ERROR("%s","Compression options (-c/-s) are only available for SLOW5 binary format.");
         return EXIT_FAILURE;
+    }
+
+    if (arg_record_press_out != NULL) {
+        record_press_out = name_to_slow5_press_method(arg_record_press_out);
+        if (record_press_out == (enum slow5_press_method) -1) {
+            ERROR("invalid record compression method -- '%s'", arg_record_press_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+    }
+
+    if (arg_signal_press_out != NULL) {
+        signal_press_out = name_to_slow5_press_method(arg_signal_press_out);
+        if (signal_press_out == (enum slow5_press_method) -1) {
+            ERROR("invalid signal compression method -- '%s'", arg_signal_press_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
     }
 
     if(arg_fname_out && arg_dir_out){
@@ -452,7 +471,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     //measure file listing time
-    init_realtime = slow5_realtime();
+    double init_realtime = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
         list_all_items(argv[i], fast5_files, 0, ".fast5");
     }
@@ -463,7 +482,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
-    f2s_iop(format_out, pressMethod, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
+    slow5_press_method_t press_out = {record_press_out,signal_press_out};
+    f2s_iop(format_out, press_out, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
     VERBOSE("Converting %ld fast5 files took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);

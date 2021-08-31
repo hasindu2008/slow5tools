@@ -1,7 +1,7 @@
 // Miscellaneous definitions and functions
 
-#ifndef MISC_H
-#define MISC_H
+#ifndef _MISC_H_
+#define _MISC_H_
 
 #include <zlib.h>
 #include <stdio.h>
@@ -17,12 +17,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <slow5/slow5.h>
+#include "slow5_extra.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+//Parsing
+enum slow5_press_method name_to_slow5_press_method(const char *name);
 
 // Timing
-
 // From minimap2/misc
 static inline double slow5_realtime(void) {
     struct timeval tp;

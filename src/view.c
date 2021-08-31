@@ -109,22 +109,6 @@ enum view_fmt path_to_view_fmt(const char *fname) {
     return fmt;
 }
 
-enum slow5_press_method name_to_slow5_press_method(const char *name) {
-    enum slow5_press_method comp = (enum slow5_press_method) -1;
-
-    if (strcmp(name, "none") == 0) {
-        comp = SLOW5_COMPRESS_NONE;
-    } else if (strcmp(name, "zlib") == 0) {
-        comp = SLOW5_COMPRESS_ZLIB;
-    } else if (strcmp(name, "svb-zd") == 0) {
-        comp = SLOW5_COMPRESS_SVB_ZD;
-    } else if (strcmp(name, "zstd") == 0) {
-        comp = SLOW5_COMPRESS_ZSTD;
-    }
-
-    return comp;
-}
-
 //static double init_realtime = 0;
 
 int view_main(int argc, char **argv, struct program_meta *meta) {
@@ -404,7 +388,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         // TODO if output is the same format just duplicate file
-        slow5_press_method_t press_out = {record_press_out,signal_press_out} ;
+        slow5_press_method_t press_out = {record_press_out,signal_press_out};
         if (slow5_convert_parallel(s5p, f_out, (enum slow5_fmt) fmt_out, press_out, num_threads, read_id_batch_capacity, meta) != 0) {
             ERROR("Conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
