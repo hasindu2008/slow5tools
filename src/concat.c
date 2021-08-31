@@ -16,7 +16,6 @@
 #include <slow5/slow5_press.h>
 
 #define USAGE_MSG "Usage: %s [SLOW5_FILE/DIR]\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Concatenate slow5s with same run_id, compression type, and file extension\n" \
     USAGE_MSG \

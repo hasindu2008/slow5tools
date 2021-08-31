@@ -20,10 +20,7 @@
 #include "misc.h"
 #include "thread.h"
 
-#define DEFAULT_NUM_THREADS (4)
-#define READ_ID_BATCH_CAPACITY (4096)
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Merge multiple SLOW5/BLOW5 files to a single file\n" \
     USAGE_MSG \

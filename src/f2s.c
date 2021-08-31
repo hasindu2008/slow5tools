@@ -21,7 +21,6 @@
 #include "misc.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Convert FAST5 files to SLOW5/BLOW5 format.\n" \
     USAGE_MSG \
@@ -35,6 +34,7 @@
     "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
     "    -a, --allow                        allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
     "    -h, --help                         display this message and exit\n" \
+    HELP_FORMATS_METHODS
 
 static double init_realtime = 0;
 

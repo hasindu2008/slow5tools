@@ -13,13 +13,9 @@
 #include "misc.h"
 #include <string>
 
-#define DEFAULT_NUM_THREADS (4)
-
 #define READ_ID_INIT_CAPACITY (128)
-#define READ_ID_BATCH_CAPACITY (4096)
 
 #define USAGE_MSG "Usage: %s [OPTION]... SLOW5|BLOW5_FILE [READ_ID]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "Display the read entry for each specified read id from a slow5 file.\n" \

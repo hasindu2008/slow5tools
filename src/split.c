@@ -16,7 +16,6 @@
 #include "read_fast5.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Split a single a SLOW5/BLOW5 file into multiple separate files.\n" \
     USAGE_MSG \
@@ -31,6 +30,7 @@
     "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
     "    -p, --iop [INT]                    number of I/O processes used to split files [default: 8]\n" \
     "    -h, --help                         display this message and exit\n" \
+    HELP_FORMATS_METHODS
 
 static double init_realtime = 0;
 

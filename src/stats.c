@@ -17,7 +17,6 @@
 
 
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "\n" \
@@ -122,16 +121,32 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         file_format = "BLOW5";
     }
 
+    fprintf(stdout, "file version\t%d.%d.%d\n",slow5File->header->version.major, slow5File->header->version.minor, slow5File->header->version.patch);
+
+
     /* TODO print separate information for record and signal compression */
     std::string compression_method = "compression error";
     if(slow5File->compress->record_press->method==SLOW5_COMPRESS_NONE){
         compression_method = "none";
     }else if(slow5File->compress->record_press->method==SLOW5_COMPRESS_ZLIB){
         compression_method = "zlib";
+    }else if(slow5File->compress->record_press->method==SLOW5_COMPRESS_ZSTD){
+        compression_method = "zstd";
     }
 
     fprintf(stdout, "file format\t%s\n", file_format.c_str());
-    fprintf(stdout, "compression method\t%s\n", compression_method.c_str());
+    fprintf(stdout, "record compression method\t%s\n", compression_method.c_str());
+
+
+    //todo: version check for signal_compression
+    std::string signal_compression_method = "compression error";
+    if(slow5File->compress->signal_press->method==SLOW5_COMPRESS_NONE){
+        signal_compression_method = "none";
+    }else if(slow5File->compress->signal_press->method==SLOW5_COMPRESS_SVB_ZD){
+        signal_compression_method = "svb-zd";
+    }
+    fprintf(stdout, "sigal compression method\t%s\n", signal_compression_method.c_str());
+
     fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
 
     VERBOSE("counting number of slow5 records...%s","");

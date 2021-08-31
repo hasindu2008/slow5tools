@@ -15,29 +15,21 @@
 #include <string>
 #include <vector>
 
-#define DEFAULT_NUM_THREADS (4)
-#define READ_ID_BATCH_CAPACITY (4096)
 #define USAGE_MSG "Usage: %s [OPTION]... [FILE]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "View a fast5 or slow5 FILE in another format.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --from=[FORMAT]            specify input file format\n" \
-    "    --to=[FORMAT]              specify output file format\n" \
-    "    -c, --compress=[METHOD]    specify output compression method -- zlib (only available for format blow5)\n" \
-    "    -s, --sig-compress=[METHOD]    specify output compression method -- none (only available for format blow5)\n" \
-    "    -o, --output=[FILE]        output to FILE -- stdout\n" \
-    "    -h, --help                 display this message and exit\n"                                               \
-    "    -t, --threads [INT]        number of threads [default: 4]\n"                                              \
-    "    -K --batchsize             the number of records on the memory at once. [default: 4096]\n" \
-    "FORMATS:\n" \
-    "    slow5\n" \
-    "    blow5\n" \
-    "METHODS:\n" \
-    "    none\n" \
-    "    zlib -- default\n"
+    "    --from=[FORMAT]                    specify input file format\n" \
+    "    --to=[FORMAT]                      specify output file format\n" \
+    "    -c, --compress=[REC_METHOD]        specify record compression method -- zlib (only available for format blow5)\n" \
+    "    -s, --sig-compress=[SIG_METHOD]    specify signal compression method -- none (only available for format blow5)\n" \
+    "    -o, --output=[FILE]                output to FILE [default: stdout]\n" \
+    "    -h, --help                         display this message and exit\n"                                               \
+    "    -t, --threads [INT]                number of threads [default: 4]\n"                                              \
+    "    -K, --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
+    HELP_FORMATS_METHODS
 
 enum view_fmt {
     // The first formats must match the order of enum slow5_fmt

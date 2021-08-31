@@ -19,7 +19,6 @@
 
 
 #define USAGE_MSG "Usage: %s [OPTION]... -d [output DIR] [SLOW5_FILE/DIR]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Convert SLOW5/BLOW5 files to FAST5 format.\n" \
     USAGE_MSG \
