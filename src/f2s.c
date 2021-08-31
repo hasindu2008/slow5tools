@@ -315,8 +315,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
     enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_fmt extension = SLOW5_FORMAT_BINARY;
+    enum slow5_fmt extension_format = SLOW5_FORMAT_BINARY;
     int compression_set = 0;
+    int format_out_set = 0;
 
     // Input arguments
     char *arg_dir_out = NULL;
@@ -335,6 +336,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
         switch (opt) {
             case 'b':
+                format_out_set = 1;
                 arg_fmt_out = optarg;
                 break;
             case 's':
@@ -385,13 +387,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
-    if (arg_fmt_out != NULL) {
+    if (arg_fmt_out) {
         if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("parsing output format%s","");
         }
-
         format_out = parse_name_to_fmt(arg_fmt_out);
-
         // An error occured
         if (format_out == SLOW5_FORMAT_UNKNOWN) {
             ERROR("invalid output format -- '%s'", arg_fmt_out);
@@ -399,7 +399,18 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             return EXIT_FAILURE;
         }
     }
-
+    if(arg_fname_out){
+        extension_format = parse_path_to_fmt(arg_fname_out);
+        if(format_out_set==0){
+            format_out = extension_format;
+        }
+    }
+    if(arg_fname_out && format_out!=extension_format){
+        ERROR("Output file extension does not match with the output format%s",".");
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
         record_press_out = SLOW5_COMPRESS_NONE;
     }
@@ -408,7 +419,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         ERROR("%s","Compression options (-c/-s) are only available for SLOW5 binary format.");
         return EXIT_FAILURE;
     }
-
     if (arg_record_press_out != NULL) {
         record_press_out = name_to_slow5_press_method(arg_record_press_out);
         if (record_press_out == (enum slow5_press_method) -1) {
@@ -433,15 +443,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
 
-    if(arg_fname_out){
-        extension = parse_path_to_fmt(arg_fname_out);
-    }
-    if(arg_fname_out && format_out!=extension){
-        ERROR("Output file extension does not match with the output format%s",".");
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }
 
     // Check for remaining files to parse
     if (optind >= argc) {
@@ -450,8 +451,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-
-
 
     if(lossy){
         WARNING("%s","Flag 'lossy' is set. Hence, auxiliary fields are not stored");
