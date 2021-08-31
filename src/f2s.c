@@ -315,6 +315,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
     enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
+    enum slow5_fmt extension = SLOW5_FORMAT_BINARY;
     int compression_set = 0;
 
     // Input arguments
@@ -322,6 +323,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     char *arg_fname_out = NULL;
     char *arg_record_press_out = NULL;
     char *arg_signal_press_out = NULL;
+    char *arg_fmt_out = NULL;
 
     int opt;
     int longindex = 0;
@@ -333,14 +335,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
         switch (opt) {
             case 'b':
-                if(strcmp(optarg,"slow5")==0){
-                    format_out = SLOW5_FORMAT_ASCII;
-                }else if(strcmp(optarg,"blow5")==0){
-                    format_out = SLOW5_FORMAT_BINARY;
-                }else{
-                    ERROR("Incorrect output format%s", "");
-                    exit(EXIT_FAILURE);
-                }
+                arg_fmt_out = optarg;
                 break;
             case 's':
                 compression_set = 1;
@@ -389,6 +384,22 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 return EXIT_FAILURE;
         }
     }
+
+    if (arg_fmt_out != NULL) {
+        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("parsing output format%s","");
+        }
+
+        format_out = parse_name_to_fmt(arg_fmt_out);
+
+        // An error occured
+        if (format_out == SLOW5_FORMAT_UNKNOWN) {
+            ERROR("invalid output format -- '%s'", arg_fmt_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+    }
+
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
         record_press_out = SLOW5_COMPRESS_NONE;
     }
@@ -425,19 +436,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    std::string output_file;
-    std::string extension;
     if(arg_fname_out){
-        output_file = std::string(arg_fname_out);
-        extension = output_file.substr(output_file.length()-6, output_file.length());
+        extension = parse_path_to_fmt(arg_fname_out);
     }
-    if(arg_fname_out && format_out==SLOW5_FORMAT_ASCII && extension!=".slow5"){
-        ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }else if(arg_fname_out && format_out==SLOW5_FORMAT_BINARY && extension!=".blow5"){
-        ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
+    if(arg_fname_out && format_out!=extension){
+        ERROR("Output file extension does not match with the output format%s",".");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;

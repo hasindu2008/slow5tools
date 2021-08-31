@@ -31,26 +31,6 @@
     "    -K, --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
     HELP_FORMATS_METHODS
 
-enum view_fmt {
-    // The first formats must match the order of enum slow5_fmt
-    VIEW_FORMAT_UNKNOWN,
-    VIEW_FORMAT_SLOW5_ASCII,
-    VIEW_FORMAT_SLOW5_BINARY,
-
-    VIEW_FORMAT_FAST5
-};
-
-struct view_fmt_meta {
-    enum view_fmt format;
-    const char *name;
-    const char *ext;
-};
-
-static const struct view_fmt_meta VIEW_FORMAT_META[] = {
-    { VIEW_FORMAT_SLOW5_ASCII,  SLOW5_ASCII_NAME,     SLOW5_ASCII_EXTENSION     },
-    { VIEW_FORMAT_SLOW5_BINARY, SLOW5_BINARY_NAME,    SLOW5_BINARY_EXTENSION    },
-};
-
 int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta);
 
 void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
@@ -73,41 +53,7 @@ void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
     slow5_rec_free(read);
 }
 
-enum view_fmt name_to_view_fmt(const char *fmt_str) {
-    enum view_fmt fmt = VIEW_FORMAT_UNKNOWN;
 
-    for (size_t i = 0; i < sizeof VIEW_FORMAT_META / sizeof VIEW_FORMAT_META[0]; ++ i) {
-        const struct view_fmt_meta meta = VIEW_FORMAT_META[i];
-        if (strcmp(meta.name, fmt_str) == 0) {
-            fmt = meta.format;
-            break;
-        }
-    }
-
-    return fmt;
-}
-
-enum view_fmt path_to_view_fmt(const char *fname) {
-    enum view_fmt fmt = VIEW_FORMAT_UNKNOWN;
-
-    for (int i = strlen(fname) - 1; i >= 0; -- i) {
-        if (fname[i] == '.') {
-            const char *ext = fname + i;
-
-            for (size_t j = 0; j < sizeof VIEW_FORMAT_META / sizeof VIEW_FORMAT_META[0]; ++ j) {
-                const struct view_fmt_meta meta = VIEW_FORMAT_META[j];
-                if (strcmp(ext, meta.ext) == 0) { // TODO comparing the '.' is superfluous
-                    fmt = meta.format;
-                    break;
-                }
-            }
-            break;
-        }
-    }
-
-
-    return fmt;
-}
 
 //static double init_realtime = 0;
 
@@ -156,8 +102,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     FILE *f_out = stdout;
-    enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
-    enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
+    enum slow5_fmt fmt_in = SLOW5_FORMAT_UNKNOWN;
+    enum slow5_fmt fmt_out = SLOW5_FORMAT_UNKNOWN;
     enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
     enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
 
@@ -245,10 +191,10 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             DEBUG("parsing input format%s","");
         }
 
-        fmt_in = name_to_view_fmt(arg_fmt_in);
+        fmt_in = parse_name_to_fmt(arg_fmt_in);
 
         // An error occured
-        if (fmt_in == VIEW_FORMAT_UNKNOWN) {
+        if (fmt_in == SLOW5_FORMAT_UNKNOWN) {
             ERROR("invalid input format -- '%s'", arg_fmt_in);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
@@ -259,10 +205,10 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             DEBUG("parsing output format%s","");
         }
 
-        fmt_out = name_to_view_fmt(arg_fmt_out);
+        fmt_out = parse_name_to_fmt(arg_fmt_out);
 
         // An error occured
-        if (fmt_out == VIEW_FORMAT_UNKNOWN) {
+        if (fmt_out == SLOW5_FORMAT_UNKNOWN) {
             ERROR("invalid output format -- '%s'", arg_fmt_out);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
@@ -285,23 +231,23 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     // Autodetect input/output formats
-    if (fmt_in == VIEW_FORMAT_UNKNOWN) {
+    if (fmt_in == SLOW5_FORMAT_UNKNOWN) {
         if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("auto detecting input file format%s","");
         }
 
-        fmt_in = path_to_view_fmt(arg_fname_in);
+        fmt_in = parse_path_to_fmt(arg_fname_in);
 
         // Error
-        if (fmt_in == VIEW_FORMAT_UNKNOWN) {
+        if (fmt_in == SLOW5_FORMAT_UNKNOWN) {
             ERROR("cannot detect file format -- '%s'", arg_fname_in);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         }
     }
-    if (fmt_out == VIEW_FORMAT_UNKNOWN) {
+    if (fmt_out == SLOW5_FORMAT_UNKNOWN) {
         if (arg_fname_out == NULL) {
-            fmt_out = VIEW_FORMAT_SLOW5_ASCII;
+            fmt_out = SLOW5_FORMAT_ASCII;
         }
 
         else{
@@ -309,10 +255,10 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
                 DEBUG("auto detecting output file format%s","");
             }
 
-            fmt_out = path_to_view_fmt(arg_fname_out);
+            fmt_out = parse_path_to_fmt(arg_fname_out);
 
             // Error
-            if (fmt_out == VIEW_FORMAT_UNKNOWN) {
+            if (fmt_out == SLOW5_FORMAT_UNKNOWN) {
                 ERROR("cannot detect file format -- '%s'", arg_fname_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
@@ -322,7 +268,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
 
     if (arg_record_press_out != NULL) {
-        if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
+        if (fmt_out != SLOW5_FORMAT_BINARY) {
             ERROR("compression only available for output format '%s'", SLOW5_BINARY_NAME);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
@@ -338,7 +284,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     if (arg_signal_press_out != NULL) {
-        if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
+        if (fmt_out != SLOW5_FORMAT_BINARY) {
             ERROR("compression only available for output format '%s'", SLOW5_BINARY_NAME);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
@@ -376,8 +322,8 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     // Do the conversion
-    if ((fmt_in == VIEW_FORMAT_SLOW5_ASCII || fmt_in == VIEW_FORMAT_SLOW5_BINARY) &&
-            (fmt_out == VIEW_FORMAT_SLOW5_ASCII || fmt_out == VIEW_FORMAT_SLOW5_BINARY)) {
+    if ((fmt_in == SLOW5_FORMAT_ASCII || fmt_in == SLOW5_FORMAT_BINARY) &&
+            (fmt_out == SLOW5_FORMAT_ASCII || fmt_out == SLOW5_FORMAT_BINARY)) {
 
         struct slow5_file *s5p = slow5_open_with(arg_fname_in, "r", (enum slow5_fmt) fmt_in);
 

@@ -81,7 +81,7 @@ $SLOW5TOOLS cat "$RAW_DIR/mixed_compression/" > "$OUTPUT_DIR/output.slow5" && di
 #$SLOW5TOOLS cat "$RAW_DIR/multi_read_group/" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools cat failed"
 #diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
-info "all $TESTCASE testcases passed"
+info "all $TESTCASE cat testcases passed"
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 exit 0
 # If you want to log to the same file: command1 >> log_file 2>&1
