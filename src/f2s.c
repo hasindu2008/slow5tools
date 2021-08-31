@@ -431,10 +431,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         ERROR("output file name and output directory both cannot be set%s","");
         return EXIT_FAILURE;
     }
-    if(iop>1 && !arg_dir_out){
-        ERROR("output directory should be specified when using multiprocessing iop=%d",iop);
-        return EXIT_FAILURE;
-    }
+
 
     if(arg_fname_out){
         extension = parse_path_to_fmt(arg_fname_out);
@@ -454,9 +451,30 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    reads_count readsCount;
-    std::vector<std::string> fast5_files;
 
+
+    if(lossy){
+        WARNING("%s","Flag 'lossy' is set. Hence, auxiliary fields are not stored");
+    }
+
+    //measure file listing time
+    double init_realtime = slow5_realtime();
+    std::vector<std::string> fast5_files;
+    for (int i = optind; i < argc; ++ i) {
+        list_all_items(argv[i], fast5_files, 0, ".fast5");
+    }
+    VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
+    if(fast5_files.size()==0){
+        ERROR("No fast5 files found. Exiting...%s","");
+        return EXIT_FAILURE;
+    }
+    if(fast5_files.size()==1){
+        iop = 1;
+    }
+    if(iop>1 && !arg_dir_out){
+        ERROR("output directory should be specified when using multiprocessing iop=%d",iop);
+        return EXIT_FAILURE;
+    }
     if(arg_dir_out){
         struct stat st = {0};
         if (stat(arg_dir_out, &st) == -1) {
@@ -469,23 +487,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             }
         }
     }
-    if(lossy){
-        WARNING("%s","Flag 'lossy' is set. Hence, auxiliary fields are not stored");
-    }
 
-    //measure file listing time
-    double init_realtime = slow5_realtime();
-    for (int i = optind; i < argc; ++ i) {
-        list_all_items(argv[i], fast5_files, 0, ".fast5");
-    }
-    VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
-    if(fast5_files.size()==0){
-        ERROR("No fast5 files found. Exiting...%s","");
-        return EXIT_FAILURE;
-    }
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
     slow5_press_method_t press_out = {record_press_out,signal_press_out};
+    reads_count readsCount;
     f2s_iop(format_out, press_out, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
     VERBOSE("Converting %ld fast5 files took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
 
