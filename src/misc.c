@@ -1,6 +1,6 @@
 /**
- * @file get.c
- * @brief get read(record) given the read_id from a SLOW5 file
+ * @file misc.c
+ * @brief miscellaneous common functions
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au) Sasha Jenner (jenner.sasha@gmail.com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
  * @date 31/08/2021
  */

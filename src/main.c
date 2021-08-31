@@ -33,7 +33,7 @@
     "    get                   display the read entry for each specified read id.\n" \
     "    view                  view the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats and compressions.\n" \
     "    stats                 prints statistics of a SLOW5/BLOW5 file to the stdout\n" \
-    "    concat                quickly concatenate SLOW5/BLOW5 files of same type\n" \
+    "    cat                quickly concatenate SLOW5/BLOW5 files of same type\n" \
     "    quickcheck            quickly checks if a SLOW5/BLOW5 file is intact\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
@@ -53,7 +53,7 @@ int (index_main)(int, char **, struct program_meta *);
 int (get_main)(int, char **, struct program_meta *);
 int (view_main)(int, char **, struct program_meta *);
 int (stats_main)(int, char **, struct program_meta *);
-int (concat_main)(int, char **, struct program_meta *);
+int (cat_main)(int argc, char **argv, struct program_meta *meta);
 int (quickcheck_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
@@ -101,18 +101,18 @@ int main(const int argc, char **argv){
 
     } else {
         const struct command cmds[] = {
-            {"f2s", f2s_main},
+            {"f2s",          f2s_main},
             {"fast5toslow5", f2s_main},
-            {"s2f", s2f_main},
+            {"s2f",          s2f_main},
             {"slow5tofast5", s2f_main},
-            {"merge", merge_main},
-            {"split", split_main},
-            {"index", index_main},
-            {"get", get_main},
-            {"view", view_main},
-            {"stats", stats_main},
-            {"concat", concat_main},
-            {"quickcheck", quickcheck_main}
+            {"merge",        merge_main},
+            {"split",        split_main},
+            {"index",        index_main},
+            {"get",          get_main},
+            {"view",         view_main},
+            {"stats",        stats_main},
+            {"cat",       cat_main},
+            {"quickcheck",   quickcheck_main}
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 

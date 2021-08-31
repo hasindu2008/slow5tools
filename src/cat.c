@@ -24,7 +24,7 @@
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -h, --help                         display this message and exit\n" \
 
-int concat_main(int argc, char **argv, struct program_meta *meta){
+int cat_main(int argc, char **argv, struct program_meta *meta){
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
         if (meta->verbosity_level >= LOG_DEBUG) {
@@ -117,7 +117,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
     VERBOSE("%ld files found - took %.3fs\n", slow5_files.size(), slow5_realtime() - realtime0);
 
     if(slow5_files.size()==0){
-        ERROR("No %s files found to concat. Exiting...",format.c_str());
+        ERROR("No %s files found to cat. Exiting...",format.c_str());
         return EXIT_FAILURE;
     }
 
@@ -211,31 +211,31 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
             first_iteration = 0;
         }else {
             if (lossy == 0 && slow5File_i->header->aux_meta == NULL) {
-                ERROR("%s has no auxiliary fields. Use merge (instead of concat) to merge files.",
+                ERROR("%s has no auxiliary fields. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
                 slow5_close(slow5File_i);
                 return EXIT_FAILURE;
             }
             if (lossy == 1 && slow5File_i->header->aux_meta != NULL) {
-                ERROR("%s has auxiliary fields. Use merge (instead of concat) to merge files.",
+                ERROR("%s has auxiliary fields. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
                 slow5_close(slow5File_i);
                 continue;
             }
             if (slow5File_i->format != format_out) {
-                ERROR("%s has a different file format. Use merge (instead of concat) to merge files.",
+                ERROR("%s has a different file format. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
                 slow5_close(slow5File_i);
                 return EXIT_FAILURE;
             }
             if (slow5File_i->compress->record_press->method != pressMethod.record_method) { //todo check for signal compression as well
-                ERROR("%s has a different compression type. Use merge (instead of concat) to merge files.",
+                ERROR("%s has a different compression type. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
                 slow5_close(slow5File_i);
                 return EXIT_FAILURE;
             }
             if (slow5File_i->header->num_read_groups != num_read_groups) {
-                ERROR("%s has a different number of read groups than the first file. Use merge (instead of concat) to merge files.",
+                ERROR("%s has a different number of read groups than the first file. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
                 slow5_close(slow5File_i);
                 return EXIT_FAILURE;
@@ -248,7 +248,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
                     return EXIT_FAILURE;
                 }
                 if (strcmp(temp, run_ids[j].c_str())) {
-                    ERROR("%s has a different run_id. Use merge (instead of concat) to merge files.",
+                    ERROR("%s has a different run_id. Use merge (instead of cat) to merge files.",
                           slow5_files[i].c_str());
                     slow5_close(slow5File_i);
                     return EXIT_FAILURE;
