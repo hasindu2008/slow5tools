@@ -462,8 +462,10 @@ int read_fast5(fast5_file_t *fast5_file,
     tracker.meta = meta;
     tracker.fast5_file = fast5_file;
     tracker.format_out = format_out;
-    tracker.pressMethod = pressMethod;
-    tracker.press_ptr = slow5_press_init(pressMethod);
+    slow5_press_method_t method = {pressMethod, SLOW5_COMPRESS_NONE};
+    tracker.pressMethod = method;
+    tracker.press_ptr = slow5_press_init(method); /* TODO add signal compression */
+
     tracker.fast5_path = fast5_file->fast5_path;
     tracker.slow5File = slow5File;
 

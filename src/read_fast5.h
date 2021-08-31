@@ -50,7 +50,7 @@ struct operator_obj {
     struct program_meta *meta;
     FILE *f_out;
     enum slow5_fmt format_out;
-    enum slow5_press_method pressMethod;
+    slow5_press_method_t pressMethod;
     slow5_press_t* press_ptr;
     const char *fast5_path;
     fast5_file_t* fast5_file;

@@ -13,13 +13,9 @@
 #include "misc.h"
 #include <string>
 
-#define DEFAULT_NUM_THREADS (4)
-
 #define READ_ID_INIT_CAPACITY (128)
-#define READ_ID_BATCH_CAPACITY (4096)
 
 #define USAGE_MSG "Usage: %s [OPTION]... SLOW5|BLOW5_FILE [READ_ID]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "Display the read entry for each specified read id from a slow5 file.\n" \
@@ -50,7 +46,7 @@ void work_per_single_read_get(core_t *core, db_t *db, int32_t i) {
     }else {
         if (core->benchmark == false){
             size_t record_size;
-            struct slow5_press* compress = slow5_press_init(core->press_method);
+            struct slow5_press* compress = slow5_press_init(core->press_method); /* TODO add signal compression */
             db->read_record[i].buffer = slow5_rec_to_mem(record,core->fp->header->aux_meta, core->format_out, compress, &record_size);
             db->read_record[i].len = record_size;
             slow5_press_free(compress);
@@ -77,7 +73,8 @@ bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_me
 
     } else {
         if (benchmark == false){
-            struct slow5_press* compress = slow5_press_init(press_method);
+            slow5_press_method_t method = {press_method, SLOW5_COMPRESS_NONE};
+            struct slow5_press* compress = slow5_press_init(method); /* TODO add signal compression */
             slow5_rec_fwrite(slow5_file_pointer,record,fp->header->aux_meta, format_out, compress);
             slow5_press_free(compress);
         }
@@ -294,7 +291,8 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         ERROR("cannot open %s. \n", f_in_name);
         exit(EXIT_FAILURE);
     }
-    if(slow5_hdr_fwrite(slow5_file_pointer, slow5file->header, format_out, pressMethod) == -1){
+    slow5_press_method_t method = {pressMethod, SLOW5_COMPRESS_NONE};
+    if(slow5_hdr_fwrite(slow5_file_pointer, slow5file->header, format_out, method) == -1){ /* TODO add signal compression */
         ERROR("Could not read the read ids from %s\n", arg_fname_in);
         exit(EXIT_FAILURE);
     }
@@ -319,7 +317,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         core.num_thread = num_threads;
         core.fp = slow5file;
         core.format_out = format_out;
-        core.press_method = pressMethod;
+        core.press_method = method;
         core.benchmark = benchmark;
 
         db_t db = { 0 };

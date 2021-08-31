@@ -16,7 +16,6 @@
 #include "read_fast5.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Split a single a SLOW5/BLOW5 file into multiple separate files.\n" \
     USAGE_MSG \
@@ -31,6 +30,7 @@
     "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
     "    -p, --iop [INT]                    number of I/O processes used to split files [default: 8]\n" \
     "    -h, --help                         display this message and exit\n" \
+    HELP_FORMATS_METHODS
 
 static double init_realtime = 0;
 
@@ -123,7 +123,9 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     exit(EXIT_FAILURE);
                 }
 
-                if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
+                /* TODO add signal compression */
+                slow5_press_method_t method = {pressMethod, SLOW5_COMPRESS_NONE};
+                if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, method) == -1){ //now write the header to the slow5File
                     ERROR("Could not write the header to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
                 }
@@ -131,7 +133,8 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 size_t record_count = 0;
                 struct slow5_rec *read = NULL;
                 int ret;
-                struct slow5_press *press_ptr = slow5_press_init(pressMethod);
+                struct slow5_press *press_ptr = slow5_press_init(method); /* TODO add signal compression */
+
                 while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
@@ -230,14 +233,17 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
                 }
-                if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
+                /* TODO add signal compression */
+                slow5_press_method_t method = {pressMethod, SLOW5_COMPRESS_NONE};
+                if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, method) == -1){ //now write the header to the slow5File
                     ERROR("Could not write the header to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
                 }
 
                 struct slow5_rec *read = NULL;
                 int ret;
-                struct slow5_press *press_ptr = slow5_press_init(pressMethod);
+                struct slow5_press *press_ptr = slow5_press_init(method); /* TODO add signal compression */
+
                 while ((number_of_records_per_file > 0) && (ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
@@ -301,14 +307,17 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     exit(EXIT_FAILURE);
                 }
 
-                if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
+                /* TODO add signal compression */
+                slow5_press_method_t method = {pressMethod, SLOW5_COMPRESS_NONE};
+                if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, method) == -1){ //now write the header to the slow5File
                     ERROR("Could not write the header to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
                 }
 
                 struct slow5_rec *read = NULL;
                 int ret;
-                struct slow5_press *press_ptr = slow5_press_init(pressMethod);
+                struct slow5_press *press_ptr = slow5_press_init(method); /* TODO add signal compression */
+
                 while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if(read->read_group == j){
                         read->read_group = 0; //since single read_group files are now created

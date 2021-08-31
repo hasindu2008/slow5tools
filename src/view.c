@@ -15,28 +15,21 @@
 #include <string>
 #include <vector>
 
-#define DEFAULT_NUM_THREADS (4)
-#define READ_ID_BATCH_CAPACITY (4096)
 #define USAGE_MSG "Usage: %s [OPTION]... [FILE]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "View a fast5 or slow5 FILE in another format.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --from=[FORMAT]            specify input file format\n" \
-    "    --to=[FORMAT]              specify output file format\n" \
-    "    -c, --compress=[METHOD]    specify output compression method -- zlib (only available for format blow5)\n" \
-    "    -o, --output=[FILE]        output to FILE -- stdout\n" \
-    "    -h, --help                 display this message and exit\n"                                               \
-    "    -t, --threads [INT]        number of threads [default: 4]\n"                                              \
-    "    -K --batchsize             the number of records on the memory at once. [default: 4096]\n" \
-    "FORMATS:\n" \
-    "    slow5\n" \
-    "    blow5\n" \
-    "METHODS:\n" \
-    "    none\n" \
-    "    zlib -- default\n"
+    "    --from=[FORMAT]                    specify input file format\n" \
+    "    --to=[FORMAT]                      specify output file format\n" \
+    "    -c, --compress=[REC_METHOD]        specify record compression method -- zlib (only available for format blow5)\n" \
+    "    -s, --sig-compress=[SIG_METHOD]    specify signal compression method -- none (only available for format blow5)\n" \
+    "    -o, --output=[FILE]                output to FILE [default: stdout]\n" \
+    "    -h, --help                         display this message and exit\n"                                               \
+    "    -t, --threads [INT]                number of threads [default: 4]\n"                                              \
+    "    -K, --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
+    HELP_FORMATS_METHODS
 
 enum view_fmt {
     // The first formats must match the order of enum slow5_fmt
@@ -116,13 +109,17 @@ enum view_fmt path_to_view_fmt(const char *fname) {
     return fmt;
 }
 
-slow5_press_method_t name_to_slow5_press_method(const char *name) {
-    slow5_press_method_t comp = (slow5_press_method_t) -1;
+enum slow5_press_method name_to_slow5_press_method(const char *name) {
+    enum slow5_press_method comp = (enum slow5_press_method) -1;
 
     if (strcmp(name, "none") == 0) {
         comp = SLOW5_COMPRESS_NONE;
     } else if (strcmp(name, "zlib") == 0) {
         comp = SLOW5_COMPRESS_ZLIB;
+    } else if (strcmp(name, "svb-zd") == 0) {
+        comp = SLOW5_COMPRESS_SVB_ZD;
+    } else if (strcmp(name, "zstd") == 0) {
+        comp = SLOW5_COMPRESS_ZSTD;
     }
 
     return comp;
@@ -163,6 +160,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     static struct option long_opts[] = {
         {"compress",    required_argument,  NULL, 'c'},
+        {"sig-compress",    required_argument,  NULL, 's'},
         {"from",        required_argument,  NULL, 'f'},
         {"help",        no_argument,        NULL, 'h'},
         {"output",      required_argument,  NULL, 'o'},
@@ -176,14 +174,16 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     FILE *f_out = stdout;
     enum view_fmt fmt_in = VIEW_FORMAT_UNKNOWN;
     enum view_fmt fmt_out = VIEW_FORMAT_UNKNOWN;
-    slow5_press_method_t press_out = SLOW5_COMPRESS_ZLIB;
+    enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
+    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
 
     // Input arguments
     char *arg_fname_in = NULL;
     char *arg_fname_out = NULL;
     char *arg_fmt_in = NULL;
     char *arg_fmt_out = NULL;
-    char *arg_press_out = NULL;
+    char *arg_record_press_out = NULL;
+    char *arg_signal_press_out = NULL;
     char *arg_num_threads = NULL;
     size_t num_threads = DEFAULT_NUM_THREADS;
     int64_t read_id_batch_capacity = READ_ID_BATCH_CAPACITY;
@@ -192,14 +192,17 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "c:f:ho:b:t:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "s:c:f:ho:b:t:K:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
         switch (opt) {
+            case 's':
+                arg_signal_press_out = optarg;
+                break;
             case 'c':
-                arg_press_out = optarg;
+                arg_record_press_out = optarg;
                 break;
             case 'f':
                 arg_fmt_in = optarg;
@@ -334,16 +337,32 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
 
-    if (arg_press_out != NULL) {
+    if (arg_record_press_out != NULL) {
         if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
             ERROR("compression only available for output format '%s'", SLOW5_BINARY_NAME);
             EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
         } else {
-            press_out = name_to_slow5_press_method(arg_press_out);
+            record_press_out = name_to_slow5_press_method(arg_record_press_out);
 
-            if (press_out == (slow5_press_method_t) -1) {
-                ERROR("invalid compression method -- '%s'", arg_press_out);
+            if (record_press_out == (enum slow5_press_method) -1) {
+                ERROR("invalid compression method -- '%s'", arg_record_press_out);
+                EXIT_MSG(EXIT_FAILURE, argv, meta);
+                return EXIT_FAILURE;
+            }
+        }
+    }
+
+    if (arg_signal_press_out != NULL) {
+        if (fmt_out != VIEW_FORMAT_SLOW5_BINARY) {
+            ERROR("compression only available for output format '%s'", SLOW5_BINARY_NAME);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        } else {
+            signal_press_out = name_to_slow5_press_method(arg_signal_press_out);
+
+            if (signal_press_out == (enum slow5_press_method) -1) {
+                ERROR("invalid compression method -- '%s'", arg_signal_press_out);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
             }
@@ -385,6 +404,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         // TODO if output is the same format just duplicate file
+        slow5_press_method_t press_out = {record_press_out,signal_press_out} ;
         if (slow5_convert_parallel(s5p, f_out, (enum slow5_fmt) fmt_out, press_out, num_threads, read_id_batch_capacity, meta) != 0) {
             ERROR("Conversion failed.%s", "");
             view_ret = EXIT_FAILURE;

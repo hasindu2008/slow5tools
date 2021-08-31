@@ -20,10 +20,7 @@
 #include "misc.h"
 #include "thread.h"
 
-#define DEFAULT_NUM_THREADS (4)
-#define READ_ID_BATCH_CAPACITY (4096)
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Merge multiple SLOW5/BLOW5 files to a single file\n" \
     USAGE_MSG \
@@ -99,6 +96,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {"threads", required_argument, NULL, 't' }, //1
             {"to", required_argument, NULL, 'b'},    //2
             {"compress", required_argument, NULL, 'c'},  //3
+            /* TODO add signal compression */
             { "lossless", required_argument, NULL, 'l'}, //4
             {"output", required_argument, NULL, 'o'}, //5
             {"batchsize", required_argument, NULL, 'K'}, //6
@@ -108,7 +106,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
+    enum slow5_press_method pressMethodRecord = SLOW5_COMPRESS_ZLIB;
+    enum slow5_press_method pressMethodSignal = SLOW5_COMPRESS_NONE;
     int compression_set = 0;
 
     // Input arguments
@@ -161,9 +160,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 'c':
                 compression_set = 1;
                 if(strcmp(optarg,"none")==0){
-                    pressMethod = SLOW5_COMPRESS_NONE;
+                    pressMethodRecord = SLOW5_COMPRESS_NONE;
                 }else if(strcmp(optarg,"zlib")==0){
-                    pressMethod = SLOW5_COMPRESS_ZLIB;
+                    pressMethodRecord = SLOW5_COMPRESS_ZLIB;
                 }else{
                     ERROR("Incorrect compression type%s", "");
                     return EXIT_FAILURE;
@@ -189,7 +188,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
     }
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
-        pressMethod = SLOW5_COMPRESS_NONE;
+        pressMethodRecord = SLOW5_COMPRESS_NONE;
+        pressMethodSignal = SLOW5_COMPRESS_NONE;
     }
     // compression option is only effective with -b blow5
     if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
@@ -355,8 +355,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
 
-    //now write the header to the slow5File.
-    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){
+    //now write the header to the slow5File. Use Binary non compress method for fast writing
+    slow5_press_method_t method = {pressMethodRecord, pressMethodSignal};
+    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, method) == -1){
         ERROR("Could not write the header to %s\n", arg_fname_out);
         return EXIT_FAILURE;
     }
@@ -407,7 +408,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         core.num_thread = num_threads;
         core.fp = from;
         core.format_out = format_out;
-        core.press_method = pressMethod;
+        slow5_press_method_t method = {pressMethodRecord,pressMethodSignal};
+        core.press_method = method;
         core.lossy = lossy;
         core.slow5_file_index = slow5_file_index;
 

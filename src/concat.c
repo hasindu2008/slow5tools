@@ -16,7 +16,6 @@
 #include <slow5/slow5_press.h>
 
 #define USAGE_MSG "Usage: %s [SLOW5_FILE/DIR]\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
 #define HELP_LARGE_MSG \
     "Concatenate slow5s with same run_id, compression type, and file extension\n" \
     USAGE_MSG \
@@ -65,7 +64,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
     int output_file_set = 0;
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    slow5_press_method_t pressMethod = SLOW5_COMPRESS_ZLIB;
+    slow5_press_method_t pressMethod = {SLOW5_COMPRESS_ZLIB,SLOW5_COMPRESS_NONE};
 
     int longindex = 0;
     int opt;
@@ -154,7 +153,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
                 lossy = 1;
             }
             format_out = slow5File_i->format;
-            pressMethod = slow5File_i->compress->method;
+            pressMethod = {slow5File_i->compress->record_press->method,slow5File_i->compress->signal_press->method};
             num_read_groups = slow5File_i->header->num_read_groups;
 
             if(output_file_set && format_out==SLOW5_FORMAT_ASCII && extension!=".slow5"){
@@ -229,7 +228,7 @@ int concat_main(int argc, char **argv, struct program_meta *meta){
                 slow5_close(slow5File_i);
                 return EXIT_FAILURE;
             }
-            if (slow5File_i->compress->method != pressMethod) {
+            if (slow5File_i->compress->record_press->method != pressMethod.record_method) { //todo check for signal compression as well
                 ERROR("%s has a different compression type. Use merge (instead of concat) to merge files.",
                       slow5_files[i].c_str());
                 slow5_close(slow5File_i);
