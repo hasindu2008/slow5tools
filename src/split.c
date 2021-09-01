@@ -27,7 +27,7 @@
     "    -f, --files [INT]                  split reads into n files evenly\n"              \
     "    -r, --reads [INT]                  split into n reads, i.e., each file will have n reads\n"              \
     "    -g, --groups                       split multi read group file into single read group files\n" \
-    "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
+    "    -l, --lossless [STR]               retain information in auxiliary fields during the conversion.[default: true].\n" \
     "    -p, --iop [INT]                    number of I/O processes used to split files [default: 8]\n" \
     "    -h, --help                         display this message and exit\n" \
     HELP_FORMATS_METHODS
