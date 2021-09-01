@@ -17,13 +17,16 @@
 #include "read_fast5.h"
 #include "misc.h"
 
+#define ESSENTIAL_AUX_ATTR_COUNT (5)
+#define ESSENTIAL_AUX_ATTRS ((char const*[]){ "start_time", "read_number", "start_mux" , "median_before", "channel_number"})
 
 #define USAGE_MSG "Usage: %s [OPTION]... -d [output DIR] [SLOW5_FILE/DIR]...\n"
 #define HELP_LARGE_MSG \
     "Convert SLOW5/BLOW5 files to FAST5 format.\n" \
     USAGE_MSG \
     "\n" \
-    "OPTIONS:\n" \
+    "OPTIONS:\n"       \
+    "    -o, --output [FILE]        output contents to FILE. Use only when a single SLOW5_FILE is converted\n" \
     "    -d, --out-dir [STR]        output directory where files are written to\n" \
     "    -p, --iop [INT]            number of I/O processes to read fast5 files [default: 8]\n" \
     "    -h, --help                 display this message and exit\n" \
@@ -32,12 +35,12 @@
 static double init_realtime = 0;
 
 void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype);
-void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t datatype);
-void add_attribute(hid_t file_id, const char* attr_name, unsigned long attr_value, hid_t datatype);
-void add_attribute(hid_t file_id, const char* attr_name, unsigned long long attr_value, hid_t datatype);
-void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value, hid_t datatype);
+void add_attribute(hid_t file_id, const char* attr_name, int32_t attr_value, hid_t datatype);
+void add_attribute(hid_t file_id, const char* attr_name, uint64_t attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype);
+
+int check_aux_fields(slow5_rec *slow5_record, const char *attr);
 
 void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *header, slow5_rec_t* slow5_record, hid_t* end_reason_enum_id) {
 //    todo- check return values
@@ -61,22 +64,41 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             break;
         case RAW:
             // add Raw attributes
-            add_attribute(group_id,"start_time",slow5_aux_get_uint64(slow5_record, "start_time", &err),H5T_STD_U64LE);
-            add_attribute(group_id,"duration",slow5_record->len_raw_signal,H5T_STD_U32LE);
-            add_attribute(group_id,"read_number",slow5_aux_get_int32(slow5_record, "read_number", &err),H5T_STD_I32LE);
-            add_attribute(group_id,"start_mux",slow5_aux_get_uint8(slow5_record, "start_mux", &err),H5T_STD_U8LE);
-            add_attribute(group_id,"read_id",slow5_record->read_id,H5T_C_S1);
-            add_attribute(group_id,"median_before",slow5_aux_get_double(slow5_record, "median_before", &err),H5T_IEEE_F64LE);
             if(header->aux_meta){
-                uint8_t end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
+                uint64_t start_time = slow5_aux_get_uint64(slow5_record, "start_time", &err);
                 if(err >= 0){
-                    add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                    add_attribute(group_id,"start_time",start_time,H5T_STD_U64LE);
+                }
+                int32_t read_number = slow5_aux_get_int32(slow5_record, "read_number", &err);
+                if(err >= 0){
+                    add_attribute(group_id,"read_number", read_number,H5T_STD_I32LE);
+                }
+                uint8_t start_mux = slow5_aux_get_uint8(slow5_record, "start_mux", &err);
+                if(err >= 0){
+                    add_attribute(group_id,"start_mux",start_mux,H5T_STD_U8LE);
+                }
+                double median_before = slow5_aux_get_double(slow5_record, "median_before", &err);
+                if(err >= 0){
+                    add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
+                }
+                if(check_aux_fields(slow5_record, "end_reason")==0){
+                    uint8_t end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
+                    if(err >= 0){
+                        add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                    }
                 }
             }
+            add_attribute(group_id,"duration",slow5_record->len_raw_signal,H5T_STD_U32LE);
+            add_attribute(group_id,"read_id",slow5_record->read_id,H5T_C_S1);
             break;
         case CHANNEL_ID:
             // add channel_id attributes
-            add_attribute(group_id,"channel_number",slow5_aux_get_string(slow5_record, "channel_number", NULL, &err),H5T_C_S1);
+            if(header->aux_meta){
+                attribute_value = slow5_aux_get_string(slow5_record, "channel_number", NULL, &err);
+                if(err >= 0){
+                    add_attribute(group_id,"channel_number",attribute_value,H5T_C_S1);
+                }
+            }
             add_attribute(group_id,"digitisation",slow5_record->digitisation,H5T_IEEE_F64LE);
             add_attribute(group_id,"offset",slow5_record->offset,H5T_IEEE_F64LE);
             add_attribute(group_id,"range",slow5_record->range,H5T_IEEE_F64LE);
@@ -244,7 +266,7 @@ void initialize_end_reason(hid_t* end_reason_enum_id) {
     H5Tenum_insert(*end_reason_enum_id, "signal_negative", (val=5,&val));
 }
 
-void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
+void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *slow5_filename) {
     hid_t   file_id;
     hid_t group_read, group_raw, group_channel_id, group_tracking_id, group_context_tags;
     herr_t  status;
@@ -259,6 +281,13 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
             return;
         }else{
             ERROR("Could not read the slow5 records. exiting... %s", "");
+            exit(EXIT_FAILURE);
+        }
+    }
+    uint32_t num_essential_aux_attrs = ESSENTIAL_AUX_ATTR_COUNT;
+    for(uint32_t i=0; i<num_essential_aux_attrs; i++){
+        if(check_aux_fields(slow5_record, ESSENTIAL_AUX_ATTRS[i])){
+            ERROR("%s is missing an essential auxiliary field. s2f only creates fast5 that can be basecalled using guppy.",slow5_filename);
             exit(EXIT_FAILURE);
         }
     }
@@ -367,7 +396,21 @@ void write_fast5(slow5_file_t* slow5File, const char* FAST5_FILE) {
     status = H5Fclose(file_id);
 }
 
-void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
+int check_aux_fields(slow5_rec *slow5_record, const char *attr) {
+    khint_t pos = kh_get(slow5_s2a, slow5_record->aux_map, attr);
+    if(pos == kh_end(slow5_record->aux_map)){
+        ERROR("Auxiliary field '%s' not found.", attr);
+        return -1;
+    }
+    return 0;
+}
+
+void s2f_child_worker(proc_arg_t args,
+                      std::vector<std::string> &slow5_files,
+                      char *output_dir,
+                      char* arg_fname_out,
+                      program_meta *meta,
+                      reads_count *readsCount) {
     for (int i = args.starti; i < args.endi; i++) {
         VERBOSE("Converting %s to fast5", slow5_files[i].c_str());
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
@@ -380,22 +423,30 @@ void s2f_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, ch
             ERROR("The file %s has %u read groups. 's2f' works only with single read group slow5 files. Use 'split' to create single read group files.", slow5_files[i].c_str(), slow5File_i->header->num_read_groups);
             continue;
         }
-        std::string fast5_path = std::string(output_dir);
-        std::string fast5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),
-                                                      slow5_files[i].length() -
-                                                      slow5_files[i].find_last_of('/') - 6) + ".fast5";
-        fast5_path += fast5file;
-        write_fast5(slow5File_i, fast5_path.c_str());
+        std::string fast5_path;
+        if(output_dir){
+            fast5_path = std::string(output_dir);
+            std::string fast5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),
+                                                          slow5_files[i].length() -
+                                                          slow5_files[i].find_last_of('/') - 6) + ".fast5";
+            fast5_path += fast5file;
+        }
+        if(arg_fname_out){
+            fast5_path = std::string(arg_fname_out);
+        }
+        write_fast5(slow5File_i, fast5_path.c_str(), slow5_files[i].c_str());
         //  Close the slow5 file.
         slow5_close(slow5File_i);
     }
 }
 
-void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount) {
+void s2f_iop(int iop,
+             std::vector<std::string> &slow5_files,
+             char *output_dir,
+             char* arg_fname_out,
+             program_meta *meta,
+             reads_count *readsCount) {
     int64_t num_slow5_files = slow5_files.size();
-    if (iop > num_slow5_files) {
-        iop = num_slow5_files;
-    }
     VERBOSE("%d proceses will be used",iop);
     //create processes
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));
@@ -422,7 +473,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
     }
 
     if(iop==1){
-        s2f_child_worker(proc_args[0], slow5_files, output_dir, meta, readsCount);
+        s2f_child_worker(proc_args[0], slow5_files, output_dir, arg_fname_out, meta, readsCount);
         free(proc_args);
         free(pids);
         return;
@@ -439,7 +490,7 @@ void s2f_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, p
             exit(EXIT_FAILURE);
         }
         if(pids[t]==0){ //child
-            s2f_child_worker(proc_args[t],slow5_files,output_dir, meta, readsCount);
+            s2f_child_worker(proc_args[t],slow5_files,output_dir, arg_fname_out, meta, readsCount);
             exit(EXIT_SUCCESS);
         }
         if(pids[t]>0){ //parent
@@ -517,20 +568,25 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
-            {"help", no_argument, NULL, 'h' }, //0
-            {"out-dir", required_argument, NULL, 'd' },  //1
-            { "iop", required_argument, NULL, 'p'},   //2
+            {"help",    no_argument, NULL, 'h' }, //0
+            {"output",  required_argument, NULL, 'o'},   //1
+            {"out-dir", required_argument, NULL, 'd' },  //2
+            { "iop",    required_argument, NULL, 'p'},   //3
             {NULL, 0, NULL, 0 }
     };
 
+    int iop = 8;
+    std::string format_low5 =  "low5";
+    std::string format_fast5 =  ".fast5";
+
     // Input arguments
+    char *arg_fname_out = NULL;
     char *arg_dir_out = NULL;
+
     int longindex = 0;
     int opt;
-    int iop = 8;
-
     // Parse options
-    while ((opt = getopt_long(argc, argv, "h:d:p:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "h:o:d:p:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -544,6 +600,9 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
+            case 'o':
+                arg_fname_out = optarg;
+                break;
             case 'd':
                 arg_dir_out = optarg;
                 break;
@@ -561,8 +620,30 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
-    if(!arg_dir_out){
-        ERROR("The output directory must be specified %s","");
+    if(arg_fname_out && arg_dir_out){
+        ERROR("output file name and output directory both cannot be set%s","");
+        return EXIT_FAILURE;
+    }
+    if(!arg_fname_out && !arg_dir_out){
+        ERROR("Please set output file name or output directory%s","");
+        return EXIT_FAILURE;
+    }
+    //measure file listing time
+    std::vector<std::string> slow5_files;
+    double realtime0 = slow5_realtime();
+    for (int i = optind; i < argc; ++ i) {
+        list_all_items(argv[i], slow5_files, 0, format_low5.c_str());
+    }
+    VERBOSE("%ld files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
+    if(slow5_files.size()==0){
+        ERROR("No slow5/blow5 files found. Exiting...%s","");
+        return EXIT_FAILURE;
+    }
+    if(slow5_files.size()==1){
+        iop = 1;
+    }
+    if(slow5_files.size()>1 && !arg_dir_out){
+        ERROR("output directory should be specified when converting more than one file%s","");
         return EXIT_FAILURE;
     }
     if(arg_dir_out){
@@ -577,23 +658,21 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
             }
         }
     }
+    if(arg_fname_out){
+        std::string output_file;
+        std::string extension;
+        output_file = std::string(arg_fname_out);
+        extension = output_file.substr(output_file.length()-6, output_file.length());
+        if(extension != format_fast5){
+            ERROR("Output file name extension should be %s", format_fast5.c_str());
+            return EXIT_FAILURE;
+        }
+    }
 
     reads_count readsCount;
-    std::vector<std::string> slow5_files;
-
-    //measure file listing time
-    double realtime0 = slow5_realtime();
-    for (int i = optind; i < argc; ++ i) {
-        list_all_items(argv[i], slow5_files, 0, NULL);
-    }
-    VERBOSE("%ld slow5 files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
-    if(slow5_files.size()==0){
-        ERROR("No slow5/blow5 files found. Exiting...%s","");
-        return EXIT_FAILURE;
-    }
     //measure s2f conversion time
     init_realtime = slow5_realtime();
-    s2f_iop(iop, slow5_files, arg_dir_out, meta, &readsCount);
+    s2f_iop(iop, slow5_files, arg_dir_out, arg_fname_out, meta, &readsCount);
     VERBOSE("Converting %ld s/blow5 files took %.3fs", slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
@@ -630,7 +709,7 @@ void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t
         WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
     }
 }
-void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t datatype) {
+void add_attribute(hid_t file_id, const char* attr_name, int32_t attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
     herr_t  status;
     hid_t   dataspace_id, attribute_id; /* identifiers */
@@ -656,57 +735,7 @@ void add_attribute(hid_t file_id, const char* attr_name, int attr_value, hid_t d
         WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
     }
 }
-void add_attribute(hid_t file_id, const char* attr_name, unsigned long attr_value, hid_t datatype) {
-    /* Create the data space for the attribute. */
-    herr_t  status;
-    hid_t   dataspace_id, attribute_id; /* identifiers */
-    dataspace_id = H5Screate(H5S_SCALAR);
-    /* Create a dataset attribute. */
-    hid_t atype = H5Tcopy(datatype);
-//    H5Tset_size(atype, strlen(attr_value));
-    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-    /* Write the attribute data. */
-    status = H5Awrite(attribute_id, atype, &attr_value);
-    assert(status>=0);
-    H5Tclose(atype);
-
-    /* Close the attribute. */
-    status = H5Aclose(attribute_id);
-    if(status<0){
-        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
-    }
-    /* Close the dataspace. */
-    status = H5Sclose(dataspace_id);
-    if(status<0){
-        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
-    }
-}
-void add_attribute(hid_t file_id, const char* attr_name, unsigned long long attr_value, hid_t datatype) {
-    /* Create the data space for the attribute. */
-    herr_t  status;
-    hid_t   dataspace_id, attribute_id; /* identifiers */
-    dataspace_id = H5Screate(H5S_SCALAR);
-    /* Create a dataset attribute. */
-    hid_t atype = H5Tcopy(datatype);
-//    H5Tset_size(atype, strlen(attr_value));
-    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-    /* Write the attribute data. */
-    status = H5Awrite(attribute_id, atype, &attr_value);
-    assert(status>=0);
-    H5Tclose(atype);
-
-    /* Close the attribute. */
-    status = H5Aclose(attribute_id);
-    if(status<0){
-        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
-    }
-    /* Close the dataspace. */
-    status = H5Sclose(dataspace_id);
-    if(status<0){
-        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
-    }
-}
-void add_attribute(hid_t file_id, const char* attr_name, unsigned int attr_value, hid_t datatype) {
+void add_attribute(hid_t file_id, const char* attr_name, uint64_t attr_value, hid_t datatype) {
     /* Create the data space for the attribute. */
     herr_t  status;
     hid_t   dataspace_id, attribute_id; /* identifiers */
