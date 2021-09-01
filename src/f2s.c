@@ -300,15 +300,15 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     static struct option long_opts[] = {
-            {"to", required_argument, NULL, 'b'},    //0
-            {"compress", required_argument, NULL, 'c'},  //1
-            {"sig-compress", required_argument,  NULL, 's'}, //2
-            {"help", no_argument, NULL, 'h'},  //3
-            {"output", required_argument, NULL, 'o'},   //4
-            { "iop", required_argument, NULL, 'p'}, //5
-            { "lossless", required_argument, NULL, 'l'}, //6
-            { "out-dir", required_argument, NULL, 'd'}, //7
-            { "allow", no_argument, NULL, 'a'}, //8
+            {"to",          required_argument, NULL, 'b'},    //0
+            {"compress",    required_argument, NULL, 'c'},  //1
+            {"sig-compress",required_argument,  NULL, 's'}, //2
+            {"help",        no_argument, NULL, 'h'},  //3
+            {"output",      required_argument, NULL, 'o'},   //4
+            { "iop",        required_argument, NULL, 'p'}, //5
+            { "lossless",   required_argument, NULL, 'l'}, //6
+            { "out-dir",    required_argument, NULL, 'd'}, //7
+            { "allow",      no_argument, NULL, 'a'}, //8
             {NULL, 0, NULL, 0 }
     };
 
