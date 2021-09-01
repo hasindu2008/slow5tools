@@ -165,13 +165,13 @@ else
     fi
 fi
 
-echo_test 'concat_test'
+echo_test 'cat_test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/concat_test.sh mem ; then
+    if ! ./test/cat_test.sh mem ; then
         fail
     fi
 else
-    if ! ./test/concat_test.sh ; then
+    if ! ./test/cat_test.sh ; then
         fail
     fi
 fi

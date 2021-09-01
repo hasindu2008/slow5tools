@@ -1,7 +1,7 @@
 // Miscellaneous definitions and functions
 
-#ifndef MISC_H
-#define MISC_H
+#ifndef _MISC_H_
+#define _MISC_H_
 
 #include <zlib.h>
 #include <stdio.h>
@@ -17,12 +17,30 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <slow5/slow5.h>
+#include "slow5_extra.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+//Parsing
+enum slow5_press_method name_to_slow5_press_method(const char *name);
+
+struct parse_fmt_meta {
+    enum slow5_fmt format;
+    const char *name;
+    const char *ext;
+};
+
+static const struct parse_fmt_meta PARSE_FORMAT_META[] = {
+        { SLOW5_FORMAT_ASCII,  SLOW5_ASCII_NAME,     SLOW5_ASCII_EXTENSION     },
+        { SLOW5_FORMAT_BINARY, SLOW5_BINARY_NAME,    SLOW5_BINARY_EXTENSION    },
+};
+
+enum slow5_fmt parse_name_to_fmt(const char *fmt_str);
+enum slow5_fmt parse_path_to_fmt(const char *fname);
 
 // Timing
-
 // From minimap2/misc
 static inline double slow5_realtime(void) {
     struct timeval tp;

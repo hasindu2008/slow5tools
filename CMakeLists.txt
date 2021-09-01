@@ -33,7 +33,9 @@ set_source_files_properties(src/split.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/thread.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/view.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/stats.c PROPERTIES LANGUAGE CXX)
-set_source_files_properties(src/concat.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/cat.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/quickcheck.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/misc.c PROPERTIES LANGUAGE CXX)
 
 set(f2s src/f2s.c)
 set(get src/get.c)
@@ -46,11 +48,13 @@ set(split src/split.c)
 set(thread src/thread.c)
 set(view src/view.c)
 set(stats src/stats.c)
-set(concat src/concat.c)
+set(cat src/cat.c)
+set(quickcheck src/quickcheck.c)
+set(misc src/misc.c)
 
 set(hdf5-static "${PROJECT_SOURCE_DIR}/prebuilt-hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
-add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${concat})
+add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/slow5lib)
 
@@ -60,7 +64,7 @@ file(GLOB_RECURSE C_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "test/*.c")
 
 # link with dependencies
 IF (${DEPLOY_PLATFORM} STREQUAL "x86")
-    target_link_libraries(slow5tools slow5 -lhdf5_serial -lz -ldl -lm -lpthread -lrt)
+    target_link_libraries(slow5tools slow5 streamvbyte -lhdf5_serial -lz -ldl -lm -lpthread -lrt)
 #    target_link_libraries(slow5tools slow5 ${hdf5-static} -lz -ldl -lm -lpthread -lrt)
 ELSE()
     target_link_libraries(slow5tools slow5 ${hdf5-static} -lz -ldl -lm)

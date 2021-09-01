@@ -73,7 +73,7 @@ struct operator_obj {
 
 //implemented in read_fast5.c
 int
-read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, slow5_press_method pressMethod, int lossy, int write_header_flag,
+read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, slow5_press_method_t press_out, int lossy, int write_header_flag,
            int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t *slow5File, std::unordered_map<std::string, uint32_t>* warning_map);
 fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);

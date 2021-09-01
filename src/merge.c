@@ -26,15 +26,15 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
-    "    -c, --compress [compression_type]  convert to compressed blow5 [default: zlib]\n" \
+    "    --to=[FORMAT]                      specify output file format\n" \
+    "    -c, --compress=[REC_METHOD]        specify record compression method -- zlib (only available for format blow5)\n" \
+    "    -s, --sig-compress=[SIG_METHOD]    specify signal compression method -- none (only available for format blow5)\n" \
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -l, --lossless [STR]               retain information in auxiliary fields during the conversion.[default: true].\n" \
     "    -t, --threads [INT]                number of threads [default: 4]\n"        \
     "    -K --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
-    "    -h, --help                         display this message and exit\n" \
-
-static double init_realtime = 0;
+    "    -h, --help                         display this message and exit\n"                                               \
+    HELP_FORMATS_METHODS
 
 void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
     //
@@ -63,7 +63,6 @@ void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
 }
 
 int merge_main(int argc, char **argv, struct program_meta *meta){
-    init_realtime = slow5_realtime();
 
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
@@ -96,23 +95,28 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {"threads", required_argument, NULL, 't' }, //1
             {"to", required_argument, NULL, 'b'},    //2
             {"compress", required_argument, NULL, 'c'},  //3
-            /* TODO add signal compression */
-            { "lossless", required_argument, NULL, 'l'}, //4
-            {"output", required_argument, NULL, 'o'}, //5
-            {"batchsize", required_argument, NULL, 'K'}, //6
+            {"sig-compress",    required_argument,  NULL, 's'}, //4
+            { "lossless", required_argument, NULL, 'l'}, //5
+            {"output", required_argument, NULL, 'o'}, //6
+            {"batchsize", required_argument, NULL, 'K'}, //7
 
             {NULL, 0, NULL, 0 }
     };
 
     // Default options
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
+    enum slow5_fmt extension_format = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethodRecord = SLOW5_COMPRESS_ZLIB;
     enum slow5_press_method pressMethodSignal = SLOW5_COMPRESS_NONE;
     int compression_set = 0;
+    int format_out_set = 0;
 
     // Input arguments
+    char *arg_fmt_out = NULL;
     char *arg_fname_out = NULL;
     char *arg_num_threads = NULL;
+    char *arg_record_press_out = NULL;
+    char *arg_signal_press_out = NULL;
     int lossy = 0;
 
     size_t num_threads = DEFAULT_NUM_THREADS;
@@ -122,7 +126,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:hl:t:o:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:s:hl:t:o:K:", long_opts, &longindex)) != -1) {
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
@@ -139,14 +143,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 arg_num_threads = optarg;
                 break;
             case 'b':
-                if(strcmp(optarg,"slow5")==0){
-                    format_out = SLOW5_FORMAT_ASCII;
-                }else if(strcmp(optarg,"blow5")==0){
-                    format_out = SLOW5_FORMAT_BINARY;
-                }else{
-                    ERROR("Incorrect output format%s", "");
-                    return EXIT_FAILURE;
-                }
+                format_out_set = 1;
+                arg_fmt_out = optarg;
                 break;
             case 'K':
                 read_id_batch_capacity = atoi(optarg);
@@ -159,14 +157,10 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 'c':
                 compression_set = 1;
-                if(strcmp(optarg,"none")==0){
-                    pressMethodRecord = SLOW5_COMPRESS_NONE;
-                }else if(strcmp(optarg,"zlib")==0){
-                    pressMethodRecord = SLOW5_COMPRESS_ZLIB;
-                }else{
-                    ERROR("Incorrect compression type%s", "");
-                    return EXIT_FAILURE;
-                }
+                arg_record_press_out = optarg;
+                break;
+            case 's':
+                arg_signal_press_out = optarg;
                 break;
             case 'l':
                 if(strcmp(optarg,"true")==0){
@@ -187,14 +181,54 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
+    if (arg_fmt_out) {
+        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("parsing output format%s","");
+        }
+        format_out = parse_name_to_fmt(arg_fmt_out);
+        // An error occured
+        if (format_out == SLOW5_FORMAT_UNKNOWN) {
+            ERROR("invalid output format -- '%s'", arg_fmt_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+    }
+    if(arg_fname_out){
+        extension_format = parse_path_to_fmt(arg_fname_out);
+        if(format_out_set==0){
+            format_out = extension_format;
+        }
+    }
+    if(arg_fname_out && format_out!=extension_format){
+        ERROR("Output file extension does not match with the output format%s",".");
+        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
         pressMethodRecord = SLOW5_COMPRESS_NONE;
         pressMethodSignal = SLOW5_COMPRESS_NONE;
     }
     // compression option is only effective with -b blow5
     if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
-        ERROR("%s","Compression option (-c) is only available for SLOW5 binary format.");
+        ERROR("%s","Compression option (-c/-s) is only available for SLOW5 binary format.");
         return EXIT_FAILURE;
+    }
+    if (arg_record_press_out != NULL) {
+        pressMethodRecord = name_to_slow5_press_method(arg_record_press_out);
+        if (pressMethodRecord == (enum slow5_press_method) -1) {
+            ERROR("invalid record compression method -- '%s'", arg_record_press_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+    }
+    if (arg_signal_press_out != NULL) {
+        pressMethodSignal = name_to_slow5_press_method(arg_signal_press_out);
+        if (pressMethodSignal == (enum slow5_press_method) -1) {
+            ERROR("invalid signal compression method -- '%s'", arg_signal_press_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
     }
 
     // Parse num threads argument
@@ -216,25 +250,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     // Check for remaining files to parse
     if (optind >= argc) {
         ERROR("missing slow5 files or directories%s", "");
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }
-
-    std::string output_file;
-    std::string extension;
-    if(arg_fname_out){
-        output_file = std::string(arg_fname_out);
-        extension = output_file.substr(output_file.length()-6, output_file.length());
-    }
-
-    if(arg_fname_out && format_out==SLOW5_FORMAT_ASCII && extension!=".slow5"){
-        ERROR("Output file extension '%s' does not match with the output format:FORMAT_ASCII", extension.c_str());
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }else if(arg_fname_out && format_out==SLOW5_FORMAT_BINARY && extension!=".blow5"){
-        ERROR("Output file extension '%s' does not match with the output format:FORMAT_BINARY", extension.c_str());
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -273,7 +288,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, arg_fname_out, format_out);
     int ret = slow5_hdr_initialize(slow5File->header, lossy);
     if(ret<0){
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     slow5File->header->num_read_groups = 0;
     std::vector<std::vector<size_t>> list;
@@ -454,7 +469,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         DEBUG("time_thread_execution\t%.3fs", time_thread_execution);
         DEBUG("time_write\t%.3fs", time_write);
     }
-
 
     if (format_out == SLOW5_FORMAT_BINARY) {
         slow5_eof_fwrite(slow5File->fp);

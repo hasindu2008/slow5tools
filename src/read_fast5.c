@@ -184,44 +184,50 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 
 //            RAW
-    else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
-        if(*(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
-            if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "start_time", SLOW5_UINT64_T)){
-                ERROR("Could not initialize the record attribute '%s'", "start_time");
-                return -1;
-            }
-        }
+    else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_time", &value.attr_int) != 0){
-            WARNING("start_time auxiliary attribute value could not be set in the slow5 record %s", "");
+        if(*(operator_data->flag_lossy) == 0){
+            if(*(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
+                if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "start_time", SLOW5_UINT64_T)){
+                    ERROR("Could not initialize the record attribute '%s'", "start_time");
+                    return -1;
+                }
+            }
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_time", &value.attr_int) != 0){
+                WARNING("start_time auxiliary attribute value could not be set in the slow5 record %s", "");
+            }
         }
     }
     else if(strcmp("duration",name)==0 && H5Tclass==H5T_INTEGER){
         flag_new_group_or_new_attribute_read_group = 0;
 //        operator_data->slow5_record->len_raw_signal = value.attr_int;
     }
-    else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
-        if(*(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
-            if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "read_number", SLOW5_INT32_T)){
-                ERROR("Could not initialize the record attribute '%s'", "read_number");
-                return -1;
-            }
-        }
+    else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "read_number", &value.attr_int) != 0){
-            WARNING("read_number auxiliary attribute value could not be set in the slow5 record %s", "");
+        if(*(operator_data->flag_lossy) == 0){
+            if(*(operator_data->flag_header_is_written)==0){
+                if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "read_number", SLOW5_INT32_T)){
+                    ERROR("Could not initialize the record attribute '%s'", "read_number");
+                    return -1;
+                }
+            }
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "read_number", &value.attr_int) != 0){
+                WARNING("read_number auxiliary attribute value could not be set in the slow5 record %s", "");
+            }
         }
     }
-    else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER && *(operator_data->flag_lossy) == 0){
-        if(*(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
-            if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "start_mux", SLOW5_UINT8_T)){
-                ERROR("Could not initialize the record attribute '%s'", "start_mux");
-                return -1;
-            }
-        }
+    else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_mux", &value.attr_int) != 0){
-            WARNING("start_mux auxiliary attribute value could not be set in the slow5 record %s", "");
+        if(*(operator_data->flag_lossy) == 0){
+            if(*(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
+                if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "start_mux", SLOW5_UINT8_T)){
+                    ERROR("Could not initialize the record attribute '%s'", "start_mux");
+                    return -1;
+                }
+            }
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "start_mux", &value.attr_int) != 0){
+                WARNING("start_mux auxiliary attribute value could not be set in the slow5 record %s", "");
+            }
         }
     }
     else if(strcmp("read_id",name)==0 && H5Tclass==H5T_STRING){
@@ -236,19 +242,22 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             return -1;
         }
     }
-    else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT && *(operator_data->flag_lossy) == 0){
-        if(*(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
-            if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "median_before", SLOW5_DOUBLE)){
-                ERROR("Could not initialize the record attribute '%s'", "median_before");
-                return -1;
-            }
-        }
+    else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "median_before", &value.attr_double) != 0){
-            WARNING("median_before auxiliary attribute value could not be set in the slow5 record %s", "");
+        if(*(operator_data->flag_lossy)==0){
+            if(*(operator_data->flag_header_is_written)==0){
+                if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "median_before", SLOW5_DOUBLE)){
+                    ERROR("Could not initialize the record attribute '%s'", "median_before");
+                    return -1;
+                }
+            }
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "median_before", &value.attr_double) != 0){
+                WARNING("median_before auxiliary attribute value could not be set in the slow5 record %s", "");
+            }
         }
     }
     else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
+        flag_new_group_or_new_attribute_read_group = 0;
 //        operator_data->slow5_record->end_reason = value.attr_uint8_t;
         std::string key = "ns_" + std::string(name); //not stored
         char warn_message[300];
@@ -256,16 +265,18 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         search_and_warn(operator_data,key,warn_message);
     }
 //            CHANNEL_ID
-    else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING && *(operator_data->flag_lossy) == 0){
-        if(*(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
-            if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "channel_number", SLOW5_STRING)){
-                ERROR("Could not initialize the record attribute '%s'", "channel_number");
-                return -1;
-            }
-        }
+    else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "channel_number", value.attr_string) != 0){
-            WARNING("channel_number auxiliary attribute value could not be set in the slow5 record %s", "");
+        if(*(operator_data->flag_lossy)==0){
+            if(*(operator_data->flag_header_is_written)==0){
+                if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, "channel_number", SLOW5_STRING)){
+                    ERROR("Could not initialize the record attribute '%s'", "channel_number");
+                    return -1;
+                }
+            }
+            if(slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "channel_number", value.attr_string) != 0){
+                WARNING("channel_number auxiliary attribute value could not be set in the slow5 record %s", "");
+            }
         }
     }
     else if(strcmp("digitisation",name)==0 && H5Tclass==H5T_FLOAT){
@@ -443,7 +454,7 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
 
 int read_fast5(fast5_file_t *fast5_file,
                slow5_fmt format_out,
-               slow5_press_method pressMethod,
+               slow5_press_method_t press_out,
                int lossy,
                int write_header_flag,
                int flag_allow_run_id_mismatch,
@@ -462,9 +473,8 @@ int read_fast5(fast5_file_t *fast5_file,
     tracker.meta = meta;
     tracker.fast5_file = fast5_file;
     tracker.format_out = format_out;
-    slow5_press_method_t method = {pressMethod, SLOW5_COMPRESS_NONE};
-    tracker.pressMethod = method;
-    tracker.press_ptr = slow5_press_init(method); /* TODO add signal compression */
+    tracker.pressMethod = press_out;
+    tracker.press_ptr = slow5_press_init(press_out);
 
     tracker.fast5_path = fast5_file->fast5_path;
     tracker.slow5File = slow5File;
@@ -747,7 +757,7 @@ std::vector< std::string > list_directory(const std::string& file_name)
 // given a directory path, recursively find all files
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
     if(extension){
-        STDERR("Looking for *'%s' files in %s", extension, path.c_str());
+        STDERR("Looking for '*%s' files in %s", extension, path.c_str());
     }
     if (is_directory(path)) {
         std::vector< std::string > dir_list = list_directory(path);
