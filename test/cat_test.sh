@@ -20,7 +20,6 @@ mkdir "$OUTPUT_DIR" || die "Failed creating $OUTPUT_DIR"
 #commands ...
 
 RAW_DIR="$REL_PATH/data/raw/cat"
-EXP_SLOW5_FILE="$REL_PATH/data/exp/cat/expected_single_group.slow5"
 SLOW5TOOLS_WITHOUT_VALGRIND=$REL_PATH/../slow5tools
 
 if [ "$1" = 'mem' ]; then
@@ -30,56 +29,50 @@ else
 fi
 
 TESTCASE=1
+EXP_SLOW5_FILE="$REL_PATH/data/exp/cat/expected_multi_group.slow5"
+info "testcase:$TESTCASE - cat multi_read_group files"
+$SLOW5TOOLS cat "$RAW_DIR/multi_read_group/" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools cat failed"
+diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
+
+EXP_SLOW5_FILE="$REL_PATH/data/exp/cat/expected_single_group.slow5"
+
+TESTCASE=2
 info "testcase:$TESTCASE - cat two slow5s. output-stdout"
 $SLOW5TOOLS cat "$RAW_DIR/slow5s/" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools cat failed"
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
-TESTCASE=2
-rm "$OUTPUT_DIR/output.*"
+TESTCASE=3
 info "testcase:$TESTCASE - cat two blow5s. output-stdout"
 $SLOW5TOOLS cat "$RAW_DIR/blow5s/" > "$OUTPUT_DIR/output.blow5" || die "testcase:$TESTCASE slow5tools cat failed"
 $SLOW5TOOLS view "$OUTPUT_DIR/output.blow5" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools view failed"
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
-TESTCASE=3
-rm "$OUTPUT_DIR/output.*"
+TESTCASE=4
 info "testcase:$TESTCASE - cat two slow5s. output-file"
 $SLOW5TOOLS cat "$RAW_DIR/slow5s/" -o "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools cat failed"
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
-TESTCASE=4
-rm "$OUTPUT_DIR/output.*"
+TESTCASE=5
 info "testcase:$TESTCASE - cat two blow5s. output-file"
 $SLOW5TOOLS cat "$RAW_DIR/blow5s/" -o "$OUTPUT_DIR/output.blow5" || die "testcase:$TESTCASE slow5tools cat failed"
 $SLOW5TOOLS view "$OUTPUT_DIR/output.blow5" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools view failed"
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
-TESTCASE=5
-rm "$OUTPUT_DIR/output.*"
+TESTCASE=6
 info "testcase:$TESTCASE - cat two slow5s. output-file. wrong file extension"
 $SLOW5TOOLS cat "$RAW_DIR/slow5s/" -o "$OUTPUT_DIR/output.blow5" && die "testcase:$TESTCASE slow5tools cat failed"
 
-TESTCASE=6
-rm "$OUTPUT_DIR/output.*"
+TESTCASE=7
 info "testcase:$TESTCASE - cat two blow5s. output-file. wrong file extension"
 $SLOW5TOOLS cat "$RAW_DIR/blow5s/" -o "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools cat failed"
 
-TESTCASE=7
-rm "$OUTPUT_DIR/output.*"
+TESTCASE=8
 info "testcase:$TESTCASE - cat different format files"
 $SLOW5TOOLS cat "$RAW_DIR/mixed_format/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools cat failed"
 
-TESTCASE=8
-rm "$OUTPUT_DIR/output.*"
+TESTCASE=9
 info "testcase:$TESTCASE - cat different compression types files"
 $SLOW5TOOLS cat "$RAW_DIR/mixed_compression/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools cat failed"
-
-TESTCASE=9
-rm "$OUTPUT_DIR/output.*"
-EXP_SLOW5_FILE="$REL_PATH/data/exp/cat/expected_multi_group.slow5"
-info "testcase:$TESTCASE - cat multi_read_group files"
-$SLOW5TOOLS cat "$RAW_DIR/multi_read_group/" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools cat failed"
-diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
 info "all $TESTCASE cat testcases passed"
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
