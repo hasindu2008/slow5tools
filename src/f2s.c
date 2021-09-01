@@ -413,6 +413,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
     if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
         record_press_out = SLOW5_COMPRESS_NONE;
+        signal_press_out = SLOW5_COMPRESS_NONE;
     }
     // compression option is only effective with -b blow5
     if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
@@ -427,7 +428,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             return EXIT_FAILURE;
         }
     }
-
     if (arg_signal_press_out != NULL) {
         signal_press_out = name_to_slow5_press_method(arg_signal_press_out);
         if (signal_press_out == (enum slow5_press_method) -1) {
@@ -442,18 +442,12 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-
-
     // Check for remaining files to parse
     if (optind >= argc) {
         ERROR("%s", "missing fast5 files or directories");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
-    }
-
-    if(lossy){
-        WARNING("%s","Flag 'lossy' is set. Hence, auxiliary fields are not stored");
     }
 
     //measure file listing time

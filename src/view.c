@@ -28,7 +28,7 @@
     "    -o, --output=[FILE]                output to FILE [default: stdout]\n" \
     "    -h, --help                         display this message and exit\n"                                               \
     "    -t, --threads [INT]                number of threads [default: 4]\n"                                              \
-    "    -K, --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
+    "    -K, --batchsize                    the number of records on the memory at once. [default: 4096]\n" \
     HELP_FORMATS_METHODS
 
 int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta);
