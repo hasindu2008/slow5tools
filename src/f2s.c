@@ -31,7 +31,7 @@
     "    -d, --out-dir [STR]                output directory where slow5files are written to\n" \
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -p, --iop [INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
-    "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
+    "    -l, --lossless [STR]               retain information in auxiliary fields during the conversion.[default: true].\n" \
     "    -a, --allow                        allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
     "    -h, --help                         display this message and exit\n" \
     HELP_FORMATS_METHODS

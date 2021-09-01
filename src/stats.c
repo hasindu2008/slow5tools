@@ -150,16 +150,16 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
 
     if(slow5File->header->aux_meta){
-        fprintf(stdout, "number of auxilliary fields\t%d\n",slow5File->header->aux_meta->num);
-        fprintf(stdout, "auxilliary fields\t");
+        fprintf(stdout, "number of auxiliary fields\t%d\n",slow5File->header->aux_meta->num);
+        fprintf(stdout, "auxiliary fields\t");
         uint32_t num = slow5File->header->aux_meta->num;
         for(uint32_t i=0; i<num; i++){
             fprintf(stdout, "%s\t",slow5File->header->aux_meta->attrs[i]);
         }
         fprintf(stdout, "\n");
     }else{
-        fprintf(stdout, "number of auxilliary fields\t%d\n",0);
-        fprintf(stdout, "auxilliary fields\n");
+        fprintf(stdout, "number of auxiliary fields\t%d\n",0);
+        fprintf(stdout, "auxiliary fields\n");
     }
 
 

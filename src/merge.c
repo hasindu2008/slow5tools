@@ -29,7 +29,7 @@
     "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5]\n" \
     "    -c, --compress [compression_type]  convert to compressed blow5 [default: zlib]\n" \
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
-    "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
+    "    -l, --lossless [STR]               retain information in auxiliary fields during the conversion.[default: true].\n" \
     "    -t, --threads [INT]                number of threads [default: 4]\n"        \
     "    -K --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
     "    -h, --help                         display this message and exit\n" \
