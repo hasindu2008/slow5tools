@@ -302,7 +302,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     static struct option long_opts[] = {
             {"to", required_argument, NULL, 'b'},    //0
             {"compress", required_argument, NULL, 'c'},  //1
-            {"sig-compress",    required_argument,  NULL, 's'}, //2
+            {"sig-compress", required_argument,  NULL, 's'}, //2
             {"help", no_argument, NULL, 'h'},  //3
             {"output", required_argument, NULL, 'o'},   //4
             { "iop", required_argument, NULL, 'p'}, //5
@@ -312,10 +312,10 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             {NULL, 0, NULL, 0 }
     };
 
-    enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
-    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_fmt extension_format = SLOW5_FORMAT_BINARY;
+    enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
+    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
     int compression_set = 0;
     int format_out_set = 0;
 
@@ -339,13 +339,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 format_out_set = 1;
                 arg_fmt_out = optarg;
                 break;
-            case 's':
-                compression_set = 1;
-                arg_signal_press_out = optarg;
-                break;
             case 'c':
                 compression_set = 1;
                 arg_record_press_out = optarg;
+                break;
+            case 's':
+                compression_set = 1;
+                arg_signal_press_out = optarg;
                 break;
             case 'l':
                 if(strcmp(optarg,"true")==0){
