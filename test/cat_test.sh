@@ -31,7 +31,7 @@ fi
 TESTCASE=1
 EXP_SLOW5_FILE="$REL_PATH/data/exp/cat/expected_multi_group.slow5"
 info "testcase:$TESTCASE - cat multi_read_group files"
-$SLOW5TOOLS cat "$RAW_DIR/multi_read_group/" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools cat failed"
+$SLOW5TOOLS cat "$RAW_DIR/multi_read_group/cat_test_0.slow5" "$RAW_DIR/multi_read_group/cat_test_1.slow5" > "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE slow5tools cat failed"
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
 EXP_SLOW5_FILE="$REL_PATH/data/exp/cat/expected_single_group.slow5"
