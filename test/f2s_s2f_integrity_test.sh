@@ -76,12 +76,11 @@ ls "$F2S_atm1_OUTPUT" | wc
 echo "ls $F2S_atm2_OUTPUT | wc"
 ls "$F2S_atm2_OUTPUT" | wc
 echo "f2s might not create the same exact header lines (starting with '@') from after s2f fast5s"
-echo "Running diff only on lines starting with '@'"
+echo "Running diff only on lines starting with '@'. If there are no differences the following line is blank"
 diff --ignore-matching-lines=?@ "$F2S_atm1_OUTPUT" "$F2S_atm2_OUTPUT"
 echo
 echo "Again running diff (ignoring header lines starting with '@'"
 diff --ignore-matching-lines=@ "$F2S_atm1_OUTPUT" "$F2S_atm2_OUTPUT" > /dev/null
-
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}SUCCESS: f2s and s2f conversions are consistent!${NC}"
 elif [ $? -eq 1 ]; then
