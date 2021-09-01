@@ -396,7 +396,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         ERROR("%s","Compression option (-c) is only available for SLOW5 binary format.");
         return EXIT_FAILURE;
     }
-
     if(arg_fname_out && arg_dir_out){
         ERROR("output file name and output directory both cannot be set%s","");
         return EXIT_FAILURE;
