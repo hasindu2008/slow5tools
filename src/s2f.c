@@ -67,7 +67,12 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             add_attribute(group_id,"start_mux",slow5_aux_get_uint8(slow5_record, "start_mux", &err),H5T_STD_U8LE);
             add_attribute(group_id,"read_id",slow5_record->read_id,H5T_C_S1);
             add_attribute(group_id,"median_before",slow5_aux_get_double(slow5_record, "median_before", &err),H5T_IEEE_F64LE);
-//            add_attribute(group_id,"end_reason",slow5_record->end_reason,*end_reason_enum_id);
+            if(header->aux_meta){
+                uint8_t end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
+                if(err >= 0){
+                    add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                }
+            }
             break;
         case CHANNEL_ID:
             // add channel_id attributes

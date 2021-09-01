@@ -13,6 +13,7 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 #include "cmd.h"
+#include "slow5_misc.h"
 
 #define WARNING_LIMIT 1
 #define PRIMARY_FIELD_COUNT 7 //without read_group number
@@ -258,11 +259,18 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
     else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
         flag_new_group_or_new_attribute_read_group = 0;
-//        operator_data->slow5_record->end_reason = value.attr_uint8_t;
-        std::string key = "ns_" + std::string(name); //not stored
-        char warn_message[300];
-        sprintf(warn_message,"Not stored: Attribute %s/%s is not stored yet until we confirm from ONT about its datatype", operator_data->group_name,name);
-        search_and_warn(operator_data,key,warn_message);
+        if(*(operator_data->flag_lossy)==0){
+            if(*(operator_data->flag_header_is_written)==0){
+                const char *enum_labels[] = {"unknown","partial","mux_change","unblock_mux_change","signal_positive","signal_negative"};
+                if(slow5_aux_meta_add_enum(operator_data->slow5File->header->aux_meta, "end_reason", SLOW5_ENUM, enum_labels, SLOW5_LENGTH(enum_labels))){
+                    ERROR("Could not initialize the record attribute '%s'", "end_reason");
+                    return -1;
+                }
+            }
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, "end_reason", &value.attr_uint8_t) != 0){
+                WARNING("end_reason auxiliary attribute value could not be set in the slow5 record %s", "");
+            }
+        }
     }
 //            CHANNEL_ID
     else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING){
