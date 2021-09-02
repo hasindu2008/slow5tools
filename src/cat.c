@@ -24,6 +24,9 @@
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -h, --help                         display this message and exit\n" \
 
+
+int close_files_and_exit(slow5_file_t *slow5_file, slow5_file_t *slow5_file_i, char *arg_fname_out);
+
 int cat_main(int argc, char **argv, struct program_meta *meta){
     // Debug: print arguments
     if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
@@ -150,7 +153,7 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
         slow5_file_t *slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if (!slow5File_i) {
             ERROR("[Skip file]: cannot open %s. skipping...\n", slow5_files[i].c_str());
-            return EXIT_FAILURE;
+            return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
         }
         if(first_iteration){
             // set parameters
@@ -162,7 +165,7 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
                 ERROR("Output file extension does not match with the output format%s",".");
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
-                return EXIT_FAILURE;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
             pressMethodRecord = slow5File_i->compress->record_press->method;
             pressMethodSignal = slow5File_i->compress->signal_press->method;
@@ -172,7 +175,7 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
 
             int ret0 = slow5_hdr_initialize(slow5File->header, lossy);
             if(ret0<0){
-                return EXIT_FAILURE;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
             slow5File->header->num_read_groups = 0;
             if(lossy==0){
@@ -196,29 +199,16 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
                     }
                     if(aux_add_fail){
                         ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
-                        exit(EXIT_FAILURE);
+                        return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
                     }
                 }
             }
-//            if(lossy==0){
-//                struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
-//                slow5File->header->aux_meta = aux_meta;
-//                slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
-//                uint32_t num_aux_attrs = aux_ptr->num;
-//                for(uint32_t r=0; r<num_aux_attrs; r++){
-//                    if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])){
-//                        ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
-//                        return EXIT_FAILURE;
-//                    }
-//                }
-//            }
-
             //set run_ids
             for(uint32_t j=0; j<num_read_groups; j++){
                 char* temp = slow5_hdr_get("run_id", 0, slow5File_i->header);
                 if(!temp){
                     ERROR("No run_id information found in %s.", slow5_files[i].c_str());
-                    return EXIT_FAILURE;
+                    return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
                 }
                 run_ids.push_back(std::string(temp));
                 //write header
@@ -229,65 +219,56 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
                 int64_t new_read_group = slow5_hdr_add_rg_data(slow5File->header, rg); //assumption0: if run_ids are similar the rest of the header attribute values of jth read_groups to follow will be similar.
                 if(new_read_group<0){
                     ERROR("Could not assign a new read group. %s","");
-                    return EXIT_FAILURE;
+                    return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
                 }
             }
             //now write the header to the slow5File.
             if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, press_out) == -1){
                 ERROR("Could not write the header to %s\n", arg_fname_out);
-                slow5_close(slow5File_i);
-                return EXIT_FAILURE;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
             first_iteration = 0;
         }else {
             if (lossy == 0 && slow5File_i->header->aux_meta == NULL) {
                 ERROR("%s has no auxiliary fields. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
-                slow5_close(slow5File_i);
-                return EXIT_FAILURE;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
             if (lossy == 1 && slow5File_i->header->aux_meta != NULL) {
                 ERROR("%s has auxiliary fields. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
-                slow5_close(slow5File_i);
-                continue;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
             if (slow5File_i->format != format_out) {
                 ERROR("%s has a different file format. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
-                slow5_close(slow5File_i);
-                return EXIT_FAILURE;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
             if (slow5File_i->compress->record_press->method != pressMethodRecord) {
                 ERROR("%s has a different record compression type. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
-                slow5_close(slow5File_i);
-                return EXIT_FAILURE;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
             if (slow5File_i->compress->signal_press->method != pressMethodSignal) {
                 ERROR("%s has a different signal compression type. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
-                slow5_close(slow5File_i);
-                return EXIT_FAILURE;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
             if (slow5File_i->header->num_read_groups != num_read_groups) {
                 ERROR("%s has a different number of read groups than the first file. Use merge (instead of cat) to merge files.",
                       slow5_files[i].c_str());
-                slow5_close(slow5File_i);
-                return EXIT_FAILURE;
+                return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
             }
-
             for (uint32_t j = 0; j < num_read_groups; j++) {
                 char *temp = slow5_hdr_get("run_id", 0, slow5File_i->header);
                 if (!temp) {
                     ERROR("No run_id information found in %s.", slow5_files[i].c_str());
-                    return EXIT_FAILURE;
+                    return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
                 }
                 if (strcmp(temp, run_ids[j].c_str())) {
                     ERROR("%s has a different run_id. Use merge (instead of cat) to merge files.",
                           slow5_files[i].c_str());
-                    slow5_close(slow5File_i);
-                    return EXIT_FAILURE;
+                    return close_files_and_exit(slow5File, slow5File_i, arg_fname_out);
                 }
             }
         }
@@ -315,4 +296,20 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
     slow5_close(slow5File);
 
     return EXIT_SUCCESS;
+}
+
+int close_files_and_exit(slow5_file_t *slow5_file, slow5_file_t *slow5_file_i, char *arg_fname_out) {
+    if(slow5_file_i){
+        slow5_close(slow5_file_i);
+    }
+    if(slow5_file){
+        slow5_close(slow5_file);
+    }
+    if(arg_fname_out){
+        int del = remove(arg_fname_out);
+        if (del){
+            ERROR("Failed to delete the malformed output file %s", arg_fname_out);
+        }
+    }
+    return EXIT_FAILURE;
 }
