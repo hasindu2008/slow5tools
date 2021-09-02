@@ -70,7 +70,6 @@ fast5_file_t fast5_open(const char* filename) {
                 ERROR("Could not parse the fast5 version string %s", version_str.c_str());
                 exit(EXIT_FAILURE);
             }
-
             fh.is_multi_fast5 = major >= 1;
         }
     }
@@ -154,6 +153,26 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             ERROR("f2s cannot handle H5TClass of the atttribute %s/%s.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->group_name, name);
             return -1;
     }
+
+    std::vector<std::string> enum_labels_list;
+    std::vector<const char*> enum_labels_list_ptrs;
+    if(H5Tclass==H5T_ENUM && *(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
+        int n = H5Tget_nmembers(native_type);
+        unsigned u;
+        for (u=0; u<(unsigned)n; u++) {
+            char *symbol = H5Tget_member_name(native_type, u);
+            short val;
+            H5Tget_member_value(native_type, u, &val);
+            enum_labels_list.push_back(std::string(symbol));
+//            fprintf(stderr,"#%u %20s = %d\n", u, symbol, val);
+            free(symbol);
+        }
+        for (std::string const& str : enum_labels_list) {
+            enum_labels_list_ptrs.push_back(str.data());
+        }
+    }
+
+    //close attributes
     H5Tclose(native_type);
     H5Tclose(attribute_type);
     H5Aclose(attribute);
@@ -261,8 +280,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         flag_new_group_or_new_attribute_read_group = 0;
         if(*(operator_data->flag_lossy)==0){
             if(*(operator_data->flag_header_is_written)==0){
-                const char *enum_labels[] = {"unknown","partial","mux_change","unblock_mux_change","signal_positive","signal_negative"};
-                if(slow5_aux_meta_add_enum(operator_data->slow5File->header->aux_meta, "end_reason", SLOW5_ENUM, enum_labels, SLOW5_LENGTH(enum_labels))){
+                if(slow5_aux_meta_add_enum(operator_data->slow5File->header->aux_meta, "end_reason", SLOW5_ENUM, enum_labels_list_ptrs.data(), enum_labels_list_ptrs.size())){
                     ERROR("Could not initialize the record attribute '%s'", "end_reason");
                     return -1;
                 }
@@ -902,7 +920,6 @@ static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std
         if(ret >= 0) {
             out = buffer;
         }
-
         // clean up
         free(buffer);
     }
