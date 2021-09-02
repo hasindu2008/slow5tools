@@ -252,18 +252,18 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
 
 }
 
-void initialize_end_reason(hid_t* end_reason_enum_id) {
+void initialize_end_reason(slow5_hdr_t* header, hid_t* end_reason_enum_id) {
 // create end_reason enum
     //    https://support.hdfgroup.org/HDF5/doc/H5.user/DatatypesEnum.html
 //    end_reason_enum_id = H5Tcreate(H5T_ENUM, sizeof(uint8_t));
     *end_reason_enum_id = H5Tenum_create(H5T_STD_U8LE);
-    uint8_t val;
-    H5Tenum_insert(*end_reason_enum_id, "unknown",   (val=0,&val));
-    H5Tenum_insert(*end_reason_enum_id, "partial", (val=1,&val));
-    H5Tenum_insert(*end_reason_enum_id, "mux_change",  (val=2,&val));
-    H5Tenum_insert(*end_reason_enum_id, "unblock_mux_change", (val=3,&val));
-    H5Tenum_insert(*end_reason_enum_id, "signal_positive", (val=4,&val));
-    H5Tenum_insert(*end_reason_enum_id, "signal_negative", (val=5,&val));
+    uint8_t n;
+    char **enum_labels = slow5_get_aux_enum_labels(header, "end_reason", &n);
+
+    for(uint8_t i=0; i<n; i++){
+        uint8_t val;
+        H5Tenum_insert(*end_reason_enum_id, enum_labels[i], (val=i,&val));
+    }
 }
 
 void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *slow5_filename) {
@@ -271,7 +271,6 @@ void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *sl
     hid_t group_read, group_raw, group_channel_id, group_tracking_id, group_context_tags;
     herr_t  status;
     hid_t end_reason_enum_id;
-    initialize_end_reason(&end_reason_enum_id);
     struct slow5_rec *slow5_record = NULL;
 
     int ret = slow5_get_next(&slow5_record, slow5File);
@@ -291,6 +290,10 @@ void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *sl
             exit(EXIT_FAILURE);
         }
     }
+    if(check_aux_fields(slow5_record, "end_reason")==0){
+        initialize_end_reason(slow5File->header, &end_reason_enum_id);
+    }
+
 
     /* Create a new file using default properties. */
     file_id = H5Fcreate(FAST5_FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);

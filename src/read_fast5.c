@@ -157,6 +157,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     std::vector<std::string> enum_labels_list;
     std::vector<const char*> enum_labels_list_ptrs;
     if(H5Tclass==H5T_ENUM && *(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
+        //https://support.hdfgroup.org/HDF5/doc/H5.user/DatatypesEnum.html
         int n = H5Tget_nmembers(native_type);
         unsigned u;
         for (u=0; u<(unsigned)n; u++) {
