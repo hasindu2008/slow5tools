@@ -66,24 +66,24 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             // add Raw attributes
             if(header->aux_meta){
                 uint64_t start_time = slow5_aux_get_uint64(slow5_record, "start_time", &err);
-                if(err >= 0){
+                if(err == 0){
                     add_attribute(group_id,"start_time",start_time,H5T_STD_U64LE);
                 }
                 int32_t read_number = slow5_aux_get_int32(slow5_record, "read_number", &err);
-                if(err >= 0){
+                if(err == 0){
                     add_attribute(group_id,"read_number", read_number,H5T_STD_I32LE);
                 }
                 uint8_t start_mux = slow5_aux_get_uint8(slow5_record, "start_mux", &err);
-                if(err >= 0){
+                if(err == 0){
                     add_attribute(group_id,"start_mux",start_mux,H5T_STD_U8LE);
                 }
                 double median_before = slow5_aux_get_double(slow5_record, "median_before", &err);
-                if(err >= 0){
+                if(err == 0){
                     add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
                 }
                 if(check_aux_fields(slow5_record, "end_reason")==0){
                     uint8_t end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
-                    if(err >= 0){
+                    if(err == 0){
                         add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
                     }
                 }
@@ -95,7 +95,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             // add channel_id attributes
             if(header->aux_meta){
                 attribute_value = slow5_aux_get_string(slow5_record, "channel_number", NULL, &err);
-                if(err >= 0){
+                if(err == 0){
                     add_attribute(group_id,"channel_number",attribute_value,H5T_C_S1);
                 }
             }
