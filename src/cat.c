@@ -64,7 +64,6 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
     char *arg_fname_out = NULL;
     std::string format =  "low5";
     int lossy = 0;
-    int output_file_set = 0;
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_fmt extension_format = SLOW5_FORMAT_BINARY;
@@ -85,7 +84,6 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
         switch (opt) {
             case 'o':
                 arg_fname_out = optarg;
-                output_file_set = 1;
                 break;
             case 'h':
                 if (meta->verbosity_level >= LOG_DEBUG) {
@@ -139,9 +137,6 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
             ERROR("Output file %s could not be opened - %s.", arg_fname_out, strerror(errno));
             return EXIT_FAILURE;
         }
-    }else{
-        std::string stdout_s = "stdout";
-        arg_fname_out = &stdout_s[0];
     }
 
     slow5_file_t* slow5File = NULL;
@@ -161,7 +156,7 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
                 lossy = 1;
             }
             format_out = slow5File_i->format;
-            if(output_file_set && format_out!=extension_format){
+            if(arg_fname_out && format_out!=extension_format){
                 ERROR("Output file extension does not match with the output format%s",".");
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
