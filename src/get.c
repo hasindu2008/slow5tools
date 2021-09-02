@@ -410,14 +410,11 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 }
             }
         }
-
         // Print total time to read slow5
         VERBOSE("read time = %.3f sec", read_time);
-
         // Free everything
         free(db.read_id);
         free(db.read_record);
-
     } else {
 
         for (int i = optind + 1; i < argc; ++ i){
