@@ -219,6 +219,11 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     }
     if(arg_fname_out){
         extension_format = parse_path_to_fmt(arg_fname_out);
+        if (extension_format == SLOW5_FORMAT_UNKNOWN) {
+            ERROR("cannot detect file format -- '%s'", arg_fname_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
         if(format_out_set==0){
             format_out = extension_format;
         }

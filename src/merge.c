@@ -194,7 +194,15 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
     }
     if(arg_fname_out){
+        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("parsing output file format%s","");
+        }
         extension_format = parse_path_to_fmt(arg_fname_out);
+        if (extension_format == SLOW5_FORMAT_UNKNOWN) {
+            ERROR("cannot detect file format -- '%s'", arg_fname_out);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
         if(format_out_set==0){
             format_out = extension_format;
         }
@@ -355,15 +363,30 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
 
     if(lossy==0){
-        for( const auto& n :set_aux_attr_pairs){
-            if(slow5_aux_meta_add(slow5File->header->aux_meta, n.first.c_str(), n.second)){
-                ERROR("Could not initialize the record attribute '%s'", n.first.c_str());
-                return -1;
+        int aux_add_fail = 0;
+        for( const auto& pair :set_aux_attr_pairs){
+            if(pair.second==SLOW5_ENUM || pair.second==SLOW5_ENUM_ARRAY){
+                uint8_t n;
+                const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File->header, pair.first.c_str(), &n);
+                if(!enum_labels){
+                    aux_add_fail = 1;
+                }
+                if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, pair.first.c_str(), pair.second, enum_labels, n)){
+                    aux_add_fail = 1;
+                }
+            }else{
+                if(slow5_aux_meta_add(slow5File->header->aux_meta, pair.first.c_str(), pair.second)){
+                    aux_add_fail = 1;
+                }
+            }
+            if(aux_add_fail){
+                ERROR("Could not initialize the record attribute '%s'", pair.first.c_str());
+                return EXIT_FAILURE;
             }
         }
     }
 
-    if(slow5_files.size()==0){
+   if(slow5_files.size()==0){
         ERROR("No slow5/blow5 files found for conversion. Exiting...%s","");
         return EXIT_FAILURE;
     }

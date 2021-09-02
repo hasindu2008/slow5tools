@@ -243,8 +243,23 @@ void split_child_worker(proc_arg_t args,
                 if(lossy==0){
                     slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
                     uint32_t num_aux_attrs = aux_ptr->num;
+                    int aux_add_fail = 0;
                     for(uint32_t r=0; r<num_aux_attrs; r++){
-                        if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])){
+                        if(aux_ptr->types[r]==SLOW5_ENUM || aux_ptr->types[r]==SLOW5_ENUM_ARRAY){
+                            uint8_t n;
+                            const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File_i->header, aux_ptr->attrs[r], &n);
+                            if(!enum_labels){
+                                aux_add_fail = 1;
+                            }
+                            if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r], enum_labels, n)){
+                                aux_add_fail = 1;
+                            }
+                        }else{
+                            if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])) {
+                                aux_add_fail =1;
+                            }
+                        }
+                        if(aux_add_fail){
                             ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
                             exit(EXIT_FAILURE);
                         }
@@ -313,8 +328,23 @@ void split_child_worker(proc_arg_t args,
                 if(lossy==0){
                     slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
                     uint32_t num_aux_attrs = aux_ptr->num;
+                    int aux_add_fail = 0;
                     for(uint32_t r=0; r<num_aux_attrs; r++){
-                        if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])){
+                        if(aux_ptr->types[r]==SLOW5_ENUM || aux_ptr->types[r]==SLOW5_ENUM_ARRAY){
+                            uint8_t n;
+                            const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File_i->header, aux_ptr->attrs[r], &n);
+                            if(!enum_labels){
+                                aux_add_fail = 1;
+                            }
+                            if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r], enum_labels, n)){
+                                aux_add_fail = 1;
+                            }
+                        }else{
+                            if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])) {
+                                aux_add_fail =1;
+                            }
+                        }
+                        if(aux_add_fail){
                             ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
                             exit(EXIT_FAILURE);
                         }
