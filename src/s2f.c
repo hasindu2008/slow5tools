@@ -393,7 +393,9 @@ void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *sl
         //fprintf(stderr, "peak RAM = %.3f GB\n", slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
     }
 
-    H5Tclose(end_reason_enum_id);
+    if (check_aux_fields(slow5_record, "end_reason", 0) == 0){
+        H5Tclose(end_reason_enum_id);
+    }
     status = H5Gclose (group_read_first);
     slow5_rec_free(slow5_record);
     status = H5Fclose(file_id);
