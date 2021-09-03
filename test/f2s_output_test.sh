@@ -292,6 +292,13 @@ mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 fa
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_fifth_read_group_in_both_read_and_tracking_id.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+TESTCASE_NO=34
+echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason fast5-------------------"
+mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
+$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason0.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason0.slow5 || die "testcase $TESTCASE_NO failed"
+diff -s $EXP_SLOW5_DIR/end_reason_fast5/end_reason0.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for end_reason fast5"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 

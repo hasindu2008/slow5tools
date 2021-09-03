@@ -27,6 +27,7 @@ if [ "$1" = 'mem' ]; then
 else
     SLOW5TOOLS=$SLOW5TOOLS_WITHOUT_VALGRIND
 fi
+SLOW5TOOLS_ERROR="(slow5tools should throw an error)"
 
 TESTCASE=1
 EXP_SLOW5_FILE="$REL_PATH/data/exp/cat/expected_multi_group.slow5"
@@ -59,19 +60,19 @@ $SLOW5TOOLS view "$OUTPUT_DIR/output.blow5" > "$OUTPUT_DIR/output.slow5" || die 
 diff $EXP_SLOW5_FILE "$OUTPUT_DIR/output.slow5" || die "testcase:$TESTCASE diff failed"
 
 TESTCASE=6
-info "testcase:$TESTCASE - cat two slow5s. output-file. wrong file extension"
+info "testcase:$TESTCASE - cat two slow5s. output-file. wrong file extension. $SLOW5TOOLS_ERROR"
 $SLOW5TOOLS cat "$RAW_DIR/slow5s/" -o "$OUTPUT_DIR/output.blow5" && die "testcase:$TESTCASE slow5tools cat failed"
 
 TESTCASE=7
-info "testcase:$TESTCASE - cat two blow5s. output-file. wrong file extension"
+info "testcase:$TESTCASE - cat two blow5s. output-file. wrong file extension. $SLOW5TOOLS_ERROR"
 $SLOW5TOOLS cat "$RAW_DIR/blow5s/" -o "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools cat failed"
 
 TESTCASE=8
-info "testcase:$TESTCASE - cat different format files"
+info "testcase:$TESTCASE - cat different format files. $SLOW5TOOLS_ERROR"
 $SLOW5TOOLS cat "$RAW_DIR/mixed_format/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools cat failed"
 
 TESTCASE=9
-info "testcase:$TESTCASE - cat different compression types files"
+info "testcase:$TESTCASE - cat different compression types files. $SLOW5TOOLS_ERROR"
 $SLOW5TOOLS cat "$RAW_DIR/mixed_compression/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools cat failed"
 
 info "all $TESTCASE cat testcases passed"

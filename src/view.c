@@ -235,9 +235,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("auto detecting input file format%s","");
         }
-
         fmt_in = parse_path_to_fmt(arg_fname_in);
-
         // Error
         if (fmt_in == SLOW5_FORMAT_UNKNOWN) {
             ERROR("cannot detect file format -- '%s'", arg_fname_in);
