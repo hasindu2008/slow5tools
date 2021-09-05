@@ -57,7 +57,7 @@ jobs:
             - zlib1g-dev
             - libhdf5-dev
             - libzstd1-dev
-      script: autoreconf && ./configure && make zstd=1 && make test zstd=1
+      script: autoreconf && ./configure && make zstd=1 && export zstd=1 && make test
     # - name: "arm64 hdf5 install script"
     #   arch: arm64
     #   os: linux

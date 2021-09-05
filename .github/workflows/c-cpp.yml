@@ -67,9 +67,9 @@ jobs:
     - name: build
       run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8 zstd=1
     - name: test
-      run: make test zstd=1
+      run: export zstd=1 && make test
     - name: test valgrind
-      run: ./test/test.sh mem
+      run: export zstd=1 && ./test/test.sh mem
   ubuntu_20:
     name: Ubuntu 20
     runs-on: ubuntu-20.04
@@ -112,7 +112,7 @@ jobs:
     - name: build
       run: autoreconf --install  && ./configure && make -j8 zstd=1
     - name: test
-      run: make test zstd=1
+      run: export zstd=1 && make test
   # arm64:
   #   name: ubuntu arm
   #   runs-on: ubuntu-latest
