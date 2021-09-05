@@ -35,11 +35,15 @@ jobs:
       with:
         submodules: recursive
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev libzstd1-dev
     - name: build
       run: autoreconf && ./configure && make -j8
     - name: test
       run: make test
+    - name: build zstd
+      run: make clean && make -j8 zstd=1
+    - name: test zstd
+      run: export zstd=1 && make test
   ubuntu_18:
     name: Ubuntu 18 hdf5 install script
     runs-on: ubuntu-18.04
@@ -48,27 +52,18 @@ jobs:
       with:
         submodules: recursive
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev valgrind
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev valgrind libzstd-dev
     - name: build
       run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
       run: make test
     - name: test valgrind
       run: ./test/test.sh mem
-  ubuntu_18_zstd:
-    name: Ubuntu 18 hdf5 install script zstd
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev valgrind libzstd-dev
-    - name: build
-      run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8 zstd=1
-    - name: test
+    - name: build zstd
+      run: make clean && make -j8 zstd=1
+    - name: test zstd
       run: export zstd=1 && make test
-    - name: test valgrind
+    - name: test valgrind zstd
       run: export zstd=1 && ./test/test.sh mem
   ubuntu_20:
     name: Ubuntu 20
@@ -78,15 +73,15 @@ jobs:
       with:
         submodules: recursive
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev libzstd-dev
     - name: build-gcc
       run: autoreconf && ./configure && make -j8
     - name: test-gcc
       run: make test
     - name: build-clang
-      run: autoreconf && ./configure && make CC=clang CXX=clang++ -j8
+      run: autoreconf && ./configure && make CC=clang CXX=clang++ -j8 zstd=1
     - name: test-clang
-      run: make test
+      run: export zstd=1 && make test
   os_x:
     name: OSX
     runs-on: macos-10.15
@@ -101,7 +96,7 @@ jobs:
     - name: test
       run: make test
   os_x_zstd:
-    name: OSX
+    name: OSX zstd
     runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
