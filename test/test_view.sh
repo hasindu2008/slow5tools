@@ -143,17 +143,17 @@ do
 
     ######## selective zstd tests
     if [ "$zstd" = "1" ]; then
-        # slow5 ASCII -> blow5 zstd-svb
-        ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.slow5" -c zstd -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5"
-        my_diff "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5" -q
+        # # slow5 ASCII -> blow5 zstd-svb
+        # ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.slow5" -c zstd -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5"
+        # my_diff "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5" -q
 
-        # blow5 zlib -> blow5 zstd-svb
-        ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib.blow5" -c zstd -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5"
-        my_diff "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5" -q
+        # # blow5 zlib -> blow5 zstd-svb
+        # ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib.blow5" -c zstd -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5"
+        # my_diff "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5" -q
 
-        # blow5 zlib-svb -> blow5 zstd-svb
-        ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" -c zstd -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5"
-        my_diff "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5" -q
+        # # blow5 zlib-svb -> blow5 zstd-svb
+        # ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" -c zstd -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5"
+        # my_diff "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5" -q
 
         # blow5 zstd-svb ->  slow5 ASCII
         ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" -o "$OUT/one_fast5/out_1_${type}_v0.2.0.slow5"
