@@ -82,6 +82,35 @@ jobs:
       run: make clean && make CC=clang CXX=clang++ -j8 zstd=1
     - name: test-clang zstd
       run: export zstd=1 && make test
+  ubuntu_20_icc:
+    name: Ubuntu 20 icc
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Intel Apt repository
+      timeout-minutes: 1
+      run: |
+        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+        echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+        sudo apt-get update
+    - name: install packages
+      run: sudo apt-get install -y zlib1g-dev libhdf5-dev libzstd-dev intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+    - name: Setup Intel oneAPI environment
+      run: |
+        source /opt/intel/oneapi/setvars.sh
+        printenv >> $GITHUB_ENV
+    - name: build
+      run: autoreconf && ./configure && make CC=icc CXX=icpc-j8
+    - name: test
+      run: make test
+    - name: build zstd
+      run: make clean && make CC=icc CXX=icpc -j8 zstd=1
+    - name: test zstd
+      run: export zstd=1 && make test
   os_x:
     name: OSX
     runs-on: macos-10.15
