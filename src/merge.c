@@ -36,6 +36,8 @@
     "    -h, --help                         display this message and exit\n"                                               \
     HELP_FORMATS_METHODS
 
+int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64_t output_g, int64_t input_g);
+
 void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
     //
     struct slow5_rec *read = NULL;
@@ -304,6 +306,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     std::vector<std::string> slow5_files;
     size_t num_files = files.size();
     for(size_t i=0; i<num_files; i++) { //iterate over slow5files
+        if (meta->verbosity_level >= LOG_DEBUG) {
+            DEBUG("input file\t%s", files[i].c_str());
+        }
         slow5_file_t* slow5File_i = slow5_open(files[i].c_str(), "r");
         if(!slow5File_i){
             ERROR("[Skip file]: cannot open %s. skipping...\n",files[i].c_str());
@@ -343,6 +348,18 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 if(strcmp(run_id_j,run_id_k) == 0){
                     flag_run_id_found = 1;
                     list[index][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
+                    int ret_compare = compare_headers(slow5File->header, slow5File_i->header, k, j);
+                    if(ret_compare == -1){
+                        ERROR("In file %s, read_group %" PRIu64 "has a different number of header attributes than the previous files had", files[i].c_str(), j);
+                        return EXIT_FAILURE;
+                    }else if(ret_compare == -2){
+                        ERROR("In file %s, read_group %" PRIu64 " has a different set of header attributes than the previous files had", files[i].c_str(), j);
+                        return EXIT_FAILURE;
+                    }else if(ret_compare == -3){
+                        ERROR("In file %s, read_group %" PRIu64 " has different values for the header attributes than the previous files had", files[i].c_str(), j);
+                        return EXIT_FAILURE;
+                    }
+                    DEBUG("ret_compare\t%d", ret_compare);
                     break;
                 }
             }
@@ -362,29 +379,29 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     }
 
-    if(lossy==0){
-        int aux_add_fail = 0;
-        for( const auto& pair :set_aux_attr_pairs){
-            if(pair.second==SLOW5_ENUM || pair.second==SLOW5_ENUM_ARRAY){
-                uint8_t n;
-                const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File->header, pair.first.c_str(), &n);
-                if(!enum_labels){
-                    aux_add_fail = 1;
-                }
-                if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, pair.first.c_str(), pair.second, enum_labels, n)){
-                    aux_add_fail = 1;
-                }
-            }else{
-                if(slow5_aux_meta_add(slow5File->header->aux_meta, pair.first.c_str(), pair.second)){
-                    aux_add_fail = 1;
-                }
-            }
-            if(aux_add_fail){
-                ERROR("Could not initialize the record attribute '%s'", pair.first.c_str());
-                return EXIT_FAILURE;
-            }
-        }
-    }
+//    if(lossy==0){
+//        int aux_add_fail = 0;
+//        for( const auto& pair :set_aux_attr_pairs){
+//            if(pair.second==SLOW5_ENUM || pair.second==SLOW5_ENUM_ARRAY){
+//                uint8_t n;
+//                const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File->header, pair.first.c_str(), &n);
+//                if(!enum_labels){
+//                    aux_add_fail = 1;
+//                }
+//                if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, pair.first.c_str(), pair.second, enum_labels, n)){
+//                    aux_add_fail = 1;
+//                }
+//            }else{
+//                if(slow5_aux_meta_add(slow5File->header->aux_meta, pair.first.c_str(), pair.second)){
+//                    aux_add_fail = 1;
+//                }
+//            }
+//            if(aux_add_fail){
+//                ERROR("Could not initialize the record attribute '%s'", pair.first.c_str());
+//                return EXIT_FAILURE;
+//            }
+//        }
+//    }
 
    if(slow5_files.size()==0){
         ERROR("No slow5/blow5 files found for conversion. Exiting...%s","");
@@ -500,4 +517,31 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
+}
+
+int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64_t output_g, int64_t input_g) {
+    uint32_t output_num_attrs, input_num_attrs;
+    output_num_attrs = output_header->data.num_attrs;
+    input_num_attrs = input_header->data.num_attrs;
+    if(output_num_attrs != input_num_attrs){
+        return -1; //number of attributes are different
+    }
+    khash_t(slow5_s2s) *rg_o = slow5_hdr_get_data(output_g, output_header);
+    khash_t(slow5_s2s) *rg_i = slow5_hdr_get_data(input_g, input_header);
+
+    for (khint_t itr = kh_begin(rg_o); itr != kh_end(rg_o); ++itr) {  // traverse hash_table_o
+        if (kh_exist(rg_o, itr)) {
+            const char* key_o = kh_key(rg_o, itr);
+            khint_t pos_i = kh_get(slow5_s2s, rg_i, key_o);
+            if(pos_i == kh_end(rg_i)){
+                return -2; //an attribute in hash_table_o is not available in hash_table_i
+            }
+            const char *value_o = kh_value(rg_o, itr);
+            const char *value_i = kh_value(rg_i, pos_i);
+            if(strcmp(value_o,value_i)){
+                return -3; //the attribute values are different
+            }
+        }
+    }
+    return 0;
 }
