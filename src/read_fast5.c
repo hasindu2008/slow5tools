@@ -33,7 +33,7 @@ int group_check(struct operator_obj *od, haddr_t target_addr);
 
 void search_and_warn(operator_obj *operator_data, std::string key, const char *warn_message);
 
-int process_attribute(const char *name, operator_obj *operator_data, H5T_class_t aClass, attribute_data data, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs);
+int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_class_t h5TClass, attribute_data value, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs);
 
 int print_slow5_header(operator_obj* operator_data) {
     if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
@@ -210,7 +210,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 //            RAW
     else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(process_attribute(name, operator_data, H5Tclass, value, SLOW5_UINT64_T, enum_labels_list_ptrs) == -1){
+        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_UINT64_T, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
@@ -220,13 +220,13 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
     else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(process_attribute(name, operator_data, H5Tclass, value, SLOW5_INT32_T, enum_labels_list_ptrs) == -1){
+        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_INT32_T, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
     else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(process_attribute(name, operator_data, H5Tclass, value, SLOW5_UINT8_T, enum_labels_list_ptrs) == -1){
+        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_UINT8_T, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
@@ -244,13 +244,13 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
     else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(process_attribute(name, operator_data, H5Tclass, value, SLOW5_DOUBLE, enum_labels_list_ptrs) == -1){
+        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_DOUBLE, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
     else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(process_attribute(name, operator_data, H5Tclass, value, SLOW5_ENUM, enum_labels_list_ptrs) == -1){
+        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_ENUM, enum_labels_list_ptrs) == -1){
             return -1;
         }
 
@@ -258,7 +258,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 //            CHANNEL_ID
     else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(process_attribute(name, operator_data, H5Tclass, value, SLOW5_STRING, enum_labels_list_ptrs) == -1){
+        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_STRING, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
@@ -367,7 +367,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     return return_val;
 }
 
-int process_attribute(const char *name, operator_obj *operator_data, H5T_class_t h5TClass, attribute_data value, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs) {
+int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_class_t h5TClass, attribute_data value, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs) {
     int failed = 0;
     if(*(operator_data->flag_lossy)==0){
         if(*(operator_data->flag_header_is_written)==0){
