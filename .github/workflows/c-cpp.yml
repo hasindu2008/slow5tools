@@ -104,11 +104,11 @@ jobs:
         source /opt/intel/oneapi/setvars.sh
         printenv >> $GITHUB_ENV
     - name: build
-      run: autoreconf && ./configure && make CC=icc CXX=icpc AR=icc -j8
+      run: autoreconf && ./configure && make CC=icc CXX=icpc-j8
     - name: test
       run: make test
     - name: build zstd
-      run: make clean && make CC=icc CXX=icpc AR=icc -j8 zstd=1
+      run: make clean && make CC=icc CXX=icpc -j8 zstd=1
     - name: test zstd
       run: export zstd=1 && make test
   os_x:
