@@ -1,15 +1,13 @@
 #!/bin/bash
-# merge four single group slow5s and diff with expected slow5 to check if slow5tools merge is working as expected
-
 # WARNING: this file should be stored inside test directory
 # WARNING: the executable should be found at ../
 # WARNING: four slow5s should be found at ./data/exp/merge/slow5s
 # WARNING: expected slow5 should be found at ./data/exp/merge
 
-Usage="merge_integrity.sh"
+Usage="test_merge.sh"
 
 # Relative path to "slow5/tests/"
-REL_PATH="$(dirname $0)/" 
+REL_PATH="$(dirname $0)/"
 
 NC='\033[0m' # No Color
 RED='\033[0;31m'
@@ -33,6 +31,9 @@ test -d  $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
 mkdir $OUTPUT_DIR || die "Creating $OUTPUT_DIR failed"
 
 INPUT_FILE=$REL_PATH/data/exp/merge/slow5s
+
+# merge four single group slow5s and diff with expected slow5 to check if slow5tools merge is working as expected
+
 INPUT_FILES="$INPUT_FILE/rg0.slow5 $INPUT_FILE/rg1.slow5 $INPUT_FILE/rg2.slow5 $INPUT_FILE/rg3.slow5"
 
 NUM_THREADS=2
@@ -93,6 +94,8 @@ else
     echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
     exit 1
 fi
+
+#
 
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"

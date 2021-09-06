@@ -98,22 +98,22 @@ fi
 
 echo_test 'merge integrity test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/merge_integrity_test.sh mem; then
+    if ! ./test/test_merge.sh mem; then
         fail
     fi
 else
-    if ! ./test/merge_integrity_test.sh; then
+    if ! ./test/test_merge.sh; then
         fail
     fi
 fi
 
 echo_test 'split integrity test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/split_integrity_test.sh mem; then
+    if ! ./test/test_split.sh mem; then
         fail
     fi
 else
-    if ! ./test/split_integrity_test.sh; then
+    if ! ./test/test_split.sh; then
         fail
     fi
 fi
@@ -129,24 +129,24 @@ else
     fi
 fi
 
-echo_test 'index_test'
+echo_test 'index test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/index_test.sh mem; then
+    if ! ./test/test_index.sh mem; then
         fail
     fi
 else
-    if ! ./test/index_test.sh; then
+    if ! ./test/test_index.sh; then
         fail
     fi
 fi
 
-echo_test 'get_test'
+echo_test 'get test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/get_test.sh mem; then
+    if ! ./test/test_get.sh mem; then
         fail
     fi
 else
-    if ! ./test/get_test.sh; then
+    if ! ./test/test_get.sh; then
         fail
     fi
 fi
@@ -165,13 +165,13 @@ else
     fi
 fi
 
-echo_test 'cat_test'
+echo_test 'cat test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/cat_test.sh mem ; then
+    if ! ./test/test_cat.sh mem ; then
         fail
     fi
 else
-    if ! ./test/cat_test.sh ; then
+    if ! ./test/test_cat.sh ; then
         fail
     fi
 fi
