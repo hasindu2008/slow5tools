@@ -109,6 +109,6 @@ INPUT_FILES="$INPUT_FILE/aux_no_enum.slow5 $INPUT_FILE/none_v0.1.0.blow5 $INPUT_
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase 4: merging with and without enum type failed"
 
 
-rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
+#rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0

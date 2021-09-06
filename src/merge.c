@@ -319,11 +319,53 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             slow5_close(slow5File_i);
             return EXIT_FAILURE;
         }
-        if(lossy==0){
+        if(lossy==0){ // adding aux_fields to the output header
             slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
             uint32_t num_aux_attrs = aux_ptr->num;
             for(uint32_t r=0; r<num_aux_attrs; r++){
-                set_aux_attr_pairs.insert({std::string(aux_ptr->attrs[r]),aux_ptr->types[r]});
+                if(aux_ptr->types[r] == SLOW5_ENUM || aux_ptr->types[r] == SLOW5_ENUM_ARRAY){
+                    int aux_avail = -1;
+                    if(slow5File->header->aux_meta->num > 0) {
+                        aux_avail = check_aux_fields_in_header(slow5File->header, aux_ptr->attrs[r], 0);
+                    }
+                    if(aux_avail == -1){
+                        uint8_t n;
+                        const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File_i->header, aux_ptr->attrs[r], &n);
+                        if(!enum_labels){
+                            ERROR("Could not fetch the record attribute '%s' from %s", aux_ptr->attrs[r], files[i].c_str());
+                            return EXIT_FAILURE;
+                        }
+                        if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r], enum_labels, n)){
+                            ERROR("Could not initialize the record attribute '%s' from %s", aux_ptr->attrs[r], files[i].c_str());
+                            return EXIT_FAILURE;
+                        }
+                    } else {
+                        uint8_t n_input;
+                        const char **enum_labels_input = (const char** )slow5_get_aux_enum_labels(slow5File_i->header, aux_ptr->attrs[r], &n_input);
+                        if(!enum_labels_input){
+                            ERROR("Could not fetch the record attribute '%s' from %s", aux_ptr->attrs[r], files[i].c_str());
+                            return EXIT_FAILURE;
+                        }
+                        uint8_t n_output;
+                        const char **enum_labels_output = (const char** )slow5_get_aux_enum_labels(slow5File->header, aux_ptr->attrs[r], &n_output);
+                        if(!enum_labels_output){
+                            ERROR("Internal error:Could not fetch the record attribute '%s' from the output header", aux_ptr->attrs[r]);
+                            return EXIT_FAILURE;
+                        }
+                        if(n_input != n_output){
+                            ERROR("Attribute %s has different number of enum labels in different files", aux_ptr->attrs[r]);
+                            return EXIT_FAILURE;
+                        }
+                        for(uint8_t i=0; i<n_input; i++){
+                            if(strcmp(enum_labels_input[i],enum_labels_output[i])){
+                                ERROR("Attribute %s has different order/name of the enum labels in different files", aux_ptr->attrs[r]);
+                                return EXIT_FAILURE;
+                            }
+                        }
+                    }
+                }else{
+                    set_aux_attr_pairs.insert({std::string(aux_ptr->attrs[r]),aux_ptr->types[r]});
+                }
             }
         }
 
@@ -350,16 +392,15 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                     list[index][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
                     int ret_compare = compare_headers(slow5File->header, slow5File_i->header, k, j);
                     if(ret_compare == -1){
-                        ERROR("In file %s, read_group %" PRIu64 "has a different number of header attributes than the previous files had", files[i].c_str(), j);
+                        ERROR("In file %s, read_group %" PRIu64 " has a different number of header attributes than what the processed files had", files[i].c_str(), j);
                         return EXIT_FAILURE;
                     }else if(ret_compare == -2){
-                        ERROR("In file %s, read_group %" PRIu64 " has a different set of header attributes than the previous files had", files[i].c_str(), j);
+                        ERROR("In file %s, read_group %" PRIu64 " has a different set of header attributes than what the processed files had", files[i].c_str(), j);
                         return EXIT_FAILURE;
                     }else if(ret_compare == -3){
-                        ERROR("In file %s, read_group %" PRIu64 " has different values for the header attributes than the previous files had", files[i].c_str(), j);
+                        ERROR("In file %s, read_group %" PRIu64 " has different values for the header attributes than what the processed files had", files[i].c_str(), j);
                         return EXIT_FAILURE;
                     }
-                    DEBUG("ret_compare\t%d", ret_compare);
                     break;
                 }
             }
@@ -379,36 +420,20 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     }
 
-//    if(lossy==0){
-//        int aux_add_fail = 0;
-//        for( const auto& pair :set_aux_attr_pairs){
-//            if(pair.second==SLOW5_ENUM || pair.second==SLOW5_ENUM_ARRAY){
-//                uint8_t n;
-//                const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File->header, pair.first.c_str(), &n);
-//                if(!enum_labels){
-//                    aux_add_fail = 1;
-//                }
-//                if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, pair.first.c_str(), pair.second, enum_labels, n)){
-//                    aux_add_fail = 1;
-//                }
-//            }else{
-//                if(slow5_aux_meta_add(slow5File->header->aux_meta, pair.first.c_str(), pair.second)){
-//                    aux_add_fail = 1;
-//                }
-//            }
-//            if(aux_add_fail){
-//                ERROR("Could not initialize the record attribute '%s'", pair.first.c_str());
-//                return EXIT_FAILURE;
-//            }
-//        }
-//    }
+    if(lossy==0){
+        for( const auto& pair :set_aux_attr_pairs){
+            if(slow5_aux_meta_add(slow5File->header->aux_meta, pair.first.c_str(), pair.second)){
+                ERROR("Could not initialize the record attribute '%s'", pair.first.c_str());
+                return EXIT_FAILURE;
+            }
+        }
+    }
 
    if(slow5_files.size()==0){
         ERROR("No slow5/blow5 files found for conversion. Exiting...%s","");
         return EXIT_FAILURE;
     }
-
-    fprintf(stderr, "[%s] Allocating new read group numbers - took %.3fs\n", __func__, slow5_realtime() - realtime0);
+    VERBOSE("Allocating new read group numbers - took %.3fs\n",slow5_realtime() - realtime0);
 
     //now write the header to the slow5File. Use Binary non compress method for fast writing
     slow5_press_method_t method = {pressMethodRecord, pressMethodSignal};
@@ -523,9 +548,9 @@ int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64
     uint32_t output_num_attrs, input_num_attrs;
     output_num_attrs = output_header->data.num_attrs;
     input_num_attrs = input_header->data.num_attrs;
-    if(output_num_attrs != input_num_attrs){
-        return -1; //number of attributes are different
-    }
+//    if(output_num_attrs != input_num_attrs){
+//        return -1; //number of attributes are different
+//    }
     khash_t(slow5_s2s) *rg_o = slow5_hdr_get_data(output_g, output_header);
     khash_t(slow5_s2s) *rg_i = slow5_hdr_get_data(input_g, input_header);
 

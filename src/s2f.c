@@ -40,8 +40,6 @@ void add_attribute(hid_t file_id, const char* attr_name, uint64_t attr_value, hi
 void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype);
 void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype);
 
-int check_aux_fields_in_record(slow5_rec *slow5_record, const char *attr, int verbose);
-
 void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *header, slow5_rec_t* slow5_record, hid_t* end_reason_enum_id) {
 //    todo- check return values
     int err;

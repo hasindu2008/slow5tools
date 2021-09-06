@@ -62,6 +62,10 @@ int check_aux_fields_in_record(slow5_rec *slow5_record, const char *attr, int ve
 }
 
 int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose){
+    if(slow5_header->aux_meta->num == 0){
+        ERROR("Header does not have auxiliary fields%s", "");
+        return -1;
+    }
     khint_t pos = kh_get(slow5_s2ui32, slow5_header->aux_meta->attr_to_pos, attr);
     if(pos == kh_end(slow5_header->aux_meta->attr_to_pos)){
         if(verbose){
