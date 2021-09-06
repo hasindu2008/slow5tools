@@ -87,11 +87,11 @@ fi
 
 echo_test 'f2s output test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/f2s_output_test.sh mem; then
+    if ! ./test/test_f2s.sh mem; then
         fail
     fi
 else
-    if ! ./test/f2s_output_test.sh; then
+    if ! ./test/test_f2s.sh; then
         fail
     fi
 fi
@@ -120,11 +120,11 @@ fi
 
 echo_test 'f2s_s2f integrity test'
 if [ $mem -eq 1 ]; then
-    if ! ./test/f2s_s2f_integrity_test.sh mem; then
+    if ! ./test/test_f2s_s2f_integrity.sh mem; then
         fail
     fi
 else
-    if ! ./test/f2s_s2f_integrity_test.sh; then
+    if ! ./test/test_f2s_s2f_integrity.sh; then
         fail
     fi
 fi
@@ -156,11 +156,11 @@ FAST5_FILE=./test/data/raw/f2s_view_diff/sss_median_before_edited.fast5
 OUTPUT_DIR=./test/data/out/f2s_view_diff
 INPUT_ARGS="$FAST5_FILE $OUTPUT_DIR"
 if [ $mem -eq 1 ]; then
-    if ! ./test/f2s_view_diff_test.sh $INPUT_ARGS mem ; then
+    if ! ./test/test_f2s_view_diff.sh $INPUT_ARGS mem ; then
         fail
     fi
 else
-    if ! ./test/f2s_view_diff_test.sh $INPUT_ARGS ; then
+    if ! ./test/test_f2s_view_diff.sh $INPUT_ARGS ; then
         fail
     fi
 fi
