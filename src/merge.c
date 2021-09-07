@@ -392,14 +392,11 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                     list[index][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
                     int ret_compare = compare_headers(slow5File->header, slow5File_i->header, k, j);
                     if(ret_compare == -1){
-                        ERROR("In file %s, read_group %" PRIu64 " has a different number of header attributes than what the processed files had", files[i].c_str(), j);
-                        return EXIT_FAILURE;
+                        WARNING("In file %s, read_group %" PRIu64 " has a different number of header attributes than what the processed files had", files[i].c_str(), j);
                     }else if(ret_compare == -2){
-                        ERROR("In file %s, read_group %" PRIu64 " has a different set of header attributes than what the processed files had", files[i].c_str(), j);
-                        return EXIT_FAILURE;
+                        WARNING("In file %s, read_group %" PRIu64 " has a different set of header attributes than what the processed files had", files[i].c_str(), j);
                     }else if(ret_compare == -3){
-                        ERROR("In file %s, read_group %" PRIu64 " has different values for the header attributes than what the processed files had", files[i].c_str(), j);
-                        return EXIT_FAILURE;
+                        WARNING("In file %s, read_group %" PRIu64 " has different values for the header attributes than what the processed files had", files[i].c_str(), j);
                     }
                     break;
                 }
@@ -548,9 +545,9 @@ int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64
     uint32_t output_num_attrs, input_num_attrs;
     output_num_attrs = output_header->data.num_attrs;
     input_num_attrs = input_header->data.num_attrs;
-//    if(output_num_attrs != input_num_attrs){
-//        return -1; //number of attributes are different
-//    }
+    if(output_num_attrs != input_num_attrs){
+        return -1; //number of attributes are different
+    }
     khash_t(slow5_s2s) *rg_o = slow5_hdr_get_data(output_g, output_header);
     khash_t(slow5_s2s) *rg_i = slow5_hdr_get_data(input_g, input_header);
 

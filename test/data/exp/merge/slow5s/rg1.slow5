@@ -3,49 +3,49 @@
 @asic_id	420170566
 @asic_id_eeprom	2043896
 @asic_temp	30.1846237
-@asic_version	
+@asic_version	.
 @auto_update	1
 @auto_update_source	https://mirror.oxfordnanoportal.com/software/MinKNOW/
-@barcoding_enabled	
+@barcoding_enabled	.
 @bream_core_version	1.1.21.1
 @bream_is_standard	1
 @bream_ont_version	1.1.21.1
 @bream_prod_version	1.1.21.1
 @bream_rnd_version	0.1.1
-@configuration_version	
+@configuration_version	.
 @device_id	MN16303
-@device_type	
-@distribution_status	
-@distribution_version	
+@device_type	.
+@distribution_status	.
+@distribution_version	.
 @exp_script_name	python/recipes/nc/NC_48Hr_Sequencing_Run_FLO-MIN106_SQK-LSK108.py
 @exp_script_purpose	sequencing_run
 @exp_start_time	1481657610
-@experiment_duration_set	
+@experiment_duration_set	.
 @experiment_kit	genomic_dna
-@experiment_type	
+@experiment_type	.
 @file_format	slow5v0.1
-@file_type	
+@file_type	.
 @file_version	2.0
 @filename	odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395
 @flow_cell_id	.
-@flow_cell_product_code	
-@guppy_version	
+@flow_cell_product_code	.
+@guppy_version	.
 @heatsink_temp	33.9765625
 @hostname	odw-genlab4209
 @installation_type	map
-@local_basecalling	
+@local_basecalling	.
 @local_firmware_file	0
 @operating_system	Windows 6.1
-@package	
-@package_version	
-@pore_type	
-@protocol_group_id	
+@package	.
+@package_version	.
+@pore_type	.
+@protocol_group_id	.
 @protocol_run_id	3eecebf6-325f-4ac5-b896-a7588f2b2324
 @protocols_version	1.1.21
 @run_id	1cc960b63c07619b4bf2917507d447479a21da66
 @sample_frequency	4000
-@sample_id	
-@sequencing_kit	
+@sample_id	.
+@sequencing_kit	.
 @tracking_id_run_id	0cc960b63c07619b4bf2917507d447479a21da66
 @usb_config	1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto
 @user_filename_input	sample_id
