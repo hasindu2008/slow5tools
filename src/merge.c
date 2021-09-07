@@ -325,7 +325,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             for(uint32_t r=0; r<num_aux_attrs; r++){
                 if(aux_ptr->types[r] == SLOW5_ENUM || aux_ptr->types[r] == SLOW5_ENUM_ARRAY){
                     int aux_avail = -1;
-                    if(slow5File->header->aux_meta->num > 0) {
+                    if(slow5File->header->aux_meta) {
                         aux_avail = check_aux_fields_in_header(slow5File->header, aux_ptr->attrs[r], 0);
                     }
                     if(aux_avail == -1){

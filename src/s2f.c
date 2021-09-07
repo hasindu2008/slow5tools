@@ -79,7 +79,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
                 if(err == 0){
                     add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
                 }
-                if(check_aux_fields_in_record(slow5_record, "end_reason", 0) == 0){
+                if(check_aux_fields_in_header(header, "end_reason", 0) == 0){
                     uint8_t end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
                     if(err == 0){
                         add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
@@ -283,12 +283,12 @@ void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *sl
     }
     uint32_t num_essential_aux_attrs = ESSENTIAL_AUX_ATTR_COUNT;
     for(uint32_t i=0; i<num_essential_aux_attrs; i++){
-        if(check_aux_fields_in_record(slow5_record, ESSENTIAL_AUX_ATTRS[i], 1)){
+        if(slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, ESSENTIAL_AUX_ATTRS[i], 1)){
             ERROR("%s is missing an essential auxiliary field. s2f only creates fast5 that can be basecalled using guppy.",slow5_filename);
             exit(EXIT_FAILURE);
         }
     }
-    if(check_aux_fields_in_record(slow5_record, "end_reason", 0) == 0){
+    if(slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, "end_reason", 0) == 0){
         initialize_end_reason(slow5File->header, &end_reason_enum_id);
     }
 
@@ -391,7 +391,7 @@ void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *sl
         //fprintf(stderr, "peak RAM = %.3f GB\n", slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
     }
 
-    if (check_aux_fields_in_record(slow5_record, "end_reason", 0) == 0){
+    if (slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, "end_reason", 0) == 0){
         H5Tclose(end_reason_enum_id);
     }
     status = H5Gclose (group_read_first);

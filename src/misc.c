@@ -50,17 +50,6 @@ enum slow5_fmt parse_path_to_fmt(const char *fname) {
     return fmt;
 }
 
-int check_aux_fields_in_record(slow5_rec *slow5_record, const char *attr, int verbose){
-    khint_t pos = kh_get(slow5_s2a, slow5_record->aux_map, attr);
-    if(pos == kh_end(slow5_record->aux_map)){
-        if(verbose){
-            ERROR("Auxiliary field '%s' not found.", attr);
-        }
-        return -1;
-    }
-    return 0;
-}
-
 int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose){
     if(slow5_header->aux_meta->num == 0){
         ERROR("Header does not have auxiliary fields%s", "");
