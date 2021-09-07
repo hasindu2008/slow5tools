@@ -6,7 +6,7 @@
 Usage="split_integrity.sh"
 
 # Relative path to "slow5/tests/"
-REL_PATH="$(dirname $0)/" 
+REL_PATH="$(dirname $0)/"
 
 if [ "$1" = 'mem' ]; then
     SLOW5_EXEC="valgrind --leak-check=full --error-exitcode=1 $REL_PATH/../slow5tools"
@@ -63,6 +63,24 @@ else
     exit 1
 fi
 
+
+echo
+echo "-------------------testcase 8: split a multi read group v0.1.0 zlib blow5 file -------------------"
+$SLOW5_EXEC split -g $REL_PATH/data/raw/split/multi_group_blow5s/example_multi_rg_v0.1.0.blow5 -d $OUTPUT_DIR/splitted_groups_blow5s --to slow5 || die "testcase 8: splitting groups failed"
+echo "comparing group split: output and expected"
+diff $REL_PATH/data/exp/split/expected_group_split_blow5s $OUTPUT_DIR/splitted_groups_blow5s  &>/dev/null
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}SUCCESS: splitting groups worked properly!${NC}"
+elif [ $? -eq 1 ]; then
+    echo -e "${RED}FAILURE: splitting groups not working properly${NC}"
+    exit 1
+else
+    echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+    exit 1
+fi
+
+
+
 echo
 echo "-------------------testcase 3: split by reads-------------------"
 $SLOW5_EXEC split -r 2 -l false $REL_PATH/data/raw/split/single_group_slow5s/11reads.slow5 -d $OUTPUT_DIR/split_reads_slow5s --to slow5 || die "testcase 3:  split by reads failed"
@@ -116,6 +134,7 @@ if ! $CD_BACK/slow5tools split -f 3 -l false 11reads.slow5 -d $CD_BACK/$OUTPUT_D
     exit 1
 fi
 echo -e "${GREEN}SUCCESS: testcase 7${NC}"
+
 
 cd -
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
