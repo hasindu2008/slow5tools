@@ -27,7 +27,7 @@ else
 fi
 
 OUTPUT_DIR="$REL_PATH/data/out/merge"
-test -d  $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
+test -d $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
 mkdir $OUTPUT_DIR || die "Creating $OUTPUT_DIR failed"
 
 INPUT_FILE=$REL_PATH/data/exp/merge/slow5s
