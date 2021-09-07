@@ -95,9 +95,20 @@ else
     exit 1
 fi
 
-#
+# merging with and without enum data type
+echo
+echo "-------------------tesetcase 4: merging with and without enum type-------------------"
+INPUT_FILES="$INPUT_FILE/aux_no_enum.slow5 $INPUT_FILE/aux_enum.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase 4: merging with and without enum type failed"
 
 
-rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
+# merging different slow5 formats and versions
+echo
+echo "-------------------tesetcase 5: merging different slow5 formats and versions-------------------"
+INPUT_FILES="$INPUT_FILE/aux_no_enum.slow5 $INPUT_FILE/none_v0.1.0.blow5 $INPUT_FILE/zlib_svb-zd_v0.2.0.blow5 $INPUT_FILE/zlib_v0.2.0.blow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase 4: merging with and without enum type failed"
+
+
+#rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
