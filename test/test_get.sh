@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run f2s with different file, input and output formats.
-Usage="slow5tools_get_test.sh"
+Usage="get_test.sh"
 
 # Relative path to "slow5/tests/"
 REL_PATH="$(dirname $0)/" 
@@ -16,12 +16,12 @@ die() {
     exit 1
 }
 
-OUTPUT_DIR="$REL_PATH/data/out/slow5tools_get"
-test -d  $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
+OUTPUT_DIR="$REL_PATH/data/out/get"
+test -d $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
 mkdir $OUTPUT_DIR || die "Creating $OUTPUT_DIR failed"
 
-EXP_SLOW5_DIR=$REL_PATH/data/exp/slow5tools_get
-SLOW5_DIR=$REL_PATH/data/raw/slow5tools_get
+EXP_SLOW5_DIR=$REL_PATH/data/exp/get
+SLOW5_DIR=$REL_PATH/data/raw/get
 SLOW5_EXEC_WITHOUT_VALGRIND=$REL_PATH/../slow5tools
 if [ "$1" = 'mem' ]; then
     SLOW5_EXEC="valgrind --leak-check=full --error-exitcode=1 $SLOW5_EXEC_WITHOUT_VALGRIND"
