@@ -101,7 +101,6 @@ echo "-------------------tesetcase 4: merging with and without enum type--------
 INPUT_FILES="$INPUT_FILE/aux_no_enum.slow5 $INPUT_FILE/aux_enum.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase 4: merging with and without enum type failed"
 
-
 # merging different slow5 formats and versions
 echo
 echo "-------------------tesetcase 5: merging different slow5 formats and versions-------------------"

@@ -37,6 +37,7 @@ typedef struct {
     //for merge
     int lossy;
     int slow5_file_index;
+    slow5_aux_meta_t* aux_meta;
 } core_t;
 
 typedef struct{

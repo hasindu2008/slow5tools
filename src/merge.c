@@ -50,7 +50,8 @@ void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
 
     struct slow5_press *press_ptr = slow5_press_init(core->press_method);
     size_t len;
-    struct slow5_aux_meta *aux_meta = core->fp->header->aux_meta;
+//    slow5_aux_meta_t *aux_meta = core->fp->header->aux_meta;
+    slow5_aux_meta_t *aux_meta = core->aux_meta;
     if(core->lossy){
         aux_meta = NULL;
     }
@@ -484,6 +485,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         core_t core;
         core.num_thread = num_threads;
         core.fp = from;
+        core.aux_meta = slow5File->header->aux_meta;
         core.format_out = format_out;
         slow5_press_method_t method = {pressMethodRecord,pressMethodSignal};
         core.press_method = method;
