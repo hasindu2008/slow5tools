@@ -151,12 +151,10 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     int opt;
     // Parse options
     while ((opt = getopt_long(argc, argv, "o:b:c:K:l:t:he", long_opts, NULL)) != -1) {
-
         if (meta->verbosity_level >= LOG_DEBUG) {
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         }
-
         switch (opt) {
             case 'b':
                 format_out_set = 1;
