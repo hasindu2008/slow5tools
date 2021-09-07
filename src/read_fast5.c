@@ -386,7 +386,7 @@ int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_c
                 return -1;
             }
         }
-        if(operator_data->slow5File->header->aux_meta->num > 0 && check_aux_fields_in_header(operator_data->slow5File->header, name, 0) == 0){
+        if(operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0) == 0){
             if(h5TClass == H5T_ENUM){
                 if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint8_t) != 0) {
                     failed = 1;
@@ -412,7 +412,7 @@ int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_c
                 return -1;
             }
 
-        }else if(*(operator_data->flag_header_is_written) == 1 && operator_data->slow5File->header->aux_meta->num > 0 && check_aux_fields_in_header(operator_data->slow5File->header, name, 0) == -1){
+        }else if(*(operator_data->flag_header_is_written) == 1 && operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0) == -1){
             WARNING("%s auxiliary attribute is not set in the slow5 header", name);
         }
     }

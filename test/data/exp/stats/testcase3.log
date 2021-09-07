@@ -1,0 +1,8 @@
+file version	0.2.0
+file format	BLOW5
+record compression method	zlib
+sigal compression method	none
+number of read groups	1
+number of auxiliary fields	0
+auxiliary fields
+number of records	100

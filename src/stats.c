@@ -154,14 +154,16 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         fprintf(stdout, "auxiliary fields\t");
         uint32_t num = slow5File->header->aux_meta->num;
         for(uint32_t i=0; i<num; i++){
-            fprintf(stdout, "%s\t",slow5File->header->aux_meta->attrs[i]);
+            fprintf(stdout, "%s",slow5File->header->aux_meta->attrs[i]);
+            if(i<num-1){
+                fprintf(stdout,",");
+            }
         }
         fprintf(stdout, "\n");
     }else{
         fprintf(stdout, "number of auxiliary fields\t%d\n",0);
         fprintf(stdout, "auxiliary fields\n");
     }
-
 
     VERBOSE("counting number of slow5 records...%s","");
 
