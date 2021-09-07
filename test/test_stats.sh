@@ -31,7 +31,6 @@ $SLOW5TOOLS --version || die "testcase$TESTCASE:slow5tools --version failed"
 TESTCASE=2
 info "testcase$TESTCASE"
 $SLOW5TOOLS stats > $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
-diff -s $OUTPUT_DIR/output.log "$EXP_DIR/testcase$TESTCASE.log" > /dev/null || die "testcase$TESTCASE: diff failed"
 
 TESTCASE=3
 info "testcase$TESTCASE"
