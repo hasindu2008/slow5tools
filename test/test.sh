@@ -187,4 +187,15 @@ else
     fi
 fi
 
+echo_test 'quickcheck test'
+if [ $mem -eq 1 ]; then
+    if ! ./test/test_quickcheck.sh mem ; then
+        fail
+    fi
+else
+    if ! ./test/test_quickcheck.sh ; then
+        fail
+    fi
+fi
+
 exit $ret
