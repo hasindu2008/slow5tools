@@ -34,18 +34,20 @@ $SLOW5TOOLS stats > $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats fail
 
 TESTCASE=3
 info "testcase$TESTCASE"
-$SLOW5TOOLS stats $RAW_DIR/lossy.blow5 > $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
-diff $OUTPUT_DIR/output.log "$EXP_DIR/testcase$TESTCASE.log"  > /dev/null || die "testcase$TESTCASE: diff failed"
+$SLOW5TOOLS stats $RAW_DIR/exp_1_lossless.slow5 > $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
+diff $OUTPUT_DIR/output.log "$EXP_DIR/exp_1_lossless.stdout"  > /dev/null || die "testcase$TESTCASE: diff failed"
 
 TESTCASE=4
 info "testcase$TESTCASE"
-$SLOW5TOOLS stats $RAW_DIR/lossless.blow5 > $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
-diff $OUTPUT_DIR/output.log "$EXP_DIR/testcase$TESTCASE.log"  > /dev/null || die "testcase$TESTCASE: diff failed"
+$SLOW5TOOLS stats $RAW_DIR/exp_1_lossy.blow5 > $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
+diff $OUTPUT_DIR/output.log "$EXP_DIR/exp_1_lossy.stdout"  > /dev/null || die "testcase$TESTCASE: diff failed"
+
+TESTCASE=5
+info "testcase$TESTCASE"
+$SLOW5TOOLS stats $RAW_DIR/zlib_svb-zd_multi_rg_v0.2.0.blow5> $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
+diff $OUTPUT_DIR/output.log "$EXP_DIR/zlib_svb-zd_multi_rg_v0.2.0.stdout"  > /dev/null || die "testcase$TESTCASE: diff failed"
+
 
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 info "all $TESTCASE testcases pased"
 exit 0
-# If you want to log to the same file: command1 >> log_file 2>&1
-# If you want different files: command1 >> log_file 2>> err_file
-# use ANSI syntax format to view stdout/stderr on SublimeText
-# use bash -n [script] and shellcheck [script] to check syntax

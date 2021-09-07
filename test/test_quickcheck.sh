@@ -19,20 +19,25 @@ else
 fi
 
 TESTCASE=1
-info "testcase$TESTCASE"
 $SLOW5TOOLS --version || die "testcase$TESTCASE:slow5tools --version failed"
 
-TESTCASE=2
-info "testcase$TESTCASE"
-$SLOW5TOOLS quickcheck $RAW_DIR/good.blow5 || die "testcase$TESTCASE: stats failed"
+GOOD_LIST="exp_1_lossless_good.slow5 exp_1_lossy_good.blow5 zlib_svb-zd_multi_rg_v0.2.0_good.blow5"
+BAD_LIST="exp_1_lossless_bad_rg_missing.slow5  exp_1_lossy_bad_eof.blow5  zlib_svb-zd_multi_rg_v0.2.0_bad_hdr_len.blow5"
 
-TESTCASE=3
-info "testcase$TESTCASE (should error out)"
-$SLOW5TOOLS stats $RAW_DIR/bad.blow5 && die "testcase$TESTCASE: stats failed"
+TESTCASE=2
+for each in $GOOD_LIST
+do
+    info "testcase$TESTCASE"
+    $SLOW5TOOLS quickcheck $RAW_DIR/${each} 2> /dev/null || die "testcase$TESTCASE: stats failed"
+    TESTCASE=$((TESTCASE + 1))
+done
+
+for each in $BAD_LIST
+do
+    info "testcase$TESTCASE (should error out)"
+    $SLOW5TOOLS quickcheck $RAW_DIR/${each} 2> /dev/null && die "testcase$TESTCASE: stats failed"
+    TESTCASE=$((TESTCASE + 1))
+done
 
 info "all $TESTCASE testcases pased"
 exit 0
-# If you want to log to the same file: command1 >> log_file 2>&1
-# If you want different files: command1 >> log_file 2>> err_file
-# use ANSI syntax format to view stdout/stderr on SublimeText
-# use bash -n [script] and shellcheck [script] to check syntax
