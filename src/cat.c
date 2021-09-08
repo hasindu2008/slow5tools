@@ -79,9 +79,7 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
         }
     }
     if(arg_fname_out){
-        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("parsing output file format%s","");
-        }
+        DEBUG("parsing output file format%s","");
         extension_format = parse_path_to_fmt(arg_fname_out);
         if (extension_format == SLOW5_FORMAT_UNKNOWN) {
             ERROR("cannot detect file format -- '%s'", arg_fname_out);

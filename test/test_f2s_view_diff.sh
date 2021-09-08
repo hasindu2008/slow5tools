@@ -39,9 +39,9 @@ fi
 NUM_THREADS=4
 BATCH_SIZE=10000
 
-$SLOW5TOOLS f2s -p1 --to blow5 -c none -o "$OUTPUT_DIR/f2s.blow5" "$FAST5_FILE" 2>/dev/null
-$SLOW5TOOLS view --from blow5 --to slow5 "$OUTPUT_DIR/f2s.blow5" -o "$OUTPUT_DIR/view.slow5" -t $NUM_THREADS -K $BATCH_SIZE 2>/dev/null
-$SLOW5TOOLS view --from slow5 --to blow5 -c none "$OUTPUT_DIR/view.slow5" -o "$OUTPUT_DIR/view.blow5" -t $NUM_THREADS -K $BATCH_SIZE 2>/dev/null
+$SLOW5TOOLS f2s -p1 --to blow5 -c none -o "$OUTPUT_DIR/f2s.blow5" "$FAST5_FILE" #2>/dev/null
+$SLOW5TOOLS view --from blow5 --to slow5 "$OUTPUT_DIR/f2s.blow5" -o "$OUTPUT_DIR/view.slow5" -t $NUM_THREADS -K $BATCH_SIZE #2>/dev/null
+$SLOW5TOOLS view --from slow5 --to blow5 -c none "$OUTPUT_DIR/view.slow5" -o "$OUTPUT_DIR/view.blow5" -t $NUM_THREADS -K $BATCH_SIZE #2>/dev/null
 
 cmp "$OUTPUT_DIR/view.blow5" "$OUTPUT_DIR/f2s.blow5" || die "Files are different. f2s_view_diff_test failed"
 info "Files are the same. Success!"

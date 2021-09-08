@@ -41,6 +41,7 @@ void init_opt(opt_t *opt){
     opt->arg_record_press_out = NULL;
     opt->arg_signal_press_out = NULL;
     opt->arg_num_threads = NULL;
+    opt->arg_batch = NULL;
 
     // Default options
     opt->fmt_in = SLOW5_FORMAT_UNKNOWN;
@@ -49,7 +50,7 @@ void init_opt(opt_t *opt){
     opt->record_press_out = SLOW5_COMPRESS_ZLIB;
     opt->signal_press_out = SLOW5_COMPRESS_NONE;
     opt->num_threads = DEFAULT_NUM_THREADS;
-    opt->read_id_batch_capacity = READ_ID_BATCH_CAPACITY;
+    opt->read_id_batch_capacity = DEFAULT_BATCH_SIZE;
 }
 
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta){
@@ -62,6 +63,27 @@ int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *me
             opt->num_threads = ret;
         } else {
             ERROR("invalid number of threads -- '%s'", opt->arg_num_threads);
+            fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int parse_batch_size(opt_t *opt, int argc, char **argv){
+    if(opt->arg_batch != NULL){
+        char *endptr;
+        long ret = strtol(opt->arg_batch, &endptr, 10);
+
+        if (*endptr == '\0') {
+            opt->read_id_batch_capacity = ret;
+            if(opt->read_id_batch_capacity < 0){
+                ERROR("invalid batch size -- '%s'", opt->arg_batch);
+                fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+                return -1;
+            }
+        } else {
+            ERROR("invalid batch size -- '%s'", opt->arg_batch);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
             return -1;
         }

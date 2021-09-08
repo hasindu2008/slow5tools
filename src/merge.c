@@ -109,7 +109,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int lossy = 0;
 
     size_t num_threads = DEFAULT_NUM_THREADS;
-    int64_t read_id_batch_capacity = READ_ID_BATCH_CAPACITY;
+    int64_t read_id_batch_capacity = DEFAULT_BATCH_SIZE;
 
     int opt;
     int longindex = 0;
@@ -167,9 +167,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
     }
     if (arg_fmt_out) {
-        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("parsing output format%s","");
-        }
+        DEBUG("parsing output format%s","");
         format_out = parse_name_to_fmt(arg_fmt_out);
         // An error occured
         if (format_out == SLOW5_FORMAT_UNKNOWN) {
@@ -179,9 +177,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         }
     }
     if(arg_fname_out){
-        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("parsing output file format%s","");
-        }
+        DEBUG("parsing output file format%s","");
         extension_format = parse_path_to_fmt(arg_fname_out);
         if (extension_format == SLOW5_FORMAT_UNKNOWN) {
             ERROR("cannot detect file format -- '%s'", arg_fname_out);

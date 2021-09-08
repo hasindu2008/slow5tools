@@ -46,6 +46,8 @@ typedef struct {
     enum slow5_fmt fmt_out;
     enum slow5_press_method record_press_out;
     enum slow5_press_method signal_press_out;
+    size_t num_threads;
+    int64_t read_id_batch_capacity;
 
     // Input arguments
     char *arg_fname_in;
@@ -55,8 +57,7 @@ typedef struct {
     char *arg_record_press_out;
     char *arg_signal_press_out;
     char *arg_num_threads;
-    size_t num_threads;
-    int64_t read_id_batch_capacity;
+    char *arg_batch;
 
 } opt_t;
 
@@ -95,10 +96,9 @@ static inline long slow5_peakrss(void) {
 
 void print_args(int argc, char **argv);
 
-
-
 void init_opt(opt_t *opt);
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta);
+int parse_batch_size(opt_t *opt, int argc, char **arg);
 int parse_format_args(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int auto_detect_formats(opt_t *opt);
 int parse_compression_opts(opt_t *opt);

@@ -164,9 +164,7 @@ void f2s_child_worker(enum slow5_fmt format_out, slow5_press_method_t press_out,
         }
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
-    if(meta->verbosity_level >= LOG_DEBUG){
-        INFO("Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
-    }
+    INFO("Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
 }
 
 void f2s_iop(enum slow5_fmt format_out, slow5_press_method_t press_out, int lossy, int flag_allow_run_id_mismatch, int iop, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){
@@ -369,9 +367,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     if (arg_fmt_out) {
-        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("parsing output format%s","");
-        }
+        DEBUG("parsing output format%s","");
         format_out = parse_name_to_fmt(arg_fmt_out);
         // An error occured
         if (format_out == SLOW5_FORMAT_UNKNOWN) {
@@ -381,9 +377,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
     if(arg_fname_out){
-        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("parsing output file format%s","");
-        }
+        DEBUG("parsing output file format%s","");
         extension_format = parse_path_to_fmt(arg_fname_out);
         if (extension_format == SLOW5_FORMAT_UNKNOWN) {
             ERROR("cannot detect file format -- '%s'", arg_fname_out);

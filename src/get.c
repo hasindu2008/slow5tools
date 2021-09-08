@@ -117,7 +117,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     int32_t num_threads = DEFAULT_NUM_THREADS;
-    int64_t read_id_batch_capacity = READ_ID_BATCH_CAPACITY;
+    int64_t read_id_batch_capacity = DEFAULT_BATCH_SIZE;
 
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_fmt extension_format = SLOW5_FORMAT_BINARY;
@@ -176,7 +176,6 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
             case 'h':
                 DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
-
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             default: // case '?'
@@ -186,9 +185,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
     if (arg_fmt_out) {
-        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("parsing output format%s","");
-        }
+        DEBUG("parsing output format%s","");
         format_out = parse_name_to_fmt(arg_fmt_out);
         // An error occured
         if (format_out == SLOW5_FORMAT_UNKNOWN) {

@@ -3,7 +3,7 @@
 # steps
 # view slow5
 # view blow5
-# diff md5sum original and created blow5 
+# diff md5sum original and created blow5
 
 RED='\033[0;31m' ; GREEN='\033[0;32m' ; NC='\033[0m' # No Color
 die() { echo -e "${RED}$1${NC}" >&2 ; echo ; exit 1 ; } # terminate script
@@ -24,13 +24,13 @@ BLOW5_FILE=$1
 
 #...directories files tools arguments commands clean
 OUTPUT_DIR=$2
-test -d "$OUTPUT_DIR" && ask "$OUTPUT_DIR" 
+test -d "$OUTPUT_DIR" && ask "$OUTPUT_DIR"
 test -d "$OUTPUT_DIR" && rm -r "$OUTPUT_DIR"
 mkdir "$OUTPUT_DIR" || die "Failed creating $OUTPUT_DIR"
 #commands ...
 
 # Relative path to "slow5tools/tests/"
-REL_PATH="$(dirname $0)/" 
+REL_PATH="$(dirname $0)/"
 SLOW5TOOLS=$REL_PATH/../slow5tools
 
 NUM_THREADS=40

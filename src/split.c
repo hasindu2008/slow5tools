@@ -590,9 +590,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         }
     }
     if (arg_fmt_out) {
-        if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("parsing output format%s","");
-        }
+        DEBUG("parsing output format%s","");
         format_out = parse_name_to_fmt(arg_fmt_out);
         // An error occured
         if (format_out == SLOW5_FORMAT_UNKNOWN) {

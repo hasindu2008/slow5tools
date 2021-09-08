@@ -21,14 +21,12 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --from=[FORMAT]                    specify input file format\n" \
-    "    --to=[FORMAT]                      specify output file format\n" \
-    "    -c, --compress=[REC_METHOD]        specify record compression method -- zlib (only available for format blow5)\n" \
-    "    -s, --sig-compress=[SIG_METHOD]    specify signal compression method -- none (only available for format blow5)\n" \
-    "    -o, --output=[FILE]                output to FILE [default: stdout]\n" \
-    "    -h, --help                         display this message and exit\n"                                               \
-    "    -t, --threads [INT]                number of threads [default: 4]\n"                                              \
-    "    -K, --batchsize                    the number of records on the memory at once. [default: 4096]\n" \
+    "    -o, --output FILE             output to FILE [stdout]\n" \
+    HELP_MSG_PRESS \
+    HELP_MSG_THREADS \
+    HELP_MSG_BATCH \
+    "    --to FORMAT                   specify output file format [auto]\n" \
+    "    --from FORMAT                 specify input file format [auto]\n" \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
@@ -106,13 +104,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
                 user_opts.arg_fmt_in = optarg;
                 break;
             case 'K':
-                user_opts.read_id_batch_capacity = atoi(optarg);
-                if(user_opts.read_id_batch_capacity < 0){
-                    fprintf(stderr, "batchsize cannot be negative\n");
-                    fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-                    EXIT_MSG(EXIT_FAILURE, argv, meta);
-                    return EXIT_FAILURE;
-                }
+                user_opts.arg_batch = optarg;
                 break;
             case 'h':
                 DEBUG("displaying large help message%s","");
@@ -136,6 +128,11 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     if(parse_num_threads(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+
+    if(parse_batch_size(&user_opts,argc,argv) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
