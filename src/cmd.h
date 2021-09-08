@@ -4,7 +4,9 @@
 #define SLOW5TOOLS_VERSION "0.2.0-dirty"
 
 #define DEFAULT_NUM_THREADS 8
+#define DEFAULT_NUM_PROCESSES 8
 #define DEFAULT_BATCH_SIZE 4096
+#define DEFAULT_AUXILIARY_FIELDS_NOT_OUT 0
 
 #define TO_STR(x) TO_STR2(x)
 #define TO_STR2(x) #x
@@ -12,6 +14,17 @@
 #define HELP_SMALL_MSG \
     "Try '%s --help' for more information.\n"
 
+#define HELP_MSG_OUTPUT_FILE \
+    "    -o, --output FILE             output to FILE [stdout]\n"
+
+#define HELP_MSG_OUTPUT_DIRECTORY \
+    "    -d, --out-dir                 output to directory\n"
+
+#define HELP_MSG_LOSSLESS \
+    "   -l, --lossless                 retain information in auxiliary fields during the conversion.[true].\n"
+
+#define HELP_MSG_OUTPUT_FORMAT \
+    "    --to FORMAT                   specify output file format [auto]\n"
 
 #define HELP_MSG_PRESS \
     "    -c, --compress REC_MTD        record compression method [zlib] (only for blow5 format)\n" \
@@ -19,6 +32,9 @@
 
 #define HELP_MSG_THREADS \
     "    -t, --threads INT             number of threads [" TO_STR(DEFAULT_NUM_THREADS) "]\n"
+
+#define HELP_MSG_PROCESSES \
+    "    -p, --iop INT                 number of I/O processes [" TO_STR(DEFAULT_NUM_PROCESSES) "]\n"
 
 #define HELP_MSG_BATCH \
     "    -K, --batchsize INT           number of records loaded to the memory at once. [" TO_STR(DEFAULT_BATCH_SIZE) "]\n"

@@ -47,7 +47,9 @@ typedef struct {
     enum slow5_press_method record_press_out;
     enum slow5_press_method signal_press_out;
     size_t num_threads;
+    size_t num_processes;
     int64_t read_id_batch_capacity;
+    int flag_lossy;
 
     // Input arguments
     char *arg_fname_in;
@@ -57,7 +59,10 @@ typedef struct {
     char *arg_record_press_out;
     char *arg_signal_press_out;
     char *arg_num_threads;
+    char *arg_num_processes;
     char *arg_batch;
+    char *arg_dir_out;
+    char *arg_lossless;
 
 } opt_t;
 
@@ -98,9 +103,11 @@ void print_args(int argc, char **argv);
 
 void init_opt(opt_t *opt);
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta);
+int parse_num_processes(opt_t *opt, int argc, char **argv, struct program_meta *meta);
+int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_batch_size(opt_t *opt, int argc, char **arg);
 int parse_format_args(opt_t *opt, int argc, char **argv, struct program_meta *meta);
-int auto_detect_formats(opt_t *opt);
+int auto_detect_formats(opt_t *opt, int set_default_output_format = 1);
 int parse_compression_opts(opt_t *opt);
 
 #ifdef __cplusplus

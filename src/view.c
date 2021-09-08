@@ -12,8 +12,6 @@
 #include <slow5/slow5.h>
 #include "slow5_extra.h"
 #include <getopt.h>
-#include <string>
-#include <vector>
 
 #define USAGE_MSG "Usage: %s [OPTION]... [FILE]...\n"
 #define HELP_LARGE_MSG \
@@ -21,11 +19,11 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -o, --output FILE             output to FILE [stdout]\n" \
+    HELP_MSG_OUTPUT_FILE \
     HELP_MSG_PRESS \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
-    "    --to FORMAT                   specify output file format [auto]\n" \
+    HELP_MSG_OUTPUT_FORMAT\
     "    --from FORMAT                 specify input file format [auto]\n" \
     HELP_FORMATS_METHODS
 
@@ -53,12 +51,8 @@ void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
     slow5_rec_free(read);
 }
 
-//static double init_realtime = 0;
-
 int view_main(int argc, char **argv, struct program_meta *meta) {
     int view_ret = EXIT_SUCCESS;
-
-    //init_realtime = slow5_realtime();
 
     // Debug: print arguments
     print_args(argc,argv);
@@ -71,14 +65,14 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     static struct option long_opts[] = {
-        {"compress",    required_argument,  NULL, 'c'},
+        {"compress",        required_argument,  NULL, 'c'},
         {"sig-compress",    required_argument,  NULL, 's'},
-        {"from",        required_argument,  NULL, 'f'},
-        {"help",        no_argument,        NULL, 'h'},
-        {"output",      required_argument,  NULL, 'o'},
-        {"to",          required_argument,  NULL, 'b'},
-        {"threads",     required_argument,  NULL, 't' },
-        {"batchsize", required_argument, NULL, 'K'},
+        {"from",            required_argument,  NULL, 'f'},
+        {"help",            no_argument,        NULL, 'h'},
+        {"output",          required_argument,  NULL, 'o'},
+        {"to",              required_argument,  NULL, 'b'},
+        {"threads",         required_argument,  NULL, 't' },
+        {"batchsize",       required_argument, NULL, 'K'},
         {NULL, 0, NULL, 0}
     };
 
@@ -131,12 +125,10 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-
     if(parse_batch_size(&user_opts,argc,argv) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-
     if(parse_format_args(&user_opts,argc,argv,meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -156,13 +148,13 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     } else { // Save input filename
         user_opts.arg_fname_in = argv[optind];
     }
-
-
-    if(auto_detect_formats(&user_opts) < 0){
+    if(auto_detect_formats(&user_opts, 0) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-
+    if (user_opts.fmt_out == SLOW5_FORMAT_UNKNOWN) {
+        user_opts.fmt_out = SLOW5_FORMAT_ASCII;
+    }
     if(parse_compression_opts(&user_opts) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -250,7 +242,6 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
         return -2;
     }
 
-    //
     double time_get_to_mem = 0;
     double time_thread_execution = 0;
     double time_write = 0;
@@ -323,6 +314,5 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
     DEBUG("time_depress_parse\t%.3fs", time_thread_execution);
     DEBUG("time_write\t%.3fs", time_write);
 
-
-    return 0;
+    return EXIT_SUCCESS;
 }

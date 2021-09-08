@@ -1,7 +1,7 @@
 /**
  * @file quickcheck.c
  * @brief performs a quick check of the header and if proper end of file exists in blow5
- * @author Hasindu
+ * @author Hasindu Gamaarachchi (hasindu@garvan.org.au)
  * @date 26/08/2021
  */
 
@@ -88,7 +88,6 @@ int quickcheck_main(int argc, char **argv, struct program_meta *meta){
             exit(EXIT_FAILURE);
         }
     }
-
     slow5_close(slow5File);
 
     return EXIT_SUCCESS;
