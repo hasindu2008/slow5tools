@@ -31,7 +31,7 @@
     "    -p, --iop [INT]            number of I/O processes to read fast5 files [default: 8]\n" \
     "    -h, --help                 display this message and exit\n" \
 
-
+extern int slow5tools_verbosity_level;
 static double init_realtime = 0;
 
 void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype);

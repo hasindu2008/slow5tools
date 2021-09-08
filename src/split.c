@@ -33,6 +33,7 @@
     "    -h, --help                         display this message and exit\n" \
     HELP_FORMATS_METHODS
 
+extern int slow5tools_verbosity_level;
 static double init_realtime = 0;
 
 enum SplitMethod {

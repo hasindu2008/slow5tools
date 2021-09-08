@@ -37,6 +37,7 @@
     "    -h, --help                         display this message and exit\n" \
     HELP_FORMATS_METHODS
 
+extern int slow5tools_verbosity_level;
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
 void f2s_child_worker(enum slow5_fmt format_out, slow5_press_method_t press_out, int lossy, int flag_allow_run_id_mismatch, proc_arg_t args, std::vector<std::string>& fast5_files, char* output_dir, struct program_meta *meta, reads_count* readsCount, char* arg_fname_out){

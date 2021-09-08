@@ -36,6 +36,8 @@
     "    -h, --help                         display this message and exit\n"                                               \
     HELP_FORMATS_METHODS
 
+extern int slow5tools_verbosity_level;
+
 int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64_t output_g, int64_t input_g);
 
 void parallel_reads_model(core_t *core, db_t *db, int32_t i) {

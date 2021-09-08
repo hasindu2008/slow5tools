@@ -38,6 +38,29 @@ static const struct parse_fmt_meta PARSE_FORMAT_META[] = {
         { SLOW5_FORMAT_BINARY, SLOW5_BINARY_NAME,    SLOW5_BINARY_EXTENSION    },
 };
 
+
+typedef struct {
+    // Default options
+    FILE *f_out;
+    enum slow5_fmt fmt_in;
+    enum slow5_fmt fmt_out;
+    enum slow5_press_method record_press_out;
+    enum slow5_press_method signal_press_out;
+
+    // Input arguments
+    char *arg_fname_in;
+    char *arg_fname_out;
+    char *arg_fmt_in;
+    char *arg_fmt_out;
+    char *arg_record_press_out;
+    char *arg_signal_press_out;
+    char *arg_num_threads;
+    size_t num_threads;
+    int64_t read_id_batch_capacity;
+
+} opt_t;
+
+
 enum slow5_fmt parse_name_to_fmt(const char *fmt_str);
 enum slow5_fmt parse_path_to_fmt(const char *fname);
 int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose);
@@ -69,6 +92,16 @@ static inline long slow5_peakrss(void) {
 #endif
 
 }
+
+void print_args(int argc, char **argv);
+
+
+
+void init_opt(opt_t *opt);
+int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta);
+int parse_format_args(opt_t *opt, int argc, char **argv, struct program_meta *meta);
+int auto_detect_formats(opt_t *opt);
+int parse_compression_opts(opt_t *opt);
 
 #ifdef __cplusplus
 }

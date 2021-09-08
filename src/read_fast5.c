@@ -20,6 +20,8 @@
 #define PRIMARY_FIELD_COUNT 7 //without read_group number
 #define H5Z_FILTER_VBZ 32020 //We need to find out what the numerical value for this is
 
+extern int slow5tools_verbosity_level;
+
 // Operator function to be called by H5Aiterate.
 herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data);
 // Operator function to be called by H5Literate.

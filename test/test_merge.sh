@@ -100,12 +100,21 @@ echo
 echo "-------------------tesetcase 4: merging with and without enum type-------------------"
 INPUT_FILES="$INPUT_FILE/aux_no_enum.slow5 $INPUT_FILE/aux_enum.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase 4: merging with and without enum type failed"
+diff $REL_PATH/data/exp/merge/merged_output_enum.slow5  $OUTPUT_DIR/merged_output_enum.slow5 -q || die "tesetcase 4: diff for merging with and without enum type failed"
+
+echo
+echo "-------------------tesetcase5: merging without and with enum type-------------------"
+INPUT_FILES="$INPUT_FILE/aux_enum.slow5 $INPUT_FILE/aux_no_enum.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum2.slow5 || die "tesetcase 5: merging with and without enum type failed"
+diff $REL_PATH/data/exp/merge/merged_output_enum2.slow5  $OUTPUT_DIR/merged_output_enum2.slow5 -q || die "tesetcase 5: diff for merging with and without enum type failed"
+
 
 # merging different slow5 formats and versions
 echo
-echo "-------------------tesetcase 5: merging different slow5 formats and versions-------------------"
+echo "-------------------tesetcase 6: merging different slow5 formats and versions-------------------"
 INPUT_FILES="$INPUT_FILE/aux_no_enum.slow5 $INPUT_FILE/none_v0.1.0.blow5 $INPUT_FILE/zlib_svb-zd_v0.2.0.blow5 $INPUT_FILE/zlib_v0.2.0.blow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase 4: merging with and without enum type failed"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_formats.slow5 || die "tesetcase 6: merging different file types failed"
+diff $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged_output_formats.slow5 -q || die "tesetcase 6: diff for merging different file types failed"
 
 
 #rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"

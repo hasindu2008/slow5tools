@@ -24,7 +24,7 @@
     "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
     "    -h, --help                         display this message and exit\n" \
 
-
+extern int slow5tools_verbosity_level;
 int close_files_and_exit(slow5_file_t *slow5_file, slow5_file_t *slow5_file_i, char *arg_fname_out);
 
 int cat_main(int argc, char **argv, struct program_meta *meta){

@@ -32,6 +32,8 @@
     "    -h, --help                         display this message and exit.\n" \
     HELP_FORMATS_METHODS
 
+extern int slow5tools_verbosity_level;
+
 void work_per_single_read_get(core_t *core, db_t *db, int32_t i) {
 
     char *id = db->read_id[i];

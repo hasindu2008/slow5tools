@@ -8,6 +8,7 @@
 #include <getopt.h>
 #include "error.h"
 #include "cmd.h"
+#include "misc.h"
 #include "slow5_extra.h"
 
 
@@ -20,28 +21,12 @@
     "OPTIONS:\n" \
     "    -h, --help         display this message and exit\n" \
 
-
+extern int slow5tools_verbosity_level;
 
 int quickcheck_main(int argc, char **argv, struct program_meta *meta){
 
     // Debug: print arguments
-    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("printing the arguments given%s","");
-        }
-
-        fprintf(stderr, DEBUG_PREFIX "argv=[",
-                __FILE__, __func__, __LINE__);
-        for (int i = 0; i < argc; ++ i) {
-            fprintf(stderr, "\"%s\"", argv[i]);
-            if (i == argc - 1) {
-                fprintf(stderr, "]");
-            } else {
-                fprintf(stderr, ", ");
-            }
-        }
-        fprintf(stderr, NO_COLOUR);
-    }
+    print_args(argc,argv);
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0

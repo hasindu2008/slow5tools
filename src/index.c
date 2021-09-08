@@ -10,6 +10,7 @@
 #include <slow5/slow5.h>
 #include "error.h"
 #include "cmd.h"
+#include "misc.h"
 
 #define USAGE_MSG "Usage: %s [OPTION]... [SLOW5|BLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
@@ -20,26 +21,12 @@
     "    -h, --help\n" \
     "        Display this message and exit.\n" \
 
+extern int slow5tools_verbosity_level;
+
 int index_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
-    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("printing the arguments given%s","");
-        }
-
-        fprintf(stderr, DEBUG_PREFIX "argv=[",
-                __FILE__, __func__, __LINE__);
-        for (int i = 0; i < argc; ++ i) {
-            fprintf(stderr, "\"%s\"", argv[i]);
-            if (i == argc - 1) {
-                fprintf(stderr, "]");
-            } else {
-                fprintf(stderr, ", ");
-            }
-        }
-        fprintf(stderr, NO_COLOUR);
-    }
+    print_args(argc,argv);
 
     // No arguments given
     if (argc <= 1) {
