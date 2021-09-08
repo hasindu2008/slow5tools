@@ -44,16 +44,12 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
     // Parse options
     while ((opt = getopt_long(argc, argv, "h", long_opts, NULL)) != -1) {
 
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+        DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
-        }
 
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_DEBUG) {
-                    DEBUG("displaying large help message%s","");
-                }
+                DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);

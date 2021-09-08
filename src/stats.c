@@ -70,15 +70,11 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
 
     // Parse options
     while ((opt = getopt_long(argc, argv, "h", long_opts, &longindex)) != -1) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+        DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
-        }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_DEBUG) {
-                    VERBOSE("displaying large help message%s","");
-                }
+                VERBOSE("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
@@ -164,9 +160,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         ERROR("Error reading the file.%s","");
         return EXIT_FAILURE;
     }
-    if (meta->verbosity_level >= LOG_DEBUG) {
-        DEBUG("time_get_to_mem\t%.3fs", slow5_realtime()-time_get_to_mem);
-    }
+    DEBUG("time_get_to_mem\t%.3fs", slow5_realtime()-time_get_to_mem);
 
     slow5_close(slow5File);
 

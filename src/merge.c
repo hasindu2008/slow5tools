@@ -70,23 +70,7 @@ void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
 int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Debug: print arguments
-    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("printing the arguments given%s","");
-        }
-
-        fprintf(stderr, DEBUG_PREFIX "argv=[",
-                __FILE__, __func__, __LINE__);
-        for (int i = 0; i < argc; ++ i) {
-            fprintf(stderr, "\"%s\"", argv[i]);
-            if (i == argc - 1) {
-                fprintf(stderr, "]");
-            } else {
-                fprintf(stderr, ", ");
-            }
-        }
-        fprintf(stderr, NO_COLOUR);
-    }
+    print_args(argc,argv);
 
     // No arguments given
     if (argc <= 1) {
@@ -132,15 +116,11 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Parse options
     while ((opt = getopt_long(argc, argv, "b:c:s:hl:t:o:K:", long_opts, &longindex)) != -1) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+        DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
-        }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_DEBUG) {
-                    DEBUG("displaying large help message%s","");
-                }
+                DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
@@ -309,9 +289,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     std::vector<std::string> slow5_files;
     size_t num_files = files.size();
     for(size_t i=0; i<num_files; i++) { //iterate over slow5files
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("input file\t%s", files[i].c_str());
-        }
+        DEBUG("input file\t%s", files[i].c_str());
+
         slow5_file_t* slow5File_i = slow5_open(files[i].c_str(), "r");
         if(!slow5File_i){
             ERROR("[Skip file]: cannot open %s. skipping...\n",files[i].c_str());
@@ -530,11 +509,10 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             }
         }
     }
-    if (meta->verbosity_level >= LOG_DEBUG) {
-        DEBUG("time_get_to_mem\t%.3fs", time_get_to_mem);
-        DEBUG("time_thread_execution\t%.3fs", time_thread_execution);
-        DEBUG("time_write\t%.3fs", time_write);
-    }
+    DEBUG("time_get_to_mem\t%.3fs", time_get_to_mem);
+    DEBUG("time_thread_execution\t%.3fs", time_thread_execution);
+    DEBUG("time_write\t%.3fs", time_write);
+
 
     if (format_out == SLOW5_FORMAT_BINARY) {
         slow5_eof_fwrite(slow5File->fp);
