@@ -31,12 +31,7 @@ void print_args(int argc, char **argv){
 
 
 void init_opt(opt_t *opt){
-    // Default options
-    opt->f_out = stdout;
-    opt->fmt_in = SLOW5_FORMAT_UNKNOWN;
-    opt->fmt_out = SLOW5_FORMAT_UNKNOWN;
-    opt->record_press_out = SLOW5_COMPRESS_ZLIB;
-    opt->signal_press_out = SLOW5_COMPRESS_NONE;
+
 
     // Input arguments
     opt->arg_fname_in = NULL;
@@ -46,6 +41,13 @@ void init_opt(opt_t *opt){
     opt->arg_record_press_out = NULL;
     opt->arg_signal_press_out = NULL;
     opt->arg_num_threads = NULL;
+
+    // Default options
+    opt->fmt_in = SLOW5_FORMAT_UNKNOWN;
+    opt->fmt_out = SLOW5_FORMAT_UNKNOWN;
+    opt->f_out = stdout;
+    opt->record_press_out = SLOW5_COMPRESS_ZLIB;
+    opt->signal_press_out = SLOW5_COMPRESS_NONE;
     opt->num_threads = DEFAULT_NUM_THREADS;
     opt->read_id_batch_capacity = READ_ID_BATCH_CAPACITY;
 }
