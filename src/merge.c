@@ -89,22 +89,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {NULL, 0, NULL, 0 }
     };
 
-//    // Default options
-//    enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-//    enum slow5_fmt extension_format = SLOW5_FORMAT_BINARY;
-//    enum slow5_press_method pressMethodRecord = SLOW5_COMPRESS_ZLIB;
-//    enum slow5_press_method pressMethodSignal = SLOW5_COMPRESS_NONE;
-//    int compression_set = 0;
-//    int format_out_set = 0;
-//
-//    // Input arguments
-//    char *arg_fmt_out = NULL;
-//    char *arg_fname_out = NULL;
-//    char *arg_num_threads = NULL;
-//    char *arg_record_press_out = NULL;
-//    char *arg_signal_press_out = NULL;
-//    int lossy = 0;
-
     opt_t user_opts;
     init_opt(&user_opts);
 
