@@ -1,122 +1,82 @@
 #!/bin/bash
-# WARNING: this file should be stored inside test directory
-# WARNING: the executable should be found at ../
-# WARNING: four slow5s should be found at ./data/exp/merge/slow5s
-# WARNING: expected slow5 should be found at ./data/exp/merge
 
-Usage="test_merge.sh"
+# steps
+# run merge for different testcases
+# diff
 
-# Relative path to "slow5/tests/"
+RED='\033[0;31m' ; GREEN='\033[0;32m' ; NC='\033[0m' # No Color
+die() { echo -e "${RED}$1${NC}" >&2 ; echo ; exit 1 ; } # terminate script
+info() {  echo ; echo -e "${GREEN}$1${NC}" >&2 ; }
+
+#...directories files tools arguments commands clean
+# Relative path to "slow5tools/tests/"
 REL_PATH="$(dirname $0)/"
 
-NC='\033[0m' # No Color
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-
-# terminate script
-die() {
-    echo -e "${RED}$1${NC}" >&2
-    echo
-    exit 1
-}
+EXP_DIR="$REL_PATH/data/exp/merge"
+RAW_DIR="$REL_PATH/data/raw/merge"
+OUTPUT_DIR="$REL_PATH/data/out/merge"
+test -d "$OUTPUT_DIR" && rm -r "$OUTPUT_DIR"
+mkdir "$OUTPUT_DIR" || die "Failed creating $OUTPUT_DIR"
 
 if [ "$1" = 'mem' ]; then
     SLOW5_EXEC="valgrind --leak-check=full --error-exitcode=1 $REL_PATH/../slow5tools"
 else
     SLOW5_EXEC=$REL_PATH/../slow5tools
 fi
+NUM_THREADS=4
 
-OUTPUT_DIR="$REL_PATH/data/out/merge"
-test -d $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
-mkdir $OUTPUT_DIR || die "Creating $OUTPUT_DIR failed"
+TESTCASE=0
+echo "-------------------tesetcase $TESTCASE: slow5tools version-------------------"
+$SLOW5_EXEC --version || die "tesetcase TESTCASE: slow5tools version failed"
 
-INPUT_FILE=$REL_PATH/data/exp/merge/slow5s
-
-# merge four single group slow5s and diff with expected slow5 to check if slow5tools merge is working as expected
-
-INPUT_FILES="$INPUT_FILE/rg0.slow5 $INPUT_FILE/rg1.slow5 $INPUT_FILE/rg2.slow5 $INPUT_FILE/rg3.slow5"
-
-NUM_THREADS=2
-
-echo "-------------------tesetcase 0: slow5tools version-------------------"
-$SLOW5_EXEC --version || die "tesetcase 0: slow5tools version failed"
-
-echo
-echo "-------------------tesetcase 1: lossless merging-------------------"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --to slow5 || die "tesetcase 1: lossless merging failed"
+TESTCASE=1
+echo "-------------------tesetcase $TESTCASE: lossless merging-------------------"
+INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg2.slow5 $RAW_DIR/rg3.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --to slow5 || die "tesetcase $TESTCASE: lossless merging failed"
 echo "comparing merged_output and merged_expected"
 sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $OUTPUT_DIR/merged_expected_sorted.slow5 || die "sort failed"
 sort $OUTPUT_DIR/merged_output.slow5 > $OUTPUT_DIR/merged_output_sorted.slow5 || die "sort failed"
 rm $OUTPUT_DIR/merged_output.slow5  || die "remove $OUTPUT_DIR/merged_output.slow5 failed"
-cmp -s $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_sorted.slow5
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}SUCCESS: merged files are consistent!${NC}"
-elif [ $? -eq 1 ]; then
-    echo -e "${RED}FAILURE: merged files are not consistent${NC}"
-    exit 1
-else
-    echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
-    exit 1
-fi
+diff -q $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_sorted.slow5 || die "diff testcase $TESTCASE failed"
 
-echo
-echo "-------------------tetcase 2: lossy merging-------------------"
-$SLOW5_EXEC merge -l false $INPUT_FILES -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5 || die "tetcase 2: lossy merging failed"
+TESTCASE=2
+echo "-------------------tetcase $TESTCASE: lossy merging-------------------"
+$SLOW5_EXEC merge -l false $INPUT_FILES -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5 || die "tetcase $TESTCASE: lossy merging failed"
 echo "comparing lossy_merged_output and lossy_merged_expected"
 sort $REL_PATH/data/exp/merge/lossy_merged_expected.slow5 > $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 || die "sort failed"
 sort $OUTPUT_DIR/lossy_merged_output.slow5 > $OUTPUT_DIR/lossy_merged_output_sorted.slow5 || die "sort failed"
 rm $OUTPUT_DIR/lossy_merged_output.slow5 || die "remove $OUTPUT_DIR/lossy_merged_output.slow5 failed"
-cmp -s $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 $OUTPUT_DIR/lossy_merged_output_sorted.slow5
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}SUCCESS: lossy merged files are consistent!${NC}"
-elif [ $? -eq 1 ]; then
-    echo -e "${RED}FAILURE: lossy merged files are not consistent${NC}"
-    exit 1
-else
-    echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
-    exit 1
-fi
+diff -q $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 $OUTPUT_DIR/lossy_merged_output_sorted.slow5 || die "diff testcase $TESTCASE failed"
 
-echo
-echo "-------------------tesetcase 3: lossless merging with threads-------------------"
-$SLOW5_EXEC merge -t $NUM_THREADS $INPUT_FILES -o $OUTPUT_DIR/merged_output_using_threads.slow5 --to slow5 || die "tesetcase 3: lossless merging using threads failed"
+TESTCASE=3
+echo "-------------------tesetcase $TESTCASE: lossless merging with threads-------------------"
+$SLOW5_EXEC merge -t $NUM_THREADS $INPUT_FILES -o $OUTPUT_DIR/merged_output_using_threads.slow5 --to slow5 || die "tesetcase $TESTCASE: lossless merging using threads failed"
 echo "comparing merged_output_using_threads and merged_expected"
 sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $OUTPUT_DIR/merged_expected_sorted.slow5 || die "sort failed"
 sort $OUTPUT_DIR/merged_output_using_threads.slow5 > $OUTPUT_DIR/merged_output_using_threads_sorted.slow5 || die "sort failed"
 rm $OUTPUT_DIR/merged_output_using_threads.slow5  || die "remove $OUTPUT_DIR/merged_output_using_threads.slow5 failed"
-cmp -s $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_using_threads_sorted.slow5
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}SUCCESS: merged files are consistent!${NC}"
-elif [ $? -eq 1 ]; then
-    echo -e "${RED}FAILURE: merged files are not consistent${NC}"
-    exit 1
-else
-    echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
-    exit 1
-fi
+diff -q $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_using_threads_sorted.slow5 || die "diff testcase $TESTCASE failed"
 
 # merging with and without enum data type
-echo
-echo "-------------------tesetcase 4: merging with and without enum type-------------------"
-INPUT_FILES="$INPUT_FILE/aux_no_enum.slow5 $INPUT_FILE/aux_enum.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase 4: merging with and without enum type failed"
-diff $REL_PATH/data/exp/merge/merged_output_enum.slow5  $OUTPUT_DIR/merged_output_enum.slow5 -q || die "tesetcase 4: diff for merging with and without enum type failed"
+TESTCASE=4
+echo "-------------------tesetcase $TESTCASE: merging with and without enum type-------------------"
+INPUT_FILES="$RAW_DIR/aux_no_enum.slow5 $RAW_DIR/aux_enum.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase $TESTCASE: merging with and without enum type failed"
+diff -q $REL_PATH/data/exp/merge/merged_output_enum.slow5  $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase $TESTCASE: diff for merging with and without enum type failed"
 
-echo
-echo "-------------------tesetcase5: merging without and with enum type-------------------"
-INPUT_FILES="$INPUT_FILE/aux_enum.slow5 $INPUT_FILE/aux_no_enum.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum2.slow5 || die "tesetcase 5: merging with and without enum type failed"
-diff $REL_PATH/data/exp/merge/merged_output_enum2.slow5  $OUTPUT_DIR/merged_output_enum2.slow5 -q || die "tesetcase 5: diff for merging with and without enum type failed"
-
+TESTCASE=5
+echo "-------------------tesetcase $TESTCASE: merging without and with enum type-------------------"
+INPUT_FILES="$RAW_DIR/aux_enum.slow5 $RAW_DIR/aux_no_enum.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum2.slow5 || die "tesetcase $TESTCASE: merging with and without enum type failed"
+diff -q $REL_PATH/data/exp/merge/merged_output_enum2.slow5  $OUTPUT_DIR/merged_output_enum2.slow5 || die "tesetcase $TESTCASE: diff for merging with and without enum type failed"
 
 # merging different slow5 formats and versions
-echo
-echo "-------------------tesetcase 6: merging different slow5 formats and versions-------------------"
-INPUT_FILES="$INPUT_FILE/aux_no_enum.slow5 $INPUT_FILE/none_v0.1.0.blow5 $INPUT_FILE/zlib_svb-zd_v0.2.0.blow5 $INPUT_FILE/zlib_v0.2.0.blow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_formats.slow5 || die "tesetcase 6: merging different file types failed"
-diff $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged_output_formats.slow5 -q || die "tesetcase 6: diff for merging different file types failed"
+TESTCASE=5
+echo "-------------------tesetcase $TESTCASE: merging different slow5 formats and versions-------------------"
+INPUT_FILES="$RAW_DIR/aux_no_enum.slow5 $RAW_DIR/none_v0.1.0.blow5 $RAW_DIR/zlib_svb-zd_v0.2.0.blow5 $RAW_DIR/zlib_v0.2.0.blow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_formats.slow5 || die "tesetcase $TESTCASE: merging different file types failed"
+diff -q $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged_output_formats.slow5 -q || die "tesetcase $TESTCASE: diff for merging different file types failed"
 
-
-#rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
-
+rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
+info "done"
 exit 0

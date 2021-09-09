@@ -50,21 +50,21 @@ echo
 TESTCASE_NO=1
 echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:file process:single_process output:stdout-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single-fast5 input:file process:single_process output"
+diff -q $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single-fast5 input:file process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
 TESTCASE_NO=2
 echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:file process:single_process output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 --to slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single-fast5 input:file process:single_process output"
+diff -q $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single-fast5 input:file process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
 TESTCASE_NO=3
 echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:directory process:single_process output:stdout-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-fast5-output/directory_single-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:single_process output"
+diff -q $EXP_SLOW5_DIR/single-fast5-output/directory_single-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
@@ -72,28 +72,28 @@ rm $OUTPUT_DIR/single-fast5-output/*
 TESTCASE_NO=4
 echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:directory process:single_process output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 -d $OUTPUT_DIR/single-fast5-output --iop 1 --to slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-fast5-output/directory_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:single_process output"
+diff -q $EXP_SLOW5_DIR/single-fast5-output/directory_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
 TESTCASE_NO=5
 echo "------------------- f2s testcase $TESTCASE_NO: format:multi-fast5 input:file process:single_process output:stdout-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 1 --to slow5>$OUTPUT_DIR/stdout.slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/file_multi-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/file_multi-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
 TESTCASE_NO=6
 echo "------------------- f2s testcase $TESTCASE_NO: format:multi-fast5 input:file process:single_process output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 1 --to slow5 -d $OUTPUT_DIR/multi-fast5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/file_multi-fast5.slow5 $OUTPUT_DIR/multi-fast5/ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/file_multi-fast5.slow5 $OUTPUT_DIR/multi-fast5/ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
 TESTCASE_NO=7
 echo "------------------- f2s testcase $TESTCASE_NO: format:multi-fast5 input:directory process:single_process output:stdout-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 1 --to slow5>$OUTPUT_DIR/stdout.slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/directory_multi-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:directory process:single_process output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/directory_multi-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:directory process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
@@ -101,9 +101,9 @@ rm $OUTPUT_DIR/multi-fast5/*
 TESTCASE_NO=8
 echo "------------------- f2s testcase $TESTCASE_NO: format:multi-fast5 input:directory process:single_process output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 1 --to slow5 -d $OUTPUT_DIR/multi-fast5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/ssm1.slow5 $OUTPUT_DIR/multi-fast5/ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/ssm2.slow5 $OUTPUT_DIR/multi-fast5/ssm2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/ssm3.slow5 $OUTPUT_DIR/multi-fast5/ssm3.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/ssm1.slow5 $OUTPUT_DIR/multi-fast5/ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/ssm2.slow5 $OUTPUT_DIR/multi-fast5/ssm2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/ssm3.slow5 $OUTPUT_DIR/multi-fast5/ssm3.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
@@ -112,16 +112,16 @@ rm $OUTPUT_DIR/stdout.slow5
 TESTCASE_NO=9
 echo "------------------- f2s testcase $TESTCASE_NO: format:single_and_multi-fast5 input:file process:single_process output:stdout-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5/1ssm1.fast5 $FAST5_DIR/single-and-multi-fast5/2sss1.fast5 $FAST5_DIR/single-and-multi-fast5/3ssm2.fast5 $FAST5_DIR/single-and-multi-fast5/4sss2.fast5 --iop 1 --to slow5 > $OUTPUT_DIR/stdout.slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-and-multi-fast5-output/file_single-and-multi-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:single_process output"
+diff -q $EXP_SLOW5_DIR/single-and-multi-fast5-output/file_single-and-multi-fast5.slow5 $OUTPUT_DIR/stdout.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
 TESTCASE_NO=10
 echo "------------------- f2s testcase $TESTCASE_NO: format:single_and_multi-fast5 input:directory process:single_process output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 1 --to slow5 -d $OUTPUT_DIR/single-and-multi-fast5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-and-multi-fast5-output/0.slow5 $OUTPUT_DIR/single-and-multi-fast5/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:single_process output"
-diff -s $EXP_SLOW5_DIR/single-and-multi-fast5-output/1ssm1.slow5 $OUTPUT_DIR/single-and-multi-fast5/1ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:single_process output"
-diff -s $EXP_SLOW5_DIR/single-and-multi-fast5-output/3ssm2.slow5 $OUTPUT_DIR/single-and-multi-fast5/3ssm2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:single_process output"
+diff -q $EXP_SLOW5_DIR/single-and-multi-fast5-output/0.slow5 $OUTPUT_DIR/single-and-multi-fast5/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:single_process output"
+diff -q $EXP_SLOW5_DIR/single-and-multi-fast5-output/1ssm1.slow5 $OUTPUT_DIR/single-and-multi-fast5/1ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:single_process output"
+diff -q $EXP_SLOW5_DIR/single-and-multi-fast5-output/3ssm2.slow5 $OUTPUT_DIR/single-and-multi-fast5/3ssm2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:single_process output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 # ----------------------------------------------- multi process --------------------------------------------
@@ -131,7 +131,7 @@ rm $OUTPUT_DIR/single-fast5-output/*
 TESTCASE_NO=11
 echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:file process:multi output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-fast5/sss1.fast5 -d $OUTPUT_DIR/single-fast5-output --iop 4 --to slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single-fast5 input:file process:multi output"
+diff -q $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single-fast5 input:file process:multi output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
@@ -139,9 +139,9 @@ rm $OUTPUT_DIR/single-fast5-output/*
 TESTCASE_NO=12
 echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:directory process:multi output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-fast5 -d $OUTPUT_DIR/single-fast5-output --iop 4 --to slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:multi output"
-diff -s $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:multi output"
-diff -s $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:multi output"
+diff -q $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/0.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:multi output"
+diff -q $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:multi output"
+diff -q $EXP_SLOW5_DIR/single-fast5-output/a_single-fast5.slow5 $OUTPUT_DIR/single-fast5-output/2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'f2s format:single-fast5 input:directory process:multi output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
@@ -149,7 +149,7 @@ rm $OUTPUT_DIR/multi-fast5/*
 TESTCASE_NO=13
 echo "------------------- f2s testcase $TESTCASE_NO: format:multi-fast5 input:file process:multi output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --iop 4 --to slow5 -d $OUTPUT_DIR/multi-fast5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/file_multi-fast5.slow5 $OUTPUT_DIR/multi-fast5/ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:multi output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/file_multi-fast5.slow5 $OUTPUT_DIR/multi-fast5/ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:multi output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
@@ -157,9 +157,9 @@ rm $OUTPUT_DIR/multi-fast5/*
 TESTCASE_NO=14
 echo "------------------- f2s testcase $TESTCASE_NO: format:multi-fast5 input:directory process:multi output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5 --iop 4 --to slow5 -d $OUTPUT_DIR/multi-fast5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/ssm1.slow5 $OUTPUT_DIR/multi-fast5/ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:multi output"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/ssm2.slow5 $OUTPUT_DIR/multi-fast5/ssm2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:multi output"
-diff -s $EXP_SLOW5_DIR/multi-fast5-output/ssm3.slow5 $OUTPUT_DIR/multi-fast5/ssm3.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:multi output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/ssm1.slow5 $OUTPUT_DIR/multi-fast5/ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:multi output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/ssm2.slow5 $OUTPUT_DIR/multi-fast5/ssm2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:multi output"
+diff -q $EXP_SLOW5_DIR/multi-fast5-output/ssm3.slow5 $OUTPUT_DIR/multi-fast5/ssm3.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:multi-fast5 input:file process:multi output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
@@ -167,8 +167,8 @@ rm $OUTPUT_DIR/single-and-multi-fast5/*
 TESTCASE_NO=15
 echo "------------------- f2s testcase $TESTCASE_NO: format:single_and_multi-fast5 input:directory process:multi output:directory-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/single-and-multi-fast5 --iop 4 --to slow5 -d $OUTPUT_DIR/single-and-multi-fast5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/single-and-multi-fast5-output/1ssm1.slow5 $OUTPUT_DIR/single-and-multi-fast5/1ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:multi output"
-diff -s $EXP_SLOW5_DIR/single-and-multi-fast5-output/3ssm2.slow5 $OUTPUT_DIR/single-and-multi-fast5/3ssm2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:multi output"
+diff -q $EXP_SLOW5_DIR/single-and-multi-fast5-output/1ssm1.slow5 $OUTPUT_DIR/single-and-multi-fast5/1ssm1.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:multi output"
+diff -q $EXP_SLOW5_DIR/single-and-multi-fast5-output/3ssm2.slow5 $OUTPUT_DIR/single-and-multi-fast5/3ssm2.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for 'format:single_and_multi-fast5 input:directory process:multi output"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 #----------------------------------------- run id conflicts -------------------------------------------
@@ -251,7 +251,7 @@ TESTCASE_NO=27
 echo "------------------- f2s testcase $TESTCASE_NO >>> auxiliary field missing fast5-------------------"
 mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/median_before_missing.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/median_before_missing.slow5 --to slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/unusual_fast5/median_before_missing.slow5 $OUTPUT_DIR/unusual_fast5/median_before_missing.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for auxiliary field missing fast5"
+diff -q $EXP_SLOW5_DIR/unusual_fast5/median_before_missing.slow5 $OUTPUT_DIR/unusual_fast5/median_before_missing.slow5 || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for auxiliary field missing fast5"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
@@ -296,31 +296,31 @@ TESTCASE_NO=34
 echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason fast5-------------------"
 mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
 $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason0.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason0.slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/end_reason_fast5/end_reason0.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason0.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for end_reason fast5"
+diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason0.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason0.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for end_reason fast5"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 #TESTCASE_NO=35
 #echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason found only in the second read group fast5 1-------------------"
 #mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
 #$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason1.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason1.slow5 || die "testcase $TESTCASE_NO failed"
-#diff -s $EXP_SLOW5_DIR/end_reason_fast5/end_reason1.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason1.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for end_reason fast5"
+#diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason1.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason1.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for end_reason fast5"
 #echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=35
 echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason found only in the first read group fast5 2-------------------"
 mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
 $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason2.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason2.slow5 || die "testcase $TESTCASE_NO failed"
-diff -s $EXP_SLOW5_DIR/end_reason_fast5/end_reason2.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason2.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for end_reason fast5"
+diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason2.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason2.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for end_reason fast5"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=36
 echo "------------------- f2s testcase $TESTCASE_NO >>> not a fast5 -------------------"
-$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/not_a_fast5.fast5  &&  die "testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/not_a_fast5.fast5  ||  die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=37
 echo "------------------- f2s testcase $TESTCASE_NO >>> non existent file -------------------"
-$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/there_is_no_such_fast5.fast5  &&  die "testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/there_is_no_such_fast5.fast5  ||  die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=38
