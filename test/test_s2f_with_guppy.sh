@@ -13,30 +13,27 @@ if [[ "$#" -lt 4 ]]; then
 	exit 1
 fi
 
-NC='\033[0m' # No Color
-RED='\033[0;31m'
-GREEN='\033[0;32m'
+RED='\033[0;31m' ; GREEN='\033[0;32m' ; NC='\033[0m' # No Color
+die() { echo -e "${RED}$1${NC}" >&2 ; echo ; exit 1 ; } # terminate script
+#ask before deleting. if yes then delete. if no then exit.
+# to automatically answer:$ yes | script or use yes n | script
+ask() { echo -n "Directory $1 exists. Delete and create again? (y/n)? " ; read answer ; if [ "$answer" != "${answer#[Nn]}" ] ;then exit ; fi ; echo ; }
 
-# terminate script
-die() {
-    echo -e "${RED}$1${NC}" >&2
-    echo
-    exit 1
-}
 
 FAST5_DIR=$1
-TEST_DIR=$2/s2f_with_guppy_test
+OUTPUT_DIR=$2/s2f_with_guppy_test
 SLOWTOOLS=$3
 GUPPY_BASECALLER=$4
 
-F2S_OUTPUT_DIR=$TEST_DIR/f2s
-S2F_OUTPUT_DIR=$TEST_DIR/s2f
-GUPPY_OUTPUT_ORIGINAL=$TEST_DIR/guppy_output_original
-GUPPY_OUTPUT_S2F=$TEST_DIR/guppy_output_s2f
+F2S_OUTPUT_DIR=$OUTPUT_DIR/f2s
+S2F_OUTPUT_DIR=$OUTPUT_DIR/s2f
+GUPPY_OUTPUT_ORIGINAL=$OUTPUT_DIR/guppy_output_original
+GUPPY_OUTPUT_S2F=$OUTPUT_DIR/guppy_output_s2f
 
 # create test directory
-test -d  $TEST_DIR && rm -r $TEST_DIR
-mkdir $TEST_DIR || die "mkdir $TEST_DIR failed"
+test -d "$OUTPUT_DIR" && ask "$OUTPUT_DIR"
+test -d  $OUTPUT_DIR && rm -r $OUTPUT_DIR
+mkdir $OUTPUT_DIR || die "mkdir $OUTPUT_DIR failed"
 
 IOP=40
 
