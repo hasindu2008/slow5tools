@@ -16,7 +16,7 @@ die() {
     exit 1
 }
 #redirect
-verbose=0
+verbose=1
 exec 3>&1
 exec 4>&2
 if ((verbose)); then
