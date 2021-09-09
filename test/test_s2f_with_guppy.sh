@@ -55,13 +55,7 @@ if test -d $GUPPY_OUTPUT_S2F/pass; then
     cat $GUPPY_OUTPUT_ORIGINAL/pass/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_original_pass_sorted.fastq || die "Cat failed"
 
     echo "diff sorted pass files"
-    diff guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq &>/dev/null
-
-
-    if [ $? -ne 0 ]; then
-      echo -e "${RED}ERROR: diff failed for guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq files ${NC}"
-      exit 1
-    fi
+    diff guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq >/dev/null || die "ERROR: diff failed for guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq files"
     echo -e "${GREEN}diff passed${NC}"
 fi
 
@@ -71,12 +65,7 @@ if test -d $GUPPY_OUTPUT_S2F/fail; then
     cat $GUPPY_OUTPUT_ORIGINAL/fail/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_original_fail_sorted.fastq
 
     echo "diff sorted fail files"
-    diff guppy_output_s2f_fail_sorted.fastq guppy_output_original_fail_sorted.fastq &>/dev/null
-
-    if [ $? -ne 0 ]; then
-      echo -e "${RED}ERROR: diff failed for guppy_output_s2f_fail_sorted.fastq and guppy_output_original_fail_sorted.fastq files ${NC}"
-      exit 1
-    fi
+    diff guppy_output_s2f_fail_sorted.fastq guppy_output_original_fail_sorted.fastq >/dev/null || die "ERROR: diff failed for guppy_output_s2f_fail_sorted.fastq and guppy_output_original_fail_sorted.fastq files"
     echo -e "${GREEN}diff passed${NC}"
 fi
 
@@ -85,12 +74,7 @@ if [ $PASS_FAIL_STRUCTURE -eq 0 ]; then
     cat $GUPPY_OUTPUT_ORIGINAL/*.fastq | awk '{if(NR%4==1){print $1} else{print $0};}'  | paste - - - -  | sort -k1,1  | tr '\t' '\n' > guppy_output_original_sorted.fastq
 
     echo "diff sorted files"
-    diff guppy_output_s2f_sorted.fastq guppy_output_original_sorted.fastq &>/dev/null
-
-    if [ $? -ne 0 ]; then
-      echo -e "${RED}ERROR: diff failed for guppy_output_s2f_sorted.fastq guppy_output_original_sorted.fastq files ${NC}"
-      exit 1
-    fi
+    diff guppy_output_s2f_sorted.fastq guppy_output_original_sorted.fastq >/dev/null || die "ERROR: diff failed for guppy_output_s2f_sorted.fastq guppy_output_original_sorted.fastq files"
     echo -e "${GREEN}diff passed${NC}"
 fi
 
