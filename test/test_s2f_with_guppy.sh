@@ -40,7 +40,7 @@ mkdir $TEST_DIR || die "mkdir $TEST_DIR failed"
 
 IOP=40
 
-$SLOWTOOLS f2s $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP || die "slow5tools f2s failed"
+$SLOWTOOLS f2s -z zstd -s svb-zd $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP || die "slow5tools f2s failed"
 $SLOWTOOLS s2f $F2S_OUTPUT_DIR -d $S2F_OUTPUT_DIR --iop $IOP || die "slow5tools s2f failed"
 
 $GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $FAST5_DIR -s $GUPPY_OUTPUT_ORIGINAL -r --device cuda:all || die "Guppy failed"
