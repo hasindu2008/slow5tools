@@ -313,6 +313,69 @@ $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason2.fast5 -o $OUTPUT_DIR/end
 diff -s $EXP_SLOW5_DIR/end_reason_fast5/end_reason2.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason2.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for end_reason fast5"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+TESTCASE_NO=36
+echo "------------------- f2s testcase $TESTCASE_NO >>> not a fast5 -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/not_a_fast5.fast5  &&  die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=37
+echo "------------------- f2s testcase $TESTCASE_NO >>> non existent file -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/there_is_no_such_fast5.fast5  &&  die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=38
+echo "------------------- f2s testcase $TESTCASE_NO >>> empty directory -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/empty_dir  &&  die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=39
+echo "------------------- f2s testcase $TESTCASE_NO >>> empty fast5 file -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/empty_fast5.fast5  &&  die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+TESTCASE_NO=40
+echo "------------------- f2s testcase $TESTCASE_NO >>> blow5 zlib output using -o -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 -o $OUTPUT_DIR/ssm1.blow5  -c zlib -s none
+diff $EXP_SLOW5_DIR/multi-fast5-output/ssm1_zlib.blow5 $OUTPUT_DIR/ssm1.blow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for blow zlib out"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=41
+echo "------------------- f2s testcase $TESTCASE_NO >>> blow5 zlib-svb output using -o -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 -o $OUTPUT_DIR/ssm1.blow5 -c zlib -s svb-zd
+diff $EXP_SLOW5_DIR/multi-fast5-output/ssm1_zlib_svb.blow5  $OUTPUT_DIR/ssm1.blow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for blow zlib-svb out"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=42
+echo "------------------- f2s testcase $TESTCASE_NO >>> slow5 output using -o -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 -o $OUTPUT_DIR/ssm1.slow5
+diff $EXP_SLOW5_DIR/multi-fast5-output/ssm1.slow5  $OUTPUT_DIR/ssm1.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for slow5"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+TESTCASE_NO=43
+echo "------------------- f2s testcase $TESTCASE_NO >>> blow5 zlib-svb output to stdout-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --to blow5 -c zlib -s svb-zd > $OUTPUT_DIR/ssm1.blow5
+diff $EXP_SLOW5_DIR/multi-fast5-output/ssm1_zlib_svb.blow5 $OUTPUT_DIR/ssm1.blow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for blow zlib out"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=44
+echo "------------------- f2s testcase $TESTCASE_NO >>> slow5 output to stdout-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --to slow5  > $OUTPUT_DIR/ssm1.slow5
+diff $EXP_SLOW5_DIR/multi-fast5-output/ssm1.slow5 $OUTPUT_DIR/ssm1.slow5 > /dev/null || die "ERROR: diff failed f2s_output_test testcase $TESTCASE_NO for slow5"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=45
+echo "------------------- f2s testcase $TESTCASE_NO >>> output extension and --to mismatch -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --to slow5  -o $OUTPUT_DIR/ssm1.blow5 && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=46
+echo "------------------- f2s testcase $TESTCASE_NO >>> compression requested with slow5 -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --to slow5  -c zlib  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
