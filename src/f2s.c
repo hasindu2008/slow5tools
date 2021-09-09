@@ -26,13 +26,11 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --to=[FORMAT]                      specify output file format\n" \
-    "    -c, --compress=[REC_METHOD]        specify record compression method -- zlib (only available for format blow5)\n" \
-    "    -s, --sig-compress=[SIG_METHOD]    specify signal compression method -- none (only available for format blow5)\n" \
-    "    -d, --out-dir [STR]                output directory where slow5files are written to\n" \
-    "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
-    "    -p, --iop [INT]                    number of I/O processes to read fast5 files [default: 8]\n" \
-    "    -l, --lossless [STR]               retain information in auxiliary fields during the conversion.[default: true].\n" \
+    HELP_MSG_OUTPUT_FORMAT \
+    HELP_MSG_OUTPUT_FILE \
+    HELP_MSG_PROCESSES \
+    HELP_MSG_LOSSLESS \
+    HELP_MSG_OUTPUT_DIRECTORY \
     "    -a, --allow                        allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
     "    -h, --help                         display this message and exit\n" \
     HELP_FORMATS_METHODS
@@ -268,8 +266,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     // This can cause a 'still reachable' memory leak on a valgrind check
     H5Eset_auto(0, NULL, NULL);
 
-    int iop = 8;
-    int lossy = 0;
     int flag_allow_run_id_mismatch = 0;
 
     print_args(argc,argv);
@@ -295,48 +291,28 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             {NULL, 0, NULL, 0 }
     };
 
-    enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_fmt extension_format = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
-    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
-    int compression_set = 0;
-    int format_out_set = 0;
-
-    // Input arguments
-    char *arg_dir_out = NULL;
-    char *arg_fname_out = NULL;
-    char *arg_record_press_out = NULL;
-    char *arg_signal_press_out = NULL;
-    char *arg_fmt_out = NULL;
+    opt_t user_opts;
+    init_opt(&user_opts);
 
     int opt;
     int longindex = 0;
+
     // Parse options
     while ((opt = getopt_long(argc, argv, "b:c:s:ho:p:l:d:a", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
             case 'b':
-                format_out_set = 1;
-                arg_fmt_out = optarg;
+                user_opts.arg_fmt_out = optarg;
                 break;
             case 'c':
-                compression_set = 1;
-                arg_record_press_out = optarg;
+                user_opts.arg_record_press_out = optarg;
                 break;
             case 's':
-                compression_set = 1;
-                arg_signal_press_out = optarg;
+                user_opts.arg_signal_press_out = optarg;
                 break;
             case 'l':
-                if(strcmp(optarg,"true")==0){
-                    lossy = 0;
-                }else if(strcmp(optarg,"false")==0){
-                    lossy = 1;
-                }else{
-                    ERROR("Incorrect argument%s", "");
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_lossless = optarg;
                 break;
             case 'a':
                 flag_allow_run_id_mismatch = 1;
@@ -347,17 +323,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             case 'd':
-                arg_dir_out = optarg;
+                user_opts.arg_dir_out = optarg;
                 break;
             case 'p':
-                iop = atoi(optarg);
-                if (iop < 1) {
-                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_num_processes = optarg;
                 break;
             case 'o':
-                arg_fname_out = optarg;
+                user_opts.arg_fname_out = optarg;
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -365,62 +337,27 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 return EXIT_FAILURE;
         }
     }
-
-    if (arg_fmt_out) {
-        DEBUG("parsing output format%s","");
-        format_out = parse_name_to_fmt(arg_fmt_out);
-        // An error occured
-        if (format_out == SLOW5_FORMAT_UNKNOWN) {
-            ERROR("invalid output format -- '%s'", arg_fmt_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
-    }
-    if(arg_fname_out){
-        DEBUG("parsing output file format%s","");
-        extension_format = parse_path_to_fmt(arg_fname_out);
-        if (extension_format == SLOW5_FORMAT_UNKNOWN) {
-            ERROR("cannot detect file format -- '%s'", arg_fname_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
-        if(format_out_set==0){
-            format_out = extension_format;
-        }
-    }
-    if(arg_fname_out && format_out!=extension_format){
-        ERROR("Output file extension does not match with the output format%s",".");
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+    if(parse_num_processes(&user_opts,argc,argv,meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
-        record_press_out = SLOW5_COMPRESS_NONE;
-        signal_press_out = SLOW5_COMPRESS_NONE;
-    }
-    // compression option is only effective with -b blow5
-    if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
-        ERROR("%s","Compression options (-c/-s) are only available for SLOW5 binary format.");
+    if(parse_arg_lossless(&user_opts, argc, argv, meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-    if (arg_record_press_out != NULL) {
-        record_press_out = name_to_slow5_press_method(arg_record_press_out);
-        if (record_press_out == (enum slow5_press_method) -1) {
-            ERROR("invalid record compression method -- '%s'", arg_record_press_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
+    if(parse_format_args(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
-    if (arg_signal_press_out != NULL) {
-        signal_press_out = name_to_slow5_press_method(arg_signal_press_out);
-        if (signal_press_out == (enum slow5_press_method) -1) {
-            ERROR("invalid signal compression method -- '%s'", arg_signal_press_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
+    if(auto_detect_formats(&user_opts) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
-
-    if(arg_fname_out && arg_dir_out){
+    if(parse_compression_opts(&user_opts) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(user_opts.arg_fname_out && user_opts.arg_dir_out){
         ERROR("output file name and output directory both cannot be set%s","");
         return EXIT_FAILURE;
     }
@@ -445,20 +382,20 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
     if(fast5_files.size()==1){
-        iop = 1;
+        user_opts.num_processes = 1;
     }
-    if(iop>1 && !arg_dir_out){
-        ERROR("output directory should be specified when using multiprocessing iop=%d",iop);
+    if(user_opts.num_processes>1 && !user_opts.arg_dir_out){
+        ERROR("output directory should be specified when using multiprocessing%s","");
         return EXIT_FAILURE;
     }
-    if(arg_dir_out){
+    if(user_opts.arg_dir_out){
         struct stat st = {0};
-        if (stat(arg_dir_out, &st) == -1) {
-            mkdir(arg_dir_out, 0700);
+        if (stat(user_opts.arg_dir_out, &st) == -1) {
+            mkdir(user_opts.arg_dir_out, 0700);
         }else{
-            std::vector< std::string > dir_list = list_directory(arg_dir_out);
+            std::vector< std::string > dir_list = list_directory(user_opts.arg_dir_out);
             if(dir_list.size()>2){
-                ERROR("Output director %s is not empty",arg_dir_out);
+                ERROR("Output director %s is not empty",user_opts.arg_dir_out);
                 return EXIT_FAILURE;
             }
         }
@@ -466,9 +403,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     //measure fast5 conversion time
     init_realtime = slow5_realtime();
-    slow5_press_method_t press_out = {record_press_out,signal_press_out};
+    slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
     reads_count readsCount;
-    f2s_iop(format_out, press_out, lossy, flag_allow_run_id_mismatch, iop, fast5_files, arg_dir_out, meta, &readsCount, arg_fname_out);
+    f2s_iop(user_opts.fmt_out, press_out, user_opts.flag_lossy, flag_allow_run_id_mismatch, user_opts.num_processes, fast5_files, user_opts.arg_dir_out, meta, &readsCount, user_opts.arg_fname_out);
     VERBOSE("Converting %ld fast5 files took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);

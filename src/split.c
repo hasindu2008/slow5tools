@@ -21,16 +21,14 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --to=[FORMAT]                      specify output file format\n" \
-    "    -c, --compress=[REC_METHOD]        specify record compression method -- zlib (only available for format blow5)\n" \
-    "    -s, --sig-compress=[SIG_METHOD]    specify signal compression method -- none (only available for format blow5)\n" \
-    "    -d, --out-dir [STR]                output directory where files are written to\n" \
+    HELP_MSG_OUTPUT_FORMAT \
+    HELP_MSG_PRESS \
+    HELP_MSG_OUTPUT_DIRECTORY \
     "    -f, --files [INT]                  split reads into n files evenly\n"              \
     "    -r, --reads [INT]                  split into n reads, i.e., each file will have n reads\n"              \
     "    -g, --groups                       split multi read group file into single read group files\n" \
-    "    -l, --lossless [STR]               retain information in auxiliary fields during the conversion.[default: true].\n" \
-    "    -p, --iop [INT]                    number of I/O processes used to split files [default: 8]\n" \
-    "    -h, --help                         display this message and exit\n" \
+    HELP_MSG_LOSSLESS \
+    HELP_MSG_PROCESSES \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
@@ -494,10 +492,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    // code from f2s
-    int iop = 8;
-    int lossy = 0;
-
     // Default options
     static struct option long_opts[] = {
             {"help",        no_argument, NULL, 'h' }, //0
@@ -513,20 +507,13 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {NULL, 0, NULL, 0 }
     };
 
-    enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method record_press_out = SLOW5_COMPRESS_ZLIB;
-    enum slow5_press_method signal_press_out = SLOW5_COMPRESS_NONE;
-    int compression_set = 0;
 
     meta_split_method metaSplitMethod;
     metaSplitMethod.n = 0;
     metaSplitMethod.splitMethod = READS_SPLIT;
 
-    // Input arguments
-    char *arg_dir_out = NULL;
-    char *arg_fmt_out = NULL;
-    char *arg_record_press_out = NULL;
-    char *arg_signal_press_out = NULL;
+    opt_t user_opts;
+    init_opt(&user_opts);
 
     int opt;
     int longindex = 0;
@@ -538,22 +525,19 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'h':
                 DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
-
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             case 'b':
-                arg_fmt_out = optarg;
+                user_opts.arg_fmt_out = optarg;
                 break;
             case 'c':
-                compression_set = 1;
-                arg_record_press_out = optarg;
+                user_opts.arg_record_press_out = optarg;
                 break;
             case 's':
-                compression_set = 1;
-                arg_signal_press_out = optarg;
+                user_opts.arg_signal_press_out = optarg;
                 break;
             case 'd':
-                arg_dir_out = optarg;
+                user_opts.arg_dir_out = optarg;
                 break;
             case 'f':
                 metaSplitMethod.splitMethod = FILE_SPLIT;
@@ -567,21 +551,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 metaSplitMethod.splitMethod = GROUP_SPLIT;
                 break;
             case 'l':
-                if(strcmp(optarg,"true")==0){
-                    lossy = 0;
-                }else if(strcmp(optarg,"false")==0){
-                    lossy = 1;
-                }else{
-                    ERROR("Incorrect argument%s", "");
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_lossless = optarg;
                 break;
             case 'p':
-                iop = atoi(optarg);
-                if (iop < 1) {
-                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_num_processes = optarg;
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -589,42 +562,26 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
-    if (arg_fmt_out) {
-        DEBUG("parsing output format%s","");
-        format_out = parse_name_to_fmt(arg_fmt_out);
-        // An error occured
-        if (format_out == SLOW5_FORMAT_UNKNOWN) {
-            ERROR("invalid output format -- '%s'", arg_fmt_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
-    }
-    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
-        record_press_out = SLOW5_COMPRESS_NONE;
-        signal_press_out = SLOW5_COMPRESS_NONE;
-    }
-    // compression option is only effective with -b blow5
-    if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
-        ERROR("%s","Compression option (-c/-s) is only available for SLOW5 binary format.");
+    if(parse_num_processes(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-    if (arg_record_press_out != NULL) {
-        record_press_out = name_to_slow5_press_method(arg_record_press_out);
-        if (record_press_out == (enum slow5_press_method) -1) {
-            ERROR("invalid record compression method -- '%s'", arg_record_press_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
+    if(parse_arg_lossless(&user_opts, argc, argv, meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
-    if (arg_signal_press_out != NULL) {
-        signal_press_out = name_to_slow5_press_method(arg_signal_press_out);
-        if (signal_press_out == (enum slow5_press_method) -1) {
-            ERROR("invalid signal compression method -- '%s'", arg_signal_press_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
+    if(parse_format_args(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
-
+    if(auto_detect_formats(&user_opts) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(parse_compression_opts(&user_opts) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
     if(metaSplitMethod.splitMethod==READS_SPLIT && metaSplitMethod.n==0){
         ERROR("Default splitting method - reads split is used. Specify the number of reads to include in a slow5 file%s","");
         return EXIT_FAILURE;
@@ -633,19 +590,19 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         ERROR("Splitting method - files split is used. Specify the number of files to create from a slow5 file%s","");
         return EXIT_FAILURE;
     }
-    if(!arg_dir_out){
+    if(!user_opts.arg_dir_out){
         ERROR("The output directory must be specified %s","");
         return EXIT_FAILURE;
     }
 
-    if(arg_dir_out){
+    if(user_opts.arg_dir_out){
         struct stat st = {0};
-        if (stat(arg_dir_out, &st) == -1) {
-            mkdir(arg_dir_out, 0700);
+        if (stat(user_opts.arg_dir_out, &st) == -1) {
+            mkdir(user_opts.arg_dir_out, 0700);
         }else{
-            std::vector< std::string > dir_list = list_directory(arg_dir_out);
+            std::vector< std::string > dir_list = list_directory(user_opts.arg_dir_out);
             if(dir_list.size()>2){
-                ERROR("Output director %s is not empty",arg_dir_out);
+                ERROR("Output director %s is not empty",user_opts.arg_dir_out);
                 return EXIT_FAILURE;
             }
         }
@@ -673,8 +630,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
     //measure slow5 splitting time
-    slow5_press_method_t press_out = {record_press_out,signal_press_out};
-    split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, press_out, lossy);
+    slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
+    split_iop(user_opts.num_processes, slow5_files, user_opts.arg_dir_out, meta, &readsCount, metaSplitMethod, user_opts.fmt_out, press_out, user_opts.flag_lossy);
     VERBOSE("Splitting %ld s/blow5 files took %.3fs",slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;

@@ -42,6 +42,9 @@ void init_opt(opt_t *opt){
     opt->arg_signal_press_out = NULL;
     opt->arg_num_threads = NULL;
     opt->arg_batch = NULL;
+    opt->arg_dir_out = NULL;
+    opt->arg_lossless = NULL;
+    opt->arg_num_processes = NULL;
 
     // Default options
     opt->fmt_in = SLOW5_FORMAT_UNKNOWN;
@@ -50,7 +53,9 @@ void init_opt(opt_t *opt){
     opt->record_press_out = SLOW5_COMPRESS_ZLIB;
     opt->signal_press_out = SLOW5_COMPRESS_NONE;
     opt->num_threads = DEFAULT_NUM_THREADS;
+    opt->num_processes = DEFAULT_NUM_PROCESSES;
     opt->read_id_batch_capacity = DEFAULT_BATCH_SIZE;
+    opt->flag_lossy = DEFAULT_AUXILIARY_FIELDS_NOT_OUT;
 }
 
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta){
@@ -64,6 +69,38 @@ int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *me
         } else {
             ERROR("invalid number of threads -- '%s'", opt->arg_num_threads);
             fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int parse_num_processes(opt_t *opt, int argc, char **argv, struct program_meta *meta){
+    // Parse num processes argument
+    if (opt->arg_num_processes != NULL) {
+        char *endptr;
+        long ret = strtol(opt->arg_num_processes, &endptr, 10);
+
+        if (*endptr == '\0') {
+            opt->num_processes = ret;
+        } else {
+            ERROR("invalid number of processes -- '%s'", opt->arg_num_processes);
+            fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *meta){
+    // Parse lossless argument
+    if (opt->arg_lossless != NULL) {
+        if (strcmp(opt->arg_lossless, "true") == 0) {
+            opt->flag_lossy = 0;
+        } else if (strcmp(opt->arg_lossless, "false") == 0) {
+            opt->flag_lossy = 1;
+        } else {
+            ERROR("Incorrect argument%s", "");
             return -1;
         }
     }
@@ -117,36 +154,44 @@ int parse_format_args(opt_t *opt, int argc, char **argv, struct program_meta *me
 }
 
 
-int auto_detect_formats(opt_t *opt){
-    // Autodetect input/output formats
-    if (opt->fmt_in == SLOW5_FORMAT_UNKNOWN) {
+int auto_detect_formats(opt_t *opt, int set_default_output_format){
+    if(opt->arg_fname_in){
         DEBUG("auto detecting input file format%s","");
-        opt->fmt_in = parse_path_to_fmt(opt->arg_fname_in);
+        enum slow5_fmt path_fmt_in = parse_path_to_fmt(opt->arg_fname_in);
         // Error
-        if (opt->fmt_in == SLOW5_FORMAT_UNKNOWN) {
-            ERROR("cannot detect file format -- '%s'",opt-> arg_fname_in);
+        if (path_fmt_in == SLOW5_FORMAT_UNKNOWN) {
+            ERROR("cannot detect input file format -- '%s'",opt-> arg_fname_in);
             return -1;
         }
-    }
-    if (opt->fmt_out == SLOW5_FORMAT_UNKNOWN) {
-        if (opt->arg_fname_out == NULL) {
-            opt->fmt_out = SLOW5_FORMAT_ASCII;
+        if (opt->fmt_in != SLOW5_FORMAT_UNKNOWN && opt->fmt_in !=path_fmt_in) {
+            ERROR("input file extension does not match with the given input format%s",".");
+            return -1;
+        } else{
+            opt->fmt_in = path_fmt_in;
         }
-
-        else{
-            DEBUG("auto detecting output file format%s","");
-
-            opt->fmt_out = parse_path_to_fmt(opt->arg_fname_out);
-
-            // Error
-            if (opt->fmt_out == SLOW5_FORMAT_UNKNOWN) {
-                ERROR("cannot detect file format -- '%s'", opt->arg_fname_out);
-                return -1;
-            }
+    }
+    if(opt->arg_fname_out){
+        DEBUG("auto detecting output file format%s","");
+        enum slow5_fmt path_fmt_out = parse_path_to_fmt(opt->arg_fname_out);
+        // Error
+        if (path_fmt_out == SLOW5_FORMAT_UNKNOWN) {
+            ERROR("cannot detect output file format -- '%s'", opt->arg_fname_out);
+            return -1;
+        }
+        if (opt->fmt_out != SLOW5_FORMAT_UNKNOWN && opt->fmt_out !=path_fmt_out) {
+            ERROR("output file extension does not match with the given output format%s",".");
+            return -1;
+        }else{
+            opt->fmt_out = path_fmt_out;
+        }
+    }
+    if(set_default_output_format){
+        DEBUG("setting default output format%s","");
+        if (opt->fmt_out == SLOW5_FORMAT_UNKNOWN) {
+            opt->fmt_out = SLOW5_FORMAT_BINARY;
         }
     }
     return 0;
-
 }
 
 

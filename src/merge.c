@@ -5,7 +5,6 @@
  * @date 27/02/2021
  */
 #include <getopt.h>
-#include <sys/wait.h>
 
 #include <string>
 #include <vector>
@@ -26,14 +25,12 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --to=[FORMAT]                      specify output file format\n" \
-    "    -c, --compress=[REC_METHOD]        specify record compression method -- zlib (only available for format blow5)\n" \
-    "    -s, --sig-compress=[SIG_METHOD]    specify signal compression method -- none (only available for format blow5)\n" \
-    "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
-    "    -l, --lossless [STR]               retain information in auxiliary fields during the conversion.[default: true].\n" \
-    "    -t, --threads [INT]                number of threads [default: 4]\n"        \
-    "    -K --batchsize                     the number of records on the memory at once. [default: 4096]\n" \
-    "    -h, --help                         display this message and exit\n"                                               \
+    HELP_MSG_OUTPUT_FORMAT \
+    HELP_MSG_PRESS \
+    HELP_MSG_OUTPUT_FILE \
+    HELP_MSG_LOSSLESS \
+    HELP_MSG_THREADS \
+    HELP_MSG_BATCH \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
@@ -92,24 +89,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {NULL, 0, NULL, 0 }
     };
 
-    // Default options
-    enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_fmt extension_format = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method pressMethodRecord = SLOW5_COMPRESS_ZLIB;
-    enum slow5_press_method pressMethodSignal = SLOW5_COMPRESS_NONE;
-    int compression_set = 0;
-    int format_out_set = 0;
-
-    // Input arguments
-    char *arg_fmt_out = NULL;
-    char *arg_fname_out = NULL;
-    char *arg_num_threads = NULL;
-    char *arg_record_press_out = NULL;
-    char *arg_signal_press_out = NULL;
-    int lossy = 0;
-
-    size_t num_threads = DEFAULT_NUM_THREADS;
-    int64_t read_id_batch_capacity = DEFAULT_BATCH_SIZE;
+    opt_t user_opts;
+    init_opt(&user_opts);
 
     int opt;
     int longindex = 0;
@@ -125,40 +106,25 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             case 't':
-                arg_num_threads = optarg;
+                user_opts.arg_num_threads = optarg;
                 break;
             case 'b':
-                format_out_set = 1;
-                arg_fmt_out = optarg;
+                user_opts.arg_fmt_out = optarg;
                 break;
             case 'K':
-                read_id_batch_capacity = atoi(optarg);
-                if(read_id_batch_capacity < 0){
-                    fprintf(stderr, "batchsize cannot be negative\n");
-                    fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-                    EXIT_MSG(EXIT_FAILURE, argv, meta);
-                    return EXIT_FAILURE;
-                }
+                user_opts.arg_batch = optarg;
                 break;
             case 'c':
-                compression_set = 1;
-                arg_record_press_out = optarg;
+                user_opts.arg_record_press_out = optarg;
                 break;
             case 's':
-                arg_signal_press_out = optarg;
+                user_opts.arg_signal_press_out = optarg;
                 break;
             case 'l':
-                if(strcmp(optarg,"true")==0){
-                    lossy = 0;
-                }else if(strcmp(optarg,"false")==0){
-                    lossy = 1;
-                }else{
-                    ERROR("Incorrect argument%s", "");
-                    return EXIT_FAILURE;
-                }
+                user_opts.arg_lossless = optarg;
                 break;
             case 'o':
-                arg_fname_out = optarg;
+                user_opts.arg_fname_out = optarg;
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -166,74 +132,25 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
-    if (arg_fmt_out) {
-        DEBUG("parsing output format%s","");
-        format_out = parse_name_to_fmt(arg_fmt_out);
-        // An error occured
-        if (format_out == SLOW5_FORMAT_UNKNOWN) {
-            ERROR("invalid output format -- '%s'", arg_fmt_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
-    }
-    if(arg_fname_out){
-        DEBUG("parsing output file format%s","");
-        extension_format = parse_path_to_fmt(arg_fname_out);
-        if (extension_format == SLOW5_FORMAT_UNKNOWN) {
-            ERROR("cannot detect file format -- '%s'", arg_fname_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
-        if(format_out_set==0){
-            format_out = extension_format;
-        }
-    }
-    if(arg_fname_out && format_out!=extension_format){
-        ERROR("Output file extension does not match with the output format%s",".");
-        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+    if(parse_num_threads(&user_opts,argc,argv,meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
-        pressMethodRecord = SLOW5_COMPRESS_NONE;
-        pressMethodSignal = SLOW5_COMPRESS_NONE;
-    }
-    // compression option is only effective with -b blow5
-    if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
-        ERROR("%s","Compression option (-c/-s) is only available for SLOW5 binary format.");
+    if(parse_arg_lossless(&user_opts, argc, argv, meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-    if (arg_record_press_out != NULL) {
-        pressMethodRecord = name_to_slow5_press_method(arg_record_press_out);
-        if (pressMethodRecord == (enum slow5_press_method) -1) {
-            ERROR("invalid record compression method -- '%s'", arg_record_press_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
+    if(parse_format_args(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
-    if (arg_signal_press_out != NULL) {
-        pressMethodSignal = name_to_slow5_press_method(arg_signal_press_out);
-        if (pressMethodSignal == (enum slow5_press_method) -1) {
-            ERROR("invalid signal compression method -- '%s'", arg_signal_press_out);
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
+    if(auto_detect_formats(&user_opts) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
-
-    // Parse num threads argument
-    if (arg_num_threads != NULL) {
-        char *endptr;
-        long ret = strtol(arg_num_threads, &endptr, 10);
-
-        if (*endptr == '\0') {
-            num_threads = ret;
-        } else {
-            ERROR("invalid number of threads -- '%s'", arg_num_threads);
-            fprintf(stderr, HELP_SMALL_MSG, argv[0]);
-
-            EXIT_MSG(EXIT_FAILURE, argv, meta);
-            return EXIT_FAILURE;
-        }
+    if(parse_compression_opts(&user_opts) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
 
     // Check for remaining files to parse
@@ -261,21 +178,29 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     //measure read_group number allocation time
     realtime0 = slow5_realtime();
 
-    FILE* slow5_file_pointer = stdout;
-    if(arg_fname_out){
-        slow5_file_pointer = fopen(arg_fname_out, "wb");
-        if (!slow5_file_pointer) {
-            ERROR("Output file %s could not be opened - %s.", arg_fname_out, strerror(errno));
+    // Parse output argument
+    if (user_opts.arg_fname_out != NULL) {
+        DEBUG("opening output file%s","");
+        // Create new file or
+        // Truncate existing file
+        FILE *new_file;
+        new_file = fopen(user_opts.arg_fname_out, "w");
+
+        // An error occurred
+        if (new_file == NULL) {
+            ERROR("File '%s' could not be opened - %s.",
+                  user_opts.arg_fname_out, strerror(errno));
+
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
             return EXIT_FAILURE;
+        } else {
+            user_opts.f_out = new_file;
         }
-    }else{
-        std::string stdout_s = "stdout";
-        arg_fname_out = &stdout_s[0];
     }
 
     std::map<std::string, enum slow5_aux_type> set_aux_attr_pairs;
-    slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, arg_fname_out, format_out);
-    int ret = slow5_hdr_initialize(slow5File->header, lossy);
+    slow5_file_t* slow5File = slow5_init_empty(user_opts.f_out, user_opts.arg_fname_out, user_opts.fmt_out);
+    int ret = slow5_hdr_initialize(slow5File->header, user_opts.flag_lossy);
     if(ret<0){
         return EXIT_FAILURE;
     }
@@ -292,12 +217,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             ERROR("[Skip file]: cannot open %s. skipping...\n",files[i].c_str());
             continue;
         }
-        if(lossy==0 && slow5File_i->header->aux_meta == NULL){
+        if(user_opts.flag_lossy==0 && slow5File_i->header->aux_meta == NULL){
             ERROR("[Skip file]: %s has no auxiliary fields. Specify -l false to merge files with no auxiliary fields.", files[i].c_str());
             slow5_close(slow5File_i);
             return EXIT_FAILURE;
         }
-        if(lossy==0){ // adding aux_fields to the output header
+        if(user_opts.flag_lossy==0){ // adding aux_fields to the output header
             slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
             uint32_t num_aux_attrs = aux_ptr->num;
             for(uint32_t r=0; r<num_aux_attrs; r++){
@@ -395,7 +320,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     }
 
-    if(lossy==0){
+    if(user_opts.flag_lossy==0){
         for( const auto& pair :set_aux_attr_pairs){
             if(slow5_aux_meta_add(slow5File->header->aux_meta, pair.first.c_str(), pair.second)){
                 ERROR("Could not initialize the record attribute '%s'", pair.first.c_str());
@@ -411,9 +336,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     VERBOSE("Allocating new read group numbers - took %.3fs\n",slow5_realtime() - realtime0);
 
     //now write the header to the slow5File. Use Binary non compress method for fast writing
-    slow5_press_method_t method = {pressMethodRecord, pressMethodSignal};
-    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, method) == -1){
-        ERROR("Could not write the header to %s\n", arg_fname_out);
+    slow5_press_method_t method = {user_opts.record_press_out, user_opts.signal_press_out};
+    if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, user_opts.fmt_out, method) == -1){
+        ERROR("Could not write the header to %s\n", user_opts.arg_fname_out);
         return EXIT_FAILURE;
     }
 
@@ -421,7 +346,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     double time_thread_execution = 0;
     double time_write = 0;
 
-    int64_t batch_size = read_id_batch_capacity;
+    int64_t batch_size = user_opts.read_id_batch_capacity;
     size_t slow5_file_index = 0;
     int flag_EOF = 0;
 
@@ -460,13 +385,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         realtime = slow5_realtime();
         // Setup multithreading structures
         core_t core;
-        core.num_thread = num_threads;
+        core.num_thread = user_opts.num_threads;
         core.fp = from;
         core.aux_meta = slow5File->header->aux_meta;
-        core.format_out = format_out;
-        slow5_press_method_t method = {pressMethodRecord,pressMethodSignal};
+        core.format_out = user_opts.fmt_out;
         core.press_method = method;
-        core.lossy = lossy;
+        core.lossy = user_opts.flag_lossy;
         core.slow5_file_index = slow5_file_index;
 
         db.n_batch = record_count;
@@ -510,7 +434,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     DEBUG("time_write\t%.3fs", time_write);
 
 
-    if (format_out == SLOW5_FORMAT_BINARY) {
+    if (user_opts.fmt_out == SLOW5_FORMAT_BINARY) {
         slow5_eof_fwrite(slow5File->fp);
     }
     slow5_close(slow5File);

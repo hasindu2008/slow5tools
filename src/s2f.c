@@ -26,10 +26,9 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n"       \
-    "    -o, --output [FILE]        output contents to FILE. Use only when a single SLOW5_FILE is converted\n" \
-    "    -d, --out-dir [STR]        output directory where files are written to\n" \
-    "    -p, --iop [INT]            number of I/O processes to read fast5 files [default: 8]\n" \
-    "    -h, --help                 display this message and exit\n" \
+    HELP_MSG_OUTPUT_FILE \
+    HELP_MSG_OUTPUT_DIRECTORY \
+    HELP_MSG_PROCESSES \
 
 extern int slow5tools_verbosity_level;
 static double init_realtime = 0;
@@ -553,13 +552,11 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
             {NULL, 0, NULL, 0 }
     };
 
-    int iop = 8;
     std::string format_low5 =  "low5";
     std::string format_fast5 =  ".fast5";
 
-    // Input arguments
-    char *arg_fname_out = NULL;
-    char *arg_dir_out = NULL;
+    opt_t user_opts;
+    init_opt(&user_opts);
 
     int longindex = 0;
     int opt;
@@ -575,17 +572,13 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             case 'o':
-                arg_fname_out = optarg;
+                user_opts.arg_fname_out = optarg;
                 break;
             case 'd':
-                arg_dir_out = optarg;
+                user_opts.arg_dir_out = optarg;
                 break;
             case 'p':
-                iop = atoi(optarg);
-                if (iop < 1) {
-                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_num_processes = optarg;
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -593,12 +586,15 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
                 return EXIT_FAILURE;
         }
     }
-
-    if(arg_fname_out && arg_dir_out){
+    if(parse_num_processes(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(user_opts.arg_fname_out && user_opts.arg_dir_out){
         ERROR("output file name and output directory both cannot be set%s","");
         return EXIT_FAILURE;
     }
-    if(!arg_fname_out && !arg_dir_out){
+    if(!user_opts.arg_fname_out && !user_opts.arg_dir_out){
         ERROR("Please set output file name or output directory%s","");
         return EXIT_FAILURE;
     }
@@ -614,28 +610,28 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
     if(slow5_files.size()==1){
-        iop = 1;
+       user_opts.num_processes = 1;
     }
-    if(slow5_files.size()>1 && !arg_dir_out){
+    if(slow5_files.size()>1 && !user_opts.arg_dir_out){
         ERROR("output directory should be specified when converting more than one file%s","");
         return EXIT_FAILURE;
     }
-    if(arg_dir_out){
+    if(user_opts.arg_dir_out){
         struct stat st = {0};
-        if (stat(arg_dir_out, &st) == -1) {
-            mkdir(arg_dir_out, 0700);
+        if (stat(user_opts.arg_dir_out, &st) == -1) {
+            mkdir(user_opts.arg_dir_out, 0700);
         }else{
-            std::vector< std::string > dir_list = list_directory(arg_dir_out);
+            std::vector< std::string > dir_list = list_directory(user_opts.arg_dir_out);
             if(dir_list.size()>2){
-                ERROR("Output director %s is not empty",arg_dir_out);
+                ERROR("Output director %s is not empty",user_opts.arg_dir_out);
                 return EXIT_FAILURE;
             }
         }
     }
-    if(arg_fname_out){
+    if(user_opts.arg_fname_out){
         std::string output_file;
         std::string extension;
-        output_file = std::string(arg_fname_out);
+        output_file = std::string(user_opts.arg_fname_out);
         extension = output_file.substr(output_file.length()-6, output_file.length());
         if(extension != format_fast5){
             ERROR("Output file name extension should be %s", format_fast5.c_str());
@@ -646,7 +642,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     reads_count readsCount;
     //measure s2f conversion time
     init_realtime = slow5_realtime();
-    s2f_iop(iop, slow5_files, arg_dir_out, arg_fname_out, meta, &readsCount);
+    s2f_iop(user_opts.num_processes, slow5_files, user_opts.arg_dir_out, user_opts.arg_fname_out, meta, &readsCount);
     VERBOSE("Converting %ld s/blow5 files took %.3fs", slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
