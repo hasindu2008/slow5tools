@@ -27,12 +27,13 @@
     "\n" \
     "OPTIONS:\n" \
     HELP_MSG_OUTPUT_FORMAT \
-    HELP_MSG_OUTPUT_FILE \
+    HELP_MSG_OUTPUT_FILE                           \
+    HELP_MSG_PRESS \
     HELP_MSG_PROCESSES \
     HELP_MSG_LOSSLESS \
     HELP_MSG_OUTPUT_DIRECTORY \
-    "    -a, --allow                        allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
-    "    -h, --help                         display this message and exit\n" \
+    "    -a, --allow                   allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
+    "    -h, --help                    display this message and exit\n" \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;

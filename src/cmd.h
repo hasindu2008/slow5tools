@@ -21,7 +21,7 @@
     "    -d, --out-dir                 output to directory\n"
 
 #define HELP_MSG_LOSSLESS \
-    "   -l, --lossless                 retain information in auxiliary fields during the conversion.[true].\n"
+    "    -l, --lossless                retain information in auxiliary fields during the conversion.[true].\n"
 
 #define HELP_MSG_OUTPUT_FORMAT \
     "    --to FORMAT                   specify output file format [auto]\n"
