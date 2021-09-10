@@ -159,6 +159,7 @@ void split_child_worker(proc_arg_t args,
                 while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
+                        slow5_press_free(press_ptr);
                         ERROR("Could not write the record to %s\n", slow5_path.c_str());
                         exit(EXIT_FAILURE);
                     }
