@@ -41,7 +41,7 @@ TESTCASE=1
 echo
 echo "------------------- slow5tools get testcase $TESTCASE -------------------"
 $SLOW5_EXEC get "$SLOW5_DIR/example2.slow5" r1 --to slow5 > "$OUTPUT_DIR/extracted_reads.txt" || die "testcase $TESTCASE failed"
-diff -s "$EXP_SLOW5_DIR/expected_extracted_reads.txt" "$OUTPUT_DIR/extracted_reads.txt" &>/dev/null
+diff -q "$EXP_SLOW5_DIR/expected_extracted_reads.txt" "$OUTPUT_DIR/extracted_reads.txt" &>/dev/null
 if [ $? -ne 0 ]; then
     echo -e "${RED}ERROR: diff failed for 'slow5tools get testcase $TESTCASE'${NC}"
     exit 1
@@ -52,7 +52,7 @@ TESTCASE=2
 echo
 echo "------------------- slow5tools get testcase $TESTCASE -------------------"
 $SLOW5_EXEC get "$SLOW5_DIR/example2.slow5" r1 r5 r3 --to slow5 > "$OUTPUT_DIR/extracted_reads2.txt" || die "testcase $TESTCASE failed"
-diff -s "$EXP_SLOW5_DIR/expected_extracted_reads2.txt" "$OUTPUT_DIR/extracted_reads2.txt" &>/dev/null
+diff -q "$EXP_SLOW5_DIR/expected_extracted_reads2.txt" "$OUTPUT_DIR/extracted_reads2.txt" &>/dev/null
 if [ $? -ne 0 ]; then
     echo -e "${RED}ERROR: diff failed for 'slow5tools get testcase $TESTCASE'${NC}"
     exit 1
@@ -63,7 +63,7 @@ TESTCASE=3
 echo
 echo "------------------- slow5tools get testcase $TESTCASE -------------------"
 $SLOW5_EXEC get "$SLOW5_DIR/example2.slow5" --list "$SLOW5_DIR/list.txt" --to slow5 > "$OUTPUT_DIR/extracted_reads3.txt" || die "testcase $TESTCASE failed"
-diff -s "$EXP_SLOW5_DIR/expected_extracted_reads3.txt" "$OUTPUT_DIR/extracted_reads3.txt" &>/dev/null
+diff -q "$EXP_SLOW5_DIR/expected_extracted_reads3.txt" "$OUTPUT_DIR/extracted_reads3.txt" &>/dev/null
 if [ $? -ne 0 ]; then
     echo -e "${RED}ERROR: diff failed for 'slow5tools get testcase $TESTCASE'${NC}"
     exit 1
@@ -74,7 +74,7 @@ TESTCASE=4
 echo
 echo "------------------- slow5tools get testcase $TESTCASE -------------------"
 $SLOW5_EXEC get "$SLOW5_DIR/example2.slow5" -t 2 r1 r5 r3 --to slow5 > "$OUTPUT_DIR/extracted_reads2.txt" || die "testcase $TESTCASE failed"
-diff -s "$EXP_SLOW5_DIR/expected_extracted_reads2.txt" "$OUTPUT_DIR/extracted_reads2.txt" &>/dev/null
+diff -q "$EXP_SLOW5_DIR/expected_extracted_reads2.txt" "$OUTPUT_DIR/extracted_reads2.txt" &>/dev/null
 if [ $? -ne 0 ]; then
     echo -e "${RED}ERROR: diff failed for 'slow5tools get testcase $TESTCASE'${NC}"
     exit 1

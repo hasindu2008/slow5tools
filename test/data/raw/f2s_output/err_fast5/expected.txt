@@ -1,0 +1,4 @@
+not_a_fast5.fast5 -> must gracefully exit/warn, currently it segfaults
+
+empty_dir -> exit with failure
+empty_fast5 -> exit with failure

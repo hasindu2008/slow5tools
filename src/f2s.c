@@ -151,13 +151,13 @@ void f2s_child_worker(enum slow5_fmt format_out, slow5_press_method_t press_out,
         }
         H5Fclose(fast5_file.hdf5_file);
     }
-    if(slow5_file_pointer_outputdir_single_fast5) {
+    if(slow5File_outputdir_single_fast5 && slow5_file_pointer_outputdir_single_fast5) {
         if(format_out == SLOW5_FORMAT_BINARY){
             slow5_eof_fwrite(slow5File_outputdir_single_fast5->fp);
         }
         slow5_close(slow5File_outputdir_single_fast5);
     }
-    if(!output_dir) {
+    if(slow5File && !output_dir) {
         if(format_out == SLOW5_FORMAT_BINARY){
             slow5_eof_fwrite(slow5File->fp);
         }
