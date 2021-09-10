@@ -90,7 +90,7 @@ else
     fi
 fi
 
-TESTCASE_NAME="f2s output test"
+TESTCASE_NAME="f2s test"
 echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_f2s.sh mem; then
