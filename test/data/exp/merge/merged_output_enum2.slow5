@@ -3,57 +3,57 @@
 @asic_id	0004A30B00F25467	420170566
 @asic_id_eeprom	0004A30B00F25467	2043896
 @asic_temp	31.996552	30.1846237
-@asic_version	Unknown	
+@asic_version	Unknown	.
 @auto_update	0	1
 @auto_update_source	https://mirror.oxfordnanoportal.com/software/MinKNOW/	https://mirror.oxfordnanoportal.com/software/MinKNOW/
-@barcoding_enabled	0	
-@basecall_config_filename	dna_r9.4.1_450bps_hac_prom.cfg	
-@bream_core_version		1.1.21.1
+@barcoding_enabled	0	.
+@basecall_config_filename	dna_r9.4.1_450bps_hac_prom.cfg	.
+@bream_core_version	.	1.1.21.1
 @bream_is_standard	0	1
-@bream_map_version		1.1.21.1
-@bream_ont_version		1.1.21.1
-@bream_prod_version		1.1.21.1
-@bream_rnd_version		0.1.1
-@configuration_version	4.0.13	
+@bream_map_version	.	1.1.21.1
+@bream_ont_version	.	1.1.21.1
+@bream_prod_version	.	1.1.21.1
+@bream_rnd_version	.	0.1.1
+@configuration_version	4.0.13	.
 @device_id	3A	MN16303
-@device_type	promethion	
-@distribution_status	stable	
-@distribution_version	20.06.9	
+@device_type	promethion	.
+@distribution_status	stable	.
+@distribution_version	20.06.9	.
 @exp_script_name	sequencing/sequencing_PRO002_DNA:FLO-PRO002:SQK-LSK109	python/recipes/nc/NC_48Hr_Sequencing_Run_FLO-MIN106_SQK-LSK108.py
 @exp_script_purpose	sequencing_run	sequencing_run
 @exp_start_time	2020-10-27T05:41:50Z	1481657610
-@experiment_duration_set	4320	
-@experiment_kit		genomic_dna
-@experiment_type	genomic_dna	
-@file_type	multi-read	
+@experiment_duration_set	4320	.
+@experiment_kit	.	genomic_dna
+@experiment_type	genomic_dna	.
+@file_type	multi-read	.
 @file_version	2.2	0.0
-@filename		odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395
+@filename	.	odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395
 @flow_cell_id	PAF25452	.
-@flow_cell_product_code	FLO-PRO002	
-@guppy_version	4.0.11+f1071ce	
+@flow_cell_product_code	FLO-PRO002	.
+@guppy_version	4.0.11+f1071ce	.
 @heatsink_temp	32.164288	33.9765625
 @hostname	PC24A004	odw-genlab4209
-@hublett_board_id	013b01308fa78662	
-@hublett_firmware_version	2.0.14	
+@hublett_board_id	013b01308fa78662	.
+@hublett_firmware_version	2.0.14	.
 @installation_type	nc	map
-@ip_address	.	
-@local_basecalling	1	
+@ip_address	.	.
+@local_basecalling	1	.
 @local_firmware_file	1	0
-@mac_address	.	
+@mac_address	.	.
 @operating_system	ubuntu 16.04	Windows 6.1
-@package	bream4	
-@package_version	6.0.7	
-@protocol_group_id	PLPN243131	
+@package	bream4	.
+@package_version	6.0.7	.
+@protocol_group_id	PLPN243131	.
 @protocol_run_id	97d631c6-c622-473d-9e7d-3cb9297b0036	3eecebf6-325f-4ac5-b896-a7588f2b2324
 @protocols_version	6.0.7	1.1.21
 @run_id	bfdfd1d840e2acaf5c061241fd9b8e5c3cfe729f	0cc960b63c07619b4bf2917507d447479a21da66
 @sample_frequency	4000	4000
-@sample_id	NA12878_SRE	
-@satellite_board_id	013c763bef6cca9d	
-@satellite_firmware_version	2.0.14	
-@sequencing_kit	sqk-lsk109	
+@sample_id	NA12878_SRE	.
+@satellite_board_id	013c763bef6cca9d	.
+@satellite_firmware_version	2.0.14	.
+@sequencing_kit	sqk-lsk109	.
 @usb_config	firm_1.2.3_ware#rbt_4.5.6_rbt#ctrl#USB3	1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto
-@user_filename_input		sample_id
+@user_filename_input	.	sample_id
 @version	4.0.3	1.1.21
 #char*	uint32_t	double	double	double	double	uint64_t	int16_t*	enum{unknown,partial,mux_change,unblock_mux_change,signal_positive,signal_negative}	char*	double	int32_t	uint8_t	uint64_t
 #read_id	read_group	digitisation	offset	range	sampling_rate	len_raw_signal	raw_signal	end_reason	channel_number	median_before	read_number	start_mux	start_time

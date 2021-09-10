@@ -3,57 +3,57 @@
 @asic_id	420170566	281856435	0004A30B00F889AB
 @asic_id_eeprom	2043896	5718056	0004A30B00F889AB
 @asic_temp	30.1846237	41.275898	32.242455
-@asic_version		IA02D	Unknown
+@asic_version	.	IA02D	Unknown
 @auto_update	1	0	0
 @auto_update_source	https://mirror.oxfordnanoportal.com/software/MinKNOW/	https://mirror.oxfordnanoportal.com/software/MinKNOW/	https://mirror.oxfordnanoportal.com/software/MinKNOW/
-@barcoding_enabled		0	0
-@basecall_config_filename			dna_r10.3_450bps_hac_prom.cfg
-@bream_core_version	1.1.21.1		
+@barcoding_enabled	.	0	0
+@basecall_config_filename	.	.	dna_r10.3_450bps_hac_prom.cfg
+@bream_core_version	1.1.21.1	.	.
 @bream_is_standard	1	0	0
-@bream_map_version	1.1.21.1		
-@bream_ont_version	1.1.21.1		
-@bream_prod_version	1.1.21.1		
-@bream_rnd_version	0.1.1		
-@configuration_version		4.1.15	4.0.16
+@bream_map_version	1.1.21.1	.	.
+@bream_ont_version	1.1.21.1	.	.
+@bream_prod_version	1.1.21.1	.	.
+@bream_rnd_version	0.1.1	.	.
+@configuration_version	.	4.1.15	4.0.16
 @device_id	MN16303	MN20801	1A
-@device_type		minion	promethion
-@distribution_status		stable	stable
-@distribution_version		20.10.3	20.06.18
+@device_type	.	minion	promethion
+@distribution_status	.	stable	stable
+@distribution_version	.	20.10.3	20.06.18
 @exp_script_name	python/recipes/nc/NC_48Hr_Sequencing_Run_FLO-MIN106_SQK-LSK108.py	sequencing/sequencing_MIN106_RNA_readfish_simulation:FLO-MIN106:SQK-RNA002	sequencing_PRO111_DNA_Q20_EA:FLO-PRO111:SQK-LSK110
 @exp_script_purpose	sequencing_run	sequencing_run	sequencing_run
 @exp_start_time	1481657610	2020-11-24T05:28:48Z	2021-03-02T00:01:21Z
-@experiment_duration_set		60	4320
-@experiment_kit	genomic_dna		
-@experiment_type		rna	genomic_dna
-@file_type		multi-read	multi-read
+@experiment_duration_set	.	60	4320
+@experiment_kit	genomic_dna	.	.
+@experiment_type	.	rna	genomic_dna
+@file_type	.	multi-read	multi-read
 @file_version	0.0	2.2	2.2
-@filename	odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395		
+@filename	odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395	.	.
 @flow_cell_id	.	FAO36516	PAG53529
-@flow_cell_product_code		FLO-MIN106	FLO-PRO111
-@guppy_version		4.2.2+effbaf8	4.0.11+f1071ce
+@flow_cell_product_code	.	FLO-MIN106	FLO-PRO111
+@guppy_version	.	4.2.2+effbaf8	4.0.11+f1071ce
 @heatsink_temp	33.9765625	34.335938	31.364706
 @hostname	odw-genlab4209	TheFridge	PC24A004
-@hublett_board_id			0133b024797d6459
-@hublett_firmware_version			2.1.9
+@hublett_board_id	.	.	0133b024797d6459
+@hublett_firmware_version	.	.	2.1.9
 @installation_type	map	nc	nc
-@ip_address			.
-@local_basecalling		0	1
+@ip_address	.	.	.
+@local_basecalling	.	0	1
 @local_firmware_file	0	1	1
-@mac_address			.
+@mac_address	.	.	.
 @operating_system	Windows 6.1	ubuntu 18.04	ubuntu 16.04
-@package		bream4	bream4
-@package_version		6.1.4	6.0.10
-@protocol_group_id		rna-test-readfish-enabled	PQXT038257
+@package	.	bream4	bream4
+@package_version	.	6.1.4	6.0.10
+@protocol_group_id	.	rna-test-readfish-enabled	PQXT038257
 @protocol_run_id	3eecebf6-325f-4ac5-b896-a7588f2b2324	a0cd3061-d8e5-4ef0-85e1-fddb360f2fe0	27ea43d0-f2e6-421c-8ee5-d44659cd0d0c
 @protocols_version	1.1.21	6.1.4	6.0.10
 @run_id	0cc960b63c07619b4bf2917507d447479a21da66	c7220be19d6fa1c69026a321f98328af4bd099ec	1736c04c8b607317759e5ecc3bac8738a6fc081c
 @sample_frequency	4000	3012	4000
-@sample_id		no_sample	NA24385
-@satellite_board_id			0132691471c6d4f7
-@satellite_firmware_version			2.1.9
-@sequencing_kit		sqk-rna002	sqk-lsk110
+@sample_id	.	no_sample	NA24385
+@satellite_board_id	.	.	0132691471c6d4f7
+@satellite_firmware_version	.	.	2.1.9
+@sequencing_kit	.	sqk-rna002	sqk-lsk110
 @usb_config	1.0.11_ONT#MinION_fpga_1.0.1#ctrl#Auto	MinION_fx3_1.1.1_ONT#MinION_fpga_1.1.0#bulk#Auto	firm_1.2.3_ware#rbt_4.5.6_rbt#ctrl#USB3
-@user_filename_input	sample_id		
+@user_filename_input	sample_id	.	.
 @version	1.1.21	4.1.2	4.0.5
 #char*	uint32_t	double	double	double	double	uint64_t	int16_t*	enum{unknown,partial,mux_change,unblock_mux_change,signal_positive,signal_negative}	char*	double	int32_t	uint8_t	uint64_t
 #read_id	read_group	digitisation	offset	range	sampling_rate	len_raw_signal	raw_signal	end_reason	channel_number	median_before	read_number	start_mux	start_time

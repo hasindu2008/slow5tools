@@ -49,6 +49,10 @@ void work_per_single_read_get(core_t *core, db_t *db, int32_t i) {
         if (core->benchmark == false){
             size_t record_size;
             struct slow5_press* compress = slow5_press_init(core->press_method);
+            if(!compress){
+                ERROR("Could not initialize the slow5 compression method%s","");
+                exit(EXIT_FAILURE);
+            }
             db->read_record[i].buffer = slow5_rec_to_mem(record,core->fp->header->aux_meta, core->format_out, compress, &record_size);
             db->read_record[i].len = record_size;
             slow5_press_free(compress);
@@ -76,6 +80,10 @@ bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_me
     } else {
         if (benchmark == false){
             struct slow5_press* compress = slow5_press_init(press_method);
+            if(!compress){
+                ERROR("Could not initialize the slow5 compression method%s","");
+                exit(EXIT_FAILURE);
+            }
             slow5_rec_fwrite(slow5_file_pointer,record,fp->header->aux_meta, format_out, compress);
             slow5_press_free(compress);
         }

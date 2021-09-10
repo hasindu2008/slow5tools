@@ -40,6 +40,10 @@ void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
         free(db->mem_records[i]);
     }
     struct slow5_press *press_ptr = slow5_press_init(core->press_method);
+    if(!press_ptr){
+        ERROR("Could not initialize the slow5 compression method%s","");
+        exit(EXIT_FAILURE);
+    }
     size_t len;
     if ((db->read_record[i].buffer = slow5_rec_to_mem(read, core->fp->header->aux_meta, core->format_out, press_ptr, &len)) == NULL) {
         slow5_press_free(press_ptr);
@@ -228,7 +232,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     if (view_ret == EXIT_FAILURE) {
-        EXIT_MSG(EXIT_SUCCESS, argv, meta);
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
     }
     return view_ret;
 }
@@ -267,8 +271,6 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
             } else {
                 db.mem_records[record_count] = mem;
                 db.mem_bytes[record_count] = bytes;
-//                mem_records.push_back(mem);
-//                mem_bytes.push_back(bytes);
                 record_count++;
             }
         }
@@ -314,5 +316,5 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
     DEBUG("time_depress_parse\t%.3fs", time_thread_execution);
     DEBUG("time_write\t%.3fs", time_write);
 
-    return EXIT_SUCCESS;
+    return 0;
 }

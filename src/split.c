@@ -155,7 +155,10 @@ void split_child_worker(proc_arg_t args,
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
-
+                if(!press_ptr){
+                    ERROR("Could not initialize the slow5 compression method%s","");
+                    exit(EXIT_FAILURE);
+                }
                 while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
@@ -278,6 +281,10 @@ void split_child_worker(proc_arg_t args,
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
+                if(!press_ptr){
+                    ERROR("Could not initialize the slow5 compression method%s","");
+                    exit(EXIT_FAILURE);
+                }
                 while ((number_of_records_per_file > 0) && (ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
@@ -363,6 +370,10 @@ void split_child_worker(proc_arg_t args,
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
+                if(!press_ptr){
+                    ERROR("Could not initialize the slow5 compression method%s","");
+                    exit(EXIT_FAILURE);
+                }
                 while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if(read->read_group == j){
                         read->read_group = 0; //since single read_group files are now created

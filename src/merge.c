@@ -48,6 +48,10 @@ void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
     read->read_group = db->list[core->slow5_file_index][read->read_group]; //write records of the ith slow5file with the updated read_group value
 
     struct slow5_press *press_ptr = slow5_press_init(core->press_method);
+    if(!press_ptr){
+        ERROR("Could not initialize the slow5 compression method%s","");
+        exit(EXIT_FAILURE);
+    }
     size_t len;
 //    slow5_aux_meta_t *aux_meta = core->fp->header->aux_meta;
     slow5_aux_meta_t *aux_meta = core->aux_meta;

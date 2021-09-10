@@ -34,7 +34,7 @@ $SLOW5_EXEC --version || die "slow5tools version failed"
 echo
 echo "------------------- slow5tools index testcase 1 -------------------"
 $SLOW5_EXEC index $SLOW5_DIR/example_multi_rg_v0.1.0.blow5 || die "testcase 1 failed"
-diff -s $SLOW5_DIR/example_multi_rg_v0.1.0.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.1.0.blow5.idx &>/dev/null
+diff -q $SLOW5_DIR/example_multi_rg_v0.1.0.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.1.0.blow5.idx &>/dev/null
 if [ $? -ne 0 ]; then
     echo -e "${RED}ERROR: diff failed for 'slow5tools index testcase 1'${NC}"
     exit 1
@@ -44,7 +44,7 @@ echo -e "${GREEN}testcase 1 passed${NC}"
 echo
 echo "------------------- slow5tools index testcase 2 -------------------"
 $SLOW5_EXEC index $SLOW5_DIR/example_multi_rg_v0.1.0.slow5 || die "testcase 2 failed"
-diff -s $SLOW5_DIR/example_multi_rg_v0.1.0.slow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.1.0.slow5.idx &>/dev/null
+diff -q $SLOW5_DIR/example_multi_rg_v0.1.0.slow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.1.0.slow5.idx &>/dev/null
 if [ $? -ne 0 ]; then
     echo -e "${RED}ERROR: diff failed for 'slow5tools index testcase 2'${NC}"
     exit 1
@@ -54,7 +54,7 @@ echo -e "${GREEN}testcase 2 passed${NC}"
 echo
 echo "------------------- slow5tools index testcase 3 -------------------"
 $SLOW5_EXEC index $SLOW5_DIR/example_multi_rg_v0.2.0.blow5 || die "testcase 3 failed"
-diff -s $SLOW5_DIR/example_multi_rg_v0.2.0.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.2.0.blow5.idx &>/dev/null
+diff -q $SLOW5_DIR/example_multi_rg_v0.2.0.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.2.0.blow5.idx &>/dev/null
 if [ $? -ne 0 ]; then
     echo -e "${RED}ERROR: diff failed for 'slow5tools index testcase 3'${NC}"
     exit 1

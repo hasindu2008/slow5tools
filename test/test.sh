@@ -1,5 +1,7 @@
 #!/bin/sh
 
+FIRST_FAILED_SET_OF_TESTCASES="NOT SET"
+
 if [ "$1" = 'mem' ]; then
     mem=1
 else
@@ -21,6 +23,7 @@ ex() {
 fail() {
     echo 'FAILURE'
     ret=1
+    FIRST_FAILED_SET_OF_TESTCASES=$1
 }
 
 not_compiled() {
@@ -30,7 +33,7 @@ not_compiled() {
 
 my_diff() {
     if ! diff "$1" "$2" -q; then
-        fail
+        fail "my diff"
     fi
 }
 
@@ -65,7 +68,8 @@ ret=0
 
 prep
 
-echo_test 'endian test'
+TESTCASE_NAME="endian test"
+echo_test $TESTCASE_NAME
 if gcc -Wall test/endian_test.c -o test/bin/endian_test; then
     ex test/bin/endian_test
 else
@@ -74,128 +78,143 @@ fi
 
 prep_view
 
-echo_test 'view test'
+TESTCASE_NAME="view test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_view.sh mem; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_view.sh; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'f2s output test'
+TESTCASE_NAME="f2s output test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_f2s.sh mem; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_f2s.sh; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'merge test'
+TESTCASE_NAME="merge test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_merge.sh mem; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_merge.sh; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'split integrity test'
+TESTCASE_NAME="split integrity test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_split.sh mem; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_split.sh; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'f2s_s2f integrity test'
+TESTCASE_NAME="f2s_s2f integrity test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_f2s_s2f_integrity.sh mem; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_f2s_s2f_integrity.sh; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'index test'
+TESTCASE_NAME="index test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_index.sh mem; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_index.sh; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'get test'
+TESTCASE_NAME="get test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_get.sh mem; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_get.sh; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'f2s_view_diff_test'
+TESTCASE_NAME="f2s_view_diff_test"
+echo_test $TESTCASE_NAME
 FAST5_FILE=./test/data/raw/f2s_view_diff/sss_median_before_edited.fast5
 OUTPUT_DIR=./test/data/out/f2s_view_diff
 INPUT_ARGS="$FAST5_FILE $OUTPUT_DIR"
 if [ $mem -eq 1 ]; then
     if ! ./test/test_f2s_view_diff.sh $INPUT_ARGS mem ; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_f2s_view_diff.sh $INPUT_ARGS ; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'cat test'
+TESTCASE_NAME="cat test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_cat.sh mem ; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_cat.sh ; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'stats test'
+TESTCASE_NAME="stats test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_stats.sh mem ; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_stats.sh ; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 fi
 
-echo_test 'quickcheck test'
+TESTCASE_NAME="quickcheck test"
+echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_quickcheck.sh mem ; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
 else
     if ! ./test/test_quickcheck.sh ; then
-        fail
+        fail "$TESTCASE_NAME"
     fi
+fi
+
+if [ $ret -eq 1 ]; then
+  echo ">>>>>One or more test cases have failed. The first failed set of testcases is $FIRST_FAILED_SET_OF_TESTCASES<<<<<"
 fi
 
 exit $ret
