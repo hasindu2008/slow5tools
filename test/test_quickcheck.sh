@@ -34,7 +34,7 @@ done
 
 for each in $BAD_LIST
 do
-    info "testcase$TESTCASE (should error out)"
+    info "testcase$TESTCASE"
     $SLOW5TOOLS quickcheck $RAW_DIR/${each} 2> /dev/null && die "testcase$TESTCASE: stats failed"
     TESTCASE=$((TESTCASE + 1))
 done

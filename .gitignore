@@ -68,6 +68,7 @@ autom4te.cache
 *.swp
 /tmp/
 /hdf5
+zstd/
 /.vscode
 src/config.h
 /profile.nvprof
