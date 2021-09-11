@@ -49,6 +49,10 @@ void work_per_single_read_get(core_t *core, db_t *db, int32_t i) {
         if (core->benchmark == false){
             size_t record_size;
             struct slow5_press* compress = slow5_press_init(core->press_method);
+            if(!compress){
+                ERROR("Could not initialize the slow5 compression method%s","");
+                exit(EXIT_FAILURE);
+            }
             db->read_record[i].buffer = slow5_rec_to_mem(record,core->fp->header->aux_meta, core->format_out, compress, &record_size);
             db->read_record[i].len = record_size;
             slow5_press_free(compress);
@@ -76,6 +80,10 @@ bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_me
     } else {
         if (benchmark == false){
             struct slow5_press* compress = slow5_press_init(press_method);
+            if(!compress){
+                ERROR("Could not initialize the slow5 compression method%s","");
+                exit(EXIT_FAILURE);
+            }
             slow5_rec_fwrite(slow5_file_pointer,record,fp->header->aux_meta, format_out, compress);
             slow5_press_free(compress);
         }
@@ -125,7 +133,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     int opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "o:b:c:K:l:t:he", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:b:c:s:K:l:t:he", long_opts, NULL)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -188,6 +196,11 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
+    if(benchmark && user_opts.arg_fname_out){
+        ERROR("Benchmark does not support writing records out%s", "");
+        return EXIT_FAILURE;
+    }
+
     // Parse output argument
     if (user_opts.arg_fname_out != NULL) {
         DEBUG("opening output file%s","");
@@ -231,29 +244,29 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     char *f_in_name = argv[optind];
 
+
     slow5_file_t *slow5file = slow5_open(f_in_name, "r");
     if (!slow5file) {
         ERROR("cannot open %s. \n", f_in_name);
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
-    slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
-    if(slow5_hdr_fwrite(user_opts.f_out, slow5file->header, user_opts.fmt_out, press_out) == -1){
-        ERROR("Could not write the output header%s\n", "");
-        exit(EXIT_FAILURE);
-    }
-    int ret_idx = slow5_idx_load(slow5file);
 
+    slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
+    if(benchmark == false){
+        if(slow5_hdr_fwrite(user_opts.f_out, slow5file->header, user_opts.fmt_out, press_out) == -1){
+            ERROR("Could not write the output header%s\n", "");
+            return EXIT_FAILURE;
+        }
+    }
+
+    int ret_idx = slow5_idx_load(slow5file);
     if (ret_idx < 0) {
         ERROR("Error loading index file for %s\n", f_in_name);
-
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
 
-    bool ret = EXIT_SUCCESS;
-
     if (read_stdin) {
-
         // Time spend reading slow5
         double read_time = 0;
 
@@ -272,11 +285,8 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
         bool end_of_file = false;
         while (!end_of_file) {
-
             int64_t num_ids = 0;
-
             while (num_ids < read_id_batch_capacity) {
-
                 char *buf = NULL;
                 size_t cap_buf = 0;
                 ssize_t nread;
@@ -285,12 +295,10 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     free(buf);
                     break;
                 }
-
                 size_t len_buf = nread - 1; // Ignore '\n'
                 char *curr_id = strndup(buf, len_buf);
                 curr_id[len_buf] = '\0'; // Add string terminator '\0'
                 free(buf); // Free buffer
-
                 if (num_ids >= cap_ids) {
                     // Double read id list capacity
                     cap_ids *= 2;
@@ -320,9 +328,9 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 for (int64_t i = 0; i < num_ids; ++ i) {
                     void *buffer = db.read_record[i].buffer;
                     int len = db.read_record[i].len;
-
                     if (buffer == NULL || len < 0) {
-                        ret = EXIT_FAILURE;
+                        ERROR("Could not write the fetched read.%s","");
+                        return EXIT_FAILURE;
                     } else {
                         fwrite(buffer,1,len,user_opts.f_out);
                         free(buffer);
@@ -336,21 +344,24 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         free(db.read_id);
         free(db.read_record);
     } else {
-
         for (int i = optind + 1; i < argc; ++ i){
             bool success = fetch_record(slow5file, argv[i], argv, meta, user_opts.fmt_out, press_out, benchmark, user_opts.f_out);
             if (!success) {
-                ret = EXIT_FAILURE;
+                ERROR("Could not fetch records.%s","");
+                return EXIT_FAILURE;
             }
         }
     }
 
-    if (user_opts.fmt_out == SLOW5_FORMAT_BINARY) {
-        slow5_eof_fwrite(slow5file->fp);
+    if(benchmark == false){
+        if (user_opts.fmt_out == SLOW5_FORMAT_BINARY) {
+                slow5_eof_fwrite(user_opts.f_out);
+            }
     }
+
     slow5_close(slow5file);
     fclose(read_list_in);
 
-    EXIT_MSG(ret, argv, meta);
-    return ret;
+    EXIT_MSG(EXIT_SUCCESS, argv, meta);
+    return EXIT_SUCCESS;
 }

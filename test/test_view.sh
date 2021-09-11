@@ -29,6 +29,15 @@ ex() {
     tot=$((tot+1))
 }
 
+ex_fail() {
+    if  "$@" 2> /dev/null; then
+        fail "$@"
+    else
+        pass=$((pass+1))
+    fi
+    tot=$((tot+1))
+}
+
 fail() {
     echo 'failed:' "$@"
     ret=1
@@ -169,9 +178,18 @@ do
         my_diff "$EXP/one_fast5/exp_1_${type}_zlib_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zlib_v0.2.0.blow5" -q
 
     fi
-
-
 done
+
+# the following should exit with error
+
+#conflict in --to format and -o format
+ex_fail "$S5T" view "$EXP/one_fast5/exp_1_lossless.slow5" --to slow5 -o $OUT/one_fast5/fail.blow5
+#if the requested compression does not exist, must exit with error
+if [ "$zstd" != "1" ]; then
+    ex_fail "$S5T" view "$EXP/one_fast5/exp_1_${type}.slow5" --to blow5 -c zstd -o $OUT/one_fast5/fail.blow5
+fi
+
+
 
 echo "$pass/$tot"
 

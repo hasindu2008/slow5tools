@@ -512,6 +512,10 @@ int read_fast5(fast5_file_t *fast5_file,
     tracker.format_out = format_out;
     tracker.pressMethod = press_out;
     tracker.press_ptr = slow5_press_init(press_out);
+    if(!tracker.press_ptr){
+        ERROR("Could not initialize the slow5 compression method%s","");
+        return -1;
+    }
 
     tracker.fast5_path = fast5_file->fast5_path;
     tracker.slow5File = slow5File;
