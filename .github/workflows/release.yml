@@ -18,7 +18,7 @@ jobs:
       with:
         submodules: recursive
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make wget valgrind
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev gcc g++ autoconf automake make wget valgrind
     - name: env
       run: lsb_release -a &&  ldd --version && gcc --version && g++ --version
     - name: build
