@@ -2,11 +2,8 @@
 
 Slow5tools is a simple toolkit for converting (FAST5 <-> SLOW5), compressing, viewing, indexing and manipulating data in SLOW5 format.
 
-## About SLOW5 format
-
-SLOW5 is a new file format for signal data from Oxford Nanopore Technologies (ONT) devices. SLOW5 was developed to overcome inherent limitations in the standard FAST5 data format that prevent efficient, scalable analysis and cause many headaches for developers. SLOW5 can be encoded in human-readable ASCII format, or a more compact and efficient binary format (BLOW5) - this is analogous to the seminal SAM/BAM format for storing DNA sequence alignments. The BLOW5 binary format can be compressed using standard zlib compression, thereby minimising the data storage footprint while still permitting efficient parallel access.
-
-Detailed benchmarking experiments have shown that SLOW5 format is an order of magnitude faster and 25% smaller than FAST5.
+**About SLOW5 format:**  
+SLOW5 is a new file format for storing signal data from Oxford Nanopore Technologies (ONT) devices. SLOW5 was developed to overcome inherent limitations in the standard FAST5 signal data format that prevent efficient, scalable analysis and cause many headaches for developers. SLOW5 can be encoded in human-readable ASCII format, or a more compact and efficient binary format (BLOW5) - this is analogous to the seminal SAM/BAM format for storing DNA sequence alignments. The BLOW5 binary format supports  *zlib* (DEFLATE) compression, or other compression methods, thereby minimising the data storage footprint while still permitting efficient parallel access. Detailed benchmarking experiments have shown that SLOW5 format is an order of magnitude faster and 25% smaller than FAST5.
 
 [![GitHub Downloads](https://img.shields.io/github/downloads/hasindu2008/slow5tools/total?logo=GitHub)](https://github.com/hasindu2008/slow5tools/releases)
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/slow5tools.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/slow5tools)
@@ -24,7 +21,9 @@ VERSION=v0.2.0
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-x86_64-linux-binaries.tar.gz" && tar xvf slow5tools-$VERSION-x86_64-linux-binaries.tar.gz && cd slow5tools-$VERSION/
 ./slow5tools
 ```
-Binaries should work on most Linux distributions as the only dependency is `zlib` which is available by default on most distros. For compiled binaries to work, your processor must support SSSE3 instructions or higher (processors after 2007 have these) and your operating system must have GLIBC 2.17 or higher (Linux distributions from 2014 onwards typically have this).
+Binaries should work on most Linux distributions as the only dependency is `zlib` which is available by default on most distroibutions. For compiled binaries to work, your processor must support SSSE3 instructions or higher (processors after 2007 have these) and your operating system must have GLIBC 2.17 or higher (Linux distributions from 2014 onwards typically have this).
+
+You can also use conda to install *slow5tools* as `conda install slow5tools -c bioconda -c conda-forge`.
 
 ## Building
 
@@ -64,19 +63,19 @@ make
 
 ### Other building options 
 
-You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building by invoking `make zstd=1`. SLOW5 files compressed with *zstd* offer slightly smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable'. 
+- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.x development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer slightly smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable'. 
 
-*slow5tools* from version 0.3.0 onwards by default requires vector instructions (SSSE3 or higher for Intel/AMD and neon for ARM). If your processor is an ancient processor with no such vector instructions, invoke make as `make no_simd=1`. 
+- *slow5tools* from version 0.3.0 onwards by default requires vector instructions (SSSE3 or higher for Intel/AMD and neon for ARM). If your processor is an ancient processor with no such vector instructions, invoke make as `make no_simd=1`. 
 
-If you cannot install hdf5 library system wide you can locally build HDF5 (takes ages) and build slow5tools against that:
+- If you cannot install hdf5 library system wide you can locally build HDF5 (takes ages) and build slow5tools against that:
 
-```
-scripts/install-hdf5.sh         # download and compiles HDF5 in the current folder
-./configure --enable-localhdf5
-make
-```
+    ```
+    scripts/install-hdf5.sh         # download and compiles HDF5 in the current folder
+    ./configure --enable-localhdf5
+    make
+    ```
 
-Similarly, if you can locally build zstd invoke `scripts/install-zstd.sh` and them `./configure --enable-localzstd`:
+    Similarly, to locally build *zstd* and linst against that, invoke `scripts/install-zstd.sh` and then `./configure --enable-localzstd`:
 
 
 
@@ -87,31 +86,36 @@ Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for
 ### Examples
 
 ```sh
-#convert a directory of fast5 files into .blow5 (compression enabled) using 8 I/O processes
-slow5tools f2s fast5_dir -d blow5_dir -p 8
-#convert a single fast5 file into a blow5 file(compression enabled)
-slow5tools f2s file.fast5 -o file.blow5 -p 1
-#merge all blow5 files in a directory into a single blow5 file using 8 threads
-slow5tools merge blow5_dir -o file.blow5 -t8
+# convert a directory of fast5 files into BLOW5 files (default compression) 
+slow5tools f2s fast5_dir -d blow5_dir
+# convert a single fast5 file into a SLOW5 ASCII
+slow5tools f2s file.fast5 -o file.slow5
+# convert a directory of fast5 files into BLOW5 files with zstd compression
+slow5tools f2s fast5_dir -d blow5_dir -c zstd
 
-#Convert a BLOW5 file into SLOW5 ASCII
-slow5tools view file.blow5 --to slow5 -o file.slow5
-#convert a SLOW5 file to BLOW5
-slow5tools view file.slow5 --to blow5 -o file.blow5
+# merge all BLOW5 files in a directory into a single BLOW5 file (default compression)
+slow5tools merge blow5_dir -o file.blow5
 
-#index a slow5/blow5 file
+# to view a BLOW5 file in SLOW5 ASCII on standard out
+slow5tools view file.blow5 
+# Convert a BLOW5 file into SLOW5 ASCII
+slow5tools view file.blow5 -o file.slow5
+# convert a SLOW5 file to BLOW5 (default compression)
+slow5tools view file.slow5 -o file.blow5
+
+# index a slow5/blow5 file
 slow5tools index file.blow5
 
-#extract records from a slow5/blow5 file corresponding to given read ids
-slow5tools get file.blow5 readid1 readid2
+# extract records from a slow5/blow5 file corresponding to given read ids
+slow5tools get file.blow5 readid1 readid2 -o output.slow5
 
-#split a blow5 file into separate blow5 files based on the read groups
+# split a BLOW5 file into separate BLOW5 files based on the read groups
 slow5tools split file.blow5 -d blow5_dir -g
-#split a blow5 file (single read group) into separate blow5 files such that there are 4000 reads in one file
+# split a BLOW5 file (single read group) into separate BLOW5 files such that there are 4000 reads in one file
 slow5tools split file.blow5 -d blow5_dir -r 4000
 
-#convert a directory of blow5 files to fast5 using 8 I/O processes
-slow5tools s2f blow5_dir -d fast5  -p 8
+# convert a directory of blow5 files to fast5
+slow5tools s2f blow5_dir -d fast5
 
 ```
 
