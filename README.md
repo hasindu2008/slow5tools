@@ -77,7 +77,12 @@ make
 
     Similarly, to locally build *zstd* and linst against that, invoke `scripts/install-zstd.sh` and then `./configure --enable-localzstd`:
 
-
+- You can build a docker image as follows.
+	```
+	git clone https://github.com/hasindu2008/slow5tools && cd slow5tools
+	docker build .
+	docker run -v /path/to/local/data/data/:/data/ -it :image_id  ./slow5tools 
+	```
 
 ## Usage
 
