@@ -27,7 +27,8 @@
 slow5tools fast5toslow5 [OPTIONS] fast5_dir1 -d output_dir
 slow5tools fast5toslow5 [OPTIONS] fast5_dir1 fast5_dir2 ... -d output_dir
 slow5tools fast5toslow5 [OPTIONS] file1.fast5 file2.fast5 ... -d output_dir
-slow5tools fast5toslow5 [OPTIONS] file.fast5 -o file.blow5 -p 1
+slow5tools fast5toslow5 [OPTIONS] file.fast5 -o output.blow5
+slow5tools fast5toslow5 [OPTIONS] file.fast5 -o output.slow5
 ```
 
 Converts FAST5 files to SLOW5/BLOW5 format.
@@ -43,22 +44,24 @@ Note: it is not recommended to run f2s on a mixture of both multi-FAST5 and sing
 *  `-d, --out-dir STR`:  
    Specifies name/location of the output directory (required option unless converting only one FAST5 file). If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-o, --output FILE`:  
-When only one FAST5 file is being converted, `-o` specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and requires `-p 1`.
+When only one FAST5 file is being converted, `-o` specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and can automatically detect the output format from the file extension`.
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
-*   `-l, --lossless STR`:  
-    Retain information in auxiliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize. *IMPORTANT: Two recently introduced fields in latest FAST5 are not stored even if -l true is specified until we conform from ONT what these are: 1. pore_type which is an empty attribute and 2. end_reason which is still not consistent*.
+*   `--lossless STR`:  
+    Retain information in auxiliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize. *IMPORTANT: `pore_type` is a recently introduced yet an empty attribute. Hence, it is not stored even if `--lossless true` is specified*.
 * `-a, --allow`:  
-   By default f2s will not accept an individual multi-fast5 file or an individual single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an individual multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurrence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user is happy to lose the original run IDs.
+   By default f2s will not accept an individual multi-fast5 file or an individual single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an individual multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurrence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user does not further require the original run IDs.
 *  `-h, --help`:  
    Prints the help menu.
 
 ### merge
 
 ```
-slow5tools merge [OPTIONS] file1.blow5 file2.blow5 ...
+slow5tools merge [OPTIONS] file1.blow5 file2.blow5
 slow5tools merge [OPTIONS] blow5_dir1
 slow5tools merge [OPTIONS] blow5_dir1 blow5_dir2 ...
+slow5tools merge [OPTIONS] file1.blow5 -o output.blow5
+slow5tools merge [OPTIONS] file1.blow5 -o output.slow5
 ```
 
 Merges multiple SLOW5/BLOW5 files to a single file.
@@ -70,11 +73,8 @@ If multiple samples (different run ids) are detected, the header and the *read_g
 *  `-c, --compress compression_type`:  
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-o, --output FILE`:  
-   Outputs merged data to FILE [default value: stdout]
-<!-- *  `--tmp-prefix` STR:  
-    Write temporary files to the directory specified by STR [default value: ./slow5_timestamp_pid]. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
--->    
-*   `-l, --lossless`:  
+   Outputs merged data to FILE [default value: stdout]. This can auto detect the output format from the file extension.
+*   `--lossless`:  
     Retain information in auxiliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce file size.
 * `-t, --threads INT`:  
    Number of threads [default value: 4].
@@ -108,7 +108,7 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 *  `-c, --compress compression_type`:  
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-o FILE`, `--output FILE`:  
-   Outputs data to FILE [default value: stdout]
+   Outputs data to FILE [default value: stdout].  This can auto detect the output format from the file extension.
 * `-K, --batchsize`:  
          The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 * `-t, --threads INT`:  
@@ -137,7 +137,7 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 *  `-c, --compress compression_type`:
           Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-o FILE`, `--output FILE`:  
-   Outputs data to FILE [default value: stdout]          
+   Outputs data to FILE [default value: stdout].  This can auto detect the output format from the file extension.          
 *  `-h`, `--help`:  
          Prints the help menu.
 
@@ -164,33 +164,29 @@ This tool is useful for parallelising across array jobs / distributed systems.
    Split the data into files containing N reads (where N = INT). Cannot be used together with `-f` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-r`.
 *  `-g, --groups`:  
    Split the data into separate files for each read group (usually run id / sample name). The number of output files will equal the number of read groups in the input file.
-*   `-l, --lossless`:  
+*   `--lossless`:  
     Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
 *  `-h, --help`:  
    Prints the help menu.
-<!--
-*  `n, --num-reads INT`:
-   Split such that n reads are put onto a single SLOW5/BLOW5 file (based on order they appear in the original file).
-*  `l, --list FILE`:
-   Split as per the mappings given in file containing a list of readID and filename pairs.
--->
 
 
 ### slow5tofast5 (or s2f)
 
 ```
-slow5tools slow5tofast5 [OPTIONS] file1.blow5 -o fast5_dir
-slow5tools slow5tofast5 [OPTIONS] blow5_dir1 -o fast5_dir
-slow5tools slow5tofast5 [OPTIONS] file1.blow5 file2.blow5 ... -o fast5_dir
-slow5tools slow5tofast5 [OPTIONS] blow5_dir1 blow5_dir2 ... -o fast5_dir
+slow5tools slow5tofast5 [OPTIONS] file1.blow5 -o output.fast5
+slow5tools slow5tofast5 [OPTIONS] blow5_dir1 -d fast5_dir
+slow5tools slow5tofast5 [OPTIONS] file1.blow5 file2.blow5 ... -d fast5_dir
+slow5tools slow5tofast5 [OPTIONS] blow5_dir1 blow5_dir2 ... -d fast5_dir
 ```
 
 Converts SLOW5/BLOW5 files to FAST5 format.
 The input can be a list of SLOW5/BLOW5 files, a directory containing multiple SLOW5/BLOW5 files, or a list of directories. If a directory is provided, the tool recursively searches within for SLOW5/BLOW5 files (.slow5/blow5 extension) and converts them to FAST5.
-Note: different SLOW5 read groups cannot be converted to the a single FAST5 file.
+Note: Before converting a SLOW5 file having multiple read groups, split the file into groups using `split`.
 
+*  `-o FILE`, `--output FILE`:  
+   Outputs data to FILE and FILE must have .fast5 extension.
 *   `-d, --out-dir STR`:  
    Output directory where the FAST5 files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-p, --iop INT`:  
