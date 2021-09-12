@@ -49,5 +49,5 @@ diff $OUTPUT_DIR/output.log "$EXP_DIR/zlib_svb-zd_multi_rg_v0.2.0.stdout"  > /de
 
 
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
-info "all $TESTCASE testcases pased"
+info "all $TESTCASE testcases passed"
 exit 0

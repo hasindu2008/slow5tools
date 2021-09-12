@@ -39,5 +39,5 @@ do
     TESTCASE=$((TESTCASE + 1))
 done
 
-info "all $TESTCASE testcases pased"
+info "all $TESTCASE testcases passed"
 exit 0
