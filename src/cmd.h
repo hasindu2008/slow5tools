@@ -23,10 +23,10 @@
     "    -d, --out-dir                 output to directory\n"
 
 #define HELP_MSG_LOSSLESS \
-    "    --lossless                    retain information in auxiliary fields during the conversion.[true].\n"
+    "        --lossless                retain information in auxiliary fields during the conversion.[true].\n"
 
 #define HELP_MSG_OUTPUT_FORMAT \
-    "    --to FORMAT                   specify output file format [auto]\n"
+    "        --to FORMAT               specify output file format [auto]\n"
 
 #define HELP_MSG_PRESS \
     "    -c, --compress REC_MTD        record compression method [zlib] (only for blow5 format)\n" \
