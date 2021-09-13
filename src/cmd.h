@@ -7,6 +7,8 @@
 #define DEFAULT_NUM_PROCESSES 8
 #define DEFAULT_BATCH_SIZE 4096
 #define DEFAULT_AUXILIARY_FIELDS_NOT_OUT 0
+#define DEFAULT_ALLOW_RUN_ID_MISMATCH 0
+#define DEFAULT_DUMP_ALL 1
 
 #define TO_STR(x) TO_STR2(x)
 #define TO_STR2(x) #x
@@ -21,7 +23,7 @@
     "    -d, --out-dir                 output to directory\n"
 
 #define HELP_MSG_LOSSLESS \
-    "    -l, --lossless                retain information in auxiliary fields during the conversion.[true].\n"
+    "    --lossless                    retain information in auxiliary fields during the conversion.[true].\n"
 
 #define HELP_MSG_OUTPUT_FORMAT \
     "    --to FORMAT                   specify output file format [auto]\n"

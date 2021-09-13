@@ -81,6 +81,117 @@ fast5_file_t fast5_open(const char* filename) {
     return fh;
 }
 
+int read_fast5(opt_t *user_opts,
+               fast5_file_t *fast5_file,
+               slow5_file_t *slow5File,
+               int write_header_flag,
+               std::unordered_map<std::string, uint32_t>* warning_map) {
+
+    slow5_fmt format_out = user_opts->fmt_out;
+    slow5_press_method_t press_out = {user_opts->record_press_out, user_opts->signal_press_out};
+
+
+    struct operator_obj tracker;
+    tracker.group_level = ROOT;
+    tracker.prev = NULL;
+    H5O_info_t infobuf;
+    H5Oget_info(fast5_file->hdf5_file, &infobuf);
+    tracker.addr = infobuf.addr;
+
+    tracker.fast5_file = fast5_file;
+    tracker.format_out = format_out;
+    tracker.pressMethod = press_out;
+    tracker.press_ptr = slow5_press_init(press_out);
+    if(!tracker.press_ptr){
+        ERROR("Could not initialize the slow5 compression method%s","");
+        return -1;
+    }
+
+    tracker.fast5_path = fast5_file->fast5_path;
+    tracker.slow5File = slow5File;
+
+    int flag_context_tags = 0;
+    int flag_tracking_id = 0;
+    int flag_run_id = 0;
+    int flag_lossy = user_opts->flag_lossy;
+    int primary_fields_count = 0;
+    int flag_header_is_written = write_header_flag;
+    int flag_allow_run_id_mismatch = user_opts->flag_allow_run_id_mismatch;
+    int flag_dump_all = user_opts->flag_dump_all;
+
+
+    size_t zero0 = 0;
+
+    tracker.flag_context_tags = &flag_context_tags;
+    tracker.flag_tracking_id = &flag_tracking_id;
+    tracker.flag_run_id = &flag_run_id;
+    tracker.flag_lossy = &flag_lossy;
+    tracker.flag_write_header = &write_header_flag;
+    tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
+    tracker.flag_header_is_written = &flag_header_is_written;
+    tracker.nreads = &zero0;
+    tracker.slow5_record = slow5_rec_init();
+    tracker.group_name = "";
+    tracker.primary_fields_count = &primary_fields_count;
+
+    tracker.warning_map = warning_map;
+
+    herr_t iterator_ret;
+
+    if (fast5_file->is_multi_fast5) {
+        hsize_t number_of_groups = 0;
+        H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
+        tracker.num_read_groups = &number_of_groups; //todo:check if the assumption is valid
+        //obtain the root group attributes
+        iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
+        if(iterator_ret<0){
+            return -1;
+        }
+        //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
+        iterator_ret =H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
+        if(iterator_ret<0){
+            return -1;
+        }
+    }else{ // single-fast5
+        //obtain the root group attributes
+        iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
+        if(iterator_ret<0){
+            return -1;
+        }
+        hsize_t number_of_groups = 1;
+        tracker.num_read_groups = &number_of_groups;
+        //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
+        iterator_ret = H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
+        if(iterator_ret<0){
+            return -1;
+        }
+        //        todo: compare header values with the previous singlefast5
+        if(*(tracker.flag_run_id) != 1){
+            ERROR("run_id information is missing in the %s in read_id %s.", tracker.fast5_path, tracker.slow5_record->read_id);
+            return -1;
+        }
+        if(write_header_flag == 0){
+            int ret = print_slow5_header(&tracker);
+            if(ret < 0){
+                return ret;
+            }
+        }
+        if(*(tracker.primary_fields_count) == PRIMARY_FIELD_COUNT){
+            int ret = print_record(&tracker);
+            if(ret < 0){
+                return ret;
+            }
+            *(tracker.primary_fields_count) = 0;
+        }else{
+            ERROR("A primary attribute is missing in the %s. Check the fast5 files", tracker.fast5_path);
+            return -1;
+        }
+        slow5_rec_free(tracker.slow5_record);
+    }
+    slow5_press_free(tracker.press_ptr);
+    return 1;
+}
+
 herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data){
     hid_t attribute, attribute_type, native_type;
     herr_t return_val = 0;
@@ -203,9 +314,10 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
     if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
         flag_new_group_or_new_attribute_read_group = 0;
-        std::string key = "ns_" + std::string(name); //not stored
+        std::string key = "sh_" + std::string(name); //stored in header
         char warn_message[300];
-        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
+        sprintf(warn_message,"read/pore_type is empty and this empty attribute is stored in the SLOW5 header");
+//        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
         search_and_warn(operator_data,key,warn_message);
     }
 
@@ -285,8 +397,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         operator_data->slow5_record->sampling_rate = value.attr_double;
     }
 
-    // if group is ROOT or CONTEXT_TAGS or TRACKING_ID or attribute is 'run_id' create an attribute in the header and store value
-    if(strcmp(name,"run_id")==0 || strcmp(operator_data->group_name,"")==0 || strcmp(operator_data->group_name,"context_tags")==0 || strcmp(operator_data->group_name,"tracking_id")==0){
+    // if group is ROOT or CONTEXT_TAGS or TRACKING_ID or attribute is 'run_id' or 'pore_type' create an attribute in the header and store value
+    if(strcmp(name,"pore_type")==0 || strcmp(name,"run_id")==0 || strcmp(operator_data->group_name,"")==0 || strcmp(operator_data->group_name,"context_tags")==0 || strcmp(operator_data->group_name,"tracking_id")==0){
         flag_new_group_or_new_attribute_read_group = 0;
         if (H5Tclass != H5T_STRING) {
             flag_value_string = 1;
@@ -489,115 +601,7 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
     return 0;
 }
 
-int read_fast5(fast5_file_t *fast5_file,
-               slow5_fmt format_out,
-               slow5_press_method_t press_out,
-               int lossy,
-               int write_header_flag,
-               int flag_allow_run_id_mismatch,
-               struct program_meta *meta,
-               slow5_file_t *slow5File,
-               std::unordered_map<std::string,
-               uint32_t>* warning_map) {
 
-    struct operator_obj tracker;
-    tracker.group_level = ROOT;
-    tracker.prev = NULL;
-    H5O_info_t infobuf;
-    H5Oget_info(fast5_file->hdf5_file, &infobuf);
-    tracker.addr = infobuf.addr;
-
-    tracker.meta = meta;
-    tracker.fast5_file = fast5_file;
-    tracker.format_out = format_out;
-    tracker.pressMethod = press_out;
-    tracker.press_ptr = slow5_press_init(press_out);
-    if(!tracker.press_ptr){
-        ERROR("Could not initialize the slow5 compression method%s","");
-        return -1;
-    }
-
-    tracker.fast5_path = fast5_file->fast5_path;
-    tracker.slow5File = slow5File;
-
-    int flag_context_tags = 0;
-    int flag_tracking_id = 0;
-    int flag_run_id = 0;
-    int flag_lossy = lossy;
-    int primary_fields_count = 0;
-    int flag_header_is_written = write_header_flag;
-
-    size_t zero0 = 0;
-
-    tracker.flag_context_tags = &flag_context_tags;
-    tracker.flag_tracking_id = &flag_tracking_id;
-    tracker.flag_run_id = &flag_run_id;
-    tracker.flag_lossy = &flag_lossy;
-    tracker.flag_write_header = &write_header_flag;
-    tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
-    tracker.flag_header_is_written = &flag_header_is_written;
-    tracker.nreads = &zero0;
-    tracker.slow5_record = slow5_rec_init();
-    tracker.group_name = "";
-    tracker.primary_fields_count = &primary_fields_count;
-
-    tracker.warning_map = warning_map;
-
-    herr_t iterator_ret;
-
-    if (fast5_file->is_multi_fast5) {
-        hsize_t number_of_groups = 0;
-        H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
-        tracker.num_read_groups = &number_of_groups; //todo:check if the assumption is valid
-        //obtain the root group attributes
-        iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
-        if(iterator_ret<0){
-            return -1;
-        }
-        //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
-        iterator_ret =H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
-        if(iterator_ret<0){
-            return -1;
-        }
-    }else{ // single-fast5
-        //obtain the root group attributes
-        iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
-        if(iterator_ret<0){
-            return -1;
-        }
-        hsize_t number_of_groups = 1;
-        tracker.num_read_groups = &number_of_groups;
-        //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
-        iterator_ret = H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
-        if(iterator_ret<0){
-            return -1;
-        }
-        //        todo: compare header values with the previous singlefast5
-        if(*(tracker.flag_run_id) != 1){
-            ERROR("run_id information is missing in the %s in read_id %s.", tracker.fast5_path, tracker.slow5_record->read_id);
-            return -1;
-        }
-        if(write_header_flag == 0){
-            int ret = print_slow5_header(&tracker);
-            if(ret < 0){
-                return ret;
-            }
-        }
-        if(*(tracker.primary_fields_count) == PRIMARY_FIELD_COUNT){
-            int ret = print_record(&tracker);
-            if(ret < 0){
-                return ret;
-            }
-            *(tracker.primary_fields_count) = 0;
-        }else{
-            ERROR("A primary attribute is missing in the %s. Check the fast5 files", tracker.fast5_path);
-            return -1;
-        }
-        slow5_rec_free(tracker.slow5_record);
-    }
-    slow5_press_free(tracker.press_ptr);
-    return 1;
-}
 
 /************************************************************
 

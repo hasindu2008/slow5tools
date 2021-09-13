@@ -50,6 +50,8 @@ typedef struct {
     size_t num_processes;
     int64_t read_id_batch_capacity;
     int flag_lossy;
+    int flag_allow_run_id_mismatch;
+    int flag_dump_all;
 
     // Input arguments
     char *arg_fname_in;

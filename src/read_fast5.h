@@ -24,6 +24,7 @@
 #    include <hdf5.h>
 #endif
 #include <unordered_map>
+#include "misc.h"
 
 KHASH_MAP_INIT_STR(warncount, uint32_t)
 
@@ -47,7 +48,6 @@ struct operator_obj {
     struct operator_obj   *prev;          /* Pointer to previous opdata */
     haddr_t         addr;           /* Group address */
     //attributes are useful when writing. They are also passed to the fast5_group_itr function along with the struct
-    struct program_meta *meta;
     FILE *f_out;
     enum slow5_fmt format_out;
     slow5_press_method_t pressMethod;
@@ -64,6 +64,7 @@ struct operator_obj {
     int *flag_write_header;
     int *flag_allow_run_id_mismatch;
     int *flag_header_is_written;
+    int *flag_dump_all;
     hsize_t* num_read_groups;
     size_t* nreads;
     slow5_file_t* slow5File;
@@ -72,9 +73,11 @@ struct operator_obj {
 };
 
 //implemented in read_fast5.c
-int
-read_fast5(fast5_file_t *fast5_file, slow5_fmt format_out, slow5_press_method_t press_out, int lossy, int write_header_flag,
-           int flag_allow_run_id_mismatch, struct program_meta *meta, slow5_file_t *slow5File, std::unordered_map<std::string, uint32_t>* warning_map);
+int read_fast5(opt_t *user_opts,
+               fast5_file_t *fast5_file,
+               slow5_file_t *slow5File,
+               int write_header_flag,
+               std::unordered_map<std::string, uint32_t>* warning_map);
 fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 std::vector< std::string > list_directory(const std::string& file_name);
