@@ -129,6 +129,7 @@ int read_fast5(opt_t *user_opts,
     tracker.flag_write_header = &write_header_flag;
     tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
     tracker.flag_header_is_written = &flag_header_is_written;
+    tracker.flag_dump_all = &flag_dump_all;
     tracker.nreads = &zero0;
     tracker.slow5_record = slow5_rec_init();
     tracker.group_name = "";
@@ -213,8 +214,11 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     union attribute_data value;
     int flag_value_string = 0;
     std::string h5t_class = "H5T_STRING";
+    enum slow5_aux_type slow5_class = SLOW5_STRING;
     switch(H5Tclass){
         case H5T_STRING:
+            h5t_class = "H5T_STRING";
+            slow5_class = SLOW5_STRING;
             flag_value_string = 1;
             if(H5Tis_variable_str(attribute_type) > 0) {
                 // variable length string
@@ -253,14 +257,17 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             }
             break;
         case H5T_FLOAT:
+            slow5_class = SLOW5_FLOAT;
             h5t_class = "H5T_FLOAT";
             H5Aread(attribute, native_type, &(value.attr_double));
             break;
         case H5T_INTEGER:
+            slow5_class = SLOW5_INT32_T;
             h5t_class = "H5T_INTEGER";
             H5Aread(attribute,native_type,&(value.attr_int));
             break;
         case H5T_ENUM:
+            slow5_class = SLOW5_ENUM;
             h5t_class = "H5T_ENUM";
             H5Aread(attribute, native_type, &(value.attr_uint8_t));
             break;
@@ -469,6 +476,11 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 
     if(flag_new_group_or_new_attribute_read_group){
+        if(*(operator_data->flag_dump_all)==1){
+            if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1){
+                return -1;
+            }
+        }
         std::string key = "at_" + std::string(name); //Alert
         char warn_message[300];
         sprintf(warn_message,"Alert: Attribute %s/%s in %s is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->group_name, operator_data->fast5_path);
