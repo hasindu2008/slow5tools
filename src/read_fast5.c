@@ -300,8 +300,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             break;
         default:
             h5t_class = "UNKNOWN";
-            ERROR("In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->fast5_path, operator_data->group_name, name);
-            return -1;
+            WARNING("In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->fast5_path, operator_data->group_name, name);
     }
 
     std::vector<std::string> enum_labels_list;
@@ -332,16 +331,14 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
     if(H5Tclass==H5T_STRING){
         if (strcmp(value.attr_string,".")==0){
-            ERROR("Attribute '%s' in %s has '%s' as a value which is reserved in slow5 for representing empty fields. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
-            return -1;
+            WARNING("Attribute '%s' in %s has '%s' as a value which is reserved in slow5 for representing empty fields. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
         }
         size_t index = 0;
 
         while(value.attr_string[index]){
             int result = isspace(value.attr_string[index]);
             if (result && value.attr_string[index]!=' '){
-                ERROR("Attribute '%s' in %s has a value '%s' with only a single white space. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
-                return -1;
+                WARNING("Attribute '%s' in %s has a value '%s' with only a single white space. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
             }
             index++;
         }
