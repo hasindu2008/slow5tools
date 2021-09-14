@@ -44,6 +44,7 @@ void init_opt(opt_t *opt){
     opt->arg_batch = NULL;
     opt->arg_dir_out = NULL;
     opt->arg_lossless = NULL;
+    opt->arg_dump_all = NULL;
     opt->arg_num_processes = NULL;
 
     // Default options

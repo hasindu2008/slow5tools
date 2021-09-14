@@ -142,7 +142,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
             if(call_count==0){
                 slow5_path = "stdout";
                 if(user_opts->arg_fname_out){
-//                    slow5_path = user_opts->arg_fname_out;
+                    slow5_path = user_opts->arg_fname_out;
                     slow5_file_pointer = fopen(user_opts->arg_fname_out, "wb");
                     if (!slow5_file_pointer) {
                         ERROR("Output file %s could not be opened for writing. %s.", user_opts->arg_fname_out, strerror(errno));
@@ -312,14 +312,14 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     static struct option long_opts[] = {
             {"to",          required_argument, NULL, 'b'},  //0
             {"compress",    required_argument, NULL, 'c'},  //1
-            {"sig-compress",required_argument,  NULL, 's'}, //2
-            {"help",        no_argument, NULL, 'h'},        //3
+            {"sig-compress",required_argument,  NULL,'s'},  //2
+            {"help",        no_argument, NULL,       'h'},  //3
             {"output",      required_argument, NULL, 'o'},  //4
             { "iop",        required_argument, NULL, 'p'},  //5
             { "lossless",   required_argument, NULL, 'l'},  //6
             { "out-dir",    required_argument, NULL, 'd'},  //7
-            { "allow",      no_argument, NULL, 'a'},        //8
-            { "dump-all",   required_argument, NULL, 'e'},        //9
+            { "allow",      no_argument, NULL,       'a'},  //8
+            { "dump-all",   required_argument, NULL, 'e'},  //9
             {NULL, 0, NULL, 0 }
     };
 
