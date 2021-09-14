@@ -30,63 +30,69 @@ info "-------------------tesetcase $TESTCASE: slow5tools version----------------
 $SLOW5_EXEC --version || die "tesetcase TESTCASE: slow5tools version failed"
 
 TESTCASE=1
-info "-------------------tesetcase $TESTCASE: lossless merging-------------------"
+TESTNAME="lossless merging"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg2.slow5 $RAW_DIR/rg3.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --to slow5 || die "tesetcase $TESTCASE: lossless merging failed"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --to slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
 sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $OUTPUT_DIR/merged_expected_sorted.slow5 || die "sort failed"
 sort $OUTPUT_DIR/merged_output.slow5 > $OUTPUT_DIR/merged_output_sorted.slow5 || die "sort failed"
 rm $OUTPUT_DIR/merged_output.slow5  || die "remove $OUTPUT_DIR/merged_output.slow5 failed"
-diff -q $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_sorted.slow5 || die "diff testcase $TESTCASE failed"
+diff -q $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_sorted.slow5 || die "diff testcase $TESTCASE: $TESTNAME failed"
 
 TESTCASE=2
-info "-------------------tetcase $TESTCASE: lossy merging-------------------"
-$SLOW5_EXEC merge -l false $INPUT_FILES -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5 || die "tetcase $TESTCASE: lossy merging failed"
+TESTNAME="lossy merging"
+info "-------------------tetcase $TESTCASE: $TESTNAME-------------------"
+$SLOW5_EXEC merge -l false $INPUT_FILES -o $OUTPUT_DIR/lossy_merged_output.slow5 --to slow5 || die "tetcase $TESTCASE: $TESTNAME failed"
 sort $REL_PATH/data/exp/merge/lossy_merged_expected.slow5 > $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 || die "sort failed"
 sort $OUTPUT_DIR/lossy_merged_output.slow5 > $OUTPUT_DIR/lossy_merged_output_sorted.slow5 || die "sort failed"
 rm $OUTPUT_DIR/lossy_merged_output.slow5 || die "remove $OUTPUT_DIR/lossy_merged_output.slow5 failed"
-diff -q $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 $OUTPUT_DIR/lossy_merged_output_sorted.slow5 || die "diff testcase $TESTCASE failed"
+diff -q $OUTPUT_DIR/lossy_merged_expected_sorted.slow5 $OUTPUT_DIR/lossy_merged_output_sorted.slow5 || die "diff testcase $TESTCASE: $TESTNAME failed"
 
 TESTCASE=3
-info "-------------------tesetcase $TESTCASE: lossless merging with threads-------------------"
-$SLOW5_EXEC merge -t $NUM_THREADS $INPUT_FILES -o $OUTPUT_DIR/merged_output_using_threads.slow5 --to slow5 || die "tesetcase $TESTCASE: lossless merging using threads failed"
+TESTNAME="lossless merging with threads"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
+$SLOW5_EXEC merge -t $NUM_THREADS $INPUT_FILES -o $OUTPUT_DIR/merged_output_using_threads.slow5 --to slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
 sort $REL_PATH/data/exp/merge/merged_expected.slow5 > $OUTPUT_DIR/merged_expected_sorted.slow5 || die "sort failed"
 sort $OUTPUT_DIR/merged_output_using_threads.slow5 > $OUTPUT_DIR/merged_output_using_threads_sorted.slow5 || die "sort failed"
 rm $OUTPUT_DIR/merged_output_using_threads.slow5  || die "remove $OUTPUT_DIR/merged_output_using_threads.slow5 failed"
-diff -q $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_using_threads_sorted.slow5 || die "diff testcase $TESTCASE failed"
+diff -q $OUTPUT_DIR/merged_expected_sorted.slow5 $OUTPUT_DIR/merged_output_using_threads_sorted.slow5 || die "diff testcase $TESTCASE: $TESTNAME failed"
 
 # merging with and without enum data type
 TESTCASE=4
-info "-------------------tesetcase $TESTCASE: merging with and without enum type-------------------"
+TESTNAME="merging with and without enum type"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/aux_no_enum.slow5 $RAW_DIR/aux_enum.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase $TESTCASE: merging with and without enum type failed"
-diff -q $REL_PATH/data/exp/merge/merged_output_enum.slow5  $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase $TESTCASE: diff for merging with and without enum type failed"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/merged_output_enum.slow5  $OUTPUT_DIR/merged_output_enum.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME failed"
 
 TESTCASE=5
-info "-------------------tesetcase $TESTCASE: merging without and with enum type-------------------"
+TESTNAME="merging without and with enum type reverse input file order"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/aux_enum.slow5 $RAW_DIR/aux_no_enum.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum2.slow5 || die "tesetcase $TESTCASE: merging with and without enum type failed"
-diff -q $REL_PATH/data/exp/merge/merged_output_enum2.slow5  $OUTPUT_DIR/merged_output_enum2.slow5 || die "tesetcase $TESTCASE: diff for merging with and without enum type failed"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum2.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/merged_output_enum2.slow5  $OUTPUT_DIR/merged_output_enum2.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME failed"
 
 # merging different slow5 formats and versions
 TESTCASE=6
-info "-------------------tesetcase $TESTCASE: merging different slow5 formats and versions-------------------"
+TESTNAME="merging different slow5 formats and versions"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/aux_no_enum.slow5 $RAW_DIR/none_v0.1.0.blow5 $RAW_DIR/zlib_svb-zd_v0.2.0.blow5 $RAW_DIR/zlib_v0.2.0.blow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_formats.slow5 || die "tesetcase $TESTCASE: merging different file types failed"
-diff -q $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged_output_formats.slow5 || die "tesetcase $TESTCASE: diff for merging different file types failed"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_formats.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged_output_formats.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME failed"
 
 TESTCASE=7
-info "-------------------tesetcase $TESTCASE: merging files where one header attr is missing in one file-------------------"
+TESTNAME="merging files where one header attr is missing in one file"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0_asic_id_missing.slow5 $RAW_DIR/rg1.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: merging different file types failed"
-diff -q $REL_PATH/data/exp/merge/asic_id_missing_expected.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for merging files where one header attr is missing in one file"
-
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/asic_id_missing_expected.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 
 TESTCASE=8
-info "-------------------tesetcase $TESTCASE: blow5 output-------------------"
+TESTNAME="blow5 output"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg2.slow5 $RAW_DIR/rg3.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -c zstd -s svb-zd -o $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: merging different file types failed"
-diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: diff for merging files where one header attr is missing in one file"
-
+$SLOW5_EXEC merge $INPUT_FILES -c zstd -s svb-zd -o $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 info "done"
