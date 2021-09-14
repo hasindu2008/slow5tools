@@ -56,6 +56,8 @@ void init_opt(opt_t *opt){
     opt->num_processes = DEFAULT_NUM_PROCESSES;
     opt->read_id_batch_capacity = DEFAULT_BATCH_SIZE;
     opt->flag_lossy = DEFAULT_AUXILIARY_FIELDS_NOT_OUT;
+    opt->flag_allow_run_id_mismatch = DEFAULT_ALLOW_RUN_ID_MISMATCH;
+    opt->flag_dump_all = DEFAULT_DUMP_ALL;
 }
 
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta){
