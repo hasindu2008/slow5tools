@@ -39,7 +39,7 @@ int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_c
 
 int print_slow5_header(operator_obj* operator_data) {
     if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
-        ERROR("%s","Could not write the SLOW5 header."); //TODO: print for which SLOW5 file
+        ERROR("Could not write the SLOW5 header to %s", operator_data->slow5File->meta.pathname);
         return -1;
     }
     *(operator_data->flag_header_is_written) = 1;
@@ -48,7 +48,7 @@ int print_slow5_header(operator_obj* operator_data) {
 
 int print_record(operator_obj* operator_data) {
     if(slow5_rec_fwrite(operator_data->slow5File->fp, operator_data->slow5_record, operator_data->slow5File->header->aux_meta, operator_data->format_out, operator_data->press_ptr) == -1){
-        ERROR("Could not write the SLOW5 record for read id '%s'.", operator_data->slow5_record->read_id); //TODO: print for which SLOW5 file as well
+        ERROR("Could not write the SLOW5 record for read id '%s' to %s.", operator_data->slow5_record->read_id, operator_data->slow5File->meta.pathname);
         return -1;
     }
     return 0;
@@ -146,25 +146,28 @@ int read_fast5(opt_t *user_opts,
 
     if (fast5_file->is_multi_fast5) {
         hsize_t number_of_groups = 0;
-        H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups); //TODO: error check
-        tracker.num_read_groups = &number_of_groups; //todo:check if the assumption is valid
+        herr_t h5_get_num_objs = H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
+        if(h5_get_num_objs < 0){
+            ERROR("Could not get the number of objects from the fast5 file %s", tracker.fast5_path);
+        }
+        tracker.num_read_groups = &number_of_groups;
         //obtain the root group attributes
         iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
         if(iterator_ret<0){
-            //TODO a proper error messgae "could not ontain the ...."
+            ERROR("Could not obtain root group attributes from the fast5 file %s", tracker.fast5_path);
             return -1;
         }
         //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
         iterator_ret =H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
         if(iterator_ret < 0){
-            //TODO a proper error messgae "could not ontain the ...."
+            ERROR("Could not iterate over the read groups in the fast5 file %s", tracker.fast5_path);
             return -1;
         }
     }else{ // single-fast5
         //obtain the root group attributes
         iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
         if(iterator_ret < 0){
-            //TODO a proper error messgae "could not ontain the ...."
+            ERROR("Could not obtain root group attributes from the fast5 file %s", tracker.fast5_path);
             return -1;
         }
         hsize_t number_of_groups = 1;
@@ -172,7 +175,7 @@ int read_fast5(opt_t *user_opts,
         //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
         iterator_ret = H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
         if(iterator_ret < 0){
-            //TODO a proper error messgae "could not ontain the ...."
+            ERROR("Could not iterate over the read groups in the fast5 file %s", tracker.fast5_path);
             return -1;
         }
         //        todo: compare header values with the previous singlefast5
@@ -193,8 +196,7 @@ int read_fast5(opt_t *user_opts,
             }
             *(tracker.primary_fields_count) = 0;
         }else{
-            ERROR("A primary data field is missing in the %s. Likely to be a corrupted or malformed fast5 file.", tracker.fast5_path);
-            //TODO Could you add which read ID
+            ERROR("A primary data field (read_id=%s) is missing in the %s. Likely to be a corrupted or malformed fast5 file.", tracker.slow5_record->read_id, tracker.fast5_path);
             return -1;
         }
         slow5_rec_free(tracker.slow5_record);
@@ -212,16 +214,29 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     // Ensure attribute exists
     ret = H5Aexists(loc_id, name);
     if(ret <= 0) {
-        WARNING("The attribute '%s' is missing in the fast5 file.\n", name);
-        //TODO: which FAST5 file and which read id.?
+        ERROR("In fast5 file %s, the attribute '%s/%s' does not exist on the HDF5 object.\n", operator_data->fast5_path, operator_data->group_name, name);
         return -1;
     }
 
     attribute = H5Aopen(loc_id, name, H5P_DEFAULT);
+    if(attribute < 0){
+        ERROR("In fast5 file %s, failed to open the HDF5 attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+        return -1;
+    }
     attribute_type = H5Aget_type(attribute);
+    if(attribute_type < 0){
+        ERROR("In fast5 file %s, failed to get the datatype of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+        return -1;
+    }
     native_type = H5Tget_native_type(attribute_type, H5T_DIR_ASCEND);
+    if(native_type < 0){
+        ERROR("In fast5 file %s, failed to get the native datatype of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+        return -1;
+    }
     H5T_class_t H5Tclass = H5Tget_class(attribute_type);
-    //TODO: error checking for these please
+    if(H5Tclass == -1){
+        ERROR("In fast5 file %s, failed to get the datatype class identifier of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+    }
 
     union attribute_data value;
     int flag_value_string = 0;
@@ -285,7 +300,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             break;
         default:
             h5t_class = "UNKNOWN";
-            ERROR("H5TClass of the atttribute %s/%s is 'UNKNOWN'.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->group_name, name);
+            ERROR("In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->fast5_path, operator_data->group_name, name);
             return -1;
     }
 
@@ -434,7 +449,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     sprintf(value.attr_string, "%u", value.attr_uint8_t);
                     break;
                 default:
-                    ERROR("%s", "SOmething impossible just happened. The code should never have reached here.");
+                    ERROR("%s", "Something impossible just happened. The code should never have reached here.");
                     return -1;
             }
             std::string key = "co_" + std::string(name); //convert

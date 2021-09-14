@@ -26,8 +26,6 @@
 #include <unordered_map>
 #include "misc.h"
 
-KHASH_MAP_INIT_STR(warncount, uint32_t)
-
 typedef struct {
     uint64_t bad_5_file = 0;
     uint64_t total_5 = 0;
