@@ -142,7 +142,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
             if(call_count==0){
                 slow5_path = "stdout";
                 if(user_opts->arg_fname_out){
-                    slow5_path = user_opts->arg_fname_out;
+//                    slow5_path = user_opts->arg_fname_out;
                     slow5_file_pointer = fopen(user_opts->arg_fname_out, "wb");
                     if (!slow5_file_pointer) {
                         ERROR("Output file %s could not be opened for writing. %s.", user_opts->arg_fname_out, strerror(errno));
