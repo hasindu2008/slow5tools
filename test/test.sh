@@ -1,6 +1,8 @@
 #!/bin/sh
 
 FIRST_FAILED_SET_OF_TESTCASES="NOT SET"
+FLAG_FIRST_FAILED_SET_OF_TESTCASES=0
+
 
 if [ "$1" = 'mem' ]; then
     mem=1
@@ -23,7 +25,10 @@ ex() {
 fail() {
     echo 'FAILURE'
     ret=1
-    FIRST_FAILED_SET_OF_TESTCASES=$1
+    if [ $FLAG_FIRST_FAILED_SET_OF_TESTCASES -eq 0 ]; then
+        FLAG_FIRST_FAILED_SET_OF_TESTCASES=1
+        FIRST_FAILED_SET_OF_TESTCASES=$1
+    fi
 }
 
 not_compiled() {
