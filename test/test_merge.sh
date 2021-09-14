@@ -80,6 +80,14 @@ INPUT_FILES="$RAW_DIR/rg0_asic_id_missing.slow5 $RAW_DIR/rg1.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: merging different file types failed"
 diff -q $REL_PATH/data/exp/merge/asic_id_missing_expected.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for merging files where one header attr is missing in one file"
 
+
+TESTCASE=8
+info "-------------------tesetcase $TESTCASE: blow5 output-------------------"
+INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg2.slow5 $RAW_DIR/rg3.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -c zstd -s svb-zd -o $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: merging different file types failed"
+diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: diff for merging files where one header attr is missing in one file"
+
+
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 info "done"
 exit 0

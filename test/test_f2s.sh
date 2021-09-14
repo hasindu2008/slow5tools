@@ -372,7 +372,22 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=46
 echo "------------------- f2s testcase $TESTCASE_NO >>> compression requested with slow5 -------------------"
-$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --to slow5  -c zlib  && die "testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --to slow5  -c zlib $OUTPUT_DIR/err.slow5 && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=47
+echo "------------------- f2s testcase $TESTCASE_NO >>> # in reead id at the beginning -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/malformed_readid1.fast5 -o $OUTPUT_DIR/err.slow5 && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=48
+echo "------------------- f2s testcase $TESTCASE_NO >>> @ in reead id at the beginning -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/malformed_readid1.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=49
+echo "------------------- f2s testcase $TESTCASE_NO >>> primary field range missing -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/missing_primary_field.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 
