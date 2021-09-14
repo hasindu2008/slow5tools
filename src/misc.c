@@ -109,6 +109,21 @@ int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *m
     return 0;
 }
 
+int parse_arg_dump_all(opt_t *opt, int argc, char **argv, struct program_meta *meta){
+    // Parse lossless argument
+    if (opt->arg_dump_all != NULL) {
+        if (strcmp(opt->arg_dump_all, "true") == 0) {
+            opt->flag_dump_all = 1;
+        } else if (strcmp(opt->arg_dump_all, "false") == 0) {
+            opt->flag_dump_all = 0;
+        } else {
+            ERROR("Incorrect argument%s", "");
+            return -1;
+        }
+    }
+    return 0;
+}
+
 int parse_batch_size(opt_t *opt, int argc, char **argv){
     if(opt->arg_batch != NULL){
         char *endptr;

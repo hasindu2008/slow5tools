@@ -319,7 +319,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             { "lossless",   required_argument, NULL, 'l'},  //6
             { "out-dir",    required_argument, NULL, 'd'},  //7
             { "allow",      no_argument, NULL, 'a'},        //8
-            { "dump-all",   no_argument, NULL, 'e'},        //9
+            { "dump-all",   required_argument, NULL, 'e'},        //9
             {NULL, 0, NULL, 0 }
     };
 
@@ -330,7 +330,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:s:ho:p:l:d:a", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:s:ho:p:l:d:a:e:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -364,7 +364,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 user_opts.arg_fname_out = optarg;
                 break;
             case 'e':
-                user_opts.flag_dump_all = 0;
+                user_opts.arg_dump_all = optarg;
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -377,6 +377,10 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
     if(parse_arg_lossless(&user_opts, argc, argv, meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(parse_arg_dump_all(&user_opts, argc, argv, meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
