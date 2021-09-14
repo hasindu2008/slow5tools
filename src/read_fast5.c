@@ -39,7 +39,7 @@ int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_c
 
 int print_slow5_header(operator_obj* operator_data) {
     if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
-        ERROR("%s","Could not write the slow5 header");
+        ERROR("%s","Could not write the SLOW5 header."); //TODO: print for which SLOW5 file
         return -1;
     }
     *(operator_data->flag_header_is_written) = 1;
@@ -48,7 +48,7 @@ int print_slow5_header(operator_obj* operator_data) {
 
 int print_record(operator_obj* operator_data) {
     if(slow5_rec_fwrite(operator_data->slow5File->fp, operator_data->slow5_record, operator_data->slow5File->header->aux_meta, operator_data->format_out, operator_data->press_ptr) == -1){
-        ERROR("Could not write the slow5 record %s", operator_data->slow5_record->read_id);
+        ERROR("Could not write the SLOW5 record for read id '%s'.", operator_data->slow5_record->read_id); //TODO: print for which SLOW5 file as well
         return -1;
     }
     return 0;
@@ -72,7 +72,7 @@ fast5_file_t fast5_open(const char* filename) {
             int minor;
             int ret = sscanf(version_str.c_str(), "%d.%d", &major, &minor);
             if(ret != 2) {
-                ERROR("Could not parse the fast5 version string %s", version_str.c_str());
+                ERROR("Could not parse the fast5 version string '%s'.", version_str.c_str());
                 exit(EXIT_FAILURE);
             }
             fh.is_multi_fast5 = major >= 1;
@@ -103,7 +103,7 @@ int read_fast5(opt_t *user_opts,
     tracker.pressMethod = press_out;
     tracker.press_ptr = slow5_press_init(press_out);
     if(!tracker.press_ptr){
-        ERROR("Could not initialize the slow5 compression method%s","");
+        ERROR("Could not initialise the slow5 compression method. %s","");
         return -1;
     }
 
@@ -132,6 +132,11 @@ int read_fast5(opt_t *user_opts,
     tracker.flag_dump_all = &flag_dump_all;
     tracker.nreads = &zero0;
     tracker.slow5_record = slow5_rec_init();
+    if(tracker.slow5_record == NULL){
+        ERROR("%s","Could not allocate space for a slow5 record.");
+        return -1;
+    }
+
     tracker.group_name = "";
     tracker.primary_fields_count = &primary_fields_count;
 
@@ -141,34 +146,38 @@ int read_fast5(opt_t *user_opts,
 
     if (fast5_file->is_multi_fast5) {
         hsize_t number_of_groups = 0;
-        H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
+        H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups); //TODO: error check
         tracker.num_read_groups = &number_of_groups; //todo:check if the assumption is valid
         //obtain the root group attributes
         iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
         if(iterator_ret<0){
+            //TODO a proper error messgae "could not ontain the ...."
             return -1;
         }
         //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
         iterator_ret =H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
-        if(iterator_ret<0){
+        if(iterator_ret < 0){
+            //TODO a proper error messgae "could not ontain the ...."
             return -1;
         }
     }else{ // single-fast5
         //obtain the root group attributes
         iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
-        if(iterator_ret<0){
+        if(iterator_ret < 0){
+            //TODO a proper error messgae "could not ontain the ...."
             return -1;
         }
         hsize_t number_of_groups = 1;
         tracker.num_read_groups = &number_of_groups;
         //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
         iterator_ret = H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
-        if(iterator_ret<0){
+        if(iterator_ret < 0){
+            //TODO a proper error messgae "could not ontain the ...."
             return -1;
         }
         //        todo: compare header values with the previous singlefast5
         if(*(tracker.flag_run_id) != 1){
-            ERROR("run_id information is missing in the %s in read_id %s.", tracker.fast5_path, tracker.slow5_record->read_id);
+            ERROR("The run_id attribute is missing in fast5 file '%s' for read id '%s'. Likely to be a corrupted or malformed fast5 file.", tracker.fast5_path, tracker.slow5_record->read_id);
             return -1;
         }
         if(write_header_flag == 0){
@@ -184,7 +193,8 @@ int read_fast5(opt_t *user_opts,
             }
             *(tracker.primary_fields_count) = 0;
         }else{
-            ERROR("A primary attribute is missing in the %s. Check the fast5 files", tracker.fast5_path);
+            ERROR("A primary data field is missing in the %s. Likely to be a corrupted or malformed fast5 file.", tracker.fast5_path);
+            //TODO Could you add which read ID
             return -1;
         }
         slow5_rec_free(tracker.slow5_record);
@@ -202,7 +212,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     // Ensure attribute exists
     ret = H5Aexists(loc_id, name);
     if(ret <= 0) {
-        WARNING("attribute %s not found\n", name);
+        WARNING("The attribute '%s' is missing in the fast5 file.\n", name);
+        //TODO: which FAST5 file and which read id.?
         return -1;
     }
 
@@ -210,6 +221,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     attribute_type = H5Aget_type(attribute);
     native_type = H5Tget_native_type(attribute_type, H5T_DIR_ASCEND);
     H5T_class_t H5Tclass = H5Tget_class(attribute_type);
+    //TODO: error checking for these please
 
     union attribute_data value;
     int flag_value_string = 0;
@@ -224,7 +236,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 // variable length string
                 ret = H5Aread(attribute, native_type, &value.attr_string);
                 if(ret < 0) {
-                    ERROR("error reading attribute %s", name);
+                    ERROR("Error when reading the attribute '%s'.", name);
                     return -1;
                 }
             } else {
@@ -238,7 +250,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 ret = H5Aread(attribute, attribute_type, value.attr_string);
 
                 if(ret < 0) {
-                    ERROR("error reading attribute %s", name);
+                    ERROR("Error when reading the attribute '%s'.", name);
                     return -1;
                 }
             }
@@ -273,7 +285,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             break;
         default:
             h5t_class = "UNKNOWN";
-            ERROR("f2s cannot handle H5TClass of the atttribute %s/%s.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->group_name, name);
+            ERROR("H5TClass of the atttribute %s/%s is 'UNKNOWN'.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->group_name, name);
             return -1;
     }
 
@@ -323,7 +335,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         flag_new_group_or_new_attribute_read_group = 0;
         std::string key = "sh_" + std::string(name); //stored in header
         char warn_message[300];
-        sprintf(warn_message,"read/pore_type is empty and this empty attribute is stored in the SLOW5 header");
+        sprintf(warn_message,"The attribute 'pore_type' is empty and will be stored in the SLOW5 header.");
 //        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
         search_and_warn(operator_data,key,warn_message);
     }
@@ -359,7 +371,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             operator_data->slow5_record->read_id_len = strlen(value.attr_string);
             operator_data->slow5_record->read_id = strdup(value.attr_string);
         }else{
-            ERROR("read_id of this format is not supported [%s]", value.attr_string);
+            ERROR("The read id which is supposed to conform to UUID V4 '%s'is malformed.", value.attr_string);
             return -1;
         }
     }
@@ -422,12 +434,12 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     sprintf(value.attr_string, "%u", value.attr_uint8_t);
                     break;
                 default:
-                    ERROR("%s", "This should not be printed");
+                    ERROR("%s", "SOmething impossible just happened. The code should never have reached here.");
                     return -1;
             }
             std::string key = "co_" + std::string(name); //convert
             char warn_message[300];
-            sprintf(warn_message,"Convert: Converting the attribute %s/%s from %s to string",operator_data->group_name, name, h5t_class.c_str());
+            sprintf(warn_message,"Convert: Converting the attribute %s/%s from %s to string.",operator_data->group_name, name, h5t_class.c_str());
             search_and_warn(operator_data,key,warn_message);
         }
 
@@ -811,6 +823,7 @@ std::vector< std::string > list_directory(const std::string& file_name)
     return res;
 }
 
+// from nanopolish
 // given a directory path, recursively find all files
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
     if(extension){
@@ -854,7 +867,9 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
 }
 
 int slow5_hdr_initialize(slow5_hdr *header, int lossy){
-    slow5_hdr_add_rg(header);
+    if (slow5_hdr_add_rg(header) < 0){
+        return -1;
+    }
     header->num_read_groups = 1;
     if(lossy==0){
         struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();

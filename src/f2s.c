@@ -65,7 +65,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
         fast5_file.fast5_path = fast5_files[i].c_str();
 
         if (fast5_file.hdf5_file < 0){
-            WARNING("Fast5 file [%s] is unreadable and will be skipped", fast5_files[i].c_str());
+            WARNING("Fast5 file '%s' is unreadable and will be skipped.", fast5_files[i].c_str());
             H5Fclose(fast5_file.hdf5_file);
             readsCount->bad_5_file++;
             continue;
@@ -81,21 +81,31 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
                 slow5_file_pointer = fopen(slow5_path.c_str(), "w");
                 // An error occured
                 if (!slow5_file_pointer) {
-                    ERROR("File '%s' could not be opened - %s.",
+                    ERROR("File '%s' could not be opened for writing. %s.",
                           slow5_path.c_str(), strerror(errno));
                     continue;
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), SLOW5_FORMAT_ASCII);
+                if (slow5File == NULL){
+                    ERROR("%s","Could not initialise the slow5lib data structure.");
+                    exit(EXIT_FAILURE);
+                }
+
                 ret = slow5_hdr_initialize(slow5File->header, user_opts->flag_lossy);
-                if(ret<0){
+                if(ret < 0){
+                    ERROR("%s","Could not initialise the SLOW5 header.");
                     exit(EXIT_FAILURE);
                 }
                 ret = read_fast5(user_opts, &fast5_file, slow5File, 0, &warning_map);
-                if(ret<0){
+                if(ret < 0){
+                    ERROR("Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
                     exit(EXIT_FAILURE);
                 }
                 if(user_opts->fmt_out == SLOW5_FORMAT_BINARY){
-                    slow5_eof_fwrite(slow5File->fp);
+                    if (slow5_eof_fwrite(slow5File->fp) < 0){
+                        ERROR("Could write the BLOW5 end of file marker in '%s'.", slow5_path.c_str());
+                        exit(EXIT_FAILURE);
+                    }
                 }
                 slow5_close(slow5File);
                 slow5_path = std::string(output_dir);
@@ -106,59 +116,78 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
                     slow5_file_pointer_outputdir_single_fast5 = fopen(slow5_path_outputdir_single_fast5.c_str(), "w");
                     // An error occured
                     if (!slow5_file_pointer_outputdir_single_fast5) {
-                        ERROR("File '%s' could not be opened - %s.",
+                        ERROR("File '%s' could not be opened for writing. %s.",
                               slow5_path_outputdir_single_fast5.c_str(), strerror(errno));
                         continue;
                     }
                     slow5File_outputdir_single_fast5 = slow5_init_empty(slow5_file_pointer_outputdir_single_fast5, slow5_path_outputdir_single_fast5.c_str(), SLOW5_FORMAT_BINARY);
+                    if (slow5File_outputdir_single_fast5 == NULL){
+                        ERROR("%s","Could not initialise the slow5lib data structure.");
+                        exit(EXIT_FAILURE);
+                    }
                     ret = slow5_hdr_initialize(slow5File_outputdir_single_fast5->header, user_opts->flag_lossy);
-                    if(ret<0){
+                    if(ret < 0){
+                        ERROR("%s","Could not initialise the SLOW5 header.");
                         exit(EXIT_FAILURE);
                     }
                 }
                 ret = read_fast5(user_opts, &fast5_file, slow5File_outputdir_single_fast5, call_count++, &warning_map);
                 if(ret<0){
+                    ERROR("Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
                     exit(EXIT_FAILURE);
                 }
             }
         }
-        else{ // output dir not set hence, writing to stdout
+        else{ // output dir not set hence, writing to file/stdout
             if(call_count==0){
                 if(user_opts->arg_fname_out){
                     slow5_file_pointer = fopen(user_opts->arg_fname_out, "wb");
                     if (!slow5_file_pointer) {
-                        ERROR("Output file %s could not be opened - %s.", user_opts->arg_fname_out, strerror(errno));
+                        ERROR("Output file %s could not be opened for writing. %s.", user_opts->arg_fname_out, strerror(errno));
                         return;
                     }
                 }else{
                     slow5_file_pointer = fdopen(1,"w");  //obtain a pointer to stdout file stream
                     if (!slow5_file_pointer) {
-                        ERROR("Could not open stdout file stream - %s.", strerror(errno));
+                        ERROR("Could not open the stdout file stream. %s.", strerror(errno));
                         return;
                     }
                 }
                 slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), SLOW5_FORMAT_BINARY);
+                if (slow5File == NULL){
+                        ERROR("%s","Could not initialise the slow5lib data structure.");
+                        exit(EXIT_FAILURE);
+                }
                 ret = slow5_hdr_initialize(slow5File->header, user_opts->flag_lossy);
                 if(ret<0){
+                    ERROR("%s","Could not initialise the SLOW5 header.");
                     exit(EXIT_FAILURE);
                 }
             }
             ret = read_fast5(user_opts, &fast5_file, slow5File, call_count++, &warning_map);
             if(ret<0){
+                ERROR("Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
                 exit(EXIT_FAILURE);
             }
         }
         H5Fclose(fast5_file.hdf5_file);
     }
+
     if(slow5File_outputdir_single_fast5 && slow5_file_pointer_outputdir_single_fast5) {
         if(user_opts->fmt_out == SLOW5_FORMAT_BINARY){
-            slow5_eof_fwrite(slow5File_outputdir_single_fast5->fp);
+            if(slow5_eof_fwrite(slow5File_outputdir_single_fast5->fp) < 0){
+                ERROR("Could write the BLOW5 end of file marker in '%s'.", slow5_path.c_str());
+                exit(EXIT_FAILURE);
+            }
         }
         slow5_close(slow5File_outputdir_single_fast5);
     }
     if(slow5File && !output_dir) {
         if(user_opts->fmt_out == SLOW5_FORMAT_BINARY){
-            slow5_eof_fwrite(slow5File->fp);
+            if(slow5_eof_fwrite(slow5File->fp) < 0){
+                ERROR("Could write the BLOW5 end of file marker in '%s'.", slow5_path.c_str());
+                exit(EXIT_FAILURE);
+            }
         }
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
@@ -172,7 +201,7 @@ void f2s_iop(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_coun
         iop = num_fast5_files;
         user_opts->num_processes = iop;
     }
-    VERBOSE("%zu proceses will be used",user_opts->num_processes);
+    VERBOSE("%zu proceses will be used.",user_opts->num_processes);
 
     //create processes
 //    pid_t pids[iop];
@@ -208,12 +237,12 @@ void f2s_iop(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_coun
     }
 
     //create processes
-    STDERR("Spawning %d I/O processes to circumvent HDF hell", iop);
+    VERBOSE("Spawning %d I/O processes to circumvent HDF hell.", iop);
     for(t = 0; t < iop; t++){
         pids[t] = fork();
 
         if(pids[t]==-1){
-            ERROR("%s","Fork failed");
+            ERROR("%s","Forking processes failed.");
             perror("");
             exit(EXIT_FAILURE);
         }
@@ -234,7 +263,7 @@ void f2s_iop(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_coun
 //        }
         w = waitpid(pids[t], &status, 0);
         if (w == -1) {
-            ERROR("%s","waitpid failed");
+            ERROR("%s","Waitpid failed.");
             perror("");
             exit(EXIT_FAILURE);
         }
@@ -243,7 +272,7 @@ void f2s_iop(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_coun
 //                STDERR("child process %d exited, status=%d", pids[t], WEXITSTATUS(status));
 //            }
             if(WEXITSTATUS(status)!=0){
-                VERBOSE("child process %d exited with status=%d",pids[t], WEXITSTATUS(status));
+                VERBOSE("Child process %d exited with status=%d.",pids[t], WEXITSTATUS(status));
                 exit(EXIT_FAILURE);
             }
         }
@@ -279,16 +308,16 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     static struct option long_opts[] = {
-            {"to",          required_argument, NULL, 'b'},    //0
+            {"to",          required_argument, NULL, 'b'},  //0
             {"compress",    required_argument, NULL, 'c'},  //1
             {"sig-compress",required_argument,  NULL, 's'}, //2
-            {"help",        no_argument, NULL, 'h'},  //3
-            {"output",      required_argument, NULL, 'o'},   //4
-            { "iop",        required_argument, NULL, 'p'}, //5
-            { "lossless",   required_argument, NULL, 'l'}, //6
-            { "out-dir",    required_argument, NULL, 'd'}, //7
-            { "allow",      no_argument, NULL, 'a'}, //8
-            { "dump-all",      no_argument, NULL, 'e'}, //8
+            {"help",        no_argument, NULL, 'h'},        //3
+            {"output",      required_argument, NULL, 'o'},  //4
+            { "iop",        required_argument, NULL, 'p'},  //5
+            { "lossless",   required_argument, NULL, 'l'},  //6
+            { "out-dir",    required_argument, NULL, 'd'},  //7
+            { "allow",      no_argument, NULL, 'a'},        //8
+            { "dump-all",   no_argument, NULL, 'e'},        //9
             {NULL, 0, NULL, 0 }
     };
 
@@ -319,7 +348,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 user_opts.flag_allow_run_id_mismatch = 1;
                 break;
             case 'h':
-                DEBUG("displaying large help message%s","");
+                DEBUG("Displaying the large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
@@ -362,13 +391,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
     if(user_opts.arg_fname_out && user_opts.arg_dir_out){
-        ERROR("output file name and output directory both cannot be set%s","");
+        ERROR("Both output file name (-o) and output directory (-d) cannot be set simultaneously. %s","");
         return EXIT_FAILURE;
     }
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        ERROR("%s", "missing fast5 files or directories");
+        ERROR("%s", "Not enough arguments. Enter one or more fast5 files or directories as arguments.");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -382,14 +411,14 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
     VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
     if(fast5_files.size()==0){
-        ERROR("No fast5 files found. Exiting...%s","");
+        ERROR("No fast5 files found. Exiting.%s","");
         return EXIT_FAILURE;
     }
     if(fast5_files.size()==1){
         user_opts.num_processes = 1;
     }
     if(user_opts.num_processes>1 && !user_opts.arg_dir_out){
-        ERROR("output directory should be specified when using multiprocessing%s","");
+        ERROR("An output directory (-d) must be specified when requesting more than one I/O process. %s","");
         return EXIT_FAILURE;
     }
     if(user_opts.arg_dir_out){
@@ -399,7 +428,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         }else{
             std::vector< std::string > dir_list = list_directory(user_opts.arg_dir_out);
             if(dir_list.size()>2){
-                ERROR("Output director %s is not empty",user_opts.arg_dir_out);
+                ERROR("Output directory %s is not empty. Please remove it or specify another directory.",user_opts.arg_dir_out);
                 return EXIT_FAILURE;
             }
         }
