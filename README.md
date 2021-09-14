@@ -75,8 +75,14 @@ make
     make
     ```
 
-    Similarly, to locally build *zstd* and linst against that, invoke `scripts/install-zstd.sh` and then `./configure --enable-localzstd`:
-
+    Similarly, to locally build *zstd* and link against that:
+    
+    ```
+    scripts/scripts/install-zstd.sh        # download and compiles HDF5 in the current folder
+    ./configure --enable-localzstd
+    make
+    ```
+    
 - You can build a docker image as follows.
 	```
 	git clone https://github.com/hasindu2008/slow5tools && cd slow5tools
