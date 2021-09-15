@@ -91,7 +91,7 @@ TESTCASE=8
 TESTNAME="blow5 output"
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg2.slow5 $RAW_DIR/rg3.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -c zstd -s svb-zd -o $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+$SLOW5_EXEC merge $INPUT_FILES -c zlib -s svb-zd -o $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
 diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
