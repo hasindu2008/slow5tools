@@ -35,7 +35,7 @@
 
 #define HELP_MSG_PRESS \
     "    -c, --compress REC_MTD        record compression method [zlib] (only for blow5 format)\n" \
-    "    -s, --sig-compress SIG_MTD    signal compression method [none] (only for blow5 format)\n"
+    "    -s, --sig-compress SIG_MTD    signal compression method [svb-zd] (only for blow5 format)\n"
 
 #define HELP_MSG_THREADS \
     "    -t, --threads INT             number of threads [" TO_STR(DEFAULT_NUM_THREADS) "]\n"

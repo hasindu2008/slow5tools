@@ -18,6 +18,8 @@
          Retrieve records for specified read IDs from a SLOW5/BLOW5 file.
 * `stats`:  
          Prints summary statistics describing a SLOW5/BLOW5 file.
+* `quickcheck`:   
+		     Quickly checks if a SLOW5/BLOW5 file is intact.
 
 
 
@@ -38,16 +40,16 @@ If single-FAST5 files are provided as input, a single SLOW5/BLOW5 file will be c
 
 Note: it is not recommended to run f2s on a mixture of both multi-FAST5 and single-FAST5 files in a single command.
 
-*IMPORTANT: `pore_type` is a per read recently introduced yet an empty attribute. Hence, it is stored in the slow5 header*
-
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
-*  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-d, --out-dir STR`:  
    Specifies name/location of the output directory (required option unless converting only one FAST5 file). If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-o, --output FILE`:  
-When only one FAST5 file is being converted, `-o` specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and can automatically detect the output format from the file extension`.
+   When only one FAST5 file is being converted, `-o` specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and can automatically detect the output format from the file extension.
+*  `-c, --compress compression_type`:  
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based (also known as gzip or DEFLATE) compression or `zstd` for Z-standard-based compression [default value: zlib]. This option is only valid for BLOW5. `zstd` will only function if slow5tools has been built with zstd support which is turned off by default.
+*  `-s, --sig-compress compression_type`:  
+   Specifies the raw signal compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed raw signal or svb-zd to compress the raw signal using StreamVByte zig-zag delta [default value: svb-zd]. This option is introduced from slow5tools v0.3.0 onwards. Note that record compression (-c option above) is still applied on top of the compressed signal. Signal compression with svb-zd and record compression with zstd is similar to ONT's vbz.  zstd+svb-zd offers slightly smaller file size than and slightly better performance compared to the default zlib+svb-zd, however, will be less portable.
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
 *   `--lossless STR`:  
@@ -60,11 +62,9 @@ When only one FAST5 file is being converted, `-o` specifies a single FILE to whi
 ### merge
 
 ```
-slow5tools merge [OPTIONS] file1.blow5 file2.blow5
-slow5tools merge [OPTIONS] blow5_dir1
-slow5tools merge [OPTIONS] blow5_dir1 blow5_dir2 ...
-slow5tools merge [OPTIONS] file1.blow5 -o output.blow5
-slow5tools merge [OPTIONS] file1.blow5 -o output.slow5
+slow5tools merge [OPTIONS] file1.blow5 file2.blow5  -o output.blow5
+slow5tools merge [OPTIONS] blow5_dir1  -o output.blow5
+slow5tools merge [OPTIONS] blow5_dir1 blow5_dir2  -o output.blow5
 ```
 
 Merges multiple SLOW5/BLOW5 files to a single file.
@@ -73,23 +73,23 @@ If multiple samples (different run ids) are detected, the header and the *read_g
 
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
+*  `-o, --output FILE`:  
+      Outputs merged data to FILE [default value: stdout]. This can auto detect the output format from the file extension.   
 *  `-c, --compress compression_type`:  
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
-*  `-o, --output FILE`:  
-   Outputs merged data to FILE [default value: stdout]. This can auto detect the output format from the file extension.
-*   `--lossless STR`:  
-    Retain information in auxiliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce file size. *IMPORTANT: Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5*.
 * `-t, --threads INT`:  
-   Number of threads [default value: 4].
+   Number of threads [default value: 8].
 * `-K, --batchsize INT`:  
   The batch size. This is the number of records on the memory at once [default value: 4096].   An increased batch size improves multi-threaded performance at cost of higher RAM.
+*   `--lossless STR`:  
+    Retain information in auxiliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce file size. *IMPORTANT: Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5*.
 *  `-h, --help`:  
    Prints the help menu.
 
 
 ### index
 
-`slow5tools index [OPTIONS] file1.blow5`
+`slow5tools index file1.blow5`
 
 Creates an index for a SLOW5/BLOW5 file.
 Input file can be in SLOW5 ASCII or SLOW5 binary (BLOW5) and can be compressed or uncompressed.
@@ -106,16 +106,16 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: slow5].
-*  `--from format_type`:
-   Specifies the format of input files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [Default: autodetected based on the file extension otherwise].
-*  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-o FILE`, `--output FILE`:  
    Outputs data to FILE [default value: stdout].  This can auto detect the output format from the file extension.
-* `-K, --batchsize`:  
-         The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
+*  `-c, --compress compression_type`:  
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 * `-t, --threads INT`:  
-   Number of threads [default value: 4].
+   Number of threads [default value: 8].
+* `-K, --batchsize`:  
+   The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
+*  `--from format_type`:
+   Specifies the format of input files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [Default: autodetected based on the file extension otherwise].
 *  `-h`, `--help`:  
    Prints the help menu.
 
@@ -132,7 +132,7 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 * `-l, --list FILE`:  
          List of read ids provided as a single-column text file with one read id per line.
 * `-t, --threads INT`:  
-         Number of threads [default value: 4].
+         Number of threads [default value: 8].
 * `-K, --batchsize`:  
          The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 *  `--to format_type`:  
@@ -157,16 +157,16 @@ This tool is useful for parallelising across array jobs / distributed systems.
 
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
-*  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-d, --out-dir STR`:  
    Output directory where the split files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
-*  `-f, --files INT`:  
-   Split the data into n files (where n = INT) in which all files have equal numbers of reads. Cannot be used together with `-r` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-n`.
-*  `-r, --reads INT`:  
-   Split the data into files containing N reads (where N = INT). Cannot be used together with `-f` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-r`.
+*  `-c, --compress compression_type`:  
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-g, --groups`:  
    Split the data into separate files for each read group (usually run id / sample name). The number of output files will equal the number of read groups in the input file.
+*  `-r, --reads INT`:  
+   Split the data into files containing N reads (where N = INT). Cannot be used together with `-f` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-r`.
+*  `-f, --files INT`:  
+   Split the data into n files (where n = INT) in which all files have equal numbers of reads. Cannot be used together with `-r` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-n`.
 *   `--lossless STR`:  
     Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize. *IMPORTANT: Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5*.
 *  `-p, --iop INT`:  
@@ -188,10 +188,10 @@ Converts SLOW5/BLOW5 files to FAST5 format.
 The input can be a list of SLOW5/BLOW5 files, a directory containing multiple SLOW5/BLOW5 files, or a list of directories. If a directory is provided, the tool recursively searches within for SLOW5/BLOW5 files (.slow5/blow5 extension) and converts them to FAST5.
 Note: Before converting a SLOW5 file having multiple read groups, split the file into groups using `split`.
 
-*  `-o FILE`, `--output FILE`:  
-   Outputs data to FILE and FILE must have .fast5 extension.
 *   `-d, --out-dir STR`:  
    Output directory where the FAST5 files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
+*  `-o FILE`, `--output FILE`:  
+   Outputs data to FILE and FILE must have .fast5 extension.
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
 *  `-h, --help`:  
@@ -200,7 +200,8 @@ Note: Before converting a SLOW5 file having multiple read groups, split the file
 
 ### stats
 
-`slow5tools stats [OPTIONS] file1.slow5/file1.blow5`
+`slow5tools stats file1.slow5/file1.blow5`
+`slow5tools stats`
 
 Prints summary statistics describing a SLOW5/BLOW5 file such as:
 
@@ -208,6 +209,12 @@ Prints summary statistics describing a SLOW5/BLOW5 file such as:
 - compression method if applicable
 - number of read groups
 - total number of reads
+
+If no argument is given, details about slow5tools is printed.
+
+### quickcheck
+
+Performs a quick check if a SLOW5/BLOW5 file is intact: checks if the file begins with a valid header (SLOW5 or BLOW5) and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only). If the file is intact, the commands exists with 0. Otherwise exists with a non-zero error code.
 
 
 ## GLOBAL OPTIONS

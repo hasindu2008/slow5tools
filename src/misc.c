@@ -52,7 +52,7 @@ void init_opt(opt_t *opt){
     opt->fmt_out = SLOW5_FORMAT_UNKNOWN;
     opt->f_out = stdout;
     opt->record_press_out = SLOW5_COMPRESS_ZLIB;
-    opt->signal_press_out = SLOW5_COMPRESS_NONE;
+    opt->signal_press_out = SLOW5_COMPRESS_SVB_ZD;
     opt->num_threads = DEFAULT_NUM_THREADS;
     opt->num_processes = DEFAULT_NUM_PROCESSES;
     opt->read_id_batch_capacity = DEFAULT_BATCH_SIZE;
