@@ -14,10 +14,10 @@
 
 #define USAGE_MSG "Usage: %s  [SLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
+    "Performs a quick check if a SLOW5/BLOW5 file is intact. That is, quickcheck checks if the file begins with a valid header (SLOW5 or BLOW5) and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only)." \
+    "If the file is intact, the commands exists with 0. Otherwise exists with a non-zero error code.\n" \
     USAGE_MSG \
     "\n" \
-    "Performs a quick check if a SLOW5/BLOW5 file is intact: checks if the file begins with a valid header (SLOW5 or BLOW5) and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only).\n" \
-    "If the file is intact, the commands exists with 0. Otherwise exists with a non-zero error code.\n\n" \
     "OPTIONS:\n" \
     "    -h, --help         display this message and exit\n" \
 
@@ -43,7 +43,7 @@ int quickcheck_main(int argc, char **argv, struct program_meta *meta){
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
             case 'h':
-                VERBOSE("displaying large help message%s","");
+                DEBUG("displaying large help message%s","");
 
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 

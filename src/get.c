@@ -16,18 +16,17 @@
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [SLOW5_FILE] [READ_ID]...\n"
 #define HELP_LARGE_MSG \
-    USAGE_MSG \
     "Display the read entry for each specified read id from a slow5 file.\n" \
     "With no READ_ID, read from standard input newline separated read ids.\n" \
+    USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -o, --output [FILE]                output contents to FILE [default: stdout]\n" \
+    "    --to FORMAT                   specify output file format\n" \
+    "    -o, --output [FILE]           output contents to FILE [default: stdout]\n" \
     HELP_MSG_PRESS \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
-    "    -l --list [FILE]                   list of read ids provided as a single-column text file with one read id per line.\n" \
-    "    --to=[FORMAT]                      specify output file format\n" \
-    "    -h, --help                         display this message and exit.\n" \
+    "    -l --list [FILE]              list of read ids provided as a single-column text file with one read id per line.\n" \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 

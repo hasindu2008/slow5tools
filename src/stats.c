@@ -18,9 +18,9 @@
 
 #define USAGE_MSG "Usage: %s [SLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
+    "Prints statistics of a SLOW5/BLOW5 file to the stdout. If no argument is given details about slow5tools is printed. \n" \
     USAGE_MSG \
     "\n" \
-    "If no argument is given details about slow5tools is printed\n" \
     "OPTIONS:\n" \
     "    -h, --help         display this message and exit\n" \
 
@@ -74,7 +74,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
             case 'h':
-                VERBOSE("displaying large help message%s","");
+                DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);

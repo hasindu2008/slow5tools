@@ -47,9 +47,9 @@ Note: it is not recommended to run f2s on a mixture of both multi-FAST5 and sing
 *  `-o, --output FILE`:  
    When only one FAST5 file is being converted, `-o` specifies a single FILE to which output data is written [default value: stdout]. Incompatible with `-d` and can automatically detect the output format from the file extension.
 *  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based (also known as gzip or DEFLATE) compression or `zstd` for Z-standard-based compression [default value: zlib]. This option is only valid for BLOW5. `zstd` will only function if slow5tools has been built with zstd support which is turned off by default.
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary; `zlib` for zlib-based (also known as gzip or DEFLATE) compression; or `zstd` for Z-standard-based compression [default value: zlib]. This option is only valid for BLOW5. `zstd` will only function if slow5tools has been built with zstd support which is turned off by default.
 *  `-s, --sig-compress compression_type`:  
-   Specifies the raw signal compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed raw signal or svb-zd to compress the raw signal using StreamVByte zig-zag delta [default value: svb-zd]. This option is introduced from slow5tools v0.3.0 onwards. Note that record compression (-c option above) is still applied on top of the compressed signal. Signal compression with svb-zd and record compression with zstd is similar to ONT's vbz.  zstd+svb-zd offers slightly smaller file size than and slightly better performance compared to the default zlib+svb-zd, however, will be less portable.
+   Specifies the raw signal compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed raw signal or `svb-zd` to compress the raw signal using StreamVByte zig-zag delta [default value: svb-zd]. This option is introduced from slow5tools v0.3.0 onwards. Note that record compression (-c option above) is still applied on top of the compressed signal. Signal compression with svb-zd and record compression with zstd is similar to ONT's vbz.  zstd+svb-zd offers slightly smaller file size and slightly better performance compared to the default zlib+svb-zd, however, will be less portable.
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
 *   `--lossless STR`:  
@@ -76,7 +76,9 @@ If multiple samples (different run ids) are detected, the header and the *read_g
 *  `-o, --output FILE`:  
       Outputs merged data to FILE [default value: stdout]. This can auto detect the output format from the file extension.   
 *  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary; `zlib` for zlib-based (also known as gzip or DEFLATE) compression; or `zstd` for Z-standard-based compression [default value: zlib]. This option is only valid for BLOW5. `zstd` will only function if slow5tools has been built with zstd support which is turned off by default.
+*  `-s, --sig-compress compression_type`:  
+   Specifies the raw signal compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed raw signal or `svb-zd` to compress the raw signal using StreamVByte zig-zag delta [default value: svb-zd]. This option is introduced from slow5tools v0.3.0 onwards. Note that record compression (-c option above) is still applied on top of the compressed signal. Signal compression with svb-zd and record compression with zstd is similar to ONT's vbz.  zstd+svb-zd offers slightly smaller file size and slightly better performance compared to the default zlib+svb-zd, however, will be less portable.
 * `-t, --threads INT`:  
    Number of threads [default value: 8].
 * `-K, --batchsize INT`:  
@@ -109,7 +111,9 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 *  `-o FILE`, `--output FILE`:  
    Outputs data to FILE [default value: stdout].  This can auto detect the output format from the file extension.
 *  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary; `zlib` for zlib-based (also known as gzip or DEFLATE) compression; or `zstd` for Z-standard-based compression [default value: zlib]. This option is only valid for BLOW5. `zstd` will only function if slow5tools has been built with zstd support which is turned off by default.
+*  `-s, --sig-compress compression_type`:  
+   Specifies the raw signal compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed raw signal or `svb-zd` to compress the raw signal using StreamVByte zig-zag delta [default value: svb-zd]. This option is introduced from slow5tools v0.3.0 onwards. Note that record compression (-c option above) is still applied on top of the compressed signal. Signal compression with svb-zd and record compression with zstd is similar to ONT's vbz.  zstd+svb-zd offers slightly smaller file size and slightly better performance compared to the default zlib+svb-zd, however, will be less portable.
 * `-t, --threads INT`:  
    Number of threads [default value: 8].
 * `-K, --batchsize`:  
@@ -129,18 +133,21 @@ slow5tools get [OPTIONS] file1.blow5 readid1 readid2 ....
 slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 ```
 
-* `-l, --list FILE`:  
-         List of read ids provided as a single-column text file with one read id per line.
+
+*  `--to format_type`:  
+         Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
+*  `-o FILE`, `--output FILE`:  
+   Outputs data to FILE [default value: stdout].  This can auto detect the output format from the file extension.    
+*  `-c, --compress compression_type`:  
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary; `zlib` for zlib-based (also known as gzip or DEFLATE) compression; or `zstd` for Z-standard-based compression [default value: zlib]. This option is only valid for BLOW5. `zstd` will only function if slow5tools has been built with zstd support which is turned off by default.
+*  `-s, --sig-compress compression_type`:  
+   Specifies the raw signal compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed raw signal or `svb-zd` to compress the raw signal using StreamVByte zig-zag delta [default value: svb-zd]. This option is introduced from slow5tools v0.3.0 onwards. Note that record compression (-c option above) is still applied on top of the compressed signal. Signal compression with svb-zd and record compression with zstd is similar to ONT's vbz.  zstd+svb-zd offers slightly smaller file size and slightly better performance compared to the default zlib+svb-zd, however, will be less portable.
 * `-t, --threads INT`:  
          Number of threads [default value: 8].
 * `-K, --batchsize`:  
-         The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
-*  `--to format_type`:  
-         Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   
-*  `-c, --compress compression_type`:
-          Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
-*  `-o FILE`, `--output FILE`:  
-   Outputs data to FILE [default value: stdout].  This can auto detect the output format from the file extension.          
+         The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM. 
+* `-l, --list FILE`:  
+         List of read ids provided as a single-column text file with one read id per line.
 *  `-h`, `--help`:  
          Prints the help menu.
 
@@ -160,7 +167,9 @@ This tool is useful for parallelising across array jobs / distributed systems.
 *  `-d, --out-dir STR`:  
    Output directory where the split files will be written. If a name is provided, a directory will be created under the current working directory. Alternatively, a valid relative or absolute path can be provided. To prevent data overwriting, the program will terminate with error if the directory name already exists and is non-empty.
 *  `-c, --compress compression_type`:  
-   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
+   Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary; `zlib` for zlib-based (also known as gzip or DEFLATE) compression; or `zstd` for Z-standard-based compression [default value: zlib]. This option is only valid for BLOW5. `zstd` will only function if slow5tools has been built with zstd support which is turned off by default.
+*  `-s, --sig-compress compression_type`:  
+   Specifies the raw signal compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed raw signal or `svb-zd` to compress the raw signal using StreamVByte zig-zag delta [default value: svb-zd]. This option is introduced from slow5tools v0.3.0 onwards. Note that record compression (-c option above) is still applied on top of the compressed signal. Signal compression with svb-zd and record compression with zstd is similar to ONT's vbz.  zstd+svb-zd offers slightly smaller file size and slightly better performance compared to the default zlib+svb-zd, however, will be less portable.
 *  `-g, --groups`:  
    Split the data into separate files for each read group (usually run id / sample name). The number of output files will equal the number of read groups in the input file.
 *  `-r, --reads INT`:  
@@ -222,6 +231,6 @@ Performs a quick check if a SLOW5/BLOW5 file is intact: checks if the file begin
 *  `-V, --version`:  
     Print the slow5tools version number.
 *  `-v INT, --verbose INT`:
-    Set the verbosity level (0-7) [default value: 3]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-debug, 6-trace.
+    Set the verbosity level (0-6) [default value: 4]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-debug, 6-trace.
 *  `-h, --help`:  
     Prints the help menu.

@@ -64,7 +64,7 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
                 user_opts.arg_fname_out = optarg;
                 break;
             case 'h':
-                VERBOSE("displaying large help message%s","");
+                DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
