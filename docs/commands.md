@@ -35,7 +35,9 @@ Converts FAST5 files to SLOW5/BLOW5 format.
 The input can be a single FAST5 file, a list of FAST5 files, a directory containing multiple FAST5 files, or a list of directories. If a directory is provided, the tool recursively searches within for FAST5 files (.fast5 extension) and converts them to SLOW5/BLOW5.
 For each multi-FAST5 file in the input directories, a SLOW5/BLOW5 file with the same file name will be created inside the output directory (specified with `-d`).
 If single-FAST5 files are provided as input, a single SLOW5/BLOW5 file will be created for each process used during conversion (specified with `-p`).
+
 Note: it is not recommended to run f2s on a mixture of both multi-FAST5 and single-FAST5 files in a single command.
+
 *IMPORTANT: `pore_type` is a per read recently introduced yet an empty attribute. Hence, it is stored in the slow5 header*
 
 *  `--to format_type`:  
