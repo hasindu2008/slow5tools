@@ -77,8 +77,8 @@ If multiple samples (different run ids) are detected, the header and the *read_g
    Specifies the compression method used for BLOW5 output. `compression_type` can be `none` for uncompressed binary or `zlib` for zlib-based compression [default value: zlib]. This option is only valid for BLOW5.
 *  `-o, --output FILE`:  
    Outputs merged data to FILE [default value: stdout]. This can auto detect the output format from the file extension.
-*   `--lossless`:  
-    Retain information in auxiliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce file size.
+*   `--lossless STR`:  
+    Retain information in auxiliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce file size. *IMPORTANT: Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5*.
 * `-t, --threads INT`:  
    Number of threads [default value: 4].
 * `-K, --batchsize INT`:  
@@ -167,8 +167,8 @@ This tool is useful for parallelising across array jobs / distributed systems.
    Split the data into files containing N reads (where N = INT). Cannot be used together with `-f` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-r`.
 *  `-g, --groups`:  
    Split the data into separate files for each read group (usually run id / sample name). The number of output files will equal the number of read groups in the input file.
-*   `--lossless`:  
-    Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize.
+*   `--lossless STR`:  
+    Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize. *IMPORTANT: Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5*.
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
 *  `-h, --help`:  
