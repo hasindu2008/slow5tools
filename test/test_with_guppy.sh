@@ -22,7 +22,7 @@ ask() { echo -n "Directory $1 exists. Delete and create again? (y/n)? " ; read a
 
 FAST5_DIR=$1
 OUTPUT_DIR=$2/s2f_with_guppy_test
-SLOWTOOLS=$3
+SLOW5TOOLS=$3
 GUPPY_BASECALLER=$4
 
 F2S_OUTPUT_DIR=$OUTPUT_DIR/f2s
@@ -37,8 +37,12 @@ mkdir $OUTPUT_DIR || die "mkdir $OUTPUT_DIR failed"
 
 IOP=40
 
-$SLOWTOOLS f2s -c zstd -s svb-zd $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP || die "slow5tools f2s failed"
-$SLOWTOOLS s2f $F2S_OUTPUT_DIR -d $S2F_OUTPUT_DIR --iop $IOP || die "slow5tools s2f failed"
+$SLOW5TOOLS f2s -c zlib -s svb-zd $FAST5_DIR -d $F2S_OUTPUT_DIR --iop $IOP || die "slow5tools f2s failed"
+$SLOW5TOOLS merge -c zlib -s none $F2S_OUTPUT_DIR -o $OUTPUT_DIR/merged.blow5 -t $IOP || die "slow5tools merge failed"
+$SLOW5TOOLS view  -c zstd -s svb-zd $OUTPUT_DIR/merged.blow5 -o $OUTPUT_DIR/zstd_svb.blow5 -t $IOP || die "slow5tools view failed"
+$SLOW5TOOLS view  -c none -s none $OUTPUT_DIR/zstd_svb.blow5  -o $OUTPUT_DIR/binary.blow5 -t $IOP || die "slow5tools view failed"
+$SLOW5TOOLS split -c zstd -s none $OUTPUT_DIR/binary.blow5  -d $OUTPUT_DIR/split -r 4000 || die "slow5tools split failed"
+$SLOW5TOOLS s2f $OUTPUT_DIR/split -d $S2F_OUTPUT_DIR --iop $IOP || die "slow5tools s2f failed"
 
 $GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $FAST5_DIR -s $GUPPY_OUTPUT_ORIGINAL -r --device cuda:all || die "Guppy failed"
 $GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac.cfg -i $S2F_OUTPUT_DIR -s $GUPPY_OUTPUT_S2F -r --device cuda:all || die "Guppy failed"
@@ -90,4 +94,3 @@ diff $GUPPY_OUTPUT_ORIGINAL/sorted_sequencing_summary.txt $GUPPY_OUTPUT_S2F/sort
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 
 exit
-
