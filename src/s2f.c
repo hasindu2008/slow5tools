@@ -248,7 +248,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             exit(EXIT_FAILURE);
     }
     if(ret_atr == -1){
-        ERROR("%s","Could not add the attribute to the fast5 file");
+        ERROR("%s","Could not add the attributes to the fast5 file");
         exit(EXIT_FAILURE);
     }
 }
@@ -267,7 +267,7 @@ void initialize_end_reason(slow5_hdr_t* header, hid_t* end_reason_enum_id) {
     }
 }
 
-void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *slow5_filename) {
+void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const char *slow5_filename) {
     hid_t   file_id;
     hid_t group_read, group_raw, group_channel_id, group_tracking_id, group_context_tags;
     herr_t  status;
@@ -297,7 +297,11 @@ void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *sl
 
 
     /* Create a new file using default properties. */
-    file_id = H5Fcreate(FAST5_FILE, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    file_id = H5Fcreate(fast5_file_path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    if(file_id < 0){
+        ERROR("Failed to create the fast5 file '%s'.", fast5_file_path);
+        exit(EXIT_FAILURE);
+    }
     set_hdf5_attributes(file_id, ROOT, slow5File->header, slow5_record, &end_reason_enum_id);
 
     // create first read group
@@ -305,22 +309,36 @@ void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *sl
     char read_name[strlen(read_tag)+strlen(slow5_record->read_id)];
     strcpy(read_name,read_tag);
     group_read = H5Gcreate (file_id, strcat(read_name,slow5_record->read_id), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(group_read < 0){
+        ERROR("Could not create read group in fast5 file '%s'.", fast5_file_path);
+        exit(EXIT_FAILURE);
+    }
     hid_t group_read_first = group_read;
 
     // create context_tags group
     group_context_tags = H5Gcreate (group_read, "context_tags", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(group_context_tags < 0){
+        ERROR("Could not create context_tags group in fast5 file '%s'.", fast5_file_path);
+        exit(EXIT_FAILURE);
+    }
     set_hdf5_attributes(group_context_tags, CONTEXT_TAGS, slow5File->header, slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_context_tags);
     if(status<0){
-        WARNING("Closing context_tags group failed. Possible memory leak. status=%d",(int)status);
+        ERROR("Could not close the context_tags group in fast5 file '%s'.", fast5_file_path);
+        exit(EXIT_FAILURE);
     }
 
     // creat tracking_id group
     group_tracking_id = H5Gcreate (group_read, "tracking_id", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if(group_context_tags < 0){
+        ERROR("Could not create tracking_id group in fast5 file '%s'.", fast5_file_path);
+        exit(EXIT_FAILURE);
+    }
     set_hdf5_attributes(group_tracking_id, TRACKING_ID, slow5File->header, slow5_record, &end_reason_enum_id);
     status = H5Gclose (group_tracking_id);
     if(status<0){
-        WARNING("Closing tracking_id group failed. Possible memory leak. status=%d",(int)status);
+        ERROR("Could not close the tracking_id group in fast5 file '%s'.", fast5_file_path);
+        exit(EXIT_FAILURE);
     }
 
     size_t i = 0;
@@ -340,39 +358,63 @@ void write_fast5(slow5_file_t *slow5File, const char *FAST5_FILE, const char *sl
             char read_name[strlen(read_tag)+strlen(slow5_record->read_id)];
             strcpy(read_name,read_tag);
             group_read = H5Gcreate (file_id, strcat(read_name,slow5_record->read_id), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-            if(group_read<1){
-                WARNING("A read group with read_id %s already exists, hence skipping.. \n",slow5_record->read_id);
-                continue;
+            if(group_read < 0){
+                ERROR("Could not create read group in fast5 file '%s'.", fast5_file_path);
+                exit(EXIT_FAILURE);
             }
+//            if(group_read<1){
+//                WARNING("A read group with read_id %s already exists, hence skipping.. \n",slow5_record->read_id);
+//                continue;
+//            }
         }
 
         set_hdf5_attributes(group_read, READ, slow5File->header, slow5_record, &end_reason_enum_id);
         // creat Raw group
         group_raw = H5Gcreate (group_read, "Raw", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        if(group_raw < 0){
+            ERROR("Could not create Raw group in fast5 file '%s'.", fast5_file_path);
+            exit(EXIT_FAILURE);
+        }
         if(i>0){
             // creat context_tags group link
             status = H5Lcreate_hard(group_read_first, "context_tags", group_read, "context_tags", H5P_DEFAULT, H5P_DEFAULT);
+            if(status < 0){
+                ERROR("Could not create link to the context_tags group in fast5 file '%s'.", fast5_file_path);
+                exit(EXIT_FAILURE);
+            }
             // creat tracking_id group link
             status = H5Lcreate_hard(group_read_first, "tracking_id", group_read, "tracking_id", H5P_DEFAULT, H5P_DEFAULT);
+            if(status < 0){
+                ERROR("Could not create link to the tracking_id group in fast5 file '%s'.", fast5_file_path);
+                exit(EXIT_FAILURE);
+            }
         }
 
         // signal
         // Create the data space for the dataset
         hsize_t nsample = slow5_record->len_raw_signal;
-        hsize_t dims[]      = {nsample};
+        hsize_t dims[] = {nsample};
         hsize_t maxdims[] = {H5S_UNLIMITED};
         hid_t dataspace_id = H5Screate_simple(1, dims, maxdims);
+        if(dataspace_id < 0){
+            ERROR("Could not create single dataspace in fast5 file '%s'.", fast5_file_path);
+            exit(EXIT_FAILURE);
+        }
 
         //Create the dataset creation property list, add the zlib compression filter and set the chunk size.
         hsize_t chunk[] = {nsample};
         hid_t dcpl = H5Pcreate (H5P_DATASET_CREATE);
+        if(dcpl < 0){
+            ERROR("Could not create the dataset creation property list in fast5 file '%s'.", fast5_file_path);
+            exit(EXIT_FAILURE);
+        }
         status = H5Pset_chunk (dcpl, 1, chunk);
         status = H5Pset_deflate (dcpl, 1);
 
         // Create the dataset.
         hid_t dataset_id = H5Dcreate2(group_raw, "Signal", H5T_STD_I16LE, dataspace_id, H5P_DEFAULT, dcpl, H5P_DEFAULT);
         // Write the data to the dataset.
-        status = H5Dwrite (dataset_id, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, slow5_record->raw_signal);
+        status = H5Dwrite(dataset_id, H5T_NATIVE_INT16, H5S_ALL, H5S_ALL, H5P_DEFAULT, slow5_record->raw_signal);
         // Close and release resources.
         status = H5Pclose (dcpl);
         status = H5Dclose(dataset_id);
