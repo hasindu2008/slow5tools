@@ -44,6 +44,7 @@ void init_opt(opt_t *opt){
     opt->arg_batch = NULL;
     opt->arg_dir_out = NULL;
     opt->arg_lossless = NULL;
+    opt->arg_dump_all = NULL;
     opt->arg_num_processes = NULL;
 
     // Default options
@@ -102,6 +103,21 @@ int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *m
         } else if (strcmp(opt->arg_lossless, "false") == 0) {
             opt->flag_lossy = 1;
             WARNING("%s", "You have requested lossy conversion. Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5");
+        } else {
+            ERROR("Incorrect argument%s", "");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int parse_arg_dump_all(opt_t *opt, int argc, char **argv, struct program_meta *meta){
+    // Parse lossless argument
+    if (opt->arg_dump_all != NULL) {
+        if (strcmp(opt->arg_dump_all, "true") == 0) {
+            opt->flag_dump_all = 1;
+        } else if (strcmp(opt->arg_dump_all, "false") == 0) {
+            opt->flag_dump_all = 0;
         } else {
             ERROR("Incorrect argument%s", "");
             return -1;
