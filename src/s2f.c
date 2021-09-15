@@ -33,30 +33,31 @@
 extern int slow5tools_verbosity_level;
 static double init_realtime = 0;
 
-void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype);
-void add_attribute(hid_t file_id, const char* attr_name, int32_t attr_value, hid_t datatype);
-void add_attribute(hid_t file_id, const char* attr_name, uint64_t attr_value, hid_t datatype);
-void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype);
-void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype);
+int add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype);
+int add_attribute(hid_t file_id, const char* attr_name, int32_t attr_value, hid_t datatype);
+int add_attribute(hid_t file_id, const char* attr_name, uint64_t attr_value, hid_t datatype);
+int add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype);
+int add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype);
 
 void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *header, slow5_rec_t* slow5_record, hid_t* end_reason_enum_id) {
 //    todo- check return values
     int err;
+    int ret_atr = 0;
     char file_type[] = "multi-read";
     switch (group_flag) {
         char* attribute_value;
         case ROOT:
             // s2f creates multi-read fast5 files
-            add_attribute(group_id,"file_type", file_type, H5T_C_S1);
+            ret_atr = add_attribute(group_id,"file_type", file_type, H5T_C_S1);
 
             if((attribute_value=slow5_hdr_get("file_version",0,header))){
-                add_attribute(group_id,"file_version", attribute_value, H5T_C_S1);
+                ret_atr = add_attribute(group_id,"file_version", attribute_value, H5T_C_S1);
             }
             break;
         case READ:
             // add read attributes
             if((attribute_value=slow5_hdr_get("run_id",0,header))){
-                add_attribute(group_id,"run_id",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"run_id",attribute_value,H5T_C_S1);
             }
             break;
         case RAW:
@@ -64,189 +65,192 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             if(header->aux_meta){
                 uint64_t start_time = slow5_aux_get_uint64(slow5_record, "start_time", &err);
                 if(err == 0){
-                    add_attribute(group_id,"start_time",start_time,H5T_STD_U64LE);
+                    ret_atr = add_attribute(group_id,"start_time",start_time,H5T_STD_U64LE);
                 }
                 int32_t read_number = slow5_aux_get_int32(slow5_record, "read_number", &err);
                 if(err == 0){
-                    add_attribute(group_id,"read_number", read_number,H5T_STD_I32LE);
+                    ret_atr = add_attribute(group_id,"read_number", read_number,H5T_STD_I32LE);
                 }
                 uint8_t start_mux = slow5_aux_get_uint8(slow5_record, "start_mux", &err);
                 if(err == 0){
-                    add_attribute(group_id,"start_mux",start_mux,H5T_STD_U8LE);
+                    ret_atr = add_attribute(group_id,"start_mux",start_mux,H5T_STD_U8LE);
                 }
                 double median_before = slow5_aux_get_double(slow5_record, "median_before", &err);
                 if(err == 0){
-                    add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
+                    ret_atr = add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
                 }
                 if(check_aux_fields_in_header(header, "end_reason", 0) == 0){
                     uint8_t end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
                     if(err == 0){
-                        add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                        ret_atr = add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
                     }
                 }
             }
-            add_attribute(group_id,"duration",slow5_record->len_raw_signal,H5T_STD_U32LE);
-            add_attribute(group_id,"read_id",slow5_record->read_id,H5T_C_S1);
+            ret_atr = add_attribute(group_id,"duration",slow5_record->len_raw_signal,H5T_STD_U32LE);
+            ret_atr = add_attribute(group_id,"read_id",slow5_record->read_id,H5T_C_S1);
             break;
         case CHANNEL_ID:
             // add channel_id attributes
             if(header->aux_meta){
                 attribute_value = slow5_aux_get_string(slow5_record, "channel_number", NULL, &err);
                 if(err == 0){
-                    add_attribute(group_id,"channel_number",attribute_value,H5T_C_S1);
+                    ret_atr = add_attribute(group_id,"channel_number",attribute_value,H5T_C_S1);
                 }
             }
-            add_attribute(group_id,"digitisation",slow5_record->digitisation,H5T_IEEE_F64LE);
-            add_attribute(group_id,"offset",slow5_record->offset,H5T_IEEE_F64LE);
-            add_attribute(group_id,"range",slow5_record->range,H5T_IEEE_F64LE);
-            add_attribute(group_id,"sampling_rate",slow5_record->sampling_rate,H5T_IEEE_F64LE);
+            ret_atr = add_attribute(group_id,"digitisation",slow5_record->digitisation,H5T_IEEE_F64LE);
+            ret_atr = add_attribute(group_id,"offset",slow5_record->offset,H5T_IEEE_F64LE);
+            ret_atr = add_attribute(group_id,"range",slow5_record->range,H5T_IEEE_F64LE);
+            ret_atr = add_attribute(group_id,"sampling_rate",slow5_record->sampling_rate,H5T_IEEE_F64LE);
             break;
         case CONTEXT_TAGS:
             // add context_tags attributes
             if((attribute_value=slow5_hdr_get("sample_frequency",0,header))){
-                add_attribute(group_id,"sample_frequency",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"sample_frequency",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("barcoding_enabled",0,header))){
-                add_attribute(group_id,"barcoding_enabled",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"barcoding_enabled",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("experiment_duration_set",0,header))){
-                add_attribute(group_id,"experiment_duration_set",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"experiment_duration_set",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("experiment_type",0,header))){
-                add_attribute(group_id,"experiment_type",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"experiment_type",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("local_basecalling",0,header))){
-                add_attribute(group_id,"local_basecalling",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"local_basecalling",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("package",0,header))){
-                add_attribute(group_id,"package",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"package",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("package_version",0,header))){
-                add_attribute(group_id,"package_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"package_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("sequencing_kit",0,header))){
-                add_attribute(group_id,"sequencing_kit",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"sequencing_kit",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("filename",0,header))){
-                add_attribute(group_id,"filename",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"filename",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("experiment_kit",0,header))){
-                add_attribute(group_id,"experiment_kit",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"experiment_kit",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("user_filename_input",0,header))){
-                add_attribute(group_id,"user_filename_input",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"user_filename_input",attribute_value,H5T_C_S1);
             }
             break;
         case TRACKING_ID:
             // add tracking_id attributes
             if((attribute_value=slow5_hdr_get("asic_id",0,header))){
-                add_attribute(group_id,"asic_id",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"asic_id",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("asic_id_eeprom",0,header))){
-                add_attribute(group_id,"asic_id_eeprom",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"asic_id_eeprom",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("asic_temp",0,header))){
-                add_attribute(group_id,"asic_temp",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"asic_temp",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("auto_update",0,header))){
-                add_attribute(group_id,"auto_update",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"auto_update",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("auto_update_source",0,header))){
-                add_attribute(group_id,"auto_update_source",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"auto_update_source",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("bream_is_standard",0,header))){
-                add_attribute(group_id,"bream_is_standard",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"bream_is_standard",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("device_id",0,header))){
-                add_attribute(group_id,"device_id",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"device_id",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("exp_script_name",0,header))){
-                add_attribute(group_id,"exp_script_name",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"exp_script_name",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("exp_script_purpose",0,header))){
-                add_attribute(group_id,"exp_script_purpose",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"exp_script_purpose",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("exp_start_time",0,header))){
-                add_attribute(group_id,"exp_start_time",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"exp_start_time",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("flow_cell_id",0,header))){
-                add_attribute(group_id,"flow_cell_id",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"flow_cell_id",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("heatsink_temp",0,header))){
-                add_attribute(group_id,"heatsink_temp",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"heatsink_temp",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("hostname",0,header))){
-                add_attribute(group_id,"hostname",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"hostname",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("installation_type",0,header))){
-                add_attribute(group_id,"installation_type",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"installation_type",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("local_firmware_file",0,header))){
-                add_attribute(group_id,"local_firmware_file",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"local_firmware_file",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("operating_system",0,header))){
-                add_attribute(group_id,"operating_system",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"operating_system",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("protocol_run_id",0,header))){
-                add_attribute(group_id,"protocol_run_id",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"protocol_run_id",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("protocols_version",0,header))){
-                add_attribute(group_id,"protocols_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"protocols_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("run_id",0,header))){
-                add_attribute(group_id,"run_id",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"run_id",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("usb_config",0,header))){
-                add_attribute(group_id,"usb_config",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"usb_config",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("version",0,header))){
-                add_attribute(group_id,"version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("asic_version",0,header))){
-                add_attribute(group_id,"asic_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"asic_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("configuration_version",0,header))){
-                add_attribute(group_id,"configuration_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"configuration_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("device_type",0,header))){
-                add_attribute(group_id,"device_type",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"device_type",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("distribution_status",0,header))){
-                add_attribute(group_id,"distribution_status",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"distribution_status",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("distribution_version",0,header))){
-                add_attribute(group_id,"distribution_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"distribution_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("flow_cell_product_code",0,header))){
-                add_attribute(group_id,"flow_cell_product_code",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"flow_cell_product_code",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("guppy_version",0,header))){
-                add_attribute(group_id,"guppy_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"guppy_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("protocol_group_id",0,header))){
-                add_attribute(group_id,"protocol_group_id",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"protocol_group_id",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("sample_id",0,header))){
-                add_attribute(group_id,"sample_id",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"sample_id",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("bream_core_version",0,header))){
-                add_attribute(group_id,"bream_core_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"bream_core_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("bream_ont_version",0,header))){
-                add_attribute(group_id,"bream_ont_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"bream_ont_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("bream_prod_version",0,header))){
-                add_attribute(group_id,"bream_prod_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"bream_prod_version",attribute_value,H5T_C_S1);
             }
             if((attribute_value=slow5_hdr_get("bream_rnd_version",0,header))){
-                add_attribute(group_id,"bream_rnd_version",attribute_value,H5T_C_S1);
+                ret_atr = add_attribute(group_id,"bream_rnd_version",attribute_value,H5T_C_S1);
             }
             break;
         default:
             ERROR("%s","Incorrect group name");
             exit(EXIT_FAILURE);
     }
-
+    if(ret_atr == -1){
+        ERROR("%s","Could not add the attribute to the fast5 file");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void initialize_end_reason(slow5_hdr_t* header, hid_t* end_reason_enum_id) {
@@ -651,137 +655,107 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     return EXIT_SUCCESS;
 }
 
-void add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype) {
-    /* Create the data space for the attribute. */
-    herr_t  status;
-    hid_t   dataspace_id, attribute_id; /* identifiers */
-    dataspace_id = H5Screate(H5S_SCALAR);
-    /* Create a dataset attribute. */
-    hid_t atype = H5Tcopy(datatype);
-    size_t attr_length = strlen(attr_value);
-    if(strcmp(attr_value,".")==0 && attr_length==1){
-        attr_value = (char*)"";
-        attr_length--;
-    }
-    H5Tset_size(atype, attr_length+1);
-    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-    /* Write the attribute data. */
-    status = H5Awrite(attribute_id, atype, attr_value);
-    assert(status>=0);
 
-    H5Tclose(atype);
-    /* Close the attribute. */
-    status = H5Aclose(attribute_id);
-    if(status<0){
-        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
-    }
+#define ADD_HDF5_ATTR(file_id, attr_name, attr_value, datatype) ({\
+    herr_t  status;\
+    hid_t dataspace_id, attribute_id;\
+    dataspace_id = H5Screate(H5S_SCALAR);\
+    if(dataspace_id < 0){\
+        ERROR("Could not create dataspace for the attribute '%s'.", attr_name); \
+        return -1;                                                            \
+    }\
+    hid_t atype = H5Tcopy(datatype);                            \
+    if(atype < 0){                                              \
+        ERROR("Could not copy the datatype of the attribute '%s'.", attr_name);  \
+        return -1;                                                            \
+    }                                                             \
+    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT); \
+    if(attribute_id < 0){                                       \
+        ERROR("Could not create the attribute '%s'.", attr_name);\
+        return -1;\
+    }                                                            \
+    status = H5Awrite(attribute_id, atype, &attr_value);        \
+    if(status < 0){                                             \
+        ERROR("Could not write the attribute '%s'.", attr_name); \
+        return -1;\
+    }                                                            \
+    status = H5Tclose(atype);                                   \
+    if(status < 0){                                             \
+        ERROR("Could not close the datatype of the attribute '%s'.", attr_name);\
+        return -1;\
+    }\
+    status = H5Aclose(attribute_id);\
+    if(status<0){                                               \
+        ERROR("Could not close the attribute '%s'.", attr_name); \
+        return -1;\
+    }\
+    status = H5Sclose(dataspace_id);\
+    if(status<0){                                               \
+        ERROR("Could not close the dataspace of the attribute '%s'.", attr_name);\
+        return -1;\
+    }                                                           \
+    return 0;                                                     \
+})
 
-    /* Close the dataspace. */
-    status = H5Sclose(dataspace_id);
-    if(status<0){
-        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
-    }
+#define ADD_HDF5_ATTR_STR(file_id, attr_name, attr_value, datatype) ({\
+    herr_t  status;\
+    hid_t dataspace_id, attribute_id;\
+    dataspace_id = H5Screate(H5S_SCALAR);\
+    if(dataspace_id < 0){\
+        ERROR("Could not create dataspace for the attribute '%s'.", attr_name); \
+        return -1;                                                            \
+    }\
+    hid_t atype = H5Tcopy(datatype);                            \
+    if(atype < 0){                                              \
+        ERROR("Could not copy the datatype of the attribute '%s'.", attr_name);  \
+        return -1;                                                            \
+    }                                                             \
+    size_t attr_length = strlen(attr_value);                             \
+    if(strcmp(attr_value,".")==0 && attr_length==1){                     \
+        attr_value = (char*)"";                                          \
+        attr_length--;            \
+    }                                                                    \
+    H5Tset_size(atype, attr_length+1);\
+    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT); \
+    if(attribute_id < 0){                                       \
+        ERROR("Could not create the attribute '%s'.", attr_name);\
+        return -1;\
+    }                                                            \
+    status = H5Awrite(attribute_id, atype, attr_value);        \
+    if(status < 0){                                             \
+        ERROR("Could not write the attribute '%s'.", attr_name); \
+        return -1;\
+    }                                                            \
+    status = H5Tclose(atype);                                   \
+    if(status < 0){                                             \
+        ERROR("Could not close the datatype of the attribute '%s'.", attr_name);\
+        return -1;\
+    }\
+    status = H5Aclose(attribute_id);\
+    if(status<0){                                               \
+        ERROR("Could not close the attribute '%s'.", attr_name); \
+        return -1;\
+    }\
+    status = H5Sclose(dataspace_id);\
+    if(status<0){                                               \
+        ERROR("Could not close the dataspace of the attribute '%s'.", attr_name);\
+        return -1;\
+    }                                                           \
+    return 0;                                                     \
+})
+
+int add_attribute(hid_t file_id, const char* attr_name, char *attr_value, hid_t datatype) {
+    ADD_HDF5_ATTR_STR(file_id, attr_name, attr_value, datatype);
 }
-void add_attribute(hid_t file_id, const char* attr_name, int32_t attr_value, hid_t datatype) {
-    /* Create the data space for the attribute. */
-    herr_t  status;
-    hid_t   dataspace_id, attribute_id; /* identifiers */
-    dataspace_id = H5Screate(H5S_SCALAR);
-    /* Create a dataset attribute. */
-    hid_t atype = H5Tcopy(datatype);
-//    H5Tset_size(atype, strlen(attr_value));
-    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-    /* Write the attribute data. */
-    status = H5Awrite(attribute_id, atype, &attr_value);
-    assert(status>=0);
-    H5Tclose(atype);
-
-    /* Close the attribute. */
-    status = H5Aclose(attribute_id);
-    if(status<0){
-        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
-    }
-
-    /* Close the dataspace. */
-    status = H5Sclose(dataspace_id);
-    if(status<0){
-        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
-    }
+int add_attribute(hid_t file_id, const char* attr_name, int32_t attr_value, hid_t datatype) {
+    ADD_HDF5_ATTR(file_id, attr_name, attr_value, datatype);
 }
-void add_attribute(hid_t file_id, const char* attr_name, uint64_t attr_value, hid_t datatype) {
-    /* Create the data space for the attribute. */
-    herr_t  status;
-    hid_t   dataspace_id, attribute_id; /* identifiers */
-    dataspace_id = H5Screate(H5S_SCALAR);
-    /* Create a dataset attribute. */
-    hid_t atype = H5Tcopy(datatype);
-//    H5Tset_size(atype, strlen(attr_value));
-    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-    /* Write the attribute data. */
-    status = H5Awrite(attribute_id, atype, &attr_value);
-    assert(status>=0);
-    H5Tclose(atype);
-
-    /* Close the attribute. */
-    status = H5Aclose(attribute_id);
-    if(status<0){
-        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
-    }
-    /* Close the dataspace. */
-    status = H5Sclose(dataspace_id);
-    if(status<0){
-        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
-    }
+int add_attribute(hid_t file_id, const char* attr_name, uint64_t attr_value, hid_t datatype) {
+    ADD_HDF5_ATTR(file_id, attr_name, attr_value, datatype);
 }
-void add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype) {
-    /* Create the data space for the attribute. */
-    herr_t  status;
-    hid_t   dataspace_id, attribute_id; /* identifiers */
-    dataspace_id = H5Screate(H5S_SCALAR);
-    /* Create a dataset attribute. */
-    hid_t atype = H5Tcopy(datatype);
-//    H5Tset_size(atype, strlen(attr_value));
-    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-    /* Write the attribute data. */
-    status = H5Awrite(attribute_id, atype, &attr_value);
-    assert(status>=0);
-    H5Tclose(atype);
-
-    /* Close the attribute. */
-    status = H5Aclose(attribute_id);
-    if(status<0){
-        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
-    }
-    /* Close the dataspace. */
-    status = H5Sclose(dataspace_id);
-    if(status<0){
-        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
-    }
-
+int add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t datatype) {
+    ADD_HDF5_ATTR(file_id, attr_name, attr_value, datatype);
 }
-void add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype) {
-    /* Create the data space for the attribute. */
-    herr_t  status;
-    hid_t   dataspace_id, attribute_id; /* identifiers */
-    dataspace_id = H5Screate(H5S_SCALAR);
-    /* Create a dataset attribute. */
-    hid_t atype = H5Tcopy(datatype);
-//    H5Tset_size(atype, strlen(attr_value));
-    attribute_id = H5Acreate2(file_id, attr_name, atype, dataspace_id, H5P_DEFAULT, H5P_DEFAULT);
-    /* Write the attribute data. */
-    status = H5Awrite(attribute_id, atype, &attr_value);
-    assert(status>=0);
-    H5Tclose(atype);
-
-    /* Close the attribute. */
-    status = H5Aclose(attribute_id);
-    if(status<0){
-        WARNING("Closing an attribute failed. Possible memory leak. status=%d",(int)status);
-    }
-    /* Close the dataspace. */
-    status = H5Sclose(dataspace_id);
-    if(status<0){
-        WARNING("Closing a dataspace failed. Possible memory leak. status=%d",(int)status);
-    }
-
+int add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype) {
+    ADD_HDF5_ATTR(file_id, attr_name, attr_value, datatype);
 }
