@@ -148,26 +148,26 @@ int read_fast5(opt_t *user_opts,
         hsize_t number_of_groups = 0;
         herr_t h5_get_num_objs = H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
         if(h5_get_num_objs < 0){
-            ERROR("Could not get the number of objects from the fast5 file %s", tracker.fast5_path);
+            ERROR("Could not get the number of objects from the fast5 file %s.", tracker.fast5_path);
         }
         tracker.num_read_groups = &number_of_groups;
         //obtain the root group attributes
         iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
         if(iterator_ret<0){
-            ERROR("Could not obtain root group attributes from the fast5 file %s", tracker.fast5_path);
+            ERROR("Could not obtain root group attributes from the fast5 file %s.", tracker.fast5_path);
             return -1;
         }
         //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
         iterator_ret =H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
         if(iterator_ret < 0){
-            ERROR("Could not iterate over the read groups in the fast5 file %s", tracker.fast5_path);
+            ERROR("Could not iterate over the read groups in the fast5 file %s.", tracker.fast5_path);
             return -1;
         }
     }else{ // single-fast5
         //obtain the root group attributes
         iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
         if(iterator_ret < 0){
-            ERROR("Could not obtain root group attributes from the fast5 file %s", tracker.fast5_path);
+            ERROR("Could not obtain root group attributes from the fast5 file %s.", tracker.fast5_path);
             return -1;
         }
         hsize_t number_of_groups = 1;
@@ -175,12 +175,12 @@ int read_fast5(opt_t *user_opts,
         //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
         iterator_ret = H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
         if(iterator_ret < 0){
-            ERROR("Could not iterate over the read groups in the fast5 file %s", tracker.fast5_path);
+            ERROR("Could not iterate over the read groups in the fast5 file %s.", tracker.fast5_path);
             return -1;
         }
         //        todo: compare header values with the previous singlefast5
         if(*(tracker.flag_run_id) != 1){
-            ERROR("The run_id attribute is missing in fast5 file '%s' for read id '%s'. Likely to be a corrupted or malformed fast5 file.", tracker.fast5_path, tracker.slow5_record->read_id);
+            ERROR("The run_id attribute is missing in fast5 file '%s' for read id '%s'.", tracker.fast5_path, tracker.slow5_record->read_id);
             return -1;
         }
         if(write_header_flag == 0){
@@ -196,7 +196,7 @@ int read_fast5(opt_t *user_opts,
             }
             *(tracker.primary_fields_count) = 0;
         }else{
-            ERROR("A primary data field (read_id=%s) is missing in the %s. Likely to be a corrupted or malformed fast5 file.", tracker.slow5_record->read_id, tracker.fast5_path);
+            ERROR("A primary data field (read_id=%s) is missing in the %s.", tracker.slow5_record->read_id, tracker.fast5_path);
             return -1;
         }
         slow5_rec_free(tracker.slow5_record);
@@ -300,7 +300,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             break;
         default:
             h5t_class = "UNKNOWN";
-            WARNING("In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.  This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", operator_data->fast5_path, operator_data->group_name, name);
+            WARNING("Weird fast5: In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.", operator_data->fast5_path, operator_data->group_name, name);
     }
 
     std::vector<std::string> enum_labels_list;
@@ -331,14 +331,14 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
     if(H5Tclass==H5T_STRING){
         if (strcmp(value.attr_string,".")==0){
-            WARNING("Attribute '%s' in %s has '%s' as a value which is reserved in slow5 for representing empty fields. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
+            WARNING("Weird fast5: Attribute '%s' in %s is empty '%s'.", name, operator_data->fast5_path, value.attr_string);
         }
         size_t index = 0;
 
         while(value.attr_string[index]){
             int result = isspace(value.attr_string[index]);
             if (result && value.attr_string[index]!=' '){
-                WARNING("Attribute '%s' in %s has a value '%s' with only a single white space. This is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->fast5_path, value.attr_string);
+                WARNING("Weird fast5: Attribute '%s' in %s  is empty '%s'.", name, operator_data->fast5_path, value.attr_string);
             }
             index++;
         }
@@ -383,7 +383,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             operator_data->slow5_record->read_id_len = strlen(value.attr_string);
             operator_data->slow5_record->read_id = strdup(value.attr_string);
         }else{
-            ERROR("The read id which is supposed to conform to UUID V4 '%s'is malformed.", value.attr_string);
+            ERROR("Bad fast5: The read id which is supposed to conform to UUID V4 '%s'is malformed.", value.attr_string);
             return -1;
         }
     }
@@ -451,7 +451,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             }
             std::string key = "co_" + std::string(name); //convert
             char warn_message[300];
-            sprintf(warn_message,"Convert: Converting the attribute %s/%s from %s to string.",operator_data->group_name, name, h5t_class.c_str());
+            sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to string.",operator_data->group_name, name, h5t_class.c_str());
             search_and_warn(operator_data,key,warn_message);
         }
 
@@ -461,7 +461,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
         ret = slow5_hdr_add_attr(name, operator_data->slow5File->header);
         if(ret == -1){
-            ERROR("Could not add the header attribute '%s/%s'. Input parameter is NULL", operator_data->group_name, name);
+            ERROR("Could not add the header attribute '%s/%s'. Internal error occured.", operator_data->group_name, name);
             return -1;
         } else if(ret == -2){
             flag_attribute_exists = 1;
@@ -471,7 +471,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 flag_existing_attr_value_mismatch = 1;
             }
         } else if(ret == -3){
-            ERROR("Could not add the header attribute '%s/%s'. Internal error occured", operator_data->group_name, name);
+            ERROR("Could not add the header attribute '%s/%s'. Internal error occured.", operator_data->group_name, name);
             return -1;
         }
 
@@ -489,10 +489,10 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 if(*(operator_data->flag_allow_run_id_mismatch)){
                     std::string key = "rm_" + std::string(name); //runid mismatch
                     char warn_message[300];
-                    sprintf(warn_message,"Mismatch: Different run_ids found in a single fast5 file. First seen run_id will be set in slow5 header");
+                    sprintf(warn_message,"Ancient fast5: Different run_ids found in an individual multi-fast5 file. First seen run_id will be set in slow5 header");
                     search_and_warn(operator_data,key,warn_message);
                 }else{
-                    ERROR("Different run_ids found in a single fast5 file. Cannot create a single header slow5/blow5. Please consider --allow option.%s", "");
+                    ERROR("Ancient fast5: Different run_ids found in an individual multi-fast5 file. Cannot create a single header slow5/blow5. Consider --allow option.%s", "");
                     return -1;
                 }
             }
@@ -507,7 +507,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
         std::string key = "at_" + std::string(name); //Alert
         char warn_message[300];
-        sprintf(warn_message,"Alert: Attribute %s/%s in %s is something we haven't seen before. Please open a github issue with an example of the fast5 file so we can implement special handling of such attributes.", name, operator_data->group_name, operator_data->fast5_path);
+        sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected.", name, operator_data->group_name, operator_data->fast5_path);
         search_and_warn(operator_data,key,warn_message);
     }
 
@@ -680,7 +680,7 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
              * H5Odecr_refcount.
              */
             if (group_check(operator_data, infobuf.addr) ) {
-                printf ("%*s  Warning: Loop detected!\n", spaces, "");
+                WARNING("%*s  Weird fast5: Loop detected!\n", spaces, "");
             }
             else {
                 //@ group number of attributes
@@ -729,15 +729,15 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                     if (operator_data->group_level == ROOT) {
                         if (*(operator_data->nreads) == 0) {
                             if (*(operator_data->flag_context_tags) != 1) {
-                                ERROR("The first read does not have context_tags information%s", ".");
+                                ERROR("Bad fast5: The first read in the multi-fast5 does not have context_tags information%s", ".");
                                 return -1;
                             }
                             if (*(operator_data->flag_tracking_id) != 1) {
-                                ERROR("The first read does not have tracking_id information%s", ".");
+                                ERROR("Bad fast5: he first read in the multi-fast5 does not have tracking_id information%s", ".");
                                 return -1;
                             }
                             if(*(operator_data->flag_run_id) != 1){
-                                ERROR("run_id information is missing in the %s in read_id %s.", operator_data->fast5_path, operator_data->slow5_record->read_id);
+                                ERROR("Bad fast5: run_id is missing in the %s in read_id %s.", operator_data->fast5_path, operator_data->slow5_record->read_id);
                                 return -1;
                             }
                             if(*(operator_data->flag_write_header) == 0){
@@ -750,7 +750,7 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                         *(operator_data->nreads) = *(operator_data->nreads) + 1;
                         if(*(operator_data->primary_fields_count) == PRIMARY_FIELD_COUNT){
                             if(*(operator_data->flag_run_id) != 1){
-                                ERROR("run_id information is missing in the %s in read_id %s.", operator_data->fast5_path, operator_data->slow5_record->read_id);
+                                ERROR("Bad fast5: run_id is missing in the %s in read_id %s.", operator_data->fast5_path, operator_data->slow5_record->read_id);
                                 return -1;
                             }
                             int ret = print_record(operator_data);
@@ -760,7 +760,7 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                             *(operator_data->primary_fields_count) = 0;
                             *(operator_data->flag_run_id) = 0;
                         }else{
-                            ERROR("A primary attribute is missing in the %s. Check the fast5 files", operator_data->fast5_path);
+                            ERROR("Bad fast5: A primary attribute is missing in the %s.", operator_data->fast5_path);
                             return -1;
                         }
                         slow5_rec_free(operator_data->slow5_record);
@@ -779,10 +779,10 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
             *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 2;
             break;
         case H5O_TYPE_NAMED_DATATYPE:
-            WARNING("Datatype: %s is not seen in fast5 before. Please check %s", name, operator_data->fast5_path);
+            WARNING("Weird fast5: Datatype %s in %s is unexpected", name, operator_data->fast5_path);
             break;
         default:
-            WARNING("Unknown: %s is not seen in fast5 before. Please check %s", name, operator_data->fast5_path);
+            WARNING("Weird fast5: %s in %s is unexpected", name, operator_data->fast5_path);
     }
     return return_val;
 }

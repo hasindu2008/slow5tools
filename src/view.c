@@ -13,18 +13,19 @@
 #include "slow5_extra.h"
 #include <getopt.h>
 
-#define USAGE_MSG "Usage: %s [OPTION]... [FILE]...\n"
+#define USAGE_MSG "Usage: %s [OPTIONS] [FILE]\n"
 #define HELP_LARGE_MSG \
     "View a fast5 or slow5 FILE in another format.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
+    HELP_MSG_OUTPUT_FORMAT_VIEW\
     HELP_MSG_OUTPUT_FILE \
     HELP_MSG_PRESS \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
-    HELP_MSG_OUTPUT_FORMAT\
     "    --from FORMAT                 specify input file format [auto]\n" \
+    HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
@@ -199,7 +200,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         // TODO if output is the same format just duplicate file
         slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
         if (slow5_convert_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta) != 0) {
-            ERROR("Conversion failed.%s", "");
+            ERROR("File conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
         }
 

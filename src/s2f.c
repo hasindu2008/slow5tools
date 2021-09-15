@@ -20,15 +20,16 @@
 #define ESSENTIAL_AUX_ATTR_COUNT (5)
 #define ESSENTIAL_AUX_ATTRS ((char const*[]){ "start_time", "read_number", "start_mux" , "median_before", "channel_number"})
 
-#define USAGE_MSG "Usage: %s [OPTION]... -d [output DIR] [SLOW5_FILE/DIR]...\n"
+#define USAGE_MSG "Usage: %s [OPTIONS] -d [OUT_DIR] [SLOW5_FILE/DIR] ...\n"
 #define HELP_LARGE_MSG \
     "Convert SLOW5/BLOW5 files to FAST5 format.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n"       \
-    HELP_MSG_OUTPUT_FILE \
     HELP_MSG_OUTPUT_DIRECTORY \
+    HELP_MSG_OUTPUT_FILE \
     HELP_MSG_PROCESSES \
+    HELP_MSG_HELP \
 
 extern int slow5tools_verbosity_level;
 static double init_realtime = 0;

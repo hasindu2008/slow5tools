@@ -12,7 +12,7 @@
 #include "cmd.h"
 #include "misc.h"
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5|BLOW5_FILE]\n"
+#define USAGE_MSG "Usage: %s  [SLOW5|BLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "Create a slow5 or blow5 index file.\n" \

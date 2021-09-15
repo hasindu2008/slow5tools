@@ -15,20 +15,21 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
+#define USAGE_MSG "Usage: %s [OPTIONS] [SLOW5_FILE/DIR] ...\n"
 #define HELP_LARGE_MSG \
     "Split a single a SLOW5/BLOW5 file into multiple separate files.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
     HELP_MSG_OUTPUT_FORMAT \
-    HELP_MSG_PRESS \
     HELP_MSG_OUTPUT_DIRECTORY \
-    "    -f, --files [INT]                  split reads into n files evenly\n"              \
-    "    -r, --reads [INT]                  split into n reads, i.e., each file will have n reads\n"              \
-    "    -g, --groups                       split multi read group file into single read group files\n" \
-    HELP_MSG_LOSSLESS \
+    HELP_MSG_PRESS \
+    "    -g, --groups                  split multi read group file into single read group files\n" \
+    "    -r, --reads [INT]             split into n reads, i.e., each file will have n reads\n"    \
+    "    -f, --files [INT]             split reads into n files evenly \n"              \
     HELP_MSG_PROCESSES \
+    HELP_MSG_LOSSLESS \
+    HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
@@ -65,7 +66,7 @@ void split_child_worker(proc_arg_t args,
 
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
-            ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+            ERROR("Cannot open %s. Skipping.\n",slow5_files[i].c_str());
             readsCount->bad_5_file++;
             continue;
         }
@@ -90,7 +91,7 @@ void split_child_worker(proc_arg_t args,
         if(metaSplitMethod.splitMethod==READS_SPLIT) {
             slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
             if(!slow5File_i){
-                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                ERROR("Cannot open %s. Skipping.\n",slow5_files[i].c_str());
                 return;
             }
             size_t file_count = 0;
@@ -195,7 +196,7 @@ void split_child_worker(proc_arg_t args,
         }else if(metaSplitMethod.splitMethod==FILE_SPLIT){ //FILE_SPLIT
             slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
             if(!slow5File_i){
-                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                ERROR("Cannot open %s. Skipping...\n",slow5_files[i].c_str());
                 return;
             }
             int number_of_records = 0;
@@ -213,7 +214,7 @@ void split_child_worker(proc_arg_t args,
 
             slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
             if(!slow5File_i){
-                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                ERROR("Cannot open %s. Skipping.\n",slow5_files[i].c_str());
                 return;
             }
 
@@ -309,7 +310,7 @@ void split_child_worker(proc_arg_t args,
             for(uint32_t j=0; j<read_group_count_i; j++){
                 slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
                 if(!slow5File_i){
-                    ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                    ERROR("Cannot open %s. Skipping.\n",slow5_files[i].c_str());
                     return;
                 }
                 int last_slash = slow5_files[i].find_last_of('/');
@@ -614,7 +615,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         }else{
             std::vector< std::string > dir_list = list_directory(user_opts.arg_dir_out);
             if(dir_list.size()>2){
-                ERROR("Output director %s is not empty",user_opts.arg_dir_out);
+                ERROR("Output directory %s is not empty. Please remove it or specify another directory.",user_opts.arg_dir_out);
                 return EXIT_FAILURE;
             }
         }
@@ -624,11 +625,11 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     std::vector<std::string> slow5_files;
 
     if(metaSplitMethod.splitMethod==READS_SPLIT){
-        VERBOSE("an input slow5 file will be split such that each output file has %lu reads", metaSplitMethod.n);
+        VERBOSE("An input slow5 file will be split such that each output file has %lu reads", metaSplitMethod.n);
     }else if(metaSplitMethod.splitMethod==FILE_SPLIT){
-        VERBOSE("an input slow5 file will be split into %lu output files", metaSplitMethod.n);
+        VERBOSE("An input slow5 file will be split into %lu output files", metaSplitMethod.n);
     } else{
-        VERBOSE("an input multi read group slow5 files will be split into single read group slow5 files %s","");
+        VERBOSE("An input multi read group slow5 files will be split into single read group slow5 files %s","");
     }
 
     //measure file listing time

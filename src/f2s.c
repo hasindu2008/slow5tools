@@ -20,20 +20,20 @@
 #include "read_fast5.h"
 #include "misc.h"
 
-#define USAGE_MSG "Usage: %s [OPTION]... [FAST5_FILE/DIR]...\n"
+#define USAGE_MSG "Usage: %s [OPTIONS] [FAST5_FILE/DIR] ...\n"
 #define HELP_LARGE_MSG \
     "Convert FAST5 files to SLOW5/BLOW5 format.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
     HELP_MSG_OUTPUT_FORMAT \
-    HELP_MSG_OUTPUT_FILE                           \
+    HELP_MSG_OUTPUT_DIRECTORY \
+    HELP_MSG_OUTPUT_FILE \
     HELP_MSG_PRESS \
     HELP_MSG_PROCESSES \
     HELP_MSG_LOSSLESS \
-    HELP_MSG_OUTPUT_DIRECTORY \
     "    -a, --allow                   allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
-    "    -h, --help                    display this message and exit\n" \
+    HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
@@ -65,7 +65,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
         fast5_file.fast5_path = fast5_files[i].c_str();
 
         if (fast5_file.hdf5_file < 0){
-            WARNING("Fast5 file '%s' is unreadable and will be skipped.", fast5_files[i].c_str());
+            WARNING("Bad fast5: Fast5 file '%s' is unreadable and will be skipped.", fast5_files[i].c_str());
             H5Fclose(fast5_file.hdf5_file);
             readsCount->bad_5_file++;
             continue;
@@ -98,7 +98,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
                 }
                 ret = read_fast5(user_opts, &fast5_file, slow5File, 0, &warning_map);
                 if(ret < 0){
-                    ERROR("Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
+                    ERROR("Bad fast5: Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
                     exit(EXIT_FAILURE);
                 }
                 if(user_opts->fmt_out == SLOW5_FORMAT_BINARY){
@@ -424,7 +424,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         user_opts.num_processes = 1;
     }
     if(user_opts.num_processes>1 && !user_opts.arg_dir_out){
-        ERROR("An output directory (-d) must be specified when requesting more than one I/O process. %s","");
+        ERROR("An output directory (-d DIR) must be specified unless the number of  I/O processes is 1 (-p 1). %s","");
         return EXIT_FAILURE;
     }
     if(user_opts.arg_dir_out){

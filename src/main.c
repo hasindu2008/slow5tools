@@ -18,7 +18,7 @@
 
 // TODO put all in header file
 
-#define USAGE_MSG "Usage: %s [OPTION]... [COMMAND] [ARG]...\n"
+#define USAGE_MSG "Usage: %s [OPTIONS] [COMMAND] [ARG]\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "Tools for using slow5 files.\n" \
@@ -29,15 +29,15 @@
     "    -V, --version    Output version information and exit.\n" \
     "\n" \
     "COMMANDS:\n" \
-    "    f2s or fast5toslow5   convert fast5 file(s) to slow5\n" \
-    "    s2f or slow5tofast5   convert slow5 file(s) to fast5\n" \
-    "    merge                 merge slow5 files\n" \
-    "    split                 split slow5 files\n" \
-    "    index                 create a slow5 or blow5 index file.\n" \
-    "    get                   display the read entry for each specified read id.\n" \
-    "    view                  view the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats and compressions.\n" \
+    "    f2s or fast5toslow5   convert fast5 file(s) to SLOW5/BLOW5\n" \
+    "    s2f or slow5tofast5   convert SLOW5/BLOW5 file(s) to fast5\n" \
+    "    merge                 merge SLOW5/BLOW5 files\n" \
+    "    split                 split SLOW5/BLOW5 files\n" \
+    "    index                 create a SLOW5/BLOW5 index file\n" \
+    "    get                   display the read entry for each specified read id\n" \
+    "    view                  view the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats and compressions\n" \
     "    stats                 prints statistics of a SLOW5/BLOW5 file to the stdout\n" \
-    "    cat                   quickly concatenate SLOW5/BLOW5 files of same type\n" \
+    "    cat                   quickly concatenate SLOW5/BLOW5 files of same type [experimental]\n" \
     "    quickcheck            quickly checks if a SLOW5/BLOW5 file is intact\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \

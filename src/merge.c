@@ -19,18 +19,19 @@
 #include "misc.h"
 #include "thread.h"
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
+#define USAGE_MSG "Usage: %s [OPTIONS] [SLOW5_FILE/DIR] ...\n"
 #define HELP_LARGE_MSG \
     "Merge multiple SLOW5/BLOW5 files to a single file\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
     HELP_MSG_OUTPUT_FORMAT \
-    HELP_MSG_PRESS \
     HELP_MSG_OUTPUT_FILE \
-    HELP_MSG_LOSSLESS \
+    HELP_MSG_PRESS \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
+    HELP_MSG_LOSSLESS \
+    HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
@@ -159,7 +160,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     // Check for remaining files to parse
     if (optind >= argc) {
-        ERROR("missing slow5 files or directories%s", "");
+        ERROR("Not enough arguments. Enter one or more slow5/blow5 files or directories as arguments.%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -174,7 +175,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     VERBOSE("%ld files found - took %.3fs\n", files.size(), slow5_realtime() - realtime0);
 
     if(files.size()==0){
-        ERROR("No slow5/blow5 files found for conversion. Exiting...%s","");
+        ERROR("No slow5/blow5 files found for conversion. Exiting.%s","");
         return EXIT_FAILURE;
     }
 
@@ -218,11 +219,11 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
         slow5_file_t* slow5File_i = slow5_open(files[i].c_str(), "r");
         if(!slow5File_i){
-            ERROR("[Skip file]: cannot open %s. skipping...\n",files[i].c_str());
+            ERROR("[Skip file]: cannot open %s. skipping.\n",files[i].c_str());
             continue;
         }
         if(user_opts.flag_lossy==0 && slow5File_i->header->aux_meta == NULL){
-            ERROR("[Skip file]: %s has no auxiliary fields. Specify -l false to merge files with no auxiliary fields.", files[i].c_str());
+            ERROR("%s has no auxiliary fields. Specify -l false to merge files with no auxiliary fields.", files[i].c_str());
             slow5_close(slow5File_i);
             return EXIT_FAILURE;
         }
@@ -256,7 +257,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                         uint8_t n_output;
                         const char **enum_labels_output = (const char** )slow5_get_aux_enum_labels(slow5File->header, aux_ptr->attrs[r], &n_output);
                         if(!enum_labels_output){
-                            ERROR("Internal error:Could not fetch the record attribute '%s' from the output header", aux_ptr->attrs[r]);
+                            ERROR("Internal error: Could not fetch the record attribute '%s' from the output header", aux_ptr->attrs[r]);
                             return EXIT_FAILURE;
                         }
                         if(n_input != n_output){
@@ -283,7 +284,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         for(int64_t j=0; j<read_group_count_i; j++){
             char* run_id_j = slow5_hdr_get("run_id", j, slow5File_i->header); // run_id of the jth read_group of the ith slow5file
             if(!run_id_j){
-                ERROR("No run_id information found in %s.", files[i].c_str());
+                ERROR("No run_id found in %s.", files[i].c_str());
                 return EXIT_FAILURE;
             }
             int64_t read_group_count = slow5File->header->num_read_groups; //since this might change during iterating; cannot know beforehand
@@ -334,7 +335,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
 
    if(slow5_files.size()==0){
-        ERROR("No slow5/blow5 files found for conversion. Exiting...%s","");
+        ERROR("No slow5/blow5 files found for conversion. Exiting.%s","");
         return EXIT_FAILURE;
     }
     VERBOSE("Allocating new read group numbers - took %.3fs\n",slow5_realtime() - realtime0);

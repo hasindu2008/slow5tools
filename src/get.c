@@ -14,7 +14,7 @@
 
 #define READ_ID_INIT_CAPACITY (128)
 
-#define USAGE_MSG "Usage: %s [OPTION]... SLOW5|BLOW5_FILE [READ_ID]...\n"
+#define USAGE_MSG "Usage: %s [OPTIONS] [SLOW5_FILE] [READ_ID]...\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "Display the read entry for each specified read id from a slow5 file.\n" \
@@ -28,6 +28,7 @@
     "    -l --list [FILE]                   list of read ids provided as a single-column text file with one read id per line.\n" \
     "    --to=[FORMAT]                      specify output file format\n" \
     "    -h, --help                         display this message and exit.\n" \
+    HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;

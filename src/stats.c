@@ -16,7 +16,7 @@
 #include <slow5/slow5_press.h>
 
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE]...\n"
+#define USAGE_MSG "Usage: %s [SLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "\n" \
