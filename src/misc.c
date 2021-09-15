@@ -101,6 +101,7 @@ int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *m
             opt->flag_lossy = 0;
         } else if (strcmp(opt->arg_lossless, "false") == 0) {
             opt->flag_lossy = 1;
+            WARNING("%s", "You have requested lossy conversion. Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5");
         } else {
             ERROR("Incorrect argument%s", "");
             return -1;

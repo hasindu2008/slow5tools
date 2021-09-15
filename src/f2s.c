@@ -378,9 +378,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-    if(user_opts.flag_lossy){
-        WARNING("%s", "You have requested lossy conversion. Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5");
-    }
     if(parse_format_args(&user_opts,argc,argv,meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
