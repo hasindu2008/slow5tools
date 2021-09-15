@@ -35,7 +35,10 @@ Converts FAST5 files to SLOW5/BLOW5 format.
 The input can be a single FAST5 file, a list of FAST5 files, a directory containing multiple FAST5 files, or a list of directories. If a directory is provided, the tool recursively searches within for FAST5 files (.fast5 extension) and converts them to SLOW5/BLOW5.
 For each multi-FAST5 file in the input directories, a SLOW5/BLOW5 file with the same file name will be created inside the output directory (specified with `-d`).
 If single-FAST5 files are provided as input, a single SLOW5/BLOW5 file will be created for each process used during conversion (specified with `-p`).
+
 Note: it is not recommended to run f2s on a mixture of both multi-FAST5 and single-FAST5 files in a single command.
+
+*IMPORTANT: `pore_type` is a per read recently introduced yet an empty attribute. Hence, it is stored in the slow5 header*
 
 *  `--to format_type`:  
    Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].
@@ -48,7 +51,7 @@ When only one FAST5 file is being converted, `-o` specifies a single FILE to whi
 *  `-p, --iop INT`:  
     Specifies the number of I/O processes to use during conversion [default value: 8]. Increasing the number of I/O processes makes f2s significantly faster, especially on HPC with RAID systems (multiple disks) where a large value number of processes can be used (e.g., `-p 64`).
 *   `--lossless STR`:  
-    Retain information in auxiliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize. *IMPORTANT: `pore_type` is a recently introduced yet an empty attribute. Hence, it is not stored even if `--lossless true` is specified*.
+    Retain information in auxiliary fields during FAST5 to SLOW5 conversion. STR can be either `true` or `false`. [default value: true]. This information is generally not required for downstream analysis and can be optionally discarded to reduce filesize. *IMPORTANT: Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5*.
 * `-a, --allow`:  
    By default f2s will not accept an individual multi-fast5 file or an individual single-fast5 directory containing multiple unique run IDs. When `-a` is specified f2s will allow multiple unique run IDs in an individual multi-fast5 file or single-fast5 directory. In this case, the header of all SLOW5/BLOW5 output files will be determined based on the first occurrence of run ID seen by f2s. This can be used to convert FAST5 files from different samples in a single command if the user does not further require the original run IDs.
 *  `-h, --help`:  
