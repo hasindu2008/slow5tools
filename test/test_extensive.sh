@@ -26,7 +26,7 @@ rm *.log
 
 guppy_basecaller --version || die "guppy_basecaller not in path"
 mkdir $TMP_DIR || die "Creating $TMP_DIR failed"
-test/test_s2f_with_guppy.sh $DATA_NA12878/fast5 $TMP_DIR ./slow5tools guppy_basecaller &> test_s2f_with_guppy.log || die "test_s2f_with_guppy failed"
+test/test_with_guppy.sh $DATA_NA12878/fast5 $TMP_DIR ./slow5tools guppy_basecaller &> test_s2f_with_guppy.log || die "test_s2f_with_guppy failed"
 rm -r $TMP_DIR
 echo "Guppy test passed yey!"
 
