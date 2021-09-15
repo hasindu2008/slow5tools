@@ -21,7 +21,7 @@ ask() { echo -n "Directory $1 exists. Delete and create again? (y/n)? " ; read a
 
 
 FAST5_DIR=$1
-OUTPUT_DIR=$2/s2f_with_guppy_test
+OUTPUT_DIR=$2/test_with_guppy_test
 SLOW5TOOLS=$3
 GUPPY_BASECALLER=$4
 
@@ -59,7 +59,7 @@ if test -d $GUPPY_OUTPUT_S2F/pass; then
 
     echo "diff sorted pass files"
     diff $OUTPUT_DIR/guppy_output_s2f_pass_sorted.fastq $OUTPUT_DIR/guppy_output_original_pass_sorted.fastq >/dev/null || die "ERROR: diff failed for guppy_output_s2f_pass_sorted.fastq guppy_output_original_pass_sorted.fastq files"
-    echo -e "${GREEN}diff passed${NC}"
+    echo -e "${GREEN}diff of 'pass' fastq passed${NC}"
 fi
 
 if test -d $GUPPY_OUTPUT_S2F/fail; then
@@ -72,7 +72,7 @@ if test -d $GUPPY_OUTPUT_S2F/fail; then
 
     echo "diff sorted fail files"
     diff $OUTPUT_DIR/guppy_output_s2f_fail_sorted.fastq $OUTPUT_DIR/guppy_output_original_fail_sorted.fastq >/dev/null || die "ERROR: diff failed for guppy_output_s2f_fail_sorted.fastq and guppy_output_original_fail_sorted.fastq files"
-    echo -e "${GREEN}diff passed${NC}"
+    echo -e "${GREEN}diff of 'fail' fastq passed${NC}"
 fi
 
 if [ $PASS_FAIL_STRUCTURE -eq 0 ]; then
@@ -84,11 +84,11 @@ if [ $PASS_FAIL_STRUCTURE -eq 0 ]; then
 
     echo "diff sorted files"
     diff $OUTPUT_DIR/guppy_output_s2f_sorted.fastq $OUTPUT_DIR/guppy_output_original_sorted.fastq >/dev/null || die "ERROR: diff failed for guppy_output_s2f_sorted.fastq guppy_output_original_sorted.fastq files"
-    echo -e "${GREEN}diff passed${NC}"
+    echo -e "${GREEN}diff of fastq passed${NC}"
 fi
 
-sort $GUPPY_OUTPUT_ORIGINAL/sequencing_summary.txt > $GUPPY_OUTPUT_ORIGINAL/sorted_sequencing_summary.txt
-sort $GUPPY_OUTPUT_S2F/sequencing_summary.txt > $GUPPY_OUTPUT_S2F/sorted_sequencing_summary.txt
+cut -f2,3,5- $GUPPY_OUTPUT_ORIGINAL/sequencing_summary.txt | sort -k1 > $GUPPY_OUTPUT_ORIGINAL/sorted_sequencing_summary.txt
+cut -f2,3,5- $GUPPY_OUTPUT_S2F/sequencing_summary.txt | sort -k1 > $GUPPY_OUTPUT_S2F/sorted_sequencing_summary.txt
 diff $GUPPY_OUTPUT_ORIGINAL/sorted_sequencing_summary.txt $GUPPY_OUTPUT_S2F/sorted_sequencing_summary.txt > /dev/null || die "diff sorted sequencing summary files failed"
 
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
