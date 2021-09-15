@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # steps
-# view slow5
-# view blow5
-# diff md5sum original and created blow5
+# f2s fast5 to blow5
+# view blow5 to slow5
+# view slow5 to blow5
+# cmp original and created blow5
 
 RED='\033[0;31m' ; GREEN='\033[0;32m' ; NC='\033[0m' # No Color
 die() { echo -e "${RED}$1${NC}" >&2 ; echo ; exit 1 ; } # terminate script
@@ -47,9 +48,4 @@ cmp "$OUTPUT_DIR/view.blow5" "$OUTPUT_DIR/f2s.blow5" || die "Files are different
 info "Files are the same. Success!"
 
 rm -r "$OUTPUT_DIR" || die "Could not delete $OUTPUT_DIR"
-info "done"
 exit 0
-# If you want to log to the same file: command1 >> log_file 2>&1
-# If you want different files: command1 >> log_file 2>> err_file
-# use ANSI syntax format to view stdout/stderr on SublimeText
-# use bash -n [script] and shellcheck [script] to check syntax
