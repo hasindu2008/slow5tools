@@ -239,7 +239,7 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
 TESTCASE_NO=26
-echo "------------------- f2s testcase $TESTCASE_NO >>> current directory:fast5 file directory-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> current directory:fast5 file directory output: stdout-------------------"
 cd $FAST5_DIR/single-fast5
 CD_BACK=../../../../..
 $CD_BACK/slow5tools f2s sss1.fast5 --iop 1 --to slow5 > $CD_BACK/$OUTPUT_DIR/stdout.slow5 || die "testcase $TESTCASE_NO failed"
@@ -390,6 +390,24 @@ echo "------------------- f2s testcase $TESTCASE_NO >>> primary field range miss
 $SLOW5_EXEC f2s $FAST5_DIR/err_fast5/missing_primary_field.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+echo
+TESTCASE_NO=50
+echo "------------------- f2s testcase $TESTCASE_NO >>> current directory:fast5 file directory output: file-------------------"
+cd $FAST5_DIR/single-fast5
+CD_BACK=../../../../..
+$CD_BACK/slow5tools f2s sss1.fast5 --iop 1 --to slow5 -o $OUTPUT_DIR/$TESTCASE_NO.slow5 || die "testcase $TESTCASE_NO failed"
+cd -
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+echo
+TESTCASE_NO=51
+echo "------------------- f2s testcase $TESTCASE_NO >>> current directory:fast5 file directory output: directory-------------------"
+cd $FAST5_DIR/single-fast5
+CD_BACK=../../../../..
+$CD_BACK/slow5tools f2s sss1.fast5 --iop 1 --to slow5 -d $OUTPUT_DIR/$TESTCASE_NO || die "testcase $TESTCASE_NO failed"
+cd -
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 

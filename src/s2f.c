@@ -418,10 +418,13 @@ void s2f_child_worker(proc_arg_t args,
         }
         std::string fast5_path;
         if(output_dir){
-            fast5_path = std::string(output_dir);
-            std::string fast5file = slow5_files[i].substr(slow5_files[i].find_last_of('/'),
-                                                          slow5_files[i].length() -
-                                                          slow5_files[i].find_last_of('/') - 6) + ".fast5";
+            std::string extension = ".fast5";
+            int last_slash = slow5_files[i].find_last_of('/');
+            if(last_slash == -1){
+                last_slash = 0;
+            }
+            std::string fast5file = slow5_files[i].substr(last_slash,slow5_files[i].length() - last_slash - extension.length()) +  extension;
+            fast5_path = std::string(output_dir) + "/";
             fast5_path += fast5file;
         }
         if(arg_fname_out){
