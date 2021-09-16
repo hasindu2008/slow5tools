@@ -50,13 +50,13 @@ On OS X : brew install hdf5 zlib
 ### Building from GitHub
 
 
-Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake`. To build from GitHub:
+Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake` (`brew install autoconf automake` on macOS). To build from GitHub:
 
 ```
 sudo apt-get install libhdf5-dev zlib1g-dev autoconf automake  #install HDF5 and zlib development libraries and autotools
 git clone --recursive https://github.com/hasindu2008/slow5tools
 cd slow5tools
-autoreconf
+autoreconf	# autoreconf --install for macos
 ./configure
 make
 ```
