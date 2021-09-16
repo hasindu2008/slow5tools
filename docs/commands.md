@@ -155,8 +155,8 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 ### split
 
 ```
-slow5tools split [OPTIONS] file1.blow5 -o out_dir
-slow5tools split [OPTIONS] blow5_dir1 -o out_dir
+slow5tools split [OPTIONS] file1.blow5 -d out_dir
+slow5tools split [OPTIONS] blow5_dir1 -d out_dir
 ```
 
 Splits a single a SLOW5/BLOW5 file into multiple separate files.
