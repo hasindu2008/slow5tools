@@ -489,7 +489,11 @@ void s2f_iop(int iop,
              char* arg_fname_out,
              program_meta *meta,
              reads_count *readsCount) {
-    int64_t num_slow5_files = slow5_files.size();
+
+    int32_t num_slow5_files = slow5_files.size();
+    if (iop > num_slow5_files) {
+        iop = num_slow5_files;
+    }
     VERBOSE("%d proceses will be used",iop);
     //create processes
     pid_t* pids = (pid_t*) malloc(iop*sizeof(pid_t));

@@ -347,7 +347,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         flag_new_group_or_new_attribute_read_group = 0;
         std::string key = "sh_" + std::string(name); //stored in header
         char warn_message[300];
-        sprintf(warn_message,"The attribute 'pore_type' is empty and will be stored in the SLOW5 header.");
+        sprintf(warn_message,"The attribute 'pore_type' is empty and will be stored in the SLOW5 header");
 //        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
         search_and_warn(operator_data,key,warn_message);
     }
@@ -451,7 +451,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             }
             std::string key = "co_" + std::string(name); //convert
             char warn_message[300];
-            sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to string.",operator_data->group_name, name, h5t_class.c_str());
+            sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to string",operator_data->group_name, name, h5t_class.c_str());
             search_and_warn(operator_data,key,warn_message);
         }
 
@@ -507,7 +507,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
         std::string key = "at_" + std::string(name); //Alert
         char warn_message[300];
-        sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected.", name, operator_data->group_name, operator_data->fast5_path);
+        sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected", name, operator_data->group_name, operator_data->fast5_path);
         search_and_warn(operator_data,key,warn_message);
     }
 
