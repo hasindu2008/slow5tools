@@ -1,0 +1,8 @@
+file version	0.1.0
+file format	SLOW5 ASCII
+record compression method	none
+sigal compression method	none
+number of read groups	1
+number of auxiliary fields	5
+auxiliary fields	channel_number,median_before,read_number,start_mux,start_time
+number of records	1

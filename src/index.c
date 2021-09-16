@@ -10,9 +10,9 @@
 #include <slow5/slow5.h>
 #include "error.h"
 #include "cmd.h"
+#include "misc.h"
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5|BLOW5_FILE]\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
+#define USAGE_MSG "Usage: %s  [SLOW5|BLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
     USAGE_MSG \
     "Create a slow5 or blow5 index file.\n" \
@@ -21,26 +21,12 @@
     "    -h, --help\n" \
     "        Display this message and exit.\n" \
 
+extern int slow5tools_verbosity_level;
+
 int index_main(int argc, char **argv, struct program_meta *meta) {
 
     // Debug: print arguments
-    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("printing the arguments given%s","");
-        }
-
-        fprintf(stderr, DEBUG_PREFIX "argv=[",
-                __FILE__, __func__, __LINE__);
-        for (int i = 0; i < argc; ++ i) {
-            fprintf(stderr, "\"%s\"", argv[i]);
-            if (i == argc - 1) {
-                fprintf(stderr, "]");
-            } else {
-                fprintf(stderr, ", ");
-            }
-        }
-        fprintf(stderr, NO_COLOUR);
-    }
+    print_args(argc,argv);
 
     // No arguments given
     if (argc <= 1) {
@@ -58,16 +44,12 @@ int index_main(int argc, char **argv, struct program_meta *meta) {
     // Parse options
     while ((opt = getopt_long(argc, argv, "h", long_opts, NULL)) != -1) {
 
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+        DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
-        }
 
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_DEBUG) {
-                    DEBUG("displaying large help message%s","");
-                }
+                DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);

@@ -8,7 +8,6 @@
 #include <getopt.h>
 #include <sys/wait.h>
 #include <string>
-#include <vector>
 #include "error.h"
 #include "cmd.h"
 #include "slow5_extra.h"
@@ -17,37 +16,21 @@
 #include <slow5/slow5_press.h>
 
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
+#define USAGE_MSG "Usage: %s [SLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
+    "Prints statistics of a SLOW5/BLOW5 file to the stdout. If no argument is given details about slow5tools is printed. \n" \
     USAGE_MSG \
     "\n" \
-    "If no argument is given details about slow5tools is printed\n" \
     "OPTIONS:\n" \
     "    -h, --help         display this message and exit\n" \
 
 
+extern int slow5tools_verbosity_level;
 
 int stats_main(int argc, char **argv, struct program_meta *meta){
 
     // Debug: print arguments
-    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("printing the arguments given%s","");
-        }
-
-        fprintf(stderr, DEBUG_PREFIX "argv=[",
-                __FILE__, __func__, __LINE__);
-        for (int i = 0; i < argc; ++ i) {
-            fprintf(stderr, "\"%s\"", argv[i]);
-            if (i == argc - 1) {
-                fprintf(stderr, "]");
-            } else {
-                fprintf(stderr, ", ");
-            }
-        }
-        fprintf(stderr, NO_COLOUR);
-    }
+    print_args(argc,argv);
 
     // No arguments given
     if (argc <= 1) {
@@ -87,15 +70,11 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
 
     // Parse options
     while ((opt = getopt_long(argc, argv, "h", long_opts, &longindex)) != -1) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+        DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
-        }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_DEBUG) {
-                    VERBOSE("displaying large help message%s","");
-                }
+                DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
@@ -123,16 +102,49 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         file_format = "BLOW5";
     }
 
+    fprintf(stdout, "file version\t%d.%d.%d\n",slow5File->header->version.major, slow5File->header->version.minor, slow5File->header->version.patch);
+
+
+    /* TODO print separate information for record and signal compression */
     std::string compression_method = "compression error";
-    if(slow5File->compress->method==SLOW5_COMPRESS_NONE){
+    if(slow5File->compress->record_press->method==SLOW5_COMPRESS_NONE){
         compression_method = "none";
-    }else if(slow5File->compress->method==SLOW5_COMPRESS_ZLIB){
+    }else if(slow5File->compress->record_press->method==SLOW5_COMPRESS_ZLIB){
         compression_method = "zlib";
+    }else if(slow5File->compress->record_press->method==SLOW5_COMPRESS_ZSTD){
+        compression_method = "zstd";
     }
 
     fprintf(stdout, "file format\t%s\n", file_format.c_str());
-    fprintf(stdout, "compression method\t%s\n", compression_method.c_str());
+    fprintf(stdout, "record compression method\t%s\n", compression_method.c_str());
+
+
+    //todo: version check for signal_compression
+    std::string signal_compression_method = "compression error";
+    if(slow5File->compress->signal_press->method==SLOW5_COMPRESS_NONE){
+        signal_compression_method = "none";
+    }else if(slow5File->compress->signal_press->method==SLOW5_COMPRESS_SVB_ZD){
+        signal_compression_method = "svb-zd";
+    }
+    fprintf(stdout, "sigal compression method\t%s\n", signal_compression_method.c_str());
+
     fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
+
+    if(slow5File->header->aux_meta){
+        fprintf(stdout, "number of auxiliary fields\t%d\n",slow5File->header->aux_meta->num);
+        fprintf(stdout, "auxiliary fields\t");
+        uint32_t num = slow5File->header->aux_meta->num;
+        for(uint32_t i=0; i<num; i++){
+            fprintf(stdout, "%s",slow5File->header->aux_meta->attrs[i]);
+            if(i<num-1){
+                fprintf(stdout,",");
+            }
+        }
+        fprintf(stdout, "\n");
+    }else{
+        fprintf(stdout, "number of auxiliary fields\t%d\n",0);
+        fprintf(stdout, "auxiliary fields\n");
+    }
 
     VERBOSE("counting number of slow5 records...%s","");
 
@@ -148,9 +160,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         ERROR("Error reading the file.%s","");
         return EXIT_FAILURE;
     }
-    if (meta->verbosity_level >= LOG_DEBUG) {
-        DEBUG("time_get_to_mem\t%.3fs", slow5_realtime()-time_get_to_mem);
-    }
+    DEBUG("time_get_to_mem\t%.3fs", slow5_realtime()-time_get_to_mem);
 
     slow5_close(slow5File);
 

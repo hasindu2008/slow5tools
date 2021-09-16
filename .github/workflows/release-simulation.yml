@@ -14,12 +14,12 @@ jobs:
     container: ubuntu:14.04
     steps:
     - name: install git
-      run: sudo apt-get install -y software-properties-common && sudo add-apt-repository ppa:git-core/ppa && sudo apt-get update -y && sudo apt-get install git -y
+      run: sudo apt-get install -y software-properties-common && sudo add-apt-repository -y ppa:git-core/ppa && sudo apt-get update -y && sudo apt-get install git -y
     - uses: actions/checkout@v2
       with:
         submodules: recursive
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev gcc g++ autoconf automake make wget valgrind
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev  gcc g++ autoconf automake make wget valgrind
     - name: env
       run: lsb_release -a &&  ldd --version && gcc --version && g++ --version
     - name: build release

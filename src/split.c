@@ -15,23 +15,24 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 
-#define USAGE_MSG "Usage: %s [OPTION]... [SLOW5_FILE/DIR]...\n"
-#define HELP_SMALL_MSG "Try '%s --help' for more information.\n"
+#define USAGE_MSG "Usage: %s [OPTIONS] [SLOW5_FILE/DIR] ...\n"
 #define HELP_LARGE_MSG \
     "Split a single a SLOW5/BLOW5 file into multiple separate files.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    --to [STR]                         output in the format specified in STR. slow5 for SLOW5 ASCII. blow5 for SLOW5 binary (BLOW5) [default: BLOW5] \n" \
-    "    -c, --compress [compression_type]  convert to compressed blow5 [default: zlib]\n" \
-    "    -d, --out-dir [STR]                output directory where files are written to\n" \
-    "    -f, --files [INT]                  split reads into n files evenly\n"              \
-    "    -r, --reads [INT]                  split into n reads, i.e., each file will have n reads\n"              \
-    "    -g, --groups                       split multi read group file into single read group files\n" \
-    "    -l, --lossless [STR]               retain information in auxilliary fields during the conversion.[default: true].\n" \
-    "    -p, --iop [INT]                    number of I/O processes used to split files [default: 8]\n" \
-    "    -h, --help                         display this message and exit\n" \
+    HELP_MSG_OUTPUT_FORMAT \
+    HELP_MSG_OUTPUT_DIRECTORY \
+    HELP_MSG_PRESS \
+    "    -g, --groups                  split multi read group file into single read group files\n" \
+    "    -r, --reads [INT]             split into n reads, i.e., each file will have n reads\n"    \
+    "    -f, --files [INT]             split reads into n files evenly \n"              \
+    HELP_MSG_PROCESSES \
+    HELP_MSG_LOSSLESS \
+    HELP_MSG_HELP \
+    HELP_FORMATS_METHODS
 
+extern int slow5tools_verbosity_level;
 static double init_realtime = 0;
 
 enum SplitMethod {
@@ -45,7 +46,15 @@ typedef struct {
     size_t n;
 }meta_split_method;
 
-void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount, meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum slow5_press_method pressMethod, size_t lossy) {
+void split_child_worker(proc_arg_t args,
+                        std::vector<std::string> &slow5_files,
+                        char *output_dir,
+                        program_meta *meta,
+                        reads_count *readsCount,
+                        meta_split_method metaSplitMethod,
+                        enum slow5_fmt format_out,
+                        slow5_press_method_t pressMethod,
+                        size_t lossy) {
 
     readsCount->total_5 = args.endi-args.starti - 1;
     std::string extension = ".blow5";
@@ -57,7 +66,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
-            ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+            ERROR("Cannot open %s. Skipping.\n",slow5_files[i].c_str());
             readsCount->bad_5_file++;
             continue;
         }
@@ -82,7 +91,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
         if(metaSplitMethod.splitMethod==READS_SPLIT) {
             slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
             if(!slow5File_i){
-                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                ERROR("Cannot open %s. Skipping.\n",slow5_files[i].c_str());
                 return;
             }
             size_t file_count = 0;
@@ -102,9 +111,36 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, lossy);
+                int ret0 = slow5_hdr_initialize(slow5File->header, lossy);
+                if(ret0<0){
+                    exit(EXIT_FAILURE);
+                }
                 slow5File->header->num_read_groups = 0;
-
+                if(lossy==0){
+                    slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
+                    uint32_t num_aux_attrs = aux_ptr->num;
+                    int aux_add_fail = 0;
+                    for(uint32_t r=0; r<num_aux_attrs; r++){
+                        if(aux_ptr->types[r]==SLOW5_ENUM || aux_ptr->types[r]==SLOW5_ENUM_ARRAY){
+                            uint8_t n;
+                            const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File_i->header, aux_ptr->attrs[r], &n);
+                            if(!enum_labels){
+                                aux_add_fail = 1;
+                            }
+                            if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r], enum_labels, n)){
+                                aux_add_fail = 1;
+                            }
+                        }else{
+                            if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])) {
+                                aux_add_fail =1;
+                            }
+                        }
+                        if(aux_add_fail){
+                            ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
@@ -120,9 +156,14 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
+                if(!press_ptr){
+                    ERROR("Could not initialize the slow5 compression method%s","");
+                    exit(EXIT_FAILURE);
+                }
                 while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
+                        slow5_press_free(press_ptr);
                         ERROR("Could not write the record to %s\n", slow5_path.c_str());
                         exit(EXIT_FAILURE);
                     }
@@ -155,7 +196,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
         }else if(metaSplitMethod.splitMethod==FILE_SPLIT){ //FILE_SPLIT
             slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
             if(!slow5File_i){
-                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                ERROR("Cannot open %s. Skipping...\n",slow5_files[i].c_str());
                 return;
             }
             int number_of_records = 0;
@@ -173,7 +214,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 
             slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
             if(!slow5File_i){
-                ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                ERROR("Cannot open %s. Skipping.\n",slow5_files[i].c_str());
                 return;
             }
 
@@ -198,9 +239,36 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, lossy);
+                int ret0 = slow5_hdr_initialize(slow5File->header, lossy);
+                if(ret0<0){
+                    exit(EXIT_FAILURE);
+                }
                 slow5File->header->num_read_groups = 0;
-
+                if(lossy==0){
+                    slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
+                    uint32_t num_aux_attrs = aux_ptr->num;
+                    int aux_add_fail = 0;
+                    for(uint32_t r=0; r<num_aux_attrs; r++){
+                        if(aux_ptr->types[r]==SLOW5_ENUM || aux_ptr->types[r]==SLOW5_ENUM_ARRAY){
+                            uint8_t n;
+                            const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File_i->header, aux_ptr->attrs[r], &n);
+                            if(!enum_labels){
+                                aux_add_fail = 1;
+                            }
+                            if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r], enum_labels, n)){
+                                aux_add_fail = 1;
+                            }
+                        }else{
+                            if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])) {
+                                aux_add_fail =1;
+                            }
+                        }
+                        if(aux_add_fail){
+                            ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, slow5File_i->header); // extract 0th read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
@@ -214,6 +282,10 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
+                if(!press_ptr){
+                    ERROR("Could not initialize the slow5 compression method%s","");
+                    exit(EXIT_FAILURE);
+                }
                 while ((number_of_records_per_file > 0) && (ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if (slow5_rec_fwrite(slow5File->fp, read, slow5File_i->header->aux_meta, format_out, press_ptr) == -1) {
                         slow5_rec_free(read);
@@ -238,7 +310,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
             for(uint32_t j=0; j<read_group_count_i; j++){
                 slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
                 if(!slow5File_i){
-                    ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
+                    ERROR("Cannot open %s. Skipping.\n",slow5_files[i].c_str());
                     return;
                 }
                 int last_slash = slow5_files[i].find_last_of('/');
@@ -256,15 +328,41 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                     return;
                 }
                 slow5_file_t* slow5File = slow5_init_empty(slow5_file_pointer, slow5_path.c_str(), format_out);
-                slow5_hdr_initialize(slow5File->header, lossy);
+                int ret0 = slow5_hdr_initialize(slow5File->header, lossy);
+                if(ret0<0){
+                    exit(EXIT_FAILURE);
+                }
                 slow5File->header->num_read_groups = 0;
-
+                if(lossy==0){
+                    slow5_aux_meta_t* aux_ptr = slow5File_i->header->aux_meta;
+                    uint32_t num_aux_attrs = aux_ptr->num;
+                    int aux_add_fail = 0;
+                    for(uint32_t r=0; r<num_aux_attrs; r++){
+                        if(aux_ptr->types[r]==SLOW5_ENUM || aux_ptr->types[r]==SLOW5_ENUM_ARRAY){
+                            uint8_t n;
+                            const char **enum_labels = (const char** )slow5_get_aux_enum_labels(slow5File_i->header, aux_ptr->attrs[r], &n);
+                            if(!enum_labels){
+                                aux_add_fail = 1;
+                            }
+                            if(slow5_aux_meta_add_enum(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r], enum_labels, n)){
+                                aux_add_fail = 1;
+                            }
+                        }else{
+                            if(slow5_aux_meta_add(slow5File->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])) {
+                                aux_add_fail =1;
+                            }
+                        }
+                        if(aux_add_fail){
+                            ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
                 khash_t(slow5_s2s) *rg = slow5_hdr_get_data(j, slow5File_i->header); // extract jth read_group related data from ith slow5file
                 if(slow5_hdr_add_rg_data(slow5File->header, rg) < 0){
                     ERROR("Could not add read group to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
                 }
-
                 if(slow5_hdr_fwrite(slow5File->fp, slow5File->header, format_out, pressMethod) == -1){ //now write the header to the slow5File
                     ERROR("Could not write the header to %s\n", slow5_path.c_str());
                     exit(EXIT_FAILURE);
@@ -273,6 +371,10 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
                 struct slow5_rec *read = NULL;
                 int ret;
                 struct slow5_press *press_ptr = slow5_press_init(pressMethod);
+                if(!press_ptr){
+                    ERROR("Could not initialize the slow5 compression method%s","");
+                    exit(EXIT_FAILURE);
+                }
                 while ((ret = slow5_get_next(&read, slow5File_i)) >= 0) {
                     if(read->read_group == j){
                         read->read_group = 0; //since single read_group files are now created
@@ -297,7 +399,7 @@ void split_child_worker(proc_arg_t args, std::vector<std::string> &slow5_files, 
 }
 
 void split_iop(int iop, std::vector<std::string> &slow5_files, char *output_dir, program_meta *meta, reads_count *readsCount,
-        meta_split_method metaSplitMethod, enum slow5_fmt format_out, enum slow5_press_method pressMethod, size_t lossy) {
+        meta_split_method metaSplitMethod, enum slow5_fmt format_out, slow5_press_method_t pressMethod, size_t lossy) {
     int64_t num_slow5_files = slow5_files.size();
     if (iop > num_slow5_files) {
         iop = num_slow5_files;
@@ -394,22 +496,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     init_realtime = slow5_realtime();
 
     // Debug: print arguments
-    if (meta != NULL && meta->verbosity_level >= LOG_DEBUG) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("printing the arguments given%s","");
-        }
-        fprintf(stderr, DEBUG_PREFIX "argv=[",
-                __FILE__, __func__, __LINE__);
-        for (int i = 0; i < argc; ++ i) {
-            fprintf(stderr, "\"%s\"", argv[i]);
-            if (i == argc - 1) {
-                fprintf(stderr, "]");
-            } else {
-                fprintf(stderr, ", ");
-            }
-        }
-        fprintf(stderr, NO_COLOUR);
-    }
+    print_args(argc,argv);
 
     // No arguments given
     if (argc <= 1) {
@@ -418,75 +505,52 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    // code from f2s
-    int iop = 8;
-    int lossy = 0;
-
     // Default options
     static struct option long_opts[] = {
-            {"help", no_argument, NULL, 'h' }, //0
-            {"to", required_argument, NULL, 'b'},    //1
-            {"compress", no_argument, NULL, 'c'},  //2
-            {"out-dir", required_argument, NULL, 'd' },  //3
-            { "iop", required_argument, NULL, 'p'},   //4
-            { "lossless", required_argument, NULL, 'l'}, //5
-            { "groups", no_argument, NULL, 'g'}, //6
-            { "files", required_argument, NULL, 'f'}, //7
-            { "reads", required_argument, NULL, 'r'}, //8
+            {"help",        no_argument, NULL, 'h' }, //0
+            {"to",          required_argument, NULL, 'b'},    //1
+            {"compress",    no_argument, NULL, 'c'},  //2
+            {"sig-compress",required_argument,  NULL, 's'}, //3
+            {"out-dir",     required_argument, NULL, 'd' },  //4
+            { "iop",        required_argument, NULL, 'p'},   //5
+            { "lossless",   required_argument, NULL, 'l'}, //6
+            { "groups",     no_argument, NULL, 'g'}, //7
+            { "files",      required_argument, NULL, 'f'}, //8
+            { "reads",      required_argument, NULL, 'r'}, //9
             {NULL, 0, NULL, 0 }
     };
 
-    enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
-    enum slow5_press_method pressMethod = SLOW5_COMPRESS_ZLIB;
-    int compression_set = 0;
 
     meta_split_method metaSplitMethod;
     metaSplitMethod.n = 0;
     metaSplitMethod.splitMethod = READS_SPLIT;
 
-    // Input arguments
-    char *arg_dir_out = NULL;
+    opt_t user_opts;
+    init_opt(&user_opts);
 
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hb:cgl:f:r:d:p:", long_opts, &longindex)) != -1) {
-        if (meta->verbosity_level >= LOG_DEBUG) {
-            DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
+    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:p:", long_opts, &longindex)) != -1) {
+        DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
-        }
         switch (opt) {
             case 'h':
-                if (meta->verbosity_level >= LOG_DEBUG) {
-                    DEBUG("displaying large help message%s","");
-                }
+                DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
-
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
             case 'b':
-                if(strcmp(optarg,"slow5")==0){
-                    format_out = SLOW5_FORMAT_ASCII;
-                }else if(strcmp(optarg,"blow5")==0){
-                    format_out = SLOW5_FORMAT_BINARY;
-                }else{
-                    ERROR("Incorrect output format%s", "");
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_fmt_out = optarg;
                 break;
             case 'c':
-                compression_set = 1;
-                if(strcmp(optarg,"none")==0){
-                    pressMethod = SLOW5_COMPRESS_NONE;
-                }else if(strcmp(optarg,"zlib")==0){
-                    pressMethod = SLOW5_COMPRESS_ZLIB;
-                }else{
-                    ERROR("Incorrect compression type%s", "");
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_record_press_out = optarg;
+                break;
+            case 's':
+                user_opts.arg_signal_press_out = optarg;
                 break;
             case 'd':
-                arg_dir_out = optarg;
+                user_opts.arg_dir_out = optarg;
                 break;
             case 'f':
                 metaSplitMethod.splitMethod = FILE_SPLIT;
@@ -500,21 +564,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 metaSplitMethod.splitMethod = GROUP_SPLIT;
                 break;
             case 'l':
-                if(strcmp(optarg,"true")==0){
-                    lossy = 0;
-                }else if(strcmp(optarg,"false")==0){
-                    lossy = 1;
-                }else{
-                    ERROR("Incorrect argument%s", "");
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_lossless = optarg;
                 break;
             case 'p':
-                iop = atoi(optarg);
-                if (iop < 1) {
-                    ERROR("Number of I/O processes should be larger than 0. You entered %d", iop);
-                    exit(EXIT_FAILURE);
-                }
+                user_opts.arg_num_processes = optarg;
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -522,15 +575,26 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
-    if(compression_set == 0 && format_out == SLOW5_FORMAT_ASCII){
-        pressMethod = SLOW5_COMPRESS_NONE;
-    }
-    // compression option is only effective with -b blow5
-    if(compression_set == 1 && format_out == SLOW5_FORMAT_ASCII){
-        ERROR("%s","Compression option (-c) is only available for SLOW5 binary format.");
+    if(parse_num_processes(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
-
+    if(parse_arg_lossless(&user_opts, argc, argv, meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(parse_format_args(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(auto_detect_formats(&user_opts) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(parse_compression_opts(&user_opts) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
     if(metaSplitMethod.splitMethod==READS_SPLIT && metaSplitMethod.n==0){
         ERROR("Default splitting method - reads split is used. Specify the number of reads to include in a slow5 file%s","");
         return EXIT_FAILURE;
@@ -539,19 +603,19 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         ERROR("Splitting method - files split is used. Specify the number of files to create from a slow5 file%s","");
         return EXIT_FAILURE;
     }
-    if(!arg_dir_out){
+    if(!user_opts.arg_dir_out){
         ERROR("The output directory must be specified %s","");
         return EXIT_FAILURE;
     }
 
-    if(arg_dir_out){
+    if(user_opts.arg_dir_out){
         struct stat st = {0};
-        if (stat(arg_dir_out, &st) == -1) {
-            mkdir(arg_dir_out, 0700);
+        if (stat(user_opts.arg_dir_out, &st) == -1) {
+            mkdir(user_opts.arg_dir_out, 0700);
         }else{
-            std::vector< std::string > dir_list = list_directory(arg_dir_out);
+            std::vector< std::string > dir_list = list_directory(user_opts.arg_dir_out);
             if(dir_list.size()>2){
-                ERROR("Output director %s is not empty",arg_dir_out);
+                ERROR("Output directory %s is not empty. Please remove it or specify another directory.",user_opts.arg_dir_out);
                 return EXIT_FAILURE;
             }
         }
@@ -561,11 +625,11 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     std::vector<std::string> slow5_files;
 
     if(metaSplitMethod.splitMethod==READS_SPLIT){
-        VERBOSE("an input slow5 file will be split such that each output file has %lu reads", metaSplitMethod.n);
+        VERBOSE("An input slow5 file will be split such that each output file has %lu reads", metaSplitMethod.n);
     }else if(metaSplitMethod.splitMethod==FILE_SPLIT){
-        VERBOSE("an input slow5 file will be split into %lu output files", metaSplitMethod.n);
+        VERBOSE("An input slow5 file will be split into %lu output files", metaSplitMethod.n);
     } else{
-        VERBOSE("an input multi read group slow5 files will be split into single read group slow5 files %s","");
+        VERBOSE("An input multi read group slow5 files will be split into single read group slow5 files %s","");
     }
 
     //measure file listing time
@@ -579,7 +643,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
     //measure slow5 splitting time
-    split_iop(iop, slow5_files, arg_dir_out, meta, &readsCount, metaSplitMethod, format_out, pressMethod, lossy);
+    slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
+    split_iop(user_opts.num_processes, slow5_files, user_opts.arg_dir_out, meta, &readsCount, metaSplitMethod, user_opts.fmt_out, press_out, user_opts.flag_lossy);
     VERBOSE("Splitting %ld s/blow5 files took %.3fs",slow5_files.size(), slow5_realtime() - init_realtime);
 
     return EXIT_SUCCESS;
