@@ -121,7 +121,7 @@ release: distclean
 		installdeps.mk configure build src slow5tools-$(VERSION)
 	cp scripts/install-hdf5.sh scripts/install-vbz.sh scripts/install-zstd.sh slow5tools-$(VERSION)/scripts
 	cp -r docs/commands.md slow5tools-$(VERSION)/docs/
-	cp -r slow5lib/lib slow5lib/include slow5lib/src  slow5lib/Makefile slow5lib/LICENSE slow5tools-$(VERSION)/slow5lib
+	cp -r slow5lib/lib slow5lib/include slow5lib/src  slow5lib/Makefile slow5lib/LICENSE slow5lib/thirdparty/ slow5tools-$(VERSION)/slow5lib
 	tar -zcf slow5tools-$(VERSION)-release.tar.gz slow5tools-$(VERSION)
 	rm -rf slow5tools-$(VERSION)
 # make the binaries
