@@ -97,15 +97,17 @@ Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for
 ### Examples
 
 ```sh
-# convert a directory of fast5 files into BLOW5 files (default compression)
+# convert a directory of fast5 files into BLOW5 files (default compression: zlib+svb-zd)
 slow5tools f2s fast5_dir -d blow5_dir
 # convert a single fast5 file into a SLOW5 ASCII
 slow5tools f2s file.fast5 -o file.slow5
-# convert a directory of fast5 files into BLOW5 files with zstd compression
-slow5tools f2s fast5_dir -d blow5_dir -c zstd
+# convert a directory of fast5 files into BLOW5 files with zstd+svb-zd compression (similar to ONT's vbz compression)
+slow5tools f2s fast5_dir -d blow5_dir -c zstd -s svb-zd
 
-# merge all BLOW5 files in a directory into a single BLOW5 file (default compression)
+# merge all BLOW5 files in a directory into a single BLOW5 file (default compression: zlib+svb-zd)
 slow5tools merge blow5_dir -o file.blow5
+# merge all BLOW5 files in a directory into a single BLOW5 file with zstd+svb-zd compression (similar to ONT's vbz compression)
+slow5tools merge blow5_dir -o file.blow5 -c zstd -s svb-zd
 
 # to view a BLOW5 file in SLOW5 ASCII on standard out
 slow5tools view file.blow5
