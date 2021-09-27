@@ -31,7 +31,7 @@ jobs:
     container: ubuntu:16.04
     steps:
     - name: install git
-      run: add-apt-repository ppa:git-core/ppa && apt-get update -y && apt-get install git -y
+      run: apt-get install -y software-properties-common && add-apt-repository ppa:git-core/ppa && apt-get update -y && apt-get install git -y
     - uses: actions/checkout@v2
       with:
         submodules: recursive
