@@ -280,8 +280,8 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
         db_t db = { 0 };
         int64_t cap_ids = READ_ID_INIT_CAPACITY;
-        db.read_id = (char **) malloc(cap_ids * sizeof *db.read_id);
-        db.read_record = (raw_record_t*) malloc(cap_ids * sizeof *db.read_record);
+        db.read_id = (char **) malloc(cap_ids * sizeof(char*));
+        db.read_record = (raw_record_t*) malloc(cap_ids * sizeof(raw_record_t));
 
         bool end_of_file = false;
         while (!end_of_file) {
