@@ -61,6 +61,7 @@ int (view_main)(int, char **, struct program_meta *);
 int (stats_main)(int, char **, struct program_meta *);
 int (cat_main)(int argc, char **argv, struct program_meta *meta);
 int (quickcheck_main)(int, char **, struct program_meta *);
+int (read_file_threaded_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
 void segv_handler(int sig) {
@@ -119,7 +120,8 @@ int main(const int argc, char **argv){
             {"view",         view_main},
             {"stats",        stats_main},
             {"cat",          cat_main},
-            {"quickcheck",   quickcheck_main}
+            {"quickcheck",   quickcheck_main},
+            {"read_file_threaded",   read_file_threaded_main}
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 

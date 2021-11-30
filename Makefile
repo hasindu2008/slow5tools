@@ -29,6 +29,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/cat.o \
 	  $(BUILD_DIR)/quickcheck.o \
 	  $(BUILD_DIR)/misc.o \
+	  $(BUILD_DIR)/read_file_threaded.o \
 
 
 PREFIX = /usr/local
@@ -79,6 +80,9 @@ $(BUILD_DIR)/quickcheck.o: src/quickcheck.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 $(BUILD_DIR)/misc.o: src/misc.c src/error.h
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/read_file_threaded.o: src/read_file_threaded.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 slow5lib/lib/libslow5.a:
