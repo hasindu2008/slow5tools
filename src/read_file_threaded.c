@@ -31,6 +31,8 @@
     HELP_MSG_HELP \
 
 extern int slow5tools_verbosity_level;
+extern double time_fread_record_length;
+extern double time_fread_record;
 
 void create_read_data(core_t *core, db_t *db, int32_t i) {
     struct slow5_rec *read = NULL;
@@ -209,6 +211,8 @@ int read_file_threaded_main(int argc, char **argv, struct program_meta *meta){
     }
     VERBOSE("time_malloc\t%.3fs", time_malloc);
     VERBOSE("time_get_next_mem\t%.3fs", time_get_next_mem);
+    VERBOSE("time_fread_record_length\t%.3fs", time_fread_record_length);
+    VERBOSE("time_fread_record\t%.3fs", time_fread_record);
     VERBOSE("time_get_to_mem_loop\t%.3fs", time_get_to_mem_loop);
     VERBOSE("time_thread_execution\t%.3fs", time_thread_execution);
 
