@@ -119,8 +119,10 @@ int read_file_threaded_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
 
-    double time_get_to_mem = 0;
+    double time_get_to_mem_loop = 0;
+    double time_get_next_mem = 0;
     double time_thread_execution = 0;
+    double time_malloc = 0;
     int flag_end_of_records = 0;
 
     int64_t batch_size = user_opts.read_id_batch_capacity;
@@ -136,17 +138,23 @@ int read_file_threaded_main(int argc, char **argv, struct program_meta *meta){
     size_t open_file_from = slow5_file_index;
 
     while(1) {
+        double realtime = slow5_realtime();
         db_t db = { 0 };
         db.mem_records = (char **) malloc(batch_size * sizeof(char*));
         db.mem_bytes = (size_t *) malloc(batch_size * sizeof(size_t));
         db.slow5_file_pointers = (slow5_file_t **) malloc(batch_size * sizeof(slow5_file_t*));
+        time_malloc += slow5_realtime() - realtime;
 
+        realtime = slow5_realtime();
         int64_t record_count = 0;
         size_t bytes;
         char *mem;
-        double realtime = slow5_realtime();
         while (record_count < batch_size) {
-            if (!(mem = (char *) slow5_get_next_mem(&bytes, from))) {
+            double realtime2 = slow5_realtime();
+            mem = (char *) slow5_get_next_mem(&bytes, from);
+            time_get_next_mem += slow5_realtime() - realtime2;
+
+            if (!mem) {
                 if (slow5_errno != SLOW5_ERR_EOF) {
                     return EXIT_FAILURE;
                 } else { //EOF file reached
@@ -172,7 +180,7 @@ int read_file_threaded_main(int argc, char **argv, struct program_meta *meta){
             }
         }
 
-        time_get_to_mem += slow5_realtime() - realtime;
+        time_get_to_mem_loop += slow5_realtime() - realtime;
         realtime = slow5_realtime();
         // Setup multithreading structures
         core_t core;
@@ -199,7 +207,9 @@ int read_file_threaded_main(int argc, char **argv, struct program_meta *meta){
         }
         
     }
-    VERBOSE("time_get_to_mem\t%.3fs", time_get_to_mem);
+    VERBOSE("time_malloc\t%.3fs", time_malloc);
+    VERBOSE("time_get_next_mem\t%.3fs", time_get_next_mem);
+    VERBOSE("time_get_to_mem_loop\t%.3fs", time_get_to_mem_loop);
     VERBOSE("time_thread_execution\t%.3fs", time_thread_execution);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
