@@ -83,7 +83,7 @@ make
     Similarly, to locally build *zstd* and link against that:
 
     ```
-    scripts/scripts/install-zstd.sh        # download and compiles HDF5 in the current folder
+    scripts/install-zstd.sh        # download and compiles HDF5 in the current folder
     ./configure --enable-localzstd
     make
     ```
