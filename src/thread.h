@@ -58,6 +58,7 @@ typedef struct {
     //for merge
     std::vector<std::string> slow5_files;
     std::vector<std::vector<size_t>> list;
+    std::vector<int> slow5_file_indices;
     std::string output_dir;
     slow5_file_t **slow5_file_pointers;
 
