@@ -517,6 +517,23 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     return return_val;
 }
 
+void search_and_warn(operator_obj *operator_data, std::string key, const char *warn_message) {
+    auto search = operator_data->warning_map->find(key);
+    if (search != operator_data->warning_map->end()) {
+        if(search->second < WARNING_LIMIT){
+            search->second = search->second+1;
+            WARNING("slow5tools-v%s: %s.", SLOW5TOOLS_VERSION, warn_message);
+        }else if(search->second == WARNING_LIMIT){
+            WARNING("slow5tools-v%s: %s. This warning is suppressed now onwards.",SLOW5TOOLS_VERSION, warn_message);
+            search->second = WARNING_LIMIT+1;
+        }
+    } else {
+        WARNING("slow5tools-v%s: %s.",SLOW5TOOLS_VERSION, warn_message);
+        operator_data->warning_map->insert({key,1});
+    }
+}
+
+
 int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_class_t h5TClass, attribute_data value, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs) {
     int failed = 0;
     if(*(operator_data->flag_lossy)==0){
@@ -563,27 +580,16 @@ int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_c
             }
 
         }else if(*(operator_data->flag_header_is_written) == 1 && operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0) == -1){
-            DEBUG("%s auxiliary attribute is not set in the slow5 header", name);
+            std::string key = "nh_" + std::string(name); //not stored in header
+            char warn_message[300];
+            sprintf(warn_message,"%s auxiliary attribute is not set in the slow5 header", name);
+            search_and_warn(operator_data,key,warn_message);
+            // WARNING("%s auxiliary attribute is not set in the slow5 header", name);
         }
     }
     return 0;
 }
 
-void search_and_warn(operator_obj *operator_data, std::string key, const char *warn_message) {
-    auto search = operator_data->warning_map->find(key);
-    if (search != operator_data->warning_map->end()) {
-        if(search->second < WARNING_LIMIT){
-            search->second = search->second+1;
-            WARNING("slow5tools-v%s: %s.", SLOW5TOOLS_VERSION, warn_message);
-        }else if(search->second == WARNING_LIMIT){
-            WARNING("slow5tools-v%s: %s. This warning is suppressed now onwards.",SLOW5TOOLS_VERSION, warn_message);
-            search->second = WARNING_LIMIT+1;
-        }
-    } else {
-        WARNING("slow5tools-v%s: %s.",SLOW5TOOLS_VERSION, warn_message);
-        operator_data->warning_map->insert({key,1});
-    }
-}
 
 int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
 
