@@ -254,8 +254,8 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
     while(1) {
 
         db_t db = { 0 };
-        db.mem_records = (char **) malloc(batch_size * sizeof *db.read_id);
-        db.mem_bytes = (size_t *) malloc(batch_size * sizeof *db.read_id);
+        db.mem_records = (char **) malloc(batch_size * sizeof(char*));
+        db.mem_bytes = (size_t *) malloc(batch_size * sizeof(size_t));
 
         int64_t record_count = 0;
         size_t bytes;
