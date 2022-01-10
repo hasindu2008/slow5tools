@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include <slow5/slow5.h>
 #include "error.h"
@@ -840,6 +841,22 @@ std::vector< std::string > list_directory(const std::string& file_name)
     closedir(dir);
     return res;
 }
+
+int check_for_similar_file_names(std::vector<std::string> file_list) {
+    std::set<std::string> file_set;
+    for(size_t i=0; i<file_list.size(); i++){
+        int last_slash = file_list[i].find_last_of('/');
+        if(last_slash == -1){
+            last_slash = 0;
+        }
+        int extension_length = 5; //fast5 or blow5 or slow5
+        std::string file_name = file_list[i].substr(last_slash,file_list[i].length() - last_slash - extension_length);
+//        fprintf(stderr,"file=%s %s\n", file_list[i].c_str(), file_name.c_str());
+        file_set.insert(file_name);
+    }
+    return !(file_list.size()==file_set.size());
+}
+
 
 // from nanopolish
 // given a directory path, recursively find all files

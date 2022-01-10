@@ -423,6 +423,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         ERROR("No fast5 files found. Exiting.%s","");
         return EXIT_FAILURE;
     }
+
+    int ret_check_for_similar_file_names = check_for_similar_file_names(fast5_files);
+    if(ret_check_for_similar_file_names){
+        ERROR("Two or more fast5 files have the same filename. Exiting.%s","");
+        return EXIT_FAILURE;
+    }
+
     if(fast5_files.size()==1){
         user_opts.num_processes = 1;
     }
@@ -453,3 +460,4 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
 }
+

@@ -81,6 +81,7 @@ fast5_file_t fast5_open(const char* filename);
 std::vector< std::string > list_directory(const std::string& file_name);
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
 int slow5_hdr_initialize(slow5_hdr *header, int lossy);
+int check_for_similar_file_names(std::vector<std::string> file_list);
 
 // args for processes
 typedef struct {
