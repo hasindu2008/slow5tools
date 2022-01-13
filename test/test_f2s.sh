@@ -14,7 +14,7 @@ die() {
     exit 1
 }
 #redirect
-verbose=1
+verbose=0
 exec 3>&1
 exec 4>&2
 if ((verbose)); then
@@ -418,7 +418,7 @@ echo
 TESTCASE_NO=53
 echo "------------------- f2s testcase $TESTCASE_NO >>> retain_dir_structure-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/retain_dir_structure -d $OUTPUT_DIR/retain_dir_structure --retain || die "testcase $TESTCASE_NO failed"
-diff $EXP_SLOW5_DIR/retain_dir_structure  $OUTPUT_DIR/retain_dir_structure  || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
+diff $EXP_SLOW5_DIR/retain_dir_structure  $OUTPUT_DIR/retain_dir_structure > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
