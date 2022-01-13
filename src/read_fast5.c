@@ -851,18 +851,44 @@ int check_for_similar_file_names(std::vector<std::string> file_list) {
         }
         int extension_length = 5; //fast5 or blow5 or slow5
         std::string file_name = file_list[i].substr(last_slash,file_list[i].length() - last_slash - extension_length);
-//        fprintf(stderr,"file=%s %s\n", file_list[i].c_str(), file_name.c_str());
         file_set.insert(file_name);
     }
     return !(file_list.size()==file_set.size());
 }
 
+//return 0; created dir
+//return -1; dir exists
+//return -2; could not create dir
+int create_dir(const char *dir_name) {
+    struct stat st = {0};
+    if (stat(dir_name, &st) == -1) {
+        int ret_mkdir = mkdir(dir_name, 0700);
+        if(ret_mkdir == -1){
+            return -2;
+        }
+    }else{
+        std::vector< std::string > dir_list = list_directory(dir_name);
+        if(dir_list.size()>2){
+            return -1;
+        }
+    }
+    return 0;
+}
 
 // from nanopolish
 // given a directory path, recursively find all files
+//if count_dir==0; then don't list dir
+//if count_dir==1; then list dir as well
+//if count_dir==2; then list only dir
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
     if(extension){
         STDERR("Looking for '*%s' files in %s", extension, path.c_str());
+    }
+    if(is_directory(path) && count_dir==1){
+        files.push_back(path);
+    }
+    if(is_directory(path) && count_dir==2){
+        files.push_back(path);
     }
     if (is_directory(path)) {
         std::vector< std::string > dir_list = list_directory(path);
@@ -878,26 +904,26 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
             }else{
                 //add to the list
                 if(extension){
-                    if(full_fn.find(extension) != std::string::npos){
+                    if(full_fn.find(extension) != std::string::npos && count_dir!=2){
                         files.push_back(full_fn);
                     }
                 }else{
-                    files.push_back(full_fn);
+                    if(count_dir!=2){
+                        files.push_back(full_fn);
+                    }
                 }
             }
         }
     }else{
         if(extension){
-            if(path.find(extension) != std::string::npos){
+            if(path.find(extension) != std::string::npos && count_dir!=2){
                 files.push_back(path);
             }
         }else{
-            files.push_back(path);
+            if(count_dir!=2){
+                files.push_back(path);
+            }
         }
-    }
-
-    if(is_directory(path) && count_dir){
-        files.push_back(path);
     }
 }
 
