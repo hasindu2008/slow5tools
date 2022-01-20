@@ -11,6 +11,7 @@ SLOW5 is a new file format for storing signal data from Oxford Nanopore Technolo
 
 Full documentation: https://hasindu2008.github.io/slow5tools   
 Pre-print: https://www.biorxiv.org/content/10.1101/2021.06.29.450255v1  
+Publication: https://www.nature.com/articles/s41587-021-01147-4  
 SLOW5 specification: https://hasindu2008.github.io/slow5specs
 
 ## Quick start
