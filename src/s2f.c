@@ -615,7 +615,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     int longindex = 0;
     int opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "h:o:d:p:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "ho:d:p:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
