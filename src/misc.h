@@ -51,6 +51,7 @@ typedef struct {
     int64_t read_id_batch_capacity;
     int flag_lossy;
     int flag_allow_run_id_mismatch;
+    int flag_retain_dir_structure;
     int flag_dump_all;
 
     // Input arguments

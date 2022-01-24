@@ -58,6 +58,7 @@ void init_opt(opt_t *opt){
     opt->read_id_batch_capacity = DEFAULT_BATCH_SIZE;
     opt->flag_lossy = DEFAULT_AUXILIARY_FIELDS_NOT_OUT;
     opt->flag_allow_run_id_mismatch = DEFAULT_ALLOW_RUN_ID_MISMATCH;
+    opt->flag_retain_dir_structure = DEFAULT_RETAIN_DIR_STRUCTURE;
     opt->flag_dump_all = DEFAULT_DUMP_ALL;
 }
 
