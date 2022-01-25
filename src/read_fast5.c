@@ -114,6 +114,7 @@ int read_fast5(opt_t *user_opts,
     int flag_context_tags = 0;
     int flag_tracking_id = 0;
     int flag_run_id = 0;
+    int flag_run_id_tracking_id = 0;
     int flag_lossy = user_opts->flag_lossy;
     int primary_fields_count = 0;
     int flag_header_is_written = write_header_flag;
@@ -126,6 +127,7 @@ int read_fast5(opt_t *user_opts,
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
     tracker.flag_run_id = &flag_run_id;
+    tracker.flag_run_id_tracking_id = &flag_run_id_tracking_id;
     tracker.flag_lossy = &flag_lossy;
     tracker.flag_write_header = &write_header_flag;
     tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
@@ -180,7 +182,7 @@ int read_fast5(opt_t *user_opts,
             return -1;
         }
         //        todo: compare header values with the previous singlefast5
-        if(*(tracker.flag_run_id) != 1){
+        if(*(tracker.flag_run_id) != 1 && *(tracker.flag_run_id_tracking_id) != 1){
             ERROR("Bad fast5: The run_id attribute is missing in fast5 file '%s' for read id '%s'.", tracker.fast5_path, tracker.slow5_record->read_id);
             return -1;
         }
@@ -708,6 +710,11 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                 //tracking_id and context_tags groups should be traversed only for the first read
 
                 if (operator_data->fast5_file->is_multi_fast5) {
+                    if (strcmp(name, "tracking_id") == 0) {
+                        // Ensure attribute exists
+                        herr_t ret_run_id = H5Aexists(group, "run_id");
+                        *(operator_data->flag_run_id_tracking_id) = ret_run_id;
+                    }
                     if (strcmp(name, "tracking_id") == 0 && *(operator_data->flag_tracking_id) == 0) {
                         return_val = H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &next_op);
                         *(operator_data->flag_tracking_id) = 1;
@@ -740,11 +747,11 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                                 return -1;
                             }
                             if (*(operator_data->flag_tracking_id) != 1) {
-                                ERROR("Bad fast5: he first read in the multi-fast5 does not have tracking_id information%s", ".");
+                                ERROR("Bad fast5: The first read in the multi-fast5 does not have tracking_id information%s", ".");
                                 return -1;
                             }
-                            if(*(operator_data->flag_run_id) != 1){
-                                ERROR("Bad fast5: run_id is missing in the %s in read_id %s.", operator_data->fast5_path, operator_data->slow5_record->read_id);
+                            if(*(operator_data->flag_run_id) != 1 && *(operator_data->flag_run_id_tracking_id) != 1){
+                                ERROR("Bad fast5: run_id information of the read %s in %s cannot be found.", operator_data->slow5_record->read_id, operator_data->fast5_path);
                                 return -1;
                             }
                             if(*(operator_data->flag_write_header) == 0){
@@ -756,9 +763,16 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                         }
                         *(operator_data->nreads) = *(operator_data->nreads) + 1;
                         if(*(operator_data->primary_fields_count) == PRIMARY_FIELD_COUNT){
-                            if(*(operator_data->flag_run_id) != 1){
-                                ERROR("Bad fast5: run_id is missing in the %s in read_id %s.", operator_data->fast5_path, operator_data->slow5_record->read_id);
+                            if(*(operator_data->flag_run_id) != 1 && *(operator_data->flag_run_id_tracking_id) != 1){
+                                ERROR("Bad fast5: run_id information of the read %s in %s cannot be found.", operator_data->slow5_record->read_id, operator_data->fast5_path);
                                 return -1;
+                            }
+                            if(*(operator_data->flag_run_id) != 1){
+                                std::string key = "pri_" + std::string("run_id"); //primary attribute run id not found in the read group
+                                char warn_message[300];
+                                sprintf(warn_message,"primary attribute run_id is not found in the read %s group", operator_data->slow5_record->read_id);
+                                search_and_warn(operator_data,key,warn_message);
+//                                WARNING("run_id is missing in the %s in read_id %s group.", operator_data->fast5_path, operator_data->slow5_record->read_id);
                             }
                             int ret = print_record(operator_data);
                             if(ret < 0){
@@ -766,6 +780,7 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                             }
                             *(operator_data->primary_fields_count) = 0;
                             *(operator_data->flag_run_id) = 0;
+                            *(operator_data->flag_run_id_tracking_id) = 0;
                         }else{
                             ERROR("Bad fast5: A primary attribute is missing in the %s.", operator_data->fast5_path);
                             return -1;

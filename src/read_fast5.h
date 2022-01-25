@@ -58,6 +58,7 @@ struct operator_obj {
     int *flag_context_tags;
     int *flag_tracking_id;
     int *flag_run_id;
+    int *flag_run_id_tracking_id;
     int *flag_lossy;
     int *flag_write_header;
     int *flag_allow_run_id_mismatch;

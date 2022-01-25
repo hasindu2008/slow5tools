@@ -267,15 +267,15 @@ $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_first_read_group_trac
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=30
-echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_first_read_group_read fast5-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_first_read_group_read but is in the tracking_id group fast5-------------------"
 mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_first_read_group_read.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=31
-echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_fifth_read_group_read fast5-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_fifth_read_group_read but is in the tracking_id group fast5-------------------"
 mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
-$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_fifth_read_group_read.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 && die "testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_fifth_read_group_read.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=32
