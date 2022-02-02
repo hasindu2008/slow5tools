@@ -15,6 +15,7 @@
 #%    -h, --help                                    Print help message
 #%    -i, --info                                    Print script information
 #%    -n [num]                                      Exit after given number of files
+#%    -d [tempfile]                                 Temporary file for monitor
 #%    -t [seconds],
 #%        default -t 3600                           Default timeout of 1 hour
 #%
@@ -78,7 +79,7 @@ existing=false # Existing files not outputed by default
 
 
 ## Handle flags
-while getopts "ehift:n:" o; do
+while getopts "ehift:n:d:" o; do
     case "${o}" in
         e)
             existing=true
@@ -100,6 +101,9 @@ while getopts "ehift:n:" o; do
         t)
             timeout=true
             TIME_INACTIVE=${OPTARG}
+            ;;
+        d)
+            TEMP_FILE="${OPTARG}"
             ;;
         *)
             echo "Incorrect or no timeout format specified"
@@ -124,11 +128,11 @@ if $existing; then # If existing files option set
 fi
 
 reset_timer() {
-    echo 0 > $SCRIPT_PATH/$TEMP_FILE # Send flag to reset timer
+    echo 0 > $TEMP_FILE # Send flag to reset timer
 }
 
 exit_safely() { # Function to use on exit
-    rm $SCRIPT_PATH/$TEMP_FILE # Remove the temporary file
+    rm $TEMP_FILE # Remove the temporary file
 
     if $flag; then # If the flag option is enabled
         echo -1
@@ -139,7 +143,7 @@ exit_safely() { # Function to use on exit
     # (todo : kill background while loop?)
 }
 
-touch $SCRIPT_PATH/$TEMP_FILE # Create the temporary file
+touch $TEMP_FILE # Create the temporary file
 
 trap exit_safely EXIT # Catch exit of script with function
 
@@ -157,7 +161,7 @@ i=0 # Initialise file counter
 
         ((i++)) # Increment file counter
         if [ "$NO_FILES" = "$i" ]; then # Exit after specified number of files found
-            echo -1 > $SCRIPT_PATH/$TEMP_FILE # Send flag to main process
+            echo -1 > $TEMP_FILE # Send flag to main process
 
             while : # Pause the script in while loop
             do
@@ -178,15 +182,15 @@ fi
 while $timeout; do
 
     # If 0 flag in temporary file
-    if [ "$(cat $SCRIPT_PATH/$TEMP_FILE)" = "0" ]; then # Reset the timer
+    if [ "$(cat $TEMP_FILE)" = "0" ]; then # Reset the timer
         SECONDS=0
-        echo > $SCRIPT_PATH/$TEMP_FILE # Empty contents of temp file
+        echo > $TEMP_FILE # Empty contents of temp file
     fi
 
     time_elapsed=$SECONDS
     # If there has been no files created in a specified period of time exit program
     # or -1 flag has been called by background process
-    if (( $(echo "$time_elapsed > $TIME_INACTIVE" | bc -l) )) || [ "$(cat $SCRIPT_PATH/$TEMP_FILE)" = "-1" ]; then
+    if (( $(echo "$time_elapsed > $TIME_INACTIVE" | bc -l) )) || [ "$(cat $TEMP_FILE)" = "-1" ]; then
         exit 0
     fi
 
@@ -194,7 +198,7 @@ done
 
 while : ; do # While true
     # If -1 flag in temporary file
-    if [ "$(cat $SCRIPT_PATH/$TEMP_FILE)" = "-1" ]; then
+    if [ "$(cat $TEMP_FILE)" = "-1" ]; then
         exit 0
     fi
 done

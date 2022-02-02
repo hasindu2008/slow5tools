@@ -77,8 +77,8 @@ scriptinfo() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#-" | sed -e "s/^#-
 # Default script to be copied and run on the worker nodes
 PIPELINE_SCRIPT="$SCRIPT_PATH/pipeline.sh"
 
-TMP_FILE_PATH="processed_list.log" # Default location for temporary files
-LOG=log.txt # Default log filepath
+TMP_FILE_PATH=  # location for temporary file (where the state is saved for later resuming)
+LOG=            # Default log filepath
 
 # Set options off by default
 resuming=false
@@ -148,36 +148,52 @@ if ! ($monitor_dir_specified); then
 	exit 1
 fi
 
+# set the temporary file and log file
+[ -z ${TMP_FILE_PATH} ] && TMP_FILE_PATH=${MONITOR_PARENT_DIR}/realtime_f2s_processed_list.log
+echo "Temporary file location that saves the state $TMP_FILE_PATH"
+[ -z ${LOG} ] && LOG=${MONITOR_PARENT_DIR}/realtime_f2s.log
+echo "Master log file location ${LOG}"
+MONITOR_TRACE=${MONITOR_PARENT_DIR}/realtime_f2s_monitor_trace.log              #trace for debugging
+echo "Monitor trace log ${MONITOR_TRACE}"
+START_END_TRACE=${MONITOR_PARENT_DIR}/realtime_f2s_start_end_trace.log         #trace for debugging
+echo "Start end trace log ${START_END_TRACE}"
+MONITOR_TEMP=${MONITOR_PARENT_DIR}/realtime_f2s_monitor_temp        #used internally to communicate with the monitor
 
+test -d ${MONITOR_PARENT_DIR} || { echo "Monitor directory does not exist!"; exit 1; }
 
     #== Begin Run ==#
 
 # Warn before cleaning logs
 if ! $resuming && ! $say_yes; then # If not resuming
-    while true; do
-        read -p "This may overwrite stats from a previous run. Do you wish to continue? (y/n)" response
 
-        case $response in
-            [Yy]* )
-                # make clean && make || exit 1 # Freshly compile necessary programs
-                test -e $LOG && rm $LOG # Empty log file
-                break
-                ;;
+    if [ -e ${LOG} ]
+        then
+            while true; do
+                read -p "A previous log file exist at ${LOG}! Use -r to resume from the saved state. To force running (y/n)" response
+                case $response in
+                    [Yy]* )
+                        test -e $LOG && rm $LOG # Empty log file
+                        break
+                        ;;
 
-            [Nn]* )
-                exit 0
-                ;;
+                    [Nn]* )
+                        exit 0
+                        ;;
 
-            * )
-                echo "Please answer yes or no."
-                ;;
-        esac
-    done
+                    * )
+                        echo "Please answer yes or no."
+                        ;;
+                esac
+        done
+    fi
+
 fi
 
 # Create folders to copy the results (slow5 files logs)
 test -d $MONITOR_PARENT_DIR/slow5         || mkdir $MONITOR_PARENT_DIR/slow5            || exit 1
+echo "SLOW5 files will be written to $MONITOR_PARENT_DIR/slow5"
 test -d $MONITOR_PARENT_DIR/slow5_logs    || mkdir $MONITOR_PARENT_DIR/slow5_logs       || exit 1
+echo "SLOW5 f2s individual logs will be written to $MONITOR_PARENT_DIR/slow5_logs"
 
 
 if ! $realtime; then # If non-realtime option set
@@ -192,22 +208,18 @@ else # Else assume realtime analysis is desired
     # Close after timeout met
     if $resuming; then # If resuming option set
         echo "resuming"
-        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -e $MONITOR_PARENT_DIR/  2>> $LOG |
-        bash "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH 2>> $LOG |
-        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH  |&
+        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -e -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/ 2>> $LOG |
+        bash "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE} 2>> $LOG |
+        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE |&
         tee -a $LOG
     else
         echo "running"
         test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
-        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f $MONITOR_PARENT_DIR/ 2>> $LOG |
-        bash "$SCRIPT_PATH"/monitor/ensure.sh -d $TMP_FILE_PATH 2>> $LOG |
-        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH |&
+        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/ 2>> $LOG |
+        bash "$SCRIPT_PATH"/monitor/ensure.sh -d $TMP_FILE_PATH -l ${MONITOR_TRACE} 2>> $LOG |
+        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE |&
         tee -a $LOG
     fi
 fi
-
-echo "[run.sh] handling logs" # testing
-cp  $LOG "$MONITOR_PARENT_DIR"/slow5_logs/slow5_master_log.log # Copy entire data folder to local f5pmaster folder
-cp  $TMP_FILE_PATH "$MONITOR_PARENT_DIR"/slow5_logs/processed_list.log # Copy entire data folder to local f5pmaster folder
 
 echo "[run.sh] exiting" # testing

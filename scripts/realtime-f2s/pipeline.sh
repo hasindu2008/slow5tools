@@ -10,12 +10,17 @@ die() {
 	exit 1
 }
 
+LOG=start_end_trace.log
+
 ## Handle flags
-while getopts "d:" o; do
+while getopts "d:l:" o; do
     case "${o}" in
         d)
             TMP_FILE=${OPTARG}
             ;;
+		l)
+            LOG=${OPTARG}
+			;;
         *)
             echo "Incorrect args"
             usagefull
@@ -27,7 +32,7 @@ shift $((OPTIND-1))
 
 slow5tools --version &> /dev/null || die "slow5tools not found in path. Exiting."
 
-test -e start_end_trace.log && rm start_end_trace.log
+test -e ${LOG}  && rm ${LOG}
 
 while read FILE
 do
@@ -44,10 +49,10 @@ do
 
     echo "Converting $FILE to $SLOW5_FILEPATH"
     START_TIME=$(date)
-    ${SLOW5TOOLS} f2s -p1 $FILE -o $SLOW5_FILEPATH 2> $LOG_FILEPATH
+    ${SLOW5TOOLS} f2s -p1 $FILE -o $SLOW5_FILEPATH 2> $LOG_FILEPATH || {echo "Converting $FILE to $SLOW5_FILEPATH failed. Please check log at $LOG_FILEPATH"}
     END_TIME=$(date)
 
     echo "$F5_FILEPATH" >> $TMP_FILE
-    echo -e $F5_FILEPATH"\t"$SLOW5_FILEPATH"\t"$START_TIME"\t"$END_TIME >> start_end_trace.log
+    echo -e $F5_FILEPATH"\t"$SLOW5_FILEPATH"\t"$START_TIME"\t"$END_TIME >> ${LOG}
 
 done
