@@ -106,7 +106,7 @@ while getopts "ehift:n:d:" o; do
             TEMP_FILE="${OPTARG}"
             ;;
         *)
-            echo "Incorrect or no timeout format specified"
+            echo "[monitor.sh] Incorrect or no timeout format specified"
             usagefull
             exit 1
             ;;

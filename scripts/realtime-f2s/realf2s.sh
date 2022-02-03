@@ -94,7 +94,7 @@ monitor_dir_specified=false
 MONITOR_PARENT_DIR=
 
 ## Handle flags
-while getopts "ihnrym:l:t:d:" o; do
+while getopts "ihnrym:l:t:d:f:" o; do
     case "${o}" in
         m)
             MONITOR_PARENT_DIR=${OPTARG}
@@ -132,6 +132,9 @@ while getopts "ihnrym:l:t:d:" o; do
         s)
             PIPELINE_SCRIPT=${OPTARG}
             ;;
+        f)
+            FAILED_LIST=${OPTARG}
+            ;;
         *)
             usage
             ;;
@@ -143,25 +146,34 @@ shift $((OPTIND-1))
 
 # If either format or monitor option not set
 if ! ($monitor_dir_specified); then
-    if ! $monitor_dir_specified; then echo "No monitor directory specified!"; fi
+    if ! $monitor_dir_specified; then echo "[realf2s.sh] No monitor directory specified!"; fi
 	usage
 	exit 1
 fi
 
 # set the temporary file and log file
-[ -z ${TMP_FILE_PATH} ] && TMP_FILE_PATH=${MONITOR_PARENT_DIR}/realtime_f2s_processed_list.log
-echo "Temporary file location that saves the state $TMP_FILE_PATH"
+[ -z ${TMP_FILE_PATH} ] && TMP_FILE_PATH=${MONITOR_PARENT_DIR}/realtime_f2s_attempted_list.log
+echo "[realf2s.sh] Temporary file location that saves the state $TMP_FILE_PATH"
+[ -z ${FAILED_LIST} ] && FAILED_LIST=${MONITOR_PARENT_DIR}/realtime_f2s_failed_list.log
+echo "[realf2s.sh] Any fast5 files that failed conversions will be written to $FAILED_LIST"
+echo "[realf2s.sh] Temporary file location that saves the state $TMP_FILE_PATH"
 [ -z ${LOG} ] && LOG=${MONITOR_PARENT_DIR}/realtime_f2s.log
-echo "Master log file location ${LOG}"
+echo "[realf2s.sh] Master log file location ${LOG}"
 MONITOR_TRACE=${MONITOR_PARENT_DIR}/realtime_f2s_monitor_trace.log              #trace for debugging
-echo "Monitor trace log ${MONITOR_TRACE}"
+echo "[realf2s.sh] Monitor trace log ${MONITOR_TRACE}"
 START_END_TRACE=${MONITOR_PARENT_DIR}/realtime_f2s_start_end_trace.log         #trace for debugging
-echo "Start end trace log ${START_END_TRACE}"
+echo "[realf2s.sh] Start end trace log ${START_END_TRACE}"
 MONITOR_TEMP=${MONITOR_PARENT_DIR}/realtime_f2s_monitor_temp        #used internally to communicate with the monitor
+echo "[realf2s.sh] Idle time with no fast5 files to end the program ${TIME_INACTIVE} seconds"
+test -d ${MONITOR_PARENT_DIR} || { echo "[realf2s.sh] Monitor directory does not exist!"; exit 1; }
+[ -z ${SLOW5TOOLS} ] && export SLOW5TOOLS=slow5tools
 
-test -d ${MONITOR_PARENT_DIR} || { echo "Monitor directory does not exist!"; exit 1; }
 
-    #== Begin Run ==#
+
+${SLOW5TOOLS} --version &> /dev/null || { echo "[realf2s.sh] slow5tools not found! Either put slow5tools under path or set SLOW5TOOLS variable, e.g.,export SLOW5TOOLS=/path/to/slow5tools"; exit 1;}
+which inotifywait &> /dev/null || { echo "[realf2s.sh] inotifywait not found! On ubuntu: sudo apt install inotify-tools"; exit 1; }
+
+#== Begin Run ==#
 
 # Warn before cleaning logs
 if ! $resuming && ! $say_yes; then # If not resuming
@@ -169,10 +181,13 @@ if ! $resuming && ! $say_yes; then # If not resuming
     if [ -e ${LOG} ]
         then
             while true; do
-                read -p "A previous log file exist at ${LOG}! Use -r to resume from the saved state. To force running (y/n)" response
+                read -p "[realf2s.sh] A previous log file exist at ${LOG}! Are you sure you want to overwite (y/n)" response
                 case $response in
                     [Yy]* )
                         test -e $LOG && rm $LOG # Empty log file
+                        test -e $MONITOR_TRACE && rm $MONITOR_TRACE # Empty log file
+                        test -e $START_END_TRACE && rm $START_END_TRACE # Empty log file
+                        test -e $FAILED_LIST && rm $FAILED_LIST # Empty log file
                         break
                         ;;
 
@@ -181,7 +196,7 @@ if ! $resuming && ! $say_yes; then # If not resuming
                         ;;
 
                     * )
-                        echo "Please answer yes or no."
+                        echo "[realf2s.sh] Please answer yes or no."
                         ;;
                 esac
         done
@@ -191,13 +206,13 @@ fi
 
 # Create folders to copy the results (slow5 files logs)
 test -d $MONITOR_PARENT_DIR/slow5         || mkdir $MONITOR_PARENT_DIR/slow5            || exit 1
-echo "SLOW5 files will be written to $MONITOR_PARENT_DIR/slow5"
+echo "[realf2s.sh] SLOW5 files will be written to $MONITOR_PARENT_DIR/slow5"
 test -d $MONITOR_PARENT_DIR/slow5_logs    || mkdir $MONITOR_PARENT_DIR/slow5_logs       || exit 1
-echo "SLOW5 f2s individual logs will be written to $MONITOR_PARENT_DIR/slow5_logs"
+echo "[realf2s.sh] SLOW5 f2s individual logs will be written to $MONITOR_PARENT_DIR/slow5_logs"
 
 
 if ! $realtime; then # If non-realtime option set
-    echo "Non realtime conversion of all files in $MONITOR_PARENT_DIR"
+    echo "[realf2s.sh] Non realtime conversion of all files in $MONITOR_PARENT_DIR"
     test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
     find $MONITOR_PARENT_DIR/ -name *.fast5 | "$PIPELINE_SCRIPT"  |&
     tee $LOG
@@ -207,19 +222,34 @@ else # Else assume realtime analysis is desired
     # Monitor the new file creation in fast5 folder and execute realtime f5-pipeline script
     # Close after timeout met
     if $resuming; then # If resuming option set
-        echo "resuming"
-        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -e -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/ 2>> $LOG |
-        bash "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE} 2>> $LOG |
+        echo "[realf2s.sh] resuming"
+        find $MONITOR_PARENT_DIR/ -name *.fast5  |
+        "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
         "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE |&
         tee -a $LOG
+        echo "[realf2s.sh] converting left overs"
+        find $MONITOR_PARENT_DIR/ -name *.fast5   |
+        "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
+        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
+        tee -a $LOG
     else
-        echo "running"
+        echo "[realf2s.sh] running"
         test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
-        bash "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/ 2>> $LOG |
-        bash "$SCRIPT_PATH"/monitor/ensure.sh -d $TMP_FILE_PATH -l ${MONITOR_TRACE} 2>> $LOG |
-        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE |&
+        "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/  |
+        "$SCRIPT_PATH"/monitor/ensure.sh -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
+        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
         tee -a $LOG
     fi
 fi
 
-echo "[run.sh] exiting" # testing
+echo "[realf2s.sh] No new fast5 files found in last ${TIME_INACTIVE} seconds."
+test -e $FAILED_LIST && echo "[realf2s.sh] $(wc -l $FAILED_LIST) fast5 files failed to convert. See $FAILED_LIST for the list"
+NUMFAST5=$(find $MONITOR_PARENT_DIR/ -name '*.fast5' | wc -l)
+NUMBLOW5=$(find $MONITOR_PARENT_DIR/ -name '*.blow5' | wc -l)
+if [ ${NUMFAST5} -ne ${NUMBLOW5} ] ; then
+    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, $NUMBLOW5 blow5 files."
+fi
+else
+    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, but only $NUMBLOW5 blow5 files. Check the logs for any failures."
+fi
+echo "[realf2s.sh] exiting" # testing

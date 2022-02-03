@@ -1,8 +1,8 @@
 #!/bin/bash
 
-SLOW5TOOLS=slow5tools
-TMP_FILE="processed_list.log"
-
+#SLOW5TOOLS=slow5tools
+TMP_FILE="attempted_list.log"
+TMP_FAILED="failed_list.log"
 # terminate script
 die() {
 	echo "$1" >&2
@@ -13,7 +13,7 @@ die() {
 LOG=start_end_trace.log
 
 ## Handle flags
-while getopts "d:l:" o; do
+while getopts "d:l:f:" o; do
     case "${o}" in
         d)
             TMP_FILE=${OPTARG}
@@ -21,8 +21,11 @@ while getopts "d:l:" o; do
 		l)
             LOG=${OPTARG}
 			;;
+        f)
+            TMP_FAILED=${OPTARG}
+            ;;
         *)
-            echo "Incorrect args"
+            echo "[pipeline.sh] Incorrect args"
             usagefull
             exit 1
             ;;
@@ -30,9 +33,9 @@ while getopts "d:l:" o; do
 done
 shift $((OPTIND-1))
 
-slow5tools --version &> /dev/null || die "slow5tools not found in path. Exiting."
+$SLOW5TOOLS --version &> /dev/null || die "[pipeline.sh] slow5tools not found in path. Exiting."
 
-test -e ${LOG}  && rm ${LOG}
+#test -e ${LOG}  && rm ${LOG}
 
 while read FILE
 do
@@ -47,12 +50,13 @@ do
     SLOW5_FILEPATH=$PARENT_DIR/slow5/$F5_PREFIX.blow5
     LOG_FILEPATH=$PARENT_DIR/slow5_logs/$F5_PREFIX.log
 
-    echo "Converting $FILE to $SLOW5_FILEPATH"
+    echo "[pipeline.sh] Converting $FILE to $SLOW5_FILEPATH"
     START_TIME=$(date)
-    ${SLOW5TOOLS} f2s -p1 $FILE -o $SLOW5_FILEPATH 2> $LOG_FILEPATH || {echo "Converting $FILE to $SLOW5_FILEPATH failed. Please check log at $LOG_FILEPATH"}
+    test -e $SLOW5_FILEPATH &&  { echo "$SLOW5_FILEPATH already exists. Converting $FILE to $SLOW5_FILEPATH failed."; echo $FILE >> $TMP_FAILED; }
+    ${SLOW5TOOLS} f2s -p1 $FILE -o $SLOW5_FILEPATH 2> $LOG_FILEPATH || { echo "Converting $FILE to $SLOW5_FILEPATH failed. Please check log at $LOG_FILEPATH"; echo $FILE >> $TMP_FAILED; }
     END_TIME=$(date)
 
-    echo "$F5_FILEPATH" >> $TMP_FILE
+    echo "[pipeline.sh] $F5_FILEPATH" >> $TMP_FILE
     echo -e $F5_FILEPATH"\t"$SLOW5_FILEPATH"\t"$START_TIME"\t"$END_TIME >> ${LOG}
 
 done

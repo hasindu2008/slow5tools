@@ -84,7 +84,7 @@ while getopts "hird:l:" o; do
             RESUME=true
             ;;
         *)
-            echo "Incorrect args"
+            echo "[ensure.sh] Incorrect args"
             usagefull
             exit 1
             ;;
@@ -104,7 +104,7 @@ YELLOW="\e[33m"
 RED="\e[31m"
 NORMAL="\033[0;39m"
 
-test -e ${LOG} && rm ${LOG}
+#test -e ${LOG} && rm ${LOG}
 
 while read filename; do
 
@@ -126,19 +126,19 @@ while read filename; do
 
             if [ $? -eq "0" ]; then # If the file has been processed
                 ((i_old ++))
-                >&2 echo -e $RED"old file ($i_old): $filename"$NORMAL
+                >&2 echo -e $RED"[ensure.sh] old file ($i_old): $filename"$NORMAL
                 continue # Wait for next input
 
             else # Else it is new
                 ((i_new ++))
-                >&2 echo -e $YELLOW"new file ($i_new): $filename"$NORMAL
+                >&2 echo -e $YELLOW"[ensure.sh] new file ($i_new): $filename"$NORMAL
             fi
 
         fi
 
         echo $filename # Output fast5 filename
         TIME=$(date)
-        echo -e $filename"\t"${TIME} >> ${LOG}
+        echo -e "[ensure.sh] "$filename"\t"${TIME} >> ${LOG}
 
     fi
 done
