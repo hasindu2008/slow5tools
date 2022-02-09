@@ -19,7 +19,7 @@ Assume your sequencing data directory is */data* and you are sequencing a sample
 ./realf2s.sh -m /data/my_sequencing_run
 ```
 
-This will monitor the specified directory */data/my_sequencing_run* and as soon as a newly generated fast5 is found, it will convert it. The converted slow5 files will be under */data/my_sequencing_run/slow5* and the individual logs from each slow5 conversion will be under */data/my_sequencing_run/slow5_logs*.
+This will monitor the specified directory */data/my_sequencing_run* and as soon as a newly generated fast5 is found, it will convert it. The converted slow5 files will be under */data/my_sequencing_run/parent_dir_of_fast5/slow5* and the individual logs from each slow5 conversion will be under */data/my_sequencing_run/parent_dir_of_fast5/slow5_logs*.
 
 Brief log messages (including any conversion failures) are written to the terminal as well as */data/my_sequencing_run/realtime_f2s.log*. The list of files that were detected by the monitor and which the conversion was attempted will be written to */data/my_sequencing_run/realtime_f2s_attempted_list.log*. If any conversions failed, the names of the fast5 files will be written to *realtime_f2s_attempted_list.log*. In addition, there will be some other debug/trace logs (e.g.,&*realtime_f2s_monitor_trace.log*).
 

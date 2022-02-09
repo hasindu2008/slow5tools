@@ -6,29 +6,31 @@
 #+    ${SCRIPT_NAME} -m [directory] [options ...]
 #%
 #% DESCRIPTION
-#%    Runs realtime (or not) FAST5 to SLOW5 conversion of sequenced genomes
+#%    Runs realtime FAST5 to SLOW5 conversion of sequenced genomes
 #%    given input directory.
 #%
 #% OPTIONS
 #%
 #%    -h, --help                                    Print help message
 #%    -i, --info                                    Print script information
-#%    -l [filename]                                 Specify log filename for logs (default log.txt)
-#%
 #%    -m [directory]                                Monitor a specific directory
-#%    -n                                            Specify non-realtime analysis
 #%    -r                                            Resumes from last processing position
-#%    -d [filename]                                 Specify location of temporary file (default: processed_list.log)
-#%    -s [file]                                     Custom script for processing files (default: script_location/pipeline.sh)
-#%
 #%    -t [time]                                     Timeout format in seconds (default 3600 s)
+#%
+#% ADVANCED OPTIONS
+#%
+#%    -n                                            Specify non-realtime analysis
+#%    -d [filename]                                 Specify location of temporary file (default: monitor_dir/realtime_f2s_attempted_list.log)
+#%    -l [filename]                                 Specify log filename for logs (default: monitor_dir/realtime_f2s.log)
+#%    -f [file]                                     Specify location of files that failed to convert (default: monitor_dir/realtime_f2s_failed_list.log)
+#%    -s [file]                                     Specify script for processing files (default: script_location/pipeline.sh)
 #%    -y, --yes                                     Say yes to 'Are you sure?' message in advance
 #%
 #% EXAMPLES
-#%    play and resume
+#%    convert
 #%        ${SCRIPT_NAME} -m [directory]
+#%    resume convert
 #%        ${SCRIPT_NAME} -m [directory] -r
-
 #%    non realtime
 #%        ${SCRIPT_NAME} -m [directory] -n
 #%
@@ -77,13 +79,9 @@ scriptinfo() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#-" | sed -e "s/^#-
 # Default script to be copied and run on the worker nodes
 PIPELINE_SCRIPT="$SCRIPT_PATH/pipeline.sh"
 
-TMP_FILE_PATH=  # location for temporary file (where the state is saved for later resuming)
-LOG=            # Default log filepath
-
-# Set options off by default
+# Set options by default
 resuming=false
 realtime=true
-custom_log_specified=false
 say_yes=false
 
 # Default timeout of 1 hour
@@ -101,7 +99,6 @@ while getopts "ihnrym:l:t:d:f:" o; do
             monitor_dir_specified=true
             ;;
 		l)
-            custom_log_specified=true
             LOG=${OPTARG}
 			;;
         h)
@@ -156,14 +153,13 @@ fi
 echo "[realf2s.sh] Temporary file location that saves the state $TMP_FILE_PATH"
 [ -z ${FAILED_LIST} ] && FAILED_LIST=${MONITOR_PARENT_DIR}/realtime_f2s_failed_list.log
 echo "[realf2s.sh] Any fast5 files that failed conversions will be written to $FAILED_LIST"
-echo "[realf2s.sh] Temporary file location that saves the state $TMP_FILE_PATH"
 [ -z ${LOG} ] && LOG=${MONITOR_PARENT_DIR}/realtime_f2s.log
 echo "[realf2s.sh] Master log file location ${LOG}"
-MONITOR_TRACE=${MONITOR_PARENT_DIR}/realtime_f2s_monitor_trace.log              #trace for debugging
+MONITOR_TRACE=${MONITOR_PARENT_DIR}/realtime_f2s_monitor_trace.log              #trace of the monitor for debugging
 echo "[realf2s.sh] Monitor trace log ${MONITOR_TRACE}"
-START_END_TRACE=${MONITOR_PARENT_DIR}/realtime_f2s_start_end_trace.log         #trace for debugging
+START_END_TRACE=${MONITOR_PARENT_DIR}/realtime_f2s_start_end_trace.log          #trace for debugging
 echo "[realf2s.sh] Start end trace log ${START_END_TRACE}"
-MONITOR_TEMP=${MONITOR_PARENT_DIR}/realtime_f2s_monitor_temp        #used internally to communicate with the monitor
+MONITOR_TEMP=${MONITOR_PARENT_DIR}/realtime_f2s_monitor_temp                    #used internally to communicate with the monitor
 echo "[realf2s.sh] Idle time with no fast5 files to end the program ${TIME_INACTIVE} seconds"
 test -d ${MONITOR_PARENT_DIR} || { echo "[realf2s.sh] Monitor directory does not exist!"; exit 1; }
 [ -z ${SLOW5TOOLS} ] && export SLOW5TOOLS=slow5tools
@@ -181,7 +177,7 @@ if ! $resuming && ! $say_yes; then # If not resuming
     if [ -e ${LOG} ]
         then
             while true; do
-                read -p "[realf2s.sh] A previous log file exist at ${LOG}! Are you sure you want to overwite (y/n)" response
+                read -p "[realf2s.sh] A previous log file exist at ${LOG}! Are you sure you want to remove them and start over (y/n)" response
                 case $response in
                     [Yy]* )
                         test -e $LOG && rm $LOG # Empty log file
@@ -205,11 +201,10 @@ if ! $resuming && ! $say_yes; then # If not resuming
 fi
 
 # Create folders to copy the results (slow5 files logs)
-test -d $MONITOR_PARENT_DIR/slow5         || mkdir $MONITOR_PARENT_DIR/slow5            || exit 1
-echo "[realf2s.sh] SLOW5 files will be written to $MONITOR_PARENT_DIR/slow5"
-test -d $MONITOR_PARENT_DIR/slow5_logs    || mkdir $MONITOR_PARENT_DIR/slow5_logs       || exit 1
-echo "[realf2s.sh] SLOW5 f2s individual logs will be written to $MONITOR_PARENT_DIR/slow5_logs"
-
+# test -d $MONITOR_PARENT_DIR/slow5         || mkdir $MONITOR_PARENT_DIR/slow5            || exit 1
+# echo "[realf2s.sh] SLOW5 files will be written to $MONITOR_PARENT_DIR/slow5"
+# test -d $MONITOR_PARENT_DIR/slow5_logs    || mkdir $MONITOR_PARENT_DIR/slow5_logs       || exit 1
+# echo "[realf2s.sh] SLOW5 f2s individual logs will be written to $MONITOR_PARENT_DIR/slow5_logs"
 
 if ! $realtime; then # If non-realtime option set
     echo "[realf2s.sh] Non realtime conversion of all files in $MONITOR_PARENT_DIR"
@@ -223,14 +218,9 @@ else # Else assume realtime analysis is desired
     # Close after timeout met
     if $resuming; then # If resuming option set
         echo "[realf2s.sh] resuming"
-        find $MONITOR_PARENT_DIR/ -name *.fast5  |
+        "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/  |
         "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
         "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE |&
-        tee -a $LOG
-        echo "[realf2s.sh] converting left overs"
-        find $MONITOR_PARENT_DIR/ -name *.fast5   |
-        "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
-        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
         tee -a $LOG
     else
         echo "[realf2s.sh] running"
@@ -240,6 +230,12 @@ else # Else assume realtime analysis is desired
         "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
         tee -a $LOG
     fi
+    echo "[realf2s.sh] converting left overs"
+    find $MONITOR_PARENT_DIR/ -name *.fast5   |
+    "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
+    "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
+    tee -a $LOG
+
 fi
 
 echo "[realf2s.sh] No new fast5 files found in last ${TIME_INACTIVE} seconds."
@@ -247,9 +243,16 @@ test -e $FAILED_LIST && echo "[realf2s.sh] $(wc -l $FAILED_LIST) fast5 files fai
 NUMFAST5=$(find $MONITOR_PARENT_DIR/ -name '*.fast5' | wc -l)
 NUMBLOW5=$(find $MONITOR_PARENT_DIR/ -name '*.blow5' | wc -l)
 if [ ${NUMFAST5} -ne ${NUMBLOW5} ] ; then
+    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, but only $NUMBLOW5 blow5 files. Check the logs for any failures."
+else
     echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, $NUMBLOW5 blow5 files."
 fi
-else
-    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, but only $NUMBLOW5 blow5 files. Check the logs for any failures."
-fi
+FAST5_SIZE=$(find $MONITOR_PARENT_DIR/ -name '*.fast5' -printf "%s\t%p\n" | awk 'BEGIN{sum=0}{sum=sum+$1}END{print sum/(1024*1024*1024)}')
+BLOW5_SIZE=$(find $MONITOR_PARENT_DIR/ -name '*.blow5' -printf "%s\t%p\n" | awk 'BEGIN{sum=0}{sum=sum+$1}END{print sum/(1024*1024*1024)}')
+SAVINGS=$(echo $FAST5_SIZE - $BLOW5_SIZE | bc)
+SAVINGS_PERCENT=$(echo "scale=2; $SAVINGS/$FAST5_SIZE*100" | bc)
+echo "FAST5 size: $FAST5_SIZE GB"
+echo "BLOW5 size: $BLOW5_SIZE GB"
+echo "Savings: $SAVINGS GB ($SAVINGS_PERCENT%)"
+
 echo "[realf2s.sh] exiting" # testing

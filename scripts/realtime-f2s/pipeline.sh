@@ -47,14 +47,18 @@ do
     # name of the .fast5 file without the extension
     F5_PREFIX=${F5_FILENAME%.*}
 
+    test -d $PARENT_DIR/slow5/ || { mkdir $PARENT_DIR/slow5/; echo "[pipeline.sh] Created $PARENT_DIR/slow5/. Converted SLOW5 files will be here."; }
+    test -d $PARENT_DIR/slow5_logs/ || { mkdir $PARENT_DIR/slow5_logs/; echo "[pipeline.sh] Created $PARENT_DIR/slow5_logs/. SLOW5 individual logs for each conversion will be here."; }
+
     SLOW5_FILEPATH=$PARENT_DIR/slow5/$F5_PREFIX.blow5
     LOG_FILEPATH=$PARENT_DIR/slow5_logs/$F5_PREFIX.log
 
-    echo "[pipeline.sh] Converting $FILE to $SLOW5_FILEPATH"
     START_TIME=$(date)
+    echo "[pipeline.sh::${START_TIME}]  Converting $FILE to $SLOW5_FILEPATH"
     test -e $SLOW5_FILEPATH &&  { echo "$SLOW5_FILEPATH already exists. Converting $FILE to $SLOW5_FILEPATH failed."; echo $FILE >> $TMP_FAILED; }
     ${SLOW5TOOLS} f2s -p1 $FILE -o $SLOW5_FILEPATH 2> $LOG_FILEPATH || { echo "Converting $FILE to $SLOW5_FILEPATH failed. Please check log at $LOG_FILEPATH"; echo $FILE >> $TMP_FAILED; }
     END_TIME=$(date)
+    echo "[pipeline.sh::${END_TIME}]  Finished converting $FILE to $SLOW5_FILEPATH"
 
     echo "[pipeline.sh] $F5_FILEPATH" >> $TMP_FILE
     echo -e $F5_FILEPATH"\t"$SLOW5_FILEPATH"\t"$START_TIME"\t"$END_TIME >> ${LOG}
