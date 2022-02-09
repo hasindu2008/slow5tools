@@ -52,7 +52,7 @@
     "        --retain                  retain directory structure in the output\n"
 
 #define HELP_MSG_CONTINUE_MERGE \
-    "        --continue                continue to merge the files despite the WARNINGS about the differences in run_id groups [false].\n"
+    "        --allow                   continue to merge the files despite the WARNINGS about the differences in run_id groups [false].\n"
 
 #define HELP_MSG_HELP \
     "    -h, --help                    display this message and exit\n" \

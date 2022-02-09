@@ -81,6 +81,13 @@ $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_formats.slow5 || die
 diff -q $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged_output_formats.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME failed"
 
 TESTCASE=7
+TESTNAME="merging files where one header attr is missing in one file"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/rg0_asic_id_missing.slow5 $RAW_DIR/rg1.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/asic_id_missing_expected_rg1.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
+
+TESTCASE=8
 TESTNAME="blow5 output"
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg2.slow5 $RAW_DIR/rg3.slow5"
@@ -89,43 +96,43 @@ diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/mer
 
 arg_true="true"
 arg_false="false"
-TESTCASE=8
+TESTCASE=9
 TESTNAME="merging files where one header attr is missing in one file"
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0_asic_id_missing.slow5 $RAW_DIR/rg0.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 && die "tesetcase $TESTCASE: $TESTNAME failed"
 
-TESTCASE=9
-TESTNAME="merging files where one header attr is missing in one file with --continue true "
+TESTCASE=10
+TESTNAME="merging files where one header attr is missing in one file with --allow true "
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0_asic_id_missing.slow5 $RAW_DIR/rg0.slow5"
-$SLOW5_EXEC merge --continue $arg_true $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+$SLOW5_EXEC merge --allow $arg_true $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
 diff -q $REL_PATH/data/exp/merge/asic_id_missing_expected.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 
-TESTCASE=10
+TESTCASE=11
 TESTNAME="merging files where one header attr is missing in one file (reversed input file order)"
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg0_asic_id_missing.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 && die "tesetcase $TESTCASE: $TESTNAME failed"
 
-TESTCASE=11
-TESTNAME="merging files where one header attr is missing in one file (reversed input file order) with --continue true "
+TESTCASE=12
+TESTNAME="merging files where one header attr is missing in one file (reversed input file order) with --allow true "
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg0_asic_id_missing.slow5"
-$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --continue $arg_true || die "tesetcase $TESTCASE: $TESTNAME failed"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 --allow $arg_true || die "tesetcase $TESTCASE: $TESTNAME failed"
 diff -q $REL_PATH/data/exp/merge/asic_id_missing_expected.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 
-TESTCASE=12
+TESTCASE=13
 TESTNAME="same run_id different attribute values"
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg0_1.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 && die "tesetcase $TESTCASE: $TESTNAME failed"
 
-TESTCASE=13
-TESTNAME="same run_id different attribute values with --continue true "
+TESTCASE=14
+TESTNAME="same run_id different attribute values with --allow true "
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg0_1.slow5"
-$SLOW5_EXEC merge --continue $arg_true $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+$SLOW5_EXEC merge --allow $arg_true $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
 diff -q $REL_PATH/data/exp/merge/same_run_id_different_attribute_values.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"

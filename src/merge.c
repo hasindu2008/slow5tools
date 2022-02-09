@@ -89,7 +89,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {"compress", required_argument, NULL, 'c'},  //3
             {"sig-compress",    required_argument,  NULL, 's'}, //4
             { "lossless", required_argument, NULL, 'l'}, //5
-            { "continue", required_argument, NULL, 'a'}, //6
+            { "allow", required_argument, NULL, 'a'}, //6
             {"output", required_argument, NULL, 'o'}, //7
             {"batchsize", required_argument, NULL, 'K'}, //8
             {NULL, 0, NULL, 0 }
