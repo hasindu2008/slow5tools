@@ -56,9 +56,14 @@ do
     START_TIME=$(date)
     echo "[pipeline.sh::${START_TIME}]  Converting $FILE to $SLOW5_FILEPATH"
     test -e $SLOW5_FILEPATH &&  { echo "$SLOW5_FILEPATH already exists. Converting $FILE to $SLOW5_FILEPATH failed."; echo $FILE >> $TMP_FAILED; }
-    ${SLOW5TOOLS} f2s -p1 $FILE -o $SLOW5_FILEPATH 2> $LOG_FILEPATH || { echo "Converting $FILE to $SLOW5_FILEPATH failed. Please check log at $LOG_FILEPATH"; echo $FILE >> $TMP_FAILED; }
-    END_TIME=$(date)
-    echo "[pipeline.sh::${END_TIME}]  Finished converting $FILE to $SLOW5_FILEPATH"
+    if ${SLOW5TOOLS} f2s -p1 $FILE -o $SLOW5_FILEPATH 2> $LOG_FILEPATH
+    then
+        END_TIME=$(date)
+        echo "[pipeline.sh::${END_TIME}]  Finished converting $FILE to $SLOW5_FILEPATH"
+    else
+        echo "Converting $FILE to $SLOW5_FILEPATH failed. Please check log at $LOG_FILEPATH"
+        echo $FILE >> $TMP_FAILED;
+    fi
 
     echo "[pipeline.sh] $F5_FILEPATH" >> $TMP_FILE
     echo -e $F5_FILEPATH"\t"$SLOW5_FILEPATH"\t"$START_TIME"\t"$END_TIME >> ${LOG}

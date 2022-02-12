@@ -119,10 +119,10 @@ while read filename; do
     pathless=$(basename $filename) # Strip path
     prefix=${pathless%.*} # Remove extension
 
-    if echo $filename | grep -q \\.fast5; then # If it is a fast5 file
+    if echo $filename | grep -q '\.fast5$'; then # If it is a fast5 file
 
         if $RESUME; then # If resume option set
-            grep -q /$prefix\\.fast5$ "$TMP_FILE" # Check if filename exists in temp files
+            grep -q "/$prefix\.fast5$" "$TMP_FILE" # Check if filename exists in temp files
 
             if [ $? -eq "0" ]; then # If the file has been processed
                 ((i_old ++))
