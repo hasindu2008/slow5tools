@@ -397,7 +397,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     else if(strcmp("read_id",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
         if(H5Tclass!=H5T_STRING){
-            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_STRING");
+            ERROR("The type of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class.c_str(), "H5T_STRING");
+            return -1;
         }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         //make sure read_id has a proper starting character
@@ -442,7 +443,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     else if(strcmp("digitisation",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
         if(H5Tclass!=H5T_FLOAT){
-            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+            ERROR("The type of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class.c_str(), "H5T_FLOAT");
+            return -1;
         }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->digitisation = value.attr_double;
@@ -450,7 +452,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     else if(strcmp("offset",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
         if(H5Tclass!=H5T_FLOAT){
-            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+            ERROR("The type of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class.c_str(), "H5T_FLOAT");
+            return -1;
         }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->offset = value.attr_double;
@@ -458,7 +461,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     else if(strcmp("range",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
         if(H5Tclass!=H5T_FLOAT){
-            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+            ERROR("The type of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class.c_str(), "H5T_FLOAT");
+            return -1;
         }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->range = value.attr_double;
@@ -466,7 +470,8 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     else if(strcmp("sampling_rate",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
         if(H5Tclass!=H5T_FLOAT){
-            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+            ERROR("The type of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class.c_str(), "H5T_FLOAT");
+            return -1;
         }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->sampling_rate = value.attr_double;
