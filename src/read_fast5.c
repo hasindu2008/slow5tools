@@ -38,6 +38,8 @@ void search_and_warn(operator_obj *operator_data, std::string key, const char *w
 
 int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_class_t h5TClass, attribute_data value, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs);
 
+void type_inconsistency_warn(const char *name, operator_obj *operator_data, std::string h5t_class, const char *expected_type);
+
 int print_slow5_header(operator_obj* operator_data) {
     if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
         ERROR("Could not write the SLOW5 header to %s", operator_data->slow5File->meta.pathname);
@@ -129,7 +131,6 @@ int read_fast5(opt_t *user_opts,
     tracker.flag_run_id = &flag_run_id;
     tracker.flag_run_id_tracking_id = &flag_run_id_tracking_id;
     tracker.flag_lossy = &flag_lossy;
-    tracker.flag_write_header = &write_header_flag;
     tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
     tracker.flag_header_is_written = &flag_header_is_written;
     tracker.flag_dump_all = &flag_dump_all;
@@ -346,8 +347,11 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             index++;
         }
     }
-    if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
+    if(strcmp("pore_type",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_STRING){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_STRING");
+        }
         std::string key = "sh_" + std::string(name); //stored in header
         char warn_message[300];
         sprintf(warn_message,"The attribute 'pore_type' is empty and will be stored in the SLOW5 header");
@@ -356,30 +360,45 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 
 //            RAW
-    else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER){
+    else if(strcmp("start_time",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_INTEGER){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_INTEGER");
+        }
         if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_UINT64_T, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
-    else if(strcmp("duration",name)==0 && H5Tclass==H5T_INTEGER){
+    else if(strcmp("duration",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_INTEGER){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_INTEGER");
+        }
 //        operator_data->slow5_record->len_raw_signal = value.attr_int;
     }
-    else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER){
+    else if(strcmp("read_number",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_INTEGER){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_INTEGER");
+        }
         if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_INT32_T, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
-    else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER){
+    else if(strcmp("start_mux",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_INTEGER){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_INTEGER");
+        }
         if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_UINT8_T, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
-    else if(strcmp("read_id",name)==0 && H5Tclass==H5T_STRING){
+    else if(strcmp("read_id",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_STRING){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_STRING");
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         //make sure read_id has a proper starting character
         if(isalpha(value.attr_string[0]) || isdigit(value.attr_string[0])){
@@ -390,43 +409,65 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             return -1;
         }
     }
-    else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("median_before",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_FLOAT){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+        }
         if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_DOUBLE, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
-    else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
+    else if(strcmp("end_reason",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_ENUM, enum_labels_list_ptrs) == -1){
+        if(H5Tclass!=H5T_ENUM){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_ENUM");
+        }
+        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1) {
             return -1;
         }
 
+
     }
 //            CHANNEL_ID
-    else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING){
+    else if(strcmp("channel_number",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_STRING){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_STRING");
+        }
         if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_STRING, enum_labels_list_ptrs) == -1){
             return -1;
         }
     }
-    else if(strcmp("digitisation",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("digitisation",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_FLOAT){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->digitisation = value.attr_double;
     }
-    else if(strcmp("offset",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("offset",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_FLOAT){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->offset = value.attr_double;
     }
-    else if(strcmp("range",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("range",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_FLOAT){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->range = value.attr_double;
     }
-    else if(strcmp("sampling_rate",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("sampling_rate",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_FLOAT){
+            type_inconsistency_warn(name, operator_data, h5t_class, "H5T_FLOAT");
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->sampling_rate = value.attr_double;
     }
@@ -518,6 +559,13 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         free(value.attr_string);
     }
     return return_val;
+}
+
+void type_inconsistency_warn(const char *name, operator_obj *operator_data, std::string h5t_class, const char *expected_type) {
+    std::string key = "type_inconsistent_" + std::string(name); //type inconsistency
+    char warn_message[300];
+    sprintf(warn_message,"The type of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class.c_str(), expected_type);
+    search_and_warn(operator_data,key,warn_message);
 }
 
 void search_and_warn(operator_obj *operator_data, std::string key, const char *warn_message) {
@@ -754,7 +802,7 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                                 ERROR("Bad fast5: run_id information of the read %s in %s cannot be found.", operator_data->slow5_record->read_id, operator_data->fast5_path);
                                 return -1;
                             }
-                            if(*(operator_data->flag_write_header) == 0){
+                            if(*(operator_data->flag_header_is_written) == 0){
                                 int ret = print_slow5_header(operator_data);
                                 if(ret < 0){
                                     return ret;
