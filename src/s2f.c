@@ -322,13 +322,13 @@ void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const cha
         }
     }
 
-
     /* Create a new file using default properties. */
     file_id = H5Fcreate(fast5_file_path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if(file_id < 0){
         ERROR("Failed to create the fast5 file '%s'.", fast5_file_path);
         exit(EXIT_FAILURE);
     }
+    set_hdf5_attributes(file_id, ROOT, slow5File->header, slow5_record, &end_reason_enum_id);
 
     // create first read group
     const char* read_tag = "read_";

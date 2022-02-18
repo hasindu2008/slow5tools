@@ -640,7 +640,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
         std::string key = "at_" + std::string(name); //Alert
         char warn_message[300];
-        sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected", name, operator_data->group_name, operator_data->fast5_path);
+        sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected", operator_data->group_name, name, operator_data->fast5_path);
         search_and_warn(operator_data,key,warn_message);
     }
 
@@ -752,75 +752,77 @@ void search_and_warn(operator_obj *operator_data, std::string key, const char *w
 
 int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_class_t h5TClass, attribute_data value, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs) {
     int failed = 0;
-    if(*(operator_data->flag_lossy)==0){
-        if(*(operator_data->flag_header_is_written)==0){
-            if(slow5_type == SLOW5_ENUM){
-                if(slow5_aux_meta_add_enum(operator_data->slow5File->header->aux_meta, name, slow5_type, enum_labels_list_ptrs.data(), enum_labels_list_ptrs.size())){
-                    failed = 1;
-                }
-            }
-            else{
-                if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, name, slow5_type)){
-                    failed = 1;
-                }
-            }
-            if(failed){
-                ERROR("Could not initialize the record attribute '%s'", name);
-                return -1;
-            }
-        }
-        uint32_t attribute_index;
-        if(operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0, &attribute_index) == 0){
-            if(slow5_type == SLOW5_ENUM){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint8_t) != 0) {
-                    failed = 1;
-                }
-            }
-            else if(slow5_type == SLOW5_STRING) {
-                if (slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, value.attr_string) != 0) {
-                    failed = 1;
-                }
-            }
-            else if(slow5_type == SLOW5_DOUBLE){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_double) != 0) {
-                    failed = 1;
-                }
-            }
-            else if(slow5_type == SLOW5_UINT8_T){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint8_t) != 0) {
-                    failed = 1;
-                }
-            }
-            else if(slow5_type == SLOW5_INT32_T){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_int32_t) != 0) {
-                    failed = 1;
-                }
-            }
-            else if(slow5_type == SLOW5_UINT32_T){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint32_t) != 0) {
-                    failed = 1;
-                }
-            }
-            else if(slow5_type == SLOW5_UINT64_T){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint64_t) != 0) {
-                    failed = 1;
-                }
-            }
-            else {
+    if(*(operator_data->flag_lossy)==1){
+        return 0;
+    }
+
+    if(*(operator_data->flag_header_is_written)==0){
+        if(slow5_type == SLOW5_ENUM){
+            if(slow5_aux_meta_add_enum(operator_data->slow5File->header->aux_meta, name, slow5_type, enum_labels_list_ptrs.data(), enum_labels_list_ptrs.size())){
                 failed = 1;
             }
-            if(failed){
-                ERROR("Could not set the slow5 record auxiliary attribute '%s/%s' in %s", operator_data->group_name, name, operator_data->fast5_path);
-                return -1;
-            }
-
-        }else if(*(operator_data->flag_header_is_written) == 1 && operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0, NULL) == -1){
-            std::string key = "nh_" + std::string(name); //not stored in header
-            char warn_message[300];
-            sprintf(warn_message,"%s auxiliary attribute is not set in the slow5 header", name);
-            search_and_warn(operator_data,key,warn_message);
-            // WARNING("%s auxiliary attribute is not set in the slow5 header", name);
         }
+        else{
+            if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, name, slow5_type)){
+                failed = 1;
+            }
+        }
+        if(failed){
+            ERROR("Could not initialize the record attribute '%s/%s' in %s", operator_data->group_name, name, operator_data->fast5_path);
+            return -1;
+        }
+    }
+    uint32_t attribute_index;
+    if(operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0, &attribute_index) == 0){
+        if(slow5_type == SLOW5_ENUM){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint8_t) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_STRING) {
+            if (slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, value.attr_string) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_DOUBLE){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_double) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_UINT8_T){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint8_t) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_INT32_T){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_int32_t) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_UINT32_T){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint32_t) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_UINT64_T){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint64_t) != 0) {
+                failed = 1;
+            }
+        }
+        else {
+            failed = 1;
+        }
+        if(failed){
+            ERROR("Could not set the slow5 record auxiliary attribute '%s/%s' in %s", operator_data->group_name, name, operator_data->fast5_path);
+            return -1;
+        }
+
+    }else if(*(operator_data->flag_header_is_written) == 1 && operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0, NULL) == -1){
+        std::string key = "nh_" + std::string(name); //not stored in header
+        char warn_message[300];
+        sprintf(warn_message,"%s auxiliary attribute is not set in the slow5 header", name);
+        search_and_warn(operator_data,key,warn_message);
+        // WARNING("%s auxiliary attribute is not set in the slow5 header", name);
     }
     return 0;
 }
