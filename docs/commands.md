@@ -85,6 +85,8 @@ If multiple samples (different run ids) are detected, the header and the *read_g
   The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 *   `--lossless STR`:  
     Retain information in auxiliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce file size. *IMPORTANT: Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5*.
+* `--allow STR`:  
+    Continue to merge the files despite the WARNINGS about the differences in run_id groups [default value: true].
 *  `-h, --help`:  
    Prints the help menu.
 

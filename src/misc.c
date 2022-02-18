@@ -46,6 +46,7 @@ void init_opt(opt_t *opt){
     opt->arg_lossless = NULL;
     opt->arg_dump_all = NULL;
     opt->arg_num_processes = NULL;
+    opt->arg_continue_merge = NULL;
 
     // Default options
     opt->fmt_in = SLOW5_FORMAT_UNKNOWN;
