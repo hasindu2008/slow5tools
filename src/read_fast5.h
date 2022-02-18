@@ -93,7 +93,11 @@ typedef struct {
 }proc_arg_t;
 
 union attribute_data {
-    int attr_int;
+    int32_t attr_int32_t;
+    int64_t attr_int64_t;
+    uint32_t attr_uint32_t;
+    uint64_t attr_uint64_t;
+    float attr_float;
     double attr_double;
     uint8_t attr_uint8_t;
     char* attr_string;

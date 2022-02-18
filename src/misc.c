@@ -308,7 +308,7 @@ enum slow5_fmt parse_path_to_fmt(const char *fname) {
     return fmt;
 }
 
-int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose){
+int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose, uint32_t* index){
     if(slow5_header->aux_meta->num == 0){
         if(verbose){
             ERROR("Header does not have auxiliary fields%s", "");
@@ -321,6 +321,9 @@ int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int ve
             ERROR("Auxiliary field '%s' not found.", attr);
         }
         return -1;
+    }else {
+        *index = kh_val(slow5_header->aux_meta->attr_to_pos, pos);
     }
+
     return 0;
 }

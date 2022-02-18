@@ -75,7 +75,7 @@ typedef struct {
 
 enum slow5_fmt parse_name_to_fmt(const char *fmt_str);
 enum slow5_fmt parse_path_to_fmt(const char *fname);
-int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose);
+int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose,  uint32_t* i);
 // Timing
 // From minimap2/misc
 static inline double slow5_realtime(void) {
