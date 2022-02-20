@@ -724,6 +724,8 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     init_realtime = slow5_realtime();
     s2f_iop(user_opts.num_processes, slow5_files, user_opts.arg_dir_out, user_opts.arg_fname_out, meta, &readsCount);
     VERBOSE("Converting %ld s/blow5 files took %.3fs", slow5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Children processes: CPU time = %.3f sec | peak RAM = %.3f GB", slow5_cputime_child(), slow5_peakrss_child() / 1024.0 / 1024.0 / 1024.0);
+
 
     return EXIT_SUCCESS;
 }

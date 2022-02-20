@@ -230,6 +230,7 @@ else # Else assume realtime analysis is desired
         "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
         tee -a $LOG
     fi
+    echo "[realf2s.sh] No new fast5 files found in last ${TIME_INACTIVE} seconds."
     echo "[realf2s.sh] converting left overs"
     find $MONITOR_PARENT_DIR/ -name *.fast5   |
     "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
@@ -238,7 +239,6 @@ else # Else assume realtime analysis is desired
 
 fi
 
-echo "[realf2s.sh] No new fast5 files found in last ${TIME_INACTIVE} seconds."
 test -e $FAILED_LIST && echo "[realf2s.sh] $(wc -l $FAILED_LIST) fast5 files failed to convert. See $FAILED_LIST for the list"
 NUMFAST5=$(find $MONITOR_PARENT_DIR/ -name '*.fast5' | wc -l)
 NUMBLOW5=$(find $MONITOR_PARENT_DIR/ -name '*.blow5' | wc -l)

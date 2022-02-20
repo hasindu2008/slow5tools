@@ -154,7 +154,7 @@ i=0 # Initialise file counter
 (
     while read path action file; do
 
-        if $timeout; then # If timeout option set
+        if $timeout && echo $file | grep -q '\.fast5$'; then # If timeout option set and file is fast5
             reset_timer # Reset the timer
         fi
         echo "$path$file" # Output the absolute file path
@@ -193,6 +193,7 @@ while $timeout; do
     if (( $(echo "$time_elapsed > $TIME_INACTIVE" | bc -l) )) || [ "$(cat $TEMP_FILE)" = "-1" ]; then
         exit 0
     fi
+    sleep 1
 
 done
 

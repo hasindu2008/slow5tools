@@ -497,8 +497,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     reads_count readsCount;
     f2s_iop(&user_opts, fast5_files, &readsCount, argv[optind]);
     VERBOSE("Converting %ld fast5 files took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Children processes: CPU time = %.3f sec | peak RAM = %.3f GB", slow5_cputime_child(), slow5_peakrss_child() / 1024.0 / 1024.0 / 1024.0);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
 }
-

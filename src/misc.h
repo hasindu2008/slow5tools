@@ -105,6 +105,24 @@ static inline long slow5_peakrss(void) {
 
 }
 
+static inline double slow5_cputime_child(void) {
+    struct rusage r;
+    getrusage(RUSAGE_CHILDREN, &r);
+    return r.ru_utime.tv_sec + r.ru_stime.tv_sec +
+           1e-6 * (r.ru_utime.tv_usec + r.ru_stime.tv_usec);
+}
+
+static inline long slow5_peakrss_child(void) {
+	struct rusage r;
+	getrusage(RUSAGE_CHILDREN, &r);
+#ifdef __linux__
+	return r.ru_maxrss * 1024;
+#else
+	return r.ru_maxrss;
+#endif
+
+}
+
 void print_args(int argc, char **argv);
 
 void init_opt(opt_t *opt);
