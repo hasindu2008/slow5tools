@@ -15,7 +15,7 @@
 #%    -i, --info                                    Print script information
 #%    -m [directory]                                Monitor a specific directory
 #%    -r                                            Resumes from last processing position
-#%    -t [time]                                     Timeout format in seconds (default 3600 s)
+#%    -t [time]                                     Timeout format in seconds (default 10800 s)
 #%
 #% ADVANCED OPTIONS
 #%
@@ -84,8 +84,8 @@ resuming=false
 realtime=true
 say_yes=false
 
-# Default timeout of 1 hour
-TIME_INACTIVE=3600
+# Default timeout of 3 hours
+TIME_INACTIVE=10800
 
 # Assume necessary options not set
 monitor_dir_specified=false

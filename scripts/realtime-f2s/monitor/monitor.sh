@@ -17,7 +17,7 @@
 #%    -n [num]                                      Exit after given number of files
 #%    -d [tempfile]                                 Temporary file for monitor
 #%    -t [seconds],
-#%        default -t 3600                           Default timeout of 1 hour
+#%        default -t 10800                           Default timeout of 3 hours
 #%
 #% EXAMPLES
 #%    exit after 10 new files
