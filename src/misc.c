@@ -46,6 +46,7 @@ void init_opt(opt_t *opt){
     opt->arg_lossless = NULL;
     opt->arg_dump_all = NULL;
     opt->arg_num_processes = NULL;
+    opt->arg_continue_merge = NULL;
 
     // Default options
     opt->fmt_in = SLOW5_FORMAT_UNKNOWN;
@@ -60,6 +61,7 @@ void init_opt(opt_t *opt){
     opt->flag_allow_run_id_mismatch = DEFAULT_ALLOW_RUN_ID_MISMATCH;
     opt->flag_retain_dir_structure = DEFAULT_RETAIN_DIR_STRUCTURE;
     opt->flag_dump_all = DEFAULT_DUMP_ALL;
+    opt->flag_continue_merge = DEFAULT_CONTINUE_MERGE;
 }
 
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta){
@@ -104,6 +106,22 @@ int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *m
         } else if (strcmp(opt->arg_lossless, "false") == 0) {
             opt->flag_lossy = 1;
             WARNING("%s", "You have requested lossy conversion. Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5");
+        } else {
+            ERROR("Incorrect argument%s", "");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int parse_arg_continue_merge(opt_t *opt, int argc, char **argv, struct program_meta *meta){
+    // Parse lossless argument
+    if (opt->arg_continue_merge != NULL) {
+        if (strcmp(opt->arg_continue_merge, "true") == 0) {
+            opt->flag_continue_merge = 1;
+        } else if (strcmp(opt->arg_continue_merge, "false") == 0) {
+            opt->flag_continue_merge = 0;
+            WARNING("%s", "You have requested to merge files despite the warnings. Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5");
         } else {
             ERROR("Incorrect argument%s", "");
             return -1;

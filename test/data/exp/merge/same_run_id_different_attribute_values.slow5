@@ -1,6 +1,6 @@
 #slow5_version	0.2.0
 #num_read_groups	1
-@asic_id	.
+@asic_id	420170566
 @asic_id_eeprom	2043896
 @asic_temp	30.1846237
 @auto_update	1
@@ -13,8 +13,8 @@
 @bream_rnd_version	0.1.1
 @device_id	MN16303
 @exp_script_name	python/recipes/nc/NC_48Hr_Sequencing_Run_FLO-MIN106_SQK-LSK108.py
-@exp_script_purpose	sequencing_run
-@exp_start_time	1481657610
+@exp_script_purpose	.
+@exp_start_time	.
 @experiment_kit	genomic_dna
 @file_version	0.0
 @filename	odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395

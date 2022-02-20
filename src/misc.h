@@ -53,6 +53,7 @@ typedef struct {
     int flag_allow_run_id_mismatch;
     int flag_retain_dir_structure;
     int flag_dump_all;
+    int flag_continue_merge;
 
     // Input arguments
     char *arg_fname_in;
@@ -67,6 +68,7 @@ typedef struct {
     char *arg_dir_out;
     char *arg_lossless;
     char *arg_dump_all;
+    char *arg_continue_merge;
 
 } opt_t;
 
@@ -109,6 +111,7 @@ void init_opt(opt_t *opt);
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_num_processes(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *meta);
+int parse_arg_continue_merge(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_arg_dump_all(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_batch_size(opt_t *opt, int argc, char **arg);
 int parse_format_args(opt_t *opt, int argc, char **argv, struct program_meta *meta);
