@@ -73,6 +73,18 @@ $CD_BACK/slow5tools s2f a.slow5 -d $CD_BACK/$OUTPUT_DIR/b || die "testcase $TEST
 cd $CD_BACK
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
-rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
+TESTCASE_NO=5
+TESTNAME="end_reason is an enum"
+echo "-------------------testcase:$TESTCASE_NO: $TESTNAME-------------------"
+$SLOW5_EXEC s2f $RAW_DIR/end_reason_is_enum.slow5 -o $OUTPUT_DIR/end_reason_is_enum.fast5 || die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=6
+TESTNAME="end_reason is an unint8_t"
+echo "-------------------testcase:$TESTCASE_NO: $TESTNAME-------------------"
+$SLOW5_EXEC s2f $RAW_DIR/end_reason_is_unint8_t.slow5 -o $OUTPUT_DIR/end_reason_is_unint8_t.fast5 || die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+#rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0

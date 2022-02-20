@@ -38,6 +38,15 @@ void search_and_warn(operator_obj *operator_data, std::string key, const char *w
 
 int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_class_t h5TClass, attribute_data value, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs);
 
+void type_inconsistency_warn(const char *name, operator_obj *operator_data, std::string h5t_class_string, const char *expected_type, std::string slow5_class, const char *slow5_expected_type);
+
+int convert_to_correct_datatype(attribute_data data, slow5_aux_type from_type, slow5_aux_type to_type);
+
+int add_slow5_auxiliary_attribute(std::string h5t_class_string, std::string slow5_class_string, const char *hdf5_expected_type, hid_t hdf5_expected_type_, const char *slow5_expected_type,
+                                  slow5_aux_type slow5_expected_type_, hid_t native_type, const char *name,
+                                  operator_obj *operator_data, H5T_class_t H5Tclass, attribute_data value,
+                                  slow5_aux_type slow5_class, std::vector<const char *> enum_labels_list_ptrs);
+
 int print_slow5_header(operator_obj* operator_data) {
     if(slow5_hdr_fwrite(operator_data->slow5File->fp, operator_data->slow5File->header, operator_data->format_out, operator_data->pressMethod) == -1){
         ERROR("Could not write the SLOW5 header to %s", operator_data->slow5File->meta.pathname);
@@ -129,7 +138,6 @@ int read_fast5(opt_t *user_opts,
     tracker.flag_run_id = &flag_run_id;
     tracker.flag_run_id_tracking_id = &flag_run_id_tracking_id;
     tracker.flag_lossy = &flag_lossy;
-    tracker.flag_write_header = &write_header_flag;
     tracker.flag_allow_run_id_mismatch = &flag_allow_run_id_mismatch;
     tracker.flag_header_is_written = &flag_header_is_written;
     tracker.flag_dump_all = &flag_dump_all;
@@ -211,7 +219,7 @@ int read_fast5(opt_t *user_opts,
 herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data){
     hid_t attribute, attribute_type, native_type;
     herr_t return_val = 0;
-    int ret = 0;
+    htri_t ret = 0;
 
     struct operator_obj *operator_data = (struct operator_obj *) op_data;
     // Ensure attribute exists
@@ -220,7 +228,6 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         ERROR("Bad fast5: In fast5 file %s, the attribute '%s/%s' does not exist on the HDF5 object.\n", operator_data->fast5_path, operator_data->group_name, name);
         return -1;
     }
-
     attribute = H5Aopen(loc_id, name, H5P_DEFAULT);
     if(attribute < 0){
         ERROR("Bad fast5: In fast5 file %s, failed to open the HDF5 attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
@@ -236,19 +243,24 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         ERROR("Bad fast5: In fast5 file %s, failed to get the native datatype of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
         return -1;
     }
+
+    std::string h5t_class_string = "H5T_STRING";
     H5T_class_t H5Tclass = H5Tget_class(attribute_type);
     if(H5Tclass == -1){
         ERROR("Bad fast5: In fast5 file %s, failed to get the datatype class identifier of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+        return -1;
     }
 
     union attribute_data value;
     int flag_value_string = 0;
-    std::string h5t_class = "H5T_STRING";
     enum slow5_aux_type slow5_class = SLOW5_STRING;
+    std::string slow5_class_string = "SLOW5_STRING";
+
     switch(H5Tclass){
         case H5T_STRING:
-            h5t_class = "H5T_STRING";
+            h5t_class_string = "H5T_STRING";
             slow5_class = SLOW5_STRING;
+            slow5_class_string = "SLOW5_STRING";
             flag_value_string = 1;
             if(H5Tis_variable_str(attribute_type) > 0) {
                 // variable length string
@@ -287,23 +299,62 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             }
             break;
         case H5T_FLOAT:
-            slow5_class = SLOW5_FLOAT;
-            h5t_class = "H5T_FLOAT";
-            H5Aread(attribute, native_type, &(value.attr_double));
+            if(H5Tequal(H5T_IEEE_F64LE,native_type)>0){
+                H5Aread(attribute, native_type, &(value.attr_double));
+                DEBUG("H5T_IEEE_F64LE=%s\n",name);
+                slow5_class = SLOW5_DOUBLE;
+                slow5_class_string = "SLOW5_DOUBLE";
+                h5t_class_string = "H5T_IEEE_F64LE";
+            }else{
+                ERROR("Found an unexpected float datatype in the attribute %s/%s in %s (expected datatype(s): %s).", operator_data->group_name, name, operator_data->fast5_path, "H5T_IEEE_F64LE");
+                return -1;
+            }
             break;
         case H5T_INTEGER:
-            slow5_class = SLOW5_INT32_T;
-            h5t_class = "H5T_INTEGER";
-            H5Aread(attribute,native_type,&(value.attr_int));
+            if(H5Tequal(H5T_STD_I32LE,native_type)>0){
+                H5Aread(attribute,native_type,&(value.attr_int32_t));
+                DEBUG("H5T_STD_I32LE=%s\n",name);
+                slow5_class = SLOW5_INT32_T;
+                slow5_class_string = "SLOW5_INT32_T";
+                h5t_class_string = "H5T_STD_I32LE";
+            }else if(H5Tequal(H5T_STD_I64LE,native_type)>0){
+                H5Aread(attribute,native_type,&(value.attr_int64_t));
+                DEBUG("H5T_STD_I64LE=%s\n",name);
+                slow5_class = SLOW5_INT64_T;
+                slow5_class_string = "SLOW5_INT64_T";
+                h5t_class_string = "H5T_STD_I64LE";
+            }else if(H5Tequal(H5T_STD_U8LE,native_type)>0){
+                H5Aread(attribute,native_type,&(value.attr_uint8_t));
+                DEBUG("H5T_STD_U8LE=%s\n",name);
+                slow5_class = SLOW5_UINT8_T;
+                slow5_class_string = "SLOW5_UINT8_T";
+                h5t_class_string = "H5T_STD_U8LE";
+            }else if(H5Tequal(H5T_STD_U32LE,native_type)>0){
+                H5Aread(attribute,native_type,&(value.attr_uint32_t));
+                DEBUG("H5T_STD_U32LE=%s\n",name);
+                slow5_class = SLOW5_UINT32_T;
+                slow5_class_string = "SLOW5_UINT32_T";
+                h5t_class_string = "H5T_STD_U32LE";
+            }else if(H5Tequal(H5T_STD_U64LE,native_type)>0){
+                H5Aread(attribute,native_type,&(value.attr_uint64_t));
+                DEBUG("H5T_STD_U64LE=%s\n",name);
+                slow5_class = SLOW5_UINT64_T;
+                slow5_class_string = "SLOW5_UINT64_T";
+                h5t_class_string = "H5T_STD_U64LE";
+            }else{
+                ERROR("Found an unexpected integer datatype in the attribute %s/%s in %s (expected datatype(s): %s).", operator_data->group_name, name, operator_data->fast5_path, "H5T_STD_I32LE,H5T_STD_I64LE,H5T_STD_U8LE,H5T_STD_U32LE,H5T_STD_U64LE");
+                return -1;
+            }
             break;
         case H5T_ENUM:
+            H5Aread(attribute,native_type,&(value.attr_uint8_t));
             slow5_class = SLOW5_ENUM;
-            h5t_class = "H5T_ENUM";
-            H5Aread(attribute, native_type, &(value.attr_uint8_t));
+            slow5_class_string = "SLOW5_ENUM";
+            h5t_class_string = "H5T_ENUM";
             break;
         default:
-            h5t_class = "UNKNOWN";
-            WARNING("Weird fast5: In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.", operator_data->fast5_path, operator_data->group_name, name);
+            ERROR("Weird fast5: In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.", operator_data->fast5_path, operator_data->group_name, name);
+            return -1;
     }
 
     std::vector<std::string> enum_labels_list;
@@ -323,110 +374,189 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         for (std::string const& str : enum_labels_list) {
             enum_labels_list_ptrs.push_back(str.data());
         }
+        if(enum_labels_list_ptrs.size() > UINT8_MAX){
+            ERROR("The number of enum (%zu) for the attribute %s/%s in %s exceeds the slow5 enum array size limit (%d)", enum_labels_list_ptrs.size(), operator_data->group_name, name, operator_data->fast5_path, UINT8_MAX);
+            return  -1;
+        }
     }
-
-    //close attributes
-    H5Tclose(native_type);
-    H5Tclose(attribute_type);
-    H5Aclose(attribute);
 
     int flag_new_group_or_new_attribute_read_group = 1;
 
     if(H5Tclass==H5T_STRING){
         if (strcmp(value.attr_string,".")==0){
-            WARNING("Weird fast5: Attribute '%s' in %s is empty '%s'.", name, operator_data->fast5_path, value.attr_string);
+            WARNING("Weird fast5: Attribute '%s/%s' in %s is empty '%s'.", operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
         }
         size_t index = 0;
 
         while(value.attr_string[index]){
             int result = isspace(value.attr_string[index]);
             if (result && value.attr_string[index]!=' '){
-                WARNING("Weird fast5: Attribute '%s' in %s  is empty '%s'.", name, operator_data->fast5_path, value.attr_string);
+                WARNING("Weird fast5: Attribute '%s/%s' in %s  is empty '%s'.", operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
             }
             index++;
         }
     }
-    if(strcmp("pore_type",name)==0 && H5Tclass==H5T_STRING){
+    if(strcmp("pore_type",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tclass!=H5T_STRING){
+            type_inconsistency_warn(name, operator_data, h5t_class_string, "H5T_STRING", slow5_class_string, "SLOW5_STRING");
+        }
         std::string key = "sh_" + std::string(name); //stored in header
         char warn_message[300];
-        sprintf(warn_message,"The attribute 'pore_type' is empty and will be stored in the SLOW5 header");
+        sprintf(warn_message,"The attribute '%s/%s' in %s is empty and will be stored in the SLOW5 header", operator_data->group_name, name, operator_data->fast5_path);
 //        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
         search_and_warn(operator_data,key,warn_message);
     }
 
 //            RAW
-    else if(strcmp("start_time",name)==0 && H5Tclass==H5T_INTEGER){
+    else if(strcmp("start_time",name)==0){
+        const char* hdf5_expected_type = "H5T_STD_U64LE";
+        hid_t hdf5_expected_type_ = H5T_STD_U64LE;
+        const char* slow5_expected_type = "SLOW5_UINT64_T";
+        slow5_aux_type slow5_expected_type_  = SLOW5_UINT64_T;
         flag_new_group_or_new_attribute_read_group = 0;
-        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_UINT64_T, enum_labels_list_ptrs) == -1){
+        int ret_add_slow5_attribute = add_slow5_auxiliary_attribute(h5t_class_string, slow5_class_string,
+                                                                    hdf5_expected_type, hdf5_expected_type_,
+                                                                    slow5_expected_type, slow5_expected_type_,
+                                                                    native_type, name, operator_data, H5Tclass, value,
+                                                                    slow5_class, enum_labels_list_ptrs);
+        if(ret_add_slow5_attribute<0){
+            ERROR("Could not add the auxiliary attribute %s/%s in %s to the slow5 record", operator_data->group_name, name, operator_data->fast5_path);
             return -1;
         }
+
     }
-    else if(strcmp("duration",name)==0 && H5Tclass==H5T_INTEGER){
+    else if(strcmp("duration",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
 //        operator_data->slow5_record->len_raw_signal = value.attr_int;
     }
-    else if(strcmp("read_number",name)==0 && H5Tclass==H5T_INTEGER){
+    else if(strcmp("read_number",name)==0){
+        const char* hdf5_expected_type = "H5T_STD_I32LE";
+        hid_t hdf5_expected_type_ = H5T_STD_I32LE;
+        const char* slow5_expected_type = "SLOW5_INT32_T";
+        slow5_aux_type slow5_expected_type_  = SLOW5_INT32_T;
         flag_new_group_or_new_attribute_read_group = 0;
-        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_INT32_T, enum_labels_list_ptrs) == -1){
+        int ret_add_slow5_attribute = add_slow5_auxiliary_attribute(h5t_class_string, slow5_class_string,
+                                                                    hdf5_expected_type, hdf5_expected_type_,
+                                                                    slow5_expected_type, slow5_expected_type_,
+                                                                    native_type, name, operator_data, H5Tclass, value,
+                                                                    slow5_class, enum_labels_list_ptrs);
+        if(ret_add_slow5_attribute<0){
+            ERROR("Could not add the auxiliary attribute %s/%s in %s to the slow5 record", operator_data->group_name, name, operator_data->fast5_path);
+            return -1;
+        }
+
+    }
+    else if(strcmp("start_mux",name)==0){
+        const char* hdf5_expected_type = "H5T_STD_U8LE";
+        hid_t hdf5_expected_type_ = H5T_STD_U8LE;
+        const char* slow5_expected_type = "SLOW5_UINT8_T";
+        slow5_aux_type slow5_expected_type_  = SLOW5_UINT8_T;
+        flag_new_group_or_new_attribute_read_group = 0;
+        int ret_add_slow5_attribute = add_slow5_auxiliary_attribute(h5t_class_string, slow5_class_string,
+                                                                    hdf5_expected_type, hdf5_expected_type_,
+                                                                    slow5_expected_type, slow5_expected_type_,
+                                                                    native_type, name, operator_data, H5Tclass, value,
+                                                                    slow5_class, enum_labels_list_ptrs);
+        if(ret_add_slow5_attribute<0){
+            ERROR("Could not add the auxiliary attribute %s/%s in %s to the slow5 record", operator_data->group_name, name, operator_data->fast5_path);
             return -1;
         }
     }
-    else if(strcmp("start_mux",name)==0 && H5Tclass==H5T_INTEGER){
+    else if(strcmp("read_id",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_UINT8_T, enum_labels_list_ptrs) == -1){
+        if(H5Tclass!=H5T_STRING){
+            ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_STRING");
             return -1;
         }
-    }
-    else if(strcmp("read_id",name)==0 && H5Tclass==H5T_STRING){
-        flag_new_group_or_new_attribute_read_group = 0;
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         //make sure read_id has a proper starting character
         if(isalpha(value.attr_string[0]) || isdigit(value.attr_string[0])){
             operator_data->slow5_record->read_id_len = strlen(value.attr_string);
             operator_data->slow5_record->read_id = strdup(value.attr_string);
         }else{
-            ERROR("Bad fast5: The read id which is supposed to conform to UUID V4 '%s'is malformed.", value.attr_string);
+            ERROR("Bad fast5: The attribute %s/%s in %s which is supposed to conform to UUID V4 is malformed (%s).", operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
             return -1;
         }
     }
-    else if(strcmp("median_before",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("median_before",name)==0){
+        const char* hdf5_expected_type = "H5T_IEEE_F64LE";
+        hid_t hdf5_expected_type_ = H5T_IEEE_F64LE;
+        const char* slow5_expected_type = "SLOW5_DOUBLE";
+        slow5_aux_type slow5_expected_type_  = SLOW5_DOUBLE;
         flag_new_group_or_new_attribute_read_group = 0;
-        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_DOUBLE, enum_labels_list_ptrs) == -1){
-            return -1;
-        }
-    }
-    else if(strcmp("end_reason",name)==0 && H5Tclass==H5T_ENUM){
-        flag_new_group_or_new_attribute_read_group = 0;
-        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_ENUM, enum_labels_list_ptrs) == -1){
+        int ret_add_slow5_attribute = add_slow5_auxiliary_attribute(h5t_class_string, slow5_class_string,
+                                                                    hdf5_expected_type, hdf5_expected_type_,
+                                                                    slow5_expected_type, slow5_expected_type_,
+                                                                    native_type, name, operator_data, H5Tclass, value,
+                                                                    slow5_class, enum_labels_list_ptrs);
+        if(ret_add_slow5_attribute<0){
+            ERROR("Bad fast5: The attribute %s/%s in %s which is supposed to conform to UUID V4 is malformed (%s).", operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
             return -1;
         }
 
     }
-//            CHANNEL_ID
-    else if(strcmp("channel_number",name)==0 && H5Tclass==H5T_STRING){
+    else if(strcmp("end_reason",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, SLOW5_STRING, enum_labels_list_ptrs) == -1){
+        if(H5Tclass!=H5T_ENUM && H5Tclass!=H5T_INTEGER) {
+            ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM or H5T_INTEGER");
+            return -1;
+        }
+        if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1) {
             return -1;
         }
     }
-    else if(strcmp("digitisation",name)==0 && H5Tclass==H5T_FLOAT){
+//            CHANNEL_ID
+    else if(strcmp("channel_number",name)==0){
+        const char* hdf5_expected_type = "H5T_STRING";
+        hid_t hdf5_expected_type_ = H5T_STRING;
+        const char* slow5_expected_type = "SLOW5_STRING";
+        slow5_aux_type slow5_expected_type_  = SLOW5_STRING;
         flag_new_group_or_new_attribute_read_group = 0;
+        int ret_add_slow5_attribute = add_slow5_auxiliary_attribute(h5t_class_string, slow5_class_string,
+                                                                    hdf5_expected_type, hdf5_expected_type_,
+                                                                    slow5_expected_type, slow5_expected_type_,
+                                                                    native_type, name, operator_data, H5Tclass, value,
+                                                                    slow5_class, enum_labels_list_ptrs);
+        if(ret_add_slow5_attribute<0){
+            ERROR("Bad fast5: The attribute %s/%s in %s which is supposed to conform to UUID V4 is malformed (%s).", operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
+            return -1;
+        }
+
+    }
+    else if(strcmp("digitisation",name)==0){
+        flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tequal(H5T_IEEE_F64LE,native_type)==0){
+            ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_IEEE_F64LE");
+            return -1;
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->digitisation = value.attr_double;
     }
-    else if(strcmp("offset",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("offset",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tequal(H5T_IEEE_F64LE,native_type)==0){
+            ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_IEEE_F64LE");
+            return -1;
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->offset = value.attr_double;
     }
-    else if(strcmp("range",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("range",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tequal(H5T_IEEE_F64LE,native_type)==0){
+            ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_IEEE_F64LE");
+            return -1;
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->range = value.attr_double;
     }
-    else if(strcmp("sampling_rate",name)==0 && H5Tclass==H5T_FLOAT){
+    else if(strcmp("sampling_rate",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
+        if(H5Tequal(H5T_IEEE_F64LE,native_type)==0){
+            ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_IEEE_F64LE");
+            return -1;
+        }
         *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 1;
         operator_data->slow5_record->sampling_rate = value.attr_double;
     }
@@ -443,7 +573,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     sprintf(value.attr_string, "%.1f", value.attr_double);
                     break;
                 case H5T_INTEGER:
-                    sprintf(value.attr_string, "%d", value.attr_int);
+                    sprintf(value.attr_string, "%d", value.attr_uint32_t);
                     break;
                 case H5T_ENUM:
                     sprintf(value.attr_string, "%u", value.attr_uint8_t);
@@ -454,7 +584,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             }
             std::string key = "co_" + std::string(name); //convert
             char warn_message[300];
-            sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to string",operator_data->group_name, name, h5t_class.c_str());
+            sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to string",operator_data->group_name, name, h5t_class_string.c_str());
             search_and_warn(operator_data,key,warn_message);
         }
 
@@ -510,14 +640,97 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
         std::string key = "at_" + std::string(name); //Alert
         char warn_message[300];
-        sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected", name, operator_data->group_name, operator_data->fast5_path);
+        sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected", operator_data->group_name, name, operator_data->fast5_path);
         search_and_warn(operator_data,key,warn_message);
     }
 
     if(flag_value_string){
         free(value.attr_string);
     }
+
+    //close attributes
+    H5Tclose(native_type);
+    H5Tclose(attribute_type);
+    H5Aclose(attribute);
+
     return return_val;
+}
+
+int add_slow5_auxiliary_attribute(std::string h5t_class_string, std::string slow5_class_string, const char *hdf5_expected_type, hid_t hdf5_expected_type_, const char *slow5_expected_type,
+                                  slow5_aux_type slow5_expected_type_, hid_t native_type, const char *name,
+                                  operator_obj *operator_data, H5T_class_t H5Tclass, attribute_data value,
+                                  slow5_aux_type slow5_class, std::vector<const char *> enum_labels_list_ptrs) {
+    if(H5Tequal(hdf5_expected_type_,native_type)==0){
+        type_inconsistency_warn(name, operator_data, h5t_class_string, hdf5_expected_type, slow5_class_string, slow5_expected_type);
+        int ret_convert_to_correct_datatype = convert_to_correct_datatype(value, slow5_class, slow5_expected_type_);
+        if(ret_convert_to_correct_datatype==0){
+            ERROR("Could not convert attribute %s/%s in %s from %s to %s", operator_data->group_name, name, operator_data->fast5_path, slow5_class_string.c_str(), slow5_expected_type)
+            return -1;
+        }
+        slow5_class = slow5_expected_type_;
+        slow5_class_string = slow5_expected_type;
+    }
+    if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1){
+        return -1;
+    }
+    return 0;
+}
+
+//if convertible then 1 else 0
+int convert_to_correct_datatype(attribute_data data, slow5_aux_type from_type, slow5_aux_type to_type) {
+    if(from_type == SLOW5_UINT8_T && to_type == SLOW5_INT32_T){
+        return 1;
+    }
+    if(from_type == SLOW5_UINT8_T && to_type == SLOW5_UINT32_T){
+        return 1;
+    }
+    if(from_type == SLOW5_UINT8_T && to_type == SLOW5_UINT64_T){
+        return 1;
+    }
+    if(from_type == SLOW5_INT32_T && to_type == SLOW5_UINT8_T){
+        return data.attr_int32_t > 0 && data.attr_int32_t < UINT8_MAX;
+    }
+    if(from_type == SLOW5_INT32_T && to_type == SLOW5_UINT32_T){
+        return data.attr_int32_t > 0;
+    }
+    if(from_type == SLOW5_INT32_T && to_type == SLOW5_UINT64_T){
+        return data.attr_int32_t > 0;
+    }
+    if(from_type == SLOW5_INT64_T && to_type == SLOW5_UINT8_T){
+        return data.attr_int64_t > 0 && data.attr_int64_t < UINT8_MAX;
+    }
+    if(from_type == SLOW5_INT64_T && to_type == SLOW5_INT32_T){
+        return data.attr_int64_t < INT32_MAX;
+    }
+    if(from_type == SLOW5_INT64_T && to_type == SLOW5_UINT64_T){
+        return data.attr_int64_t > 0;
+    }
+    if(from_type == SLOW5_UINT32_T && to_type == SLOW5_UINT8_T){
+        return data.attr_uint32_t < UINT8_MAX;
+    }
+    if(from_type == SLOW5_UINT32_T && to_type == SLOW5_INT32_T){
+        return 1;
+    }
+    if(from_type == SLOW5_UINT32_T && to_type == SLOW5_UINT64_T){
+        return 1;
+    }
+    if(from_type == SLOW5_UINT64_T && to_type == SLOW5_UINT8_T){
+        return data.attr_uint64_t < UINT8_MAX;
+    }
+    if(from_type == SLOW5_UINT64_T && to_type == SLOW5_INT32_T){
+        return 1;
+    }
+    if(from_type == SLOW5_UINT64_T && to_type == SLOW5_UINT32_T){
+        return 1;
+    }
+    return 0;
+}
+
+void type_inconsistency_warn(const char *name, operator_obj *operator_data, std::string h5t_class_string, const char *expected_type, std::string slow5_class, const char *slow5_expected_type) {
+    std::string key = "type_inconsistent_" + std::string(name); //type inconsistency
+    char warn_message[300];
+    sprintf(warn_message,"The datatype of the attribute %s/%s in %s is %s instead of %s. Hence converting from %s to %s.",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), expected_type, slow5_class.c_str(), slow5_expected_type);
+    search_and_warn(operator_data,key,warn_message);
 }
 
 void search_and_warn(operator_obj *operator_data, std::string key, const char *warn_message) {
@@ -539,56 +752,77 @@ void search_and_warn(operator_obj *operator_data, std::string key, const char *w
 
 int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_class_t h5TClass, attribute_data value, enum slow5_aux_type slow5_type, std::vector<const char *> enum_labels_list_ptrs) {
     int failed = 0;
-    if(*(operator_data->flag_lossy)==0){
-        if(*(operator_data->flag_header_is_written)==0){
-            if(h5TClass == H5T_ENUM){
-                if(slow5_aux_meta_add_enum(operator_data->slow5File->header->aux_meta, name, slow5_type, enum_labels_list_ptrs.data(), enum_labels_list_ptrs.size())){
-                    failed = 1;
-                }
-            }
-            else{
-                if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, name, slow5_type)){
-                    failed = 1;
-                }
-            }
-            if(failed){
-                ERROR("Could not initialize the record attribute '%s'", name);
-                return -1;
-            }
-        }
-        if(operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0) == 0){
-            if(h5TClass == H5T_ENUM){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint8_t) != 0) {
-                    failed = 1;
-                }
-            }
-            if(h5TClass == H5T_STRING) {
-                if (slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, value.attr_string) != 0) {
-                    failed = 1;
-                }
-            }
-            if(h5TClass == H5T_FLOAT){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_double) != 0) {
-                    failed = 1;
-                }
-            }
-            if(h5TClass == H5T_INTEGER){
-                if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_int) != 0) {
-                    failed = 1;
-                }
-            }
-            if(failed){
-                ERROR("Could not set the record attribute '%s'", name);
-                return -1;
-            }
+    if(*(operator_data->flag_lossy)==1){
+        return 0;
+    }
 
-        }else if(*(operator_data->flag_header_is_written) == 1 && operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0) == -1){
-            std::string key = "nh_" + std::string(name); //not stored in header
-            char warn_message[300];
-            sprintf(warn_message,"%s auxiliary attribute is not set in the slow5 header", name);
-            search_and_warn(operator_data,key,warn_message);
-            // WARNING("%s auxiliary attribute is not set in the slow5 header", name);
+    if(*(operator_data->flag_header_is_written)==0){
+        if(slow5_type == SLOW5_ENUM){
+            if(slow5_aux_meta_add_enum(operator_data->slow5File->header->aux_meta, name, slow5_type, enum_labels_list_ptrs.data(), enum_labels_list_ptrs.size())){
+                failed = 1;
+            }
         }
+        else{
+            if(slow5_aux_meta_add(operator_data->slow5File->header->aux_meta, name, slow5_type)){
+                failed = 1;
+            }
+        }
+        if(failed){
+            ERROR("Could not initialize the record attribute '%s/%s' in %s", operator_data->group_name, name, operator_data->fast5_path);
+            return -1;
+        }
+    }
+    uint32_t attribute_index;
+    if(operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0, &attribute_index) == 0){
+        if(slow5_type == SLOW5_ENUM){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint8_t) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_STRING) {
+            if (slow5_rec_set_string(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, value.attr_string) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_DOUBLE){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_double) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_UINT8_T){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint8_t) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_INT32_T){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_int32_t) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_UINT32_T){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint32_t) != 0) {
+                failed = 1;
+            }
+        }
+        else if(slow5_type == SLOW5_UINT64_T){
+            if(slow5_rec_set(operator_data->slow5_record, operator_data->slow5File->header->aux_meta, name, &value.attr_uint64_t) != 0) {
+                failed = 1;
+            }
+        }
+        else {
+            failed = 1;
+        }
+        if(failed){
+            ERROR("Could not set the slow5 record auxiliary attribute '%s/%s' in %s", operator_data->group_name, name, operator_data->fast5_path);
+            return -1;
+        }
+
+    }else if(*(operator_data->flag_header_is_written) == 1 && operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0, NULL) == -1){
+        std::string key = "nh_" + std::string(name); //not stored in header
+        char warn_message[300];
+        sprintf(warn_message,"%s auxiliary attribute is not set in the slow5 header", name);
+        search_and_warn(operator_data,key,warn_message);
+        // WARNING("%s auxiliary attribute is not set in the slow5 header", name);
     }
     return 0;
 }
@@ -754,7 +988,7 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                                 ERROR("Bad fast5: run_id information of the read %s in %s cannot be found.", operator_data->slow5_record->read_id, operator_data->fast5_path);
                                 return -1;
                             }
-                            if(*(operator_data->flag_write_header) == 0){
+                            if(*(operator_data->flag_header_is_written) == 0){
                                 int ret = print_slow5_header(operator_data);
                                 if(ret < 0){
                                     return ret;
