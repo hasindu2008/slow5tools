@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <set>
+#include <regex>
 
 #include <slow5/slow5.h>
 #include "error.h"
@@ -1154,8 +1155,10 @@ int create_dir(const char *dir_name) {
 //if count_dir==1; then list dir as well
 //if count_dir==2; then list only dir
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
+    std::regex file_extension_pattern;
     if(extension){
-        STDERR("Looking for '*%s' files in %s", extension, path.c_str());
+        STDERR("Looking for '%s' files in %s", extension, path.c_str());
+        file_extension_pattern = std::regex(extension);
     }
     if(is_directory(path) && count_dir==1){
         files.push_back(path);
@@ -1177,7 +1180,7 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
             }else{
                 //add to the list
                 if(extension){
-                    if(full_fn.find(extension) != std::string::npos && count_dir!=2){
+                    if(std::regex_match(full_fn, file_extension_pattern) && count_dir!=2){
                         files.push_back(full_fn);
                     }
                 }else{
@@ -1189,7 +1192,7 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
         }
     }else{
         if(extension){
-            if(path.find(extension) != std::string::npos && count_dir!=2){
+            if(std::regex_match(path, file_extension_pattern) && count_dir!=2){
                 files.push_back(path);
             }
         }else{

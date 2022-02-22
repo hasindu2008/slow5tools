@@ -26,6 +26,9 @@
 #include <unordered_map>
 #include "misc.h"
 
+#define SLOW5_FILE_EXTENSION_REGEX ".*\\.[b|s]low5$"
+#define FAST5_FILE_EXTENSION_REGEX ".*\\.fast5$"
+
 typedef struct {
     uint64_t bad_5_file = 0;
     uint64_t total_5 = 0;

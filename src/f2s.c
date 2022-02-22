@@ -429,10 +429,15 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     std::vector<std::string> fast5_files;
     int i = optind;
     for (; i < argc; ++ i) {
-        list_all_items(argv[i], fast5_files, 0, ".fast5");
+        list_all_items(argv[i], fast5_files, 0, FAST5_FILE_EXTENSION_REGEX);
     }
-    int flag_one_input = i==optind+1;
+    VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
+    if(fast5_files.size()==0){
+        ERROR("No fast5 files found. Exiting.%s","");
+        return EXIT_FAILURE;
+    }
 
+    int flag_one_input = i==optind+1;
     if(fast5_files.size()==1){
         user_opts.num_processes = 1;
     }
@@ -441,11 +446,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
-    if(fast5_files.size()==0){
-        ERROR("No fast5 files found. Exiting.%s","");
-        return EXIT_FAILURE;
-    }
 
     if(user_opts.flag_retain_dir_structure==0){
         int ret_check_for_similar_file_names = check_for_similar_file_names(fast5_files);
