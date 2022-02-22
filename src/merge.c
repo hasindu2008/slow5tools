@@ -377,7 +377,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         db_t db = { 0 };
         db.mem_records = (char **) malloc(batch_size * sizeof(char*));
         db.mem_bytes = (size_t *) malloc(batch_size * sizeof(size_t));
-
+        MALLOC_CHK(db.mem_records);
+        MALLOC_CHK(db.mem_bytes);
         int64_t record_count = 0;
         size_t bytes;
         char *mem;
@@ -411,6 +412,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
         db.n_batch = record_count;
         db.read_record = (raw_record_t*) malloc(record_count * sizeof *db.read_record);
+        MALLOC_CHK(db.read_record);
         db.list = list;
         work_db(&core,&db,parallel_reads_model);
         time_thread_execution += slow5_realtime() - realtime;

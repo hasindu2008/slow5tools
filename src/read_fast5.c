@@ -21,6 +21,8 @@
 #define PRIMARY_FIELD_COUNT 7 //without read_group number
 #define H5Z_FILTER_VBZ 32020 //We need to find out what the numerical value for this is
 
+#define BUFFER_CAP (20*1024*1024)
+
 extern int slow5tools_verbosity_level;
 
 // Operator function to be called by H5Aiterate.
@@ -402,10 +404,13 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             type_inconsistency_warn(name, operator_data, h5t_class_string, "H5T_STRING", slow5_class_string, "SLOW5_STRING");
         }
         std::string key = "sh_" + std::string(name); //stored in header
-        char warn_message[300];
+        size_t buf_cap = BUFFER_CAP;
+        char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+        MALLOC_CHK(warn_message);
         sprintf(warn_message,"The attribute '%s/%s' in %s is empty and will be stored in the SLOW5 header", operator_data->group_name, name, operator_data->fast5_path);
 //        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
         search_and_warn(operator_data,key,warn_message);
+        free(warn_message);
     }
 
 //            RAW
@@ -583,9 +588,12 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     return -1;
             }
             std::string key = "co_" + std::string(name); //convert
-            char warn_message[300];
+            size_t buf_cap = BUFFER_CAP;
+            char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+            MALLOC_CHK(warn_message);
             sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to string",operator_data->group_name, name, h5t_class_string.c_str());
             search_and_warn(operator_data,key,warn_message);
+            free(warn_message);
         }
 
         int flag_attribute_exists = 0;
@@ -621,9 +629,13 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             if(flag_existing_attr_value_mismatch){
                 if(*(operator_data->flag_allow_run_id_mismatch)){
                     std::string key = "rm_" + std::string(name); //runid mismatch
-                    char warn_message[300];
+                    size_t buf_cap = BUFFER_CAP;
+                    char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+                    MALLOC_CHK(warn_message);
                     sprintf(warn_message,"Ancient fast5: Different run_ids found in an individual multi-fast5 file. First seen run_id will be set in slow5 header");
                     search_and_warn(operator_data,key,warn_message);
+                    free(warn_message);
+
                 }else{
                     ERROR("Ancient fast5: Different run_ids found in an individual multi-fast5 file. Cannot create a single header slow5/blow5. Consider --allow option.%s", "");
                     return -1;
@@ -639,9 +651,12 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             }
         }
         std::string key = "at_" + std::string(name); //Alert
-        char warn_message[300];
+        size_t buf_cap = BUFFER_CAP;
+        char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+        MALLOC_CHK(warn_message);
         sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected", operator_data->group_name, name, operator_data->fast5_path);
         search_and_warn(operator_data,key,warn_message);
+        free(warn_message);
     }
 
     if(flag_value_string){
@@ -728,9 +743,12 @@ int convert_to_correct_datatype(attribute_data data, slow5_aux_type from_type, s
 
 void type_inconsistency_warn(const char *name, operator_obj *operator_data, std::string h5t_class_string, const char *expected_type, std::string slow5_class, const char *slow5_expected_type) {
     std::string key = "type_inconsistent_" + std::string(name); //type inconsistency
-    char warn_message[300];
+    size_t buf_cap = BUFFER_CAP;
+    char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+    MALLOC_CHK(warn_message);
     sprintf(warn_message,"The datatype of the attribute %s/%s in %s is %s instead of %s. Hence converting from %s to %s.",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), expected_type, slow5_class.c_str(), slow5_expected_type);
     search_and_warn(operator_data,key,warn_message);
+    free(warn_message);
 }
 
 void search_and_warn(operator_obj *operator_data, std::string key, const char *warn_message) {
@@ -819,10 +837,13 @@ int add_aux_slow5_attribute(const char *name, operator_obj *operator_data, H5T_c
 
     }else if(*(operator_data->flag_header_is_written) == 1 && operator_data->slow5File->header->aux_meta && check_aux_fields_in_header(operator_data->slow5File->header, name, 0, NULL) == -1){
         std::string key = "nh_" + std::string(name); //not stored in header
-        char warn_message[300];
+        size_t buf_cap = BUFFER_CAP;
+        char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+        MALLOC_CHK(warn_message);
         sprintf(warn_message,"%s auxiliary attribute is not set in the slow5 header", name);
         search_and_warn(operator_data,key,warn_message);
         // WARNING("%s auxiliary attribute is not set in the slow5 header", name);
+        free(warn_message);
     }
     return 0;
 }
@@ -1003,10 +1024,13 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                             }
                             if(*(operator_data->flag_run_id) != 1){
                                 std::string key = "pri_" + std::string("run_id"); //primary attribute run id not found in the read group
-                                char warn_message[300];
+                                size_t buf_cap = BUFFER_CAP;
+                                char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+                                MALLOC_CHK(warn_message);
                                 sprintf(warn_message,"primary attribute run_id is not found in the read %s group", operator_data->slow5_record->read_id);
                                 search_and_warn(operator_data,key,warn_message);
 //                                WARNING("run_id is missing in the %s in read_id %s group.", operator_data->fast5_path, operator_data->slow5_record->read_id);
+                                free(warn_message);
                             }
                             int ret = print_record(operator_data);
                             if(ret < 0){
