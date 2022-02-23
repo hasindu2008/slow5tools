@@ -43,7 +43,6 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
             {NULL, 0, NULL, 0 }
     };
 
-    std::string format =  "low5";
     int lossy = 0;
     enum slow5_fmt format_out = SLOW5_FORMAT_BINARY;
     enum slow5_press_method pressMethodRecord = SLOW5_COMPRESS_ZLIB;
@@ -90,12 +89,12 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
     double realtime0 = slow5_realtime();
     std::vector<std::string> slow5_files;
     for (int i = optind; i < argc; ++ i) {
-        list_all_items(argv[i], slow5_files, 0, format.c_str());
+        list_all_items(argv[i], slow5_files, 0, ".slow5");
     }
     VERBOSE("%ld files found - took %.3fs\n", slow5_files.size(), slow5_realtime() - realtime0);
 
     if(slow5_files.size()==0){
-        ERROR("No %s files found to cat. Exiting...",format.c_str());
+        ERROR("No %s files found to cat. Exiting...", ".slow5");
         return EXIT_FAILURE;
     }
 

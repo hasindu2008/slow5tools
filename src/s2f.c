@@ -632,7 +632,6 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
             {NULL, 0, NULL, 0 }
     };
 
-    std::string format_low5 =  "low5";
     std::string format_fast5 =  ".fast5";
 
     opt_t user_opts;
@@ -682,7 +681,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     std::vector<std::string> slow5_files;
     double realtime0 = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
-        list_all_items(argv[i], slow5_files, 0, format_low5.c_str());
+        list_all_items(argv[i], slow5_files, 0, ".slow5");
     }
     VERBOSE("%ld files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
     if(slow5_files.size()==0){

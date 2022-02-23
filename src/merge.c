@@ -178,7 +178,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     double realtime0 = slow5_realtime();
     std::vector<std::string> files;
     for (int i = optind; i < argc; ++i) {
-        list_all_items(argv[i], files, 0, NULL);
+        list_all_items(argv[i], files, 0, ".slow5");
     }
     VERBOSE("%ld files found - took %.3fs\n", files.size(), slow5_realtime() - realtime0);
 
