@@ -145,6 +145,10 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
+    if(parse_batch_size(&user_opts,argc,argv) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
     if(parse_arg_lossless(&user_opts, argc, argv, meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
