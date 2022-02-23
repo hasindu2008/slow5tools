@@ -373,8 +373,10 @@ echo "------------------- f2s testcase $TESTCASE_NO >>> compression requested wi
 $SLOW5_EXEC f2s $FAST5_DIR/multi-fast5/ssm1.fast5 --to slow5  -c zlib $OUTPUT_DIR/err.slow5 && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+### erroreneous fields in fast5
+
 TESTCASE_NO=47
-echo "------------------- f2s testcase $TESTCASE_NO >>> # in reead id at the beginning -------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> # in read id at the beginning -------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/err_fast5/malformed_readid1.fast5 -o $OUTPUT_DIR/err.slow5 && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
@@ -384,12 +386,97 @@ $SLOW5_EXEC f2s $FAST5_DIR/err_fast5/malformed_readid1.fast5 -o $OUTPUT_DIR/err.
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=49
-echo "------------------- f2s testcase $TESTCASE_NO >>> primary field range missing -------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> Duplicated attribute -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/dupli_attrib.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+TESTCASE_NO=50
+echo "------------------- f2s testcase $TESTCASE_NO >>> tab in attribute name 'operating system'-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/tab_in_attrib.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=51
+echo "------------------- f2s testcase $TESTCASE_NO >>> new line in attribute 'exp_script_name' value-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/newline_in_attrib.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+TESTCASE_NO=52
+echo "------------------- f2s testcase $TESTCASE_NO >>> new line in field name 'channel number'-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/newline_in_field.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=53
+echo "------------------- f2s testcase $TESTCASE_NO >>> tab in field value 'channel number'-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/tab_in_field.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=54
+echo "------------------- f2s testcase $TESTCASE_NO >>> primary field 'range' missing -------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/err_fast5/missing_primary_field.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+TESTCASE_NO=54
+echo "------------------- f2s testcase $TESTCASE_NO >>> primary field 'range' wrong type -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/primary_field_wrong_type.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=55
+echo "------------------- f2s testcase $TESTCASE_NO >>> aux field 'channel number' wrong type -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/aux_field_wrong_type.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+## Unusual stuff
+TESTCASE_NO=56
+echo "------------------- f2s testcase $TESTCASE_NO >>> new non string attribute in context tags  -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_context.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=57
+echo "------------------- f2s testcase $TESTCASE_NO >>> new non string attribute in tracking id  -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_tracking.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=58
+echo "------------------- f2s testcase $TESTCASE_NO >>> new string attribute in context tags  -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_str_attrib_in_context.fast5 -o $OUTPUT_DIR/unusual_fast5/new_str_attrib_in_context.slow5
+diff $EXP_SLOW5_DIR/unusual_fast5/new_str_attrib_in_context.slow5 $OUTPUT_DIR/unusual_fast5/new_str_attrib_in_context.slow5  > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=59
+echo "------------------- f2s testcase $TESTCASE_NO >>> new string attribute in tracking id  -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_str_attrib_in_tracking.fast5 -o $OUTPUT_DIR/unusual_fast5/new_str_attrib_in_tracking.slow5
+diff $EXP_SLOW5_DIR/unusual_fast5/new_str_attrib_in_tracking.slow5 $OUTPUT_DIR/unusual_fast5/new_str_attrib_in_tracking.slow5  > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=60
+echo "------------------- f2s testcase $TESTCASE_NO >>> new attribute in raw  -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_raw.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=61
+echo "------------------- f2s testcase $TESTCASE_NO >>> new attribute in read id  -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_read.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=62
+echo "------------------- f2s testcase $TESTCASE_NO >>> new group   -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_group.fast5 > /dev/null  2> $OUTPUT_DIR/err.slow5.log || die "testcase $TESTCASE_NO failed"
+grep -q "WARNING" $OUTPUT_DIR/err.slow5.log || die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+TESTCASE_NO=63
+echo "------------------- f2s testcase $TESTCASE_NO >>> pore type set   -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/pore_set.fast5 -o $OUTPUT_DIR/err.slow5 && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+## Output formats
+
 echo
-TESTCASE_NO=50
+TESTCASE_NO=64
 echo "------------------- f2s testcase $TESTCASE_NO >>> current directory:fast5 file directory output: file-------------------"
 cd $FAST5_DIR/single-fast5
 CD_BACK=../../../../..
@@ -398,7 +485,7 @@ cd -
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
-TESTCASE_NO=51
+TESTCASE_NO=65
 echo "------------------- f2s testcase $TESTCASE_NO >>> current directory:fast5 file directory output: directory-------------------"
 cd $FAST5_DIR/single-fast5
 CD_BACK=../../../../..
@@ -409,23 +496,28 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 verbose=1
 
 echo
-TESTCASE_NO=52
+TESTCASE_NO=66
 echo "------------------- f2s testcase $TESTCASE_NO >>> retain_dir_structure without --retain failure expected -------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/retain_dir_structure -d $OUTPUT_DIR/retain_dir_structure && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 echo
-TESTCASE_NO=53
+TESTCASE_NO=67
 echo "------------------- f2s testcase $TESTCASE_NO >>> retain_dir_structure-------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/retain_dir_structure -d $OUTPUT_DIR/retain_dir_structure --retain || die "testcase $TESTCASE_NO failed"
 diff $EXP_SLOW5_DIR/retain_dir_structure  $OUTPUT_DIR/retain_dir_structure > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
-TESTCASE_NO=54
+TESTCASE_NO=68
 echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason datatype is uint8_t-------------------"
 mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
 $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 || die "testcase $TESTCASE_NO failed"
 diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=69
+echo "------------------- f2s testcase $TESTCASE_NO >>> all fast5 files were skipped   -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/ -o $OUTPUT_DIR/err.slow5 -p1 && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
