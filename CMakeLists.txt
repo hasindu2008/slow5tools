@@ -40,7 +40,6 @@ set_source_files_properties(src/stats.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/cat.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/quickcheck.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/misc.c PROPERTIES LANGUAGE CXX)
-set_source_files_properties(src/read_file_threaded.c PROPERTIES LANGUAGE CXX)
 
 set(f2s src/f2s.c)
 set(get src/get.c)

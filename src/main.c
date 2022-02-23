@@ -119,7 +119,7 @@ int main(const int argc, char **argv){
             {"view",         view_main},
             {"stats",        stats_main},
             {"cat",          cat_main},
-            {"quickcheck",   quickcheck_main},
+            {"quickcheck",   quickcheck_main}
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
