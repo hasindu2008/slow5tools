@@ -267,15 +267,15 @@ $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_first_read_group_trac
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=30
-echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_first_read_group_read fast5-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_first_read_group_read but is in the tracking_id group fast5-------------------"
 mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_first_read_group_read.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=31
-echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_fifth_read_group_read fast5-------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> run_id_missing_in_fifth_read_group_read but is in the tracking_id group fast5-------------------"
 mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
-$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_fifth_read_group_read.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 && die "testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/run_id_missing_in_fifth_read_group_read.fast5 --iop 1 -o $OUTPUT_DIR/unusual_fast5/run_id_missing.slow5 --to slow5 || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=32
@@ -397,7 +397,6 @@ $CD_BACK/slow5tools f2s sss1.fast5 --iop 1 --to slow5 -o $CD_BACK/$OUTPUT_DIR/$T
 cd -
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
-
 echo
 TESTCASE_NO=51
 echo "------------------- f2s testcase $TESTCASE_NO >>> current directory:fast5 file directory output: directory-------------------"
@@ -405,6 +404,28 @@ cd $FAST5_DIR/single-fast5
 CD_BACK=../../../../..
 $CD_BACK/slow5tools -v 7 f2s sss1.fast5 --iop 1 --to slow5 -d $CD_BACK/$OUTPUT_DIR/$TESTCASE_NO || die "testcase $TESTCASE_NO failed"
 cd -
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+verbose=1
+
+echo
+TESTCASE_NO=52
+echo "------------------- f2s testcase $TESTCASE_NO >>> retain_dir_structure without --retain failure expected -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/retain_dir_structure -d $OUTPUT_DIR/retain_dir_structure && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+echo
+TESTCASE_NO=53
+echo "------------------- f2s testcase $TESTCASE_NO >>> retain_dir_structure-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/retain_dir_structure -d $OUTPUT_DIR/retain_dir_structure --retain || die "testcase $TESTCASE_NO failed"
+diff $EXP_SLOW5_DIR/retain_dir_structure  $OUTPUT_DIR/retain_dir_structure > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=54
+echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason datatype is uint8_t-------------------"
+mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
+$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 || die "testcase $TESTCASE_NO failed"
+diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"

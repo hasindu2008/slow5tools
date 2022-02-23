@@ -15,6 +15,7 @@
 #%    -r                                 Check if dev files already contain any of the filenames
 #%    -d [tmp_file]                      Specify the temporary file location for resuming purposes.
 #%                                       Only used when resume option set.
+#%    -l [log_file]                      Specify the log file location for tracing
 #%
 #================================================================
 #- IMPLEMENTATION
@@ -60,10 +61,10 @@ scriptinfo() { head -${SCRIPT_HEADSIZE:-99} ${0} | grep -e "^#-" | sed -e "s/^#-
 
 RESUME=false # Set resume option to false by default
 TMP_FILE="processed_list.log" # Default  temp in current directory
-
+LOG="monitor_trace.log"
 
 ## Handle flags
-while getopts "hird:" o; do
+while getopts "hird:l:" o; do
     case "${o}" in
         h)
             usagefull
@@ -73,6 +74,9 @@ while getopts "hird:" o; do
             scriptinfo
             exit 0
             ;;
+		l)
+            LOG=${OPTARG}
+			;;
         d)
             TMP_FILE=${OPTARG}
             ;;
@@ -80,7 +84,7 @@ while getopts "hird:" o; do
             RESUME=true
             ;;
         *)
-            echo "Incorrect args"
+            echo "[ensure.sh] Incorrect args"
             usagefull
             exit 1
             ;;
@@ -100,7 +104,7 @@ YELLOW="\e[33m"
 RED="\e[31m"
 NORMAL="\033[0;39m"
 
-test -e monitor_trace.log && rm monitor_trace.log
+#test -e ${LOG} && rm ${LOG}
 
 while read filename; do
 
@@ -115,26 +119,26 @@ while read filename; do
     pathless=$(basename $filename) # Strip path
     prefix=${pathless%.*} # Remove extension
 
-    if echo $filename | grep -q \\.fast5; then # If it is a fast5 file
+    if echo $filename | grep -q '\.fast5$'; then # If it is a fast5 file
 
         if $RESUME; then # If resume option set
-            grep -q /$prefix\\.fast5$ "$TMP_FILE" # Check if filename exists in temp files
+            grep -q "/$prefix\.fast5$" "$TMP_FILE" # Check if filename exists in temp files
 
             if [ $? -eq "0" ]; then # If the file has been processed
                 ((i_old ++))
-                >&2 echo -e $RED"old file ($i_old): $filename"$NORMAL
+                >&2 echo -e $RED"[ensure.sh] old file ($i_old): $filename"$NORMAL
                 continue # Wait for next input
 
             else # Else it is new
                 ((i_new ++))
-                >&2 echo -e $YELLOW"new file ($i_new): $filename"$NORMAL
+                >&2 echo -e $YELLOW"[ensure.sh] new file ($i_new): $filename"$NORMAL
             fi
 
         fi
 
         echo $filename # Output fast5 filename
         TIME=$(date)
-        echo -e $filename"\t"${TIME} >> monitor_trace.log
+        echo -e "[ensure.sh] "$filename"\t"${TIME} >> ${LOG}
 
     fi
 done

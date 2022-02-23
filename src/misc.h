@@ -51,7 +51,9 @@ typedef struct {
     int64_t read_id_batch_capacity;
     int flag_lossy;
     int flag_allow_run_id_mismatch;
+    int flag_retain_dir_structure;
     int flag_dump_all;
+    int flag_continue_merge;
 
     // Input arguments
     char *arg_fname_in;
@@ -66,13 +68,14 @@ typedef struct {
     char *arg_dir_out;
     char *arg_lossless;
     char *arg_dump_all;
+    char *arg_continue_merge;
 
 } opt_t;
 
 
 enum slow5_fmt parse_name_to_fmt(const char *fmt_str);
 enum slow5_fmt parse_path_to_fmt(const char *fname);
-int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose);
+int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int verbose,  uint32_t* i);
 // Timing
 // From minimap2/misc
 static inline double slow5_realtime(void) {
@@ -102,12 +105,31 @@ static inline long slow5_peakrss(void) {
 
 }
 
+static inline double slow5_cputime_child(void) {
+    struct rusage r;
+    getrusage(RUSAGE_CHILDREN, &r);
+    return r.ru_utime.tv_sec + r.ru_stime.tv_sec +
+           1e-6 * (r.ru_utime.tv_usec + r.ru_stime.tv_usec);
+}
+
+static inline long slow5_peakrss_child(void) {
+	struct rusage r;
+	getrusage(RUSAGE_CHILDREN, &r);
+#ifdef __linux__
+	return r.ru_maxrss * 1024;
+#else
+	return r.ru_maxrss;
+#endif
+
+}
+
 void print_args(int argc, char **argv);
 
 void init_opt(opt_t *opt);
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_num_processes(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *meta);
+int parse_arg_continue_merge(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_arg_dump_all(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_batch_size(opt_t *opt, int argc, char **arg);
 int parse_format_args(opt_t *opt, int argc, char **argv, struct program_meta *meta);

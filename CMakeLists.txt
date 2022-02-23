@@ -11,7 +11,11 @@ ENDIF()
 project(slow5tools)
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fPIC -rdynamic -Wall -O2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -O2 -std=c++11 ")
+IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -std=c++11 ")
+ELSEIF()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -O2 -std=c++11 ")
+ENDIF()
 
 set(CMAKE_CXX_STANDARD 11)
 
@@ -52,11 +56,10 @@ set(stats src/stats.c)
 set(cat src/cat.c)
 set(quickcheck src/quickcheck.c)
 set(misc src/misc.c)
-set(read_file_threaded src/read_file_threaded.c)
 
 set(hdf5-static "${PROJECT_SOURCE_DIR}/prebuilt-hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
-add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc} ${read_file_threaded})
+add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/slow5lib)
 
@@ -66,7 +69,7 @@ file(GLOB_RECURSE C_SOURCES RELATIVE ${CMAKE_SOURCE_DIR} "test/*.c")
 
 # link with dependencies
 IF (${DEPLOY_PLATFORM} STREQUAL "x86")
-    target_link_libraries(slow5tools slow5 streamvbyte -lhdf5_serial -lz -ldl -lm -lpthread -lrt)
+    target_link_libraries(slow5tools slow5 streamvbyte_slow5 -lhdf5_serial -lz -ldl -lm -lpthread -lrt)
 #    target_link_libraries(slow5tools slow5 ${hdf5-static} -lz -ldl -lm -lpthread -lrt)
 ELSE()
     target_link_libraries(slow5tools slow5 ${hdf5-static} -lz -ldl -lm)

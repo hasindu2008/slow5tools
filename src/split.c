@@ -635,7 +635,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     //measure file listing time
     double realtime0 = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
-        list_all_items(argv[i], slow5_files, 0, NULL);
+        list_all_items(argv[i], slow5_files, 0, ".slow5");
     }
     VERBOSE("%ld slow5 files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
     if(slow5_files.size()==0){

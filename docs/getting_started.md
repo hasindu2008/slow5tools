@@ -6,6 +6,7 @@ Slow5tools is a simple toolkit for converting (FAST5 <-> SLOW5), compressing, vi
 SLOW5 is a new file format for storing signal data from Oxford Nanopore Technologies (ONT) devices. SLOW5 was developed to overcome inherent limitations in the standard FAST5 signal data format that prevent efficient, scalable analysis and cause many headaches for developers. SLOW5 can be encoded in human-readable ASCII format, or a more compact and efficient binary format (BLOW5) - this is analogous to the seminal SAM/BAM format for storing DNA sequence alignments. The BLOW5 binary format supports  *zlib* (DEFLATE) compression, or other compression methods (see notes at the end), thereby minimising the data storage footprint while still permitting efficient parallel access. Detailed benchmarking experiments have shown that SLOW5 format is an order of magnitude faster and significantly smaller than FAST5.
 
 Pre-print: https://www.biorxiv.org/content/10.1101/2021.06.29.450255v1  
+Publication: https://www.nature.com/articles/s41587-021-01147-4   
 SLOW5 specification: https://hasindu2008.github.io/slow5specs
 
 ## Quick start
@@ -97,15 +98,17 @@ Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for
 ### Examples
 
 ```sh
-# convert a directory of fast5 files into BLOW5 files (default compression)
+# convert a directory of fast5 files into BLOW5 files (default compression: zlib+svb-zd)
 slow5tools f2s fast5_dir -d blow5_dir
 # convert a single fast5 file into a SLOW5 ASCII
 slow5tools f2s file.fast5 -o file.slow5
-# convert a directory of fast5 files into BLOW5 files with zstd compression
-slow5tools f2s fast5_dir -d blow5_dir -c zstd
+# convert a directory of fast5 files into BLOW5 files with zstd+svb-zd compression (similar to ONT's vbz compression)
+slow5tools f2s fast5_dir -d blow5_dir -c zstd -s svb-zd
 
-# merge all BLOW5 files in a directory into a single BLOW5 file (default compression)
+# merge all BLOW5 files in a directory into a single BLOW5 file (default compression: zlib+svb-zd)
 slow5tools merge blow5_dir -o file.blow5
+# merge all BLOW5 files in a directory into a single BLOW5 file with zstd+svb-zd compression (similar to ONT's vbz compression)
+slow5tools merge blow5_dir -o file.blow5 -c zstd -s svb-zd
 
 # to view a BLOW5 file in SLOW5 ASCII on standard out
 slow5tools view file.blow5

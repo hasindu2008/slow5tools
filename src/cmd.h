@@ -8,7 +8,9 @@
 #define DEFAULT_BATCH_SIZE 4096
 #define DEFAULT_AUXILIARY_FIELDS_NOT_OUT 0
 #define DEFAULT_ALLOW_RUN_ID_MISMATCH 0
-#define DEFAULT_DUMP_ALL 1
+#define DEFAULT_RETAIN_DIR_STRUCTURE 0
+#define DEFAULT_DUMP_ALL 0
+#define DEFAULT_CONTINUE_MERGE 0
 
 #define TO_STR(x) TO_STR2(x)
 #define TO_STR2(x) #x
@@ -45,6 +47,12 @@
 
 #define HELP_MSG_BATCH \
     "    -K, --batchsize INT           number of records loaded to the memory at once. [" TO_STR(DEFAULT_BATCH_SIZE) "]\n"
+
+#define HELP_MSG_RETAIN_DIR_STRUCTURE \
+    "        --retain                  retain directory structure in the output\n"
+
+#define HELP_MSG_CONTINUE_MERGE \
+    "        --allow                   continue to merge the files despite the WARNINGS about the differences in run_id groups [false].\n"
 
 #define HELP_MSG_HELP \
     "    -h, --help                    display this message and exit\n" \

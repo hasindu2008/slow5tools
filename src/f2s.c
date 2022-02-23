@@ -33,13 +33,14 @@
     HELP_MSG_PROCESSES \
     HELP_MSG_LOSSLESS \
     "    -a, --allow                   allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
+    HELP_MSG_RETAIN_DIR_STRUCTURE \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
 
 // what a child process should do, i.e. open a tmp file, go through the fast5 files
-void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_count* readsCount, proc_arg_t args){
+void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_count* readsCount,  char *input_dir, proc_arg_t args){
     int ret = 0;
     static size_t call_count = 0;
     slow5_file_t* slow5File = NULL;
@@ -72,13 +73,20 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
         }
         if(output_dir){
             if (fast5_file.is_multi_fast5) {
-                int last_slash = fast5_files[i].find_last_of('/');
-                if(last_slash == -1){
-                    last_slash = 0;
+                std::string slow5_file_name;
+                if(user_opts->flag_retain_dir_structure==1){
+                    std::string input_dir_str = std::string(input_dir);
+                    slow5_file_name = fast5_files[i].substr(input_dir_str.size(), fast5_files[i].length() - input_dir_str.size() -  extension.length()) + extension;
                 }
-                std::string slow5file = fast5_files[i].substr(last_slash,fast5_files[i].length() - last_slash - extension.length()) +  extension;
+                else{
+                    int last_slash = fast5_files[i].find_last_of('/');
+                    if(last_slash == -1){
+                        last_slash = 0;
+                    }
+                    slow5_file_name = fast5_files[i].substr(last_slash,fast5_files[i].length() - last_slash - extension.length()) +  extension;
+                }
                 std::string slow5_path = std::string(output_dir) + "/";
-                slow5_path += slow5file;
+                slow5_path += slow5_file_name;
                 //fprintf(stderr,"slow5path = %s\n fast5_path = %s\nslow5file = %s\n",slow5_path.c_str(), fast5_files[i].c_str(),slow5file.c_str());
 
                 slow5_file_pointer = fopen(slow5_path.c_str(), "w");
@@ -199,7 +207,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
     INFO("Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
 }
 
-void f2s_iop(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_count* readsCount){
+void f2s_iop(opt_t *user_opts, std::vector<std::string> &fast5_files, reads_count *readsCount, char *input_dir) {
     int32_t num_fast5_files = fast5_files.size();
     int32_t iop = user_opts->num_processes;
     if (iop > num_fast5_files) {
@@ -235,7 +243,7 @@ void f2s_iop(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_coun
     }
 
     if(iop==1){
-        f2s_child_worker(user_opts, fast5_files,readsCount, proc_args[0]);
+        f2s_child_worker(user_opts, fast5_files,readsCount, input_dir, proc_args[0]);
         free(proc_args);
         free(pids);
         return;
@@ -252,7 +260,7 @@ void f2s_iop(opt_t *user_opts, std::vector<std::string>& fast5_files, reads_coun
             exit(EXIT_FAILURE);
         }
         if(pids[t]==0){ //child
-            f2s_child_worker(user_opts, fast5_files, readsCount,  proc_args[t]);
+            f2s_child_worker(user_opts, fast5_files, readsCount, input_dir,  proc_args[t]);
             exit(EXIT_SUCCESS);
         }
         if(pids[t]>0){ //parent
@@ -322,7 +330,8 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             { "lossless",   required_argument, NULL, 'l'},  //6
             { "out-dir",    required_argument, NULL, 'd'},  //7
             { "allow",      no_argument, NULL,       'a'},  //8
-            { "dump-all",   required_argument, NULL, 'e'},  //9
+            { "retain",      no_argument, NULL,       'r'},  //9
+            { "dump-all",   required_argument, NULL, 'e'},  //10
             {NULL, 0, NULL, 0 }
     };
 
@@ -333,7 +342,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:s:ho:p:l:d:ae:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:s:ho:p:l:d:are:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -351,6 +360,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 break;
             case 'a':
                 user_opts.flag_allow_run_id_mismatch = 1;
+                break;
+            case 'r':
+                user_opts.flag_retain_dir_structure = 1;
                 break;
             case 'h':
                 DEBUG("Displaying the large help message%s","");
@@ -415,14 +427,19 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     //measure file listing time
     double init_realtime = slow5_realtime();
     std::vector<std::string> fast5_files;
-    for (int i = optind; i < argc; ++ i) {
+    int i = optind;
+    for (; i < argc; ++ i) {
         list_all_items(argv[i], fast5_files, 0, ".fast5");
     }
+
     VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
     if(fast5_files.size()==0){
         ERROR("No fast5 files found. Exiting.%s","");
         return EXIT_FAILURE;
     }
+
+    int flag_one_input = i==optind+1;
+
     if(fast5_files.size()==1){
         user_opts.num_processes = 1;
     }
@@ -430,16 +447,48 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         ERROR("An output directory (-d DIR) must be specified unless the number of  I/O processes is 1 (-p 1). %s","");
         return EXIT_FAILURE;
     }
+
+    if(user_opts.flag_retain_dir_structure==0){
+        int ret_check_for_similar_file_names = check_for_similar_file_names(fast5_files);
+        if(ret_check_for_similar_file_names){
+            ERROR("Two or more fast5 files have the same filename. Exiting.%s","");
+            return EXIT_FAILURE;
+        }
+    }
+
     if(user_opts.arg_dir_out){
-        struct stat st = {0};
-        if (stat(user_opts.arg_dir_out, &st) == -1) {
-            mkdir(user_opts.arg_dir_out, 0700);
-        }else{
-            std::vector< std::string > dir_list = list_directory(user_opts.arg_dir_out);
-            if(dir_list.size()>2){
-                ERROR("Output directory %s is not empty. Please remove it or specify another directory.",user_opts.arg_dir_out);
-                return EXIT_FAILURE;
+        int ret_create_dir = create_dir(user_opts.arg_dir_out);
+        if(ret_create_dir == -1){
+            ERROR("Output directory %s is not empty. Please remove it or specify another directory.",user_opts.arg_dir_out);
+            return EXIT_FAILURE;
+        }
+        if(ret_create_dir == -2){
+            ERROR("Could not create the output dir %s.",user_opts.arg_dir_out);
+            return EXIT_FAILURE;
+        }
+    }
+
+    if(user_opts.arg_dir_out && user_opts.flag_retain_dir_structure==1 && flag_one_input==1){
+        std::vector<std::string> input_sub_dirs;
+        list_all_items(argv[optind], input_sub_dirs, 2, NULL);
+
+        if(input_sub_dirs.size()){
+            std::string base_input_dir = argv[optind];
+            for(size_t i=1; i<input_sub_dirs.size(); i++){
+                std::string sub_dir_prefix = input_sub_dirs[i].substr(base_input_dir.size(), std::string::npos);
+                std::string sub_dir_output = std::string(user_opts.arg_dir_out) + sub_dir_prefix;
+                int ret_create_dir = create_dir(sub_dir_output.c_str());
+                if(ret_create_dir == -1){
+                    ERROR("Output directory %s is not empty. Please remove it or specify another directory.", sub_dir_output.c_str());
+                    return EXIT_FAILURE;
+                }
+                if(ret_create_dir == -2){
+                    ERROR("Could not create the output dir %s.", sub_dir_output.c_str());
+                    return EXIT_FAILURE;
+                }
             }
+        }else{
+            user_opts.flag_retain_dir_structure = 0;
         }
     }
 
@@ -447,8 +496,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     init_realtime = slow5_realtime();
 
     reads_count readsCount;
-    f2s_iop(&user_opts, fast5_files, &readsCount);
+    f2s_iop(&user_opts, fast5_files, &readsCount, argv[optind]);
     VERBOSE("Converting %ld fast5 files took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Children processes: CPU time = %.3f sec | peak RAM = %.3f GB", slow5_cputime_child(), slow5_peakrss_child() / 1024.0 / 1024.0 / 1024.0);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;

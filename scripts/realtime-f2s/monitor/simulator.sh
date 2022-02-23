@@ -73,10 +73,9 @@ die() {
     #== Default variables ==#
 
 NO_BATCHES=-1 # Default value of -1 if parameter unset
-TIME=0s # 0s between copying by default
+TIME=10s # 10s between copying by default
 REAL_SIM=false # No real simulation by default
 SEQ_SUM=""
-
 
 ## Handle flags
 while getopts "ihrn:t:s:" o; do
