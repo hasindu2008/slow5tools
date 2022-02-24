@@ -381,9 +381,9 @@ int read_file_split_func(std::basic_string<char> &input_slow5_path, slow5_file_t
                     WARNING("Deleting additional file %s failed\n", slow5_path_out);
                     perror("");
                 }
-                if(slow5_path_out){
-                    free(slow5_path_out);
-                }
+            }
+            if(slow5_path_out){
+                free(slow5_path_out);
             }
             break;
         }
