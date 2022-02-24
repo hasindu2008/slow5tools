@@ -175,7 +175,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 user_opts.arg_num_threads = optarg;
                 break;
             case 'p':
-                WARNING("'--iop' is deprecated. Use '--threads' instead%s", ".");
+                WARNING("'-p/--iop' is deprecated and is ineffective. Use '-t' instead%s", ".");
                 user_opts.arg_num_threads = optarg;
                 break;
             case 'K':
