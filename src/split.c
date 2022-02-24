@@ -49,20 +49,27 @@ typedef struct {
 
 int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta_split_method  meta_split_method_object);
 
-//READ SPLIT
-int read_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int read_file_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
                     slow5_press_method_t press_out, meta_split_method meta_split_method_object,
                     int flag_single_threaded_execution);
 
-int single_threaded_read_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
-                                     slow5_press_method_t press_out, int read_limit,
-                                     size_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out);
+int single_threaded_read_file_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+                                              slow5_press_method_t press_out, int64_t read_limit,
+                                              int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out);
 
-int multi_threaded_read_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
-                                    slow5_press_method_t press_out, int read_limit,
-                                    size_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out);
+int multi_threaded_read_file_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+                                             slow5_press_method_t press_out, int64_t read_limit,
+                                             int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, std::vector<slow5_file_t*> output_slow5_files);
 
-void read_split_thread_func(core_t *core, db_t *db, int32_t i) {
+int group_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+                         slow5_press_method_t press_out, meta_split_method meta_split_method_object,
+                         int flag_single_threaded_execution);
+
+int create_output_slow5(slow5_file_t *input_slow5_file_i, slow5_file_t *&slow5_file_out, opt_t user_opts,
+                        std::basic_string<char> &input_slow5_path, char** slow5_path_out_char_array, slow5_press_method_t press_out,
+                        std::string extension, uint32_t file_index, uint32_t read_group_index);
+
+void split_thread_func(core_t *core, db_t *db, int32_t i) {
     //
     struct slow5_rec *read = NULL;
     if (slow5_rec_depress_parse(&db->mem_records[i], &db->mem_bytes[i], NULL, &read, core->fp) != 0) {
@@ -70,6 +77,8 @@ void read_split_thread_func(core_t *core, db_t *db, int32_t i) {
     } else {
         free(db->mem_records[i]);
     }
+    db->read_group_vector[i] = read->read_group;
+    read->read_group = 0;
     struct slow5_press *press_ptr = slow5_press_init(core->press_method);
     if(!press_ptr){
         ERROR("Could not initialize the slow5 compression method%s","");
@@ -85,12 +94,6 @@ void read_split_thread_func(core_t *core, db_t *db, int32_t i) {
     db->read_record[i].len = len;
     slow5_rec_free(read);
 }
-
-//FILE SPLIT
-int file_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
-                    slow5_press_method_t press_out, meta_split_method meta_split_method_object,
-                    int flag_single_threaded_execution);
-
 
 int split_main(int argc, char **argv, struct program_meta *meta){
     init_realtime = slow5_realtime();
@@ -253,7 +256,9 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     //split threading start
     int ret_split_func = split_func(slow5_files_input, user_opts, meta_split_method_object);
-
+    if(ret_split_func){
+        return EXIT_FAILURE;
+    }
     //split threading end
 
     VERBOSE("Splitting %ld s/blow5 files took %.3fs", slow5_files_input.size(), slow5_realtime() - init_realtime);
@@ -293,18 +298,23 @@ int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta
             flag_single_threaded_execution = 1;
         }
         slow5_close(input_slow5_file_i); //todo-implement a method to fseek() to the first record of the slow5File_i
-        if (meta_split_method_object.splitMethod == READS_SPLIT) {
-            int ret_read_split_func = read_split_func(slow5_files_input[i], user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
+        if (meta_split_method_object.splitMethod == READS_SPLIT || meta_split_method_object.splitMethod == FILE_SPLIT) {
+            int ret_read_file_split_func = read_file_split_func(slow5_files_input[i], user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
+            if(ret_read_file_split_func){
+                return -1;
+            }
         }
-        if (meta_split_method_object.splitMethod == FILE_SPLIT) {
-            int ret_read_split_func = file_split_func(slow5_files_input[i], user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
+        else if (meta_split_method_object.splitMethod == GROUP_SPLIT) {
+            int ret_group_split_func = group_split_func(slow5_files_input[i], user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
+            if(ret_group_split_func){
+                return -1;
+            }
         }
     }
-
     return 0;
 }
 
-int read_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int read_file_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
                     slow5_press_method_t press_out, meta_split_method meta_split_method_object,
                     int flag_single_threaded_execution) {
     int flag_EOF = 0;
@@ -313,92 +323,77 @@ int read_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, 
         ERROR("Cannot open %s. Skipping.\n", input_slow5_path.c_str());
         return -1;
     }
+
+    int64_t rem = 0;
+    int64_t limit = 0;
+    if(meta_split_method_object.splitMethod==FILE_SPLIT){
+            int64_t number_of_records = 0;
+            size_t bytes;
+            char *mem;
+            while ((mem = (char *) slow5_get_next_mem(&bytes, input_slow5_file_i))) {
+                free(mem);
+                number_of_records++;
+            }
+
+            slow5_close(input_slow5_file_i); //todo-implement a method to fseek() to the first record of the slow5File_i
+
+            input_slow5_file_i = slow5_open(input_slow5_path.c_str(), "r");
+            if (!input_slow5_file_i) {
+                ERROR("Cannot open %s. Skipping.\n", input_slow5_path.c_str());
+                return -1;
+            }
+
+            limit = number_of_records/meta_split_method_object.n;
+            rem = number_of_records%meta_split_method_object.n;
+    };
+    int64_t number_of_records_per_file = meta_split_method_object.n;
     size_t file_count = 0;
     while (1) {
-        int last_slash = input_slow5_path.find_last_of('/');
-        if (last_slash == -1) {
-            last_slash = 0;
+        if(meta_split_method_object.splitMethod==FILE_SPLIT){
+            number_of_records_per_file = (rem > 0) ? 1 : 0;
+            number_of_records_per_file += limit;
+            rem--;
         }
-        std::string substr_path_slow5_out =
-                input_slow5_path.substr(last_slash, input_slow5_path.length() - last_slash - extension.length()) +
-                "_" + std::to_string(file_count) + extension;
-        std::string slow5_path_out = std::string(user_opts.arg_dir_out) + "/";
-        slow5_path_out += substr_path_slow5_out;
-
-        FILE *slow5_file_pointer_out = NULL;
-        slow5_file_pointer_out = fopen(slow5_path_out.c_str(), "w");
-        if (!slow5_file_pointer_out) {
-            ERROR("Output file %s could not be opened - %s.", slow5_path_out.c_str(), strerror(errno));
-            continue;
+        uint32_t read_group_count_i = input_slow5_file_i->header->num_read_groups;
+        std::vector<slow5_file_t*> output_slow5_files(read_group_count_i);
+        char* slow5_path_out = NULL;
+        int ret_create_output_slow5 = create_output_slow5(input_slow5_file_i, output_slow5_files[0], user_opts, input_slow5_path, &slow5_path_out, press_out, extension, file_count, 0);
+        if(ret_create_output_slow5){
+            return -1;
         }
-        slow5_file_t *slow5_file_out = slow5_init_empty(slow5_file_pointer_out, slow5_path_out.c_str(), user_opts.fmt_out);
-        int ret0 = slow5_hdr_initialize(slow5_file_out->header, user_opts.flag_lossy);
-        if (ret0 < 0) {
-            exit(EXIT_FAILURE);
-        }
-        slow5_file_out->header->num_read_groups = 0;
-        if (user_opts.flag_lossy == 0) {
-            slow5_aux_meta_t *aux_ptr = input_slow5_file_i->header->aux_meta;
-            uint32_t num_aux_attrs = aux_ptr->num;
-            int aux_add_fail = 0;
-            for (uint32_t r = 0; r < num_aux_attrs; r++) {
-                if (aux_ptr->types[r] == SLOW5_ENUM || aux_ptr->types[r] == SLOW5_ENUM_ARRAY) {
-                    uint8_t n;
-                    const char **enum_labels = (const char **) slow5_get_aux_enum_labels(input_slow5_file_i->header,
-                                                                                         aux_ptr->attrs[r], &n);
-                    if (!enum_labels) {
-                        aux_add_fail = 1;
-                    }
-                    if (slow5_aux_meta_add_enum(slow5_file_out->header->aux_meta, aux_ptr->attrs[r],
-                                                aux_ptr->types[r], enum_labels, n)) {
-                        aux_add_fail = 1;
-                    }
-                } else {
-                    if (slow5_aux_meta_add(slow5_file_out->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])) {
-                        aux_add_fail = 1;
-                    }
-                }
-                if (aux_add_fail) {
-                    ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
-                    exit(EXIT_FAILURE);
-                }
-            }
-        }
-        khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, input_slow5_file_i->header); // extract 0th read_group related data from ith slow5file
-        if (slow5_hdr_add_rg_data(slow5_file_out->header, rg) < 0) {
-            ERROR("Could not add read group to %s\n", slow5_path_out.c_str());
-            exit(EXIT_FAILURE);
-        }
-
-        if (slow5_hdr_fwrite(slow5_file_out->fp, slow5_file_out->header, user_opts.fmt_out, press_out) == -1) { //now write the header to the slow5File
-            ERROR("Could not write the header to %s\n", slow5_path_out.c_str());
-            exit(EXIT_FAILURE);
-        }
-        size_t record_count = 0;
+        int64_t record_count = 0;
         if(flag_single_threaded_execution){
-            int ret_single_threaded_read_split_execution = single_threaded_read_split_execution(input_slow5_path,
+            int ret_single_threaded_read_file_split_execution = single_threaded_read_file_split_execution(input_slow5_path,
                                                                                                 user_opts, extension,
                                                                                                 press_out,
-                                                                                                meta_split_method_object.n,
-                                                                                                &record_count, &flag_EOF, input_slow5_file_i, slow5_file_out);
+                                                                                                number_of_records_per_file,
+                                                                                                &record_count, &flag_EOF, input_slow5_file_i, output_slow5_files[0]);
+            if(ret_single_threaded_read_file_split_execution){
+                return -1;
+            }
         }else{
-            int ret_multi_threaded_read_split_execution = multi_threaded_read_split_execution(input_slow5_path,
+            int ret_multi_threaded_read_file_split_execution = multi_threaded_read_file_split_execution(input_slow5_path,
                                                                                               user_opts, extension,
                                                                                               press_out,
-                                                                                              meta_split_method_object.n,
-                                                                                              &record_count, &flag_EOF, input_slow5_file_i, slow5_file_out);
+                                                                                              number_of_records_per_file,
+                                                                                              &record_count, &flag_EOF, input_slow5_file_i, output_slow5_files);
+            if(ret_multi_threaded_read_file_split_execution){
+                return -1;
+            }
         }
         if (user_opts.fmt_out == SLOW5_FORMAT_BINARY) {
-            slow5_eof_fwrite(slow5_file_out->fp);
+            slow5_eof_fwrite(output_slow5_files[0]->fp);
         }
-        slow5_close(slow5_file_out);
-
+        slow5_close(output_slow5_files[0]);
         if (flag_EOF) {
             if (record_count == 0) {
-                int del = remove(slow5_path_out.c_str());
+                int del = remove(slow5_path_out);
                 if (del) {
-                    WARNING("Deleting additional file %s failed\n", slow5_path_out.c_str());
+                    WARNING("Deleting additional file %s failed\n", slow5_path_out);
                     perror("");
+                }
+                if(slow5_path_out){
+                    free(slow5_path_out);
                 }
             }
             break;
@@ -409,11 +404,11 @@ int read_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, 
     return 0;
 }
 
-int multi_threaded_read_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
-                                    slow5_press_method_t press_out, int read_limit,
-                                    size_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out) {
+int multi_threaded_read_file_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+                                    slow5_press_method_t press_out, int64_t read_limit,
+                                    int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, std::vector<slow5_file_t*> output_slow5_files) {
 
-    size_t record_count = *record_count_ptr;
+    int64_t record_count = *record_count_ptr;
     int flag_EOF = *flag_EOF_ptr;
     while(record_count<read_limit){
         int64_t batch_size = (user_opts.read_id_batch_capacity<read_limit)?user_opts.read_id_batch_capacity:read_limit;
@@ -428,7 +423,8 @@ int multi_threaded_read_split_execution(std::basic_string<char> &input_slow5_pat
         while (record_count_local < batch_size) {
             if (!(mem = (char *) slow5_get_next_mem(&bytes, input_slow5_file_i))) {
                 if (slow5_errno != SLOW5_ERR_EOF) {
-                    return EXIT_FAILURE;
+                    ERROR("Could not read file %s", input_slow5_path.c_str());
+                    return -1;
                 } else { //EOF file reached
                     flag_EOF = 1;
                     break;
@@ -445,24 +441,27 @@ int multi_threaded_read_split_execution(std::basic_string<char> &input_slow5_pat
         core_t core;
         core.num_thread = user_opts.num_threads;
         core.fp = input_slow5_file_i;
-        core.aux_meta = slow5_file_out->header->aux_meta;
+        core.aux_meta = input_slow5_file_i->header->aux_meta;
         core.format_out = user_opts.fmt_out;
         core.press_method = press_out;
         core.lossy = user_opts.flag_lossy;
 
+        db.read_group_vector = (uint32_t *) malloc(record_count_local * sizeof(uint32_t));
+        MALLOC_CHK(db.read_group_vector);
         db.n_batch = record_count_local;
         db.read_record = (raw_record_t *) malloc(record_count_local * sizeof *db.read_record);
         MALLOC_CHK(db.read_record);
-        work_db(&core, &db, read_split_thread_func);
+        work_db(&core, &db, split_thread_func);
 
         for (int64_t i = 0; i < record_count_local; i++) {
-            fwrite(db.read_record[i].buffer, 1, db.read_record[i].len, slow5_file_out->fp);
+            fwrite(db.read_record[i].buffer, 1, db.read_record[i].len, output_slow5_files[db.read_group_vector[i]]->fp);
             free(db.read_record[i].buffer);
         }
         // Free everything
         free(db.mem_bytes);
         free(db.mem_records);
         free(db.read_record);
+        free(db.read_group_vector);
 
         if(flag_EOF){
             break;
@@ -470,14 +469,15 @@ int multi_threaded_read_split_execution(std::basic_string<char> &input_slow5_pat
     }
     *flag_EOF_ptr = flag_EOF;
     *record_count_ptr = record_count;
+
     return 0;
 }
 
-int single_threaded_read_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
-                                     slow5_press_method_t press_out, int read_limit,
-                                     size_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out) {
+int single_threaded_read_file_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+                                     slow5_press_method_t press_out, int64_t read_limit,
+                                     int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out) {
 
-    size_t record_count = *record_count_ptr;
+    int64_t record_count = *record_count_ptr;
     int flag_EOF = *flag_EOF_ptr;
     size_t bytes;
     char *buffer;
@@ -485,7 +485,7 @@ int single_threaded_read_split_execution(std::basic_string<char> &input_slow5_pa
         if (!(buffer = (char *) slow5_get_next_mem(&bytes, input_slow5_file_i))) {
             if (slow5_errno != SLOW5_ERR_EOF) {
                 ERROR("Could not read file %s", input_slow5_path.c_str());
-                return EXIT_FAILURE;
+                return -1;
             } else { //EOF file reached
                 flag_EOF = 1;
                 break;
@@ -502,133 +502,108 @@ int single_threaded_read_split_execution(std::basic_string<char> &input_slow5_pa
     return 0;
 }
 
-int file_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
-                    slow5_press_method_t press_out, meta_split_method meta_split_method_object,
-                    int flag_single_threaded_execution){
-    int flag_EOF = 0;
+int group_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+                     slow5_press_method_t press_out, meta_split_method meta_split_method_object,
+                     int flag_single_threaded_execution){
     slow5_file_t * input_slow5_file_i = slow5_open(input_slow5_path.c_str(), "r");
     if (!input_slow5_file_i) {
         ERROR("Cannot open %s. Skipping.\n", input_slow5_path.c_str());
         return -1;
     }
-
-    int64_t number_of_records = 0;
-    size_t bytes;
-    char *mem;
-    double time_get_to_mem = slow5_realtime();
-    while ((mem = (char *) slow5_get_next_mem(&bytes, input_slow5_file_i))) {
-        free(mem);
-        number_of_records++;
+    uint32_t read_group_count_i = input_slow5_file_i->header->num_read_groups;
+    std::vector<slow5_file_t*> output_slow5_files(read_group_count_i);
+    for(uint32_t j=0; j<read_group_count_i; j++){
+        char* slow5_path_out;
+        int ret_create_output_slow5 = create_output_slow5(input_slow5_file_i, output_slow5_files[j], user_opts, input_slow5_path, &slow5_path_out, press_out, extension, j, j);
+        free(slow5_path_out);
+        if(ret_create_output_slow5){
+            return -1;
+        }
     }
-
-    slow5_close(input_slow5_file_i); //todo-implement a method to fseek() to the first record of the slow5File_i
-
-    input_slow5_file_i = slow5_open(input_slow5_path.c_str(), "r");
-    if (!input_slow5_file_i) {
-        ERROR("Cannot open %s. Skipping.\n", input_slow5_path.c_str());
-        return -1;
-    }
-
-    int limit = number_of_records/meta_split_method_object.n;
-    int rem = number_of_records%meta_split_method_object.n;
-    size_t file_count = 0;
-
-    while(number_of_records > 0) {
-        int number_of_records_per_file = (rem > 0) ? 1 : 0;
-        number_of_records_per_file += limit;
-        // fprintf(stderr, "file_count = %d, number_of_records_per_file = %d, number_of_records = %d\n", file_count, number_of_records_per_file, number_of_records);
-        number_of_records -= number_of_records_per_file;
-        rem--;
-        int last_slash = input_slow5_path.find_last_of('/');
-        if (last_slash == -1) {
-            last_slash = 0;
-        }
-        std::string substr_path_slow5_out =
-                input_slow5_path.substr(last_slash, input_slow5_path.length() - last_slash - extension.length()) +
-                "_" + std::to_string(file_count) + extension;
-        std::string slow5_path_out = std::string(user_opts.arg_dir_out) + "/";
-        slow5_path_out += substr_path_slow5_out;
-
-        FILE *slow5_file_pointer_out = NULL;
-        slow5_file_pointer_out = fopen(slow5_path_out.c_str(), "w");
-        if (!slow5_file_pointer_out) {
-            ERROR("Output file %s could not be opened - %s.", slow5_path_out.c_str(), strerror(errno));
-            continue;
-        }
-        slow5_file_t *slow5_file_out = slow5_init_empty(slow5_file_pointer_out, slow5_path_out.c_str(), user_opts.fmt_out);
-        int ret0 = slow5_hdr_initialize(slow5_file_out->header, user_opts.flag_lossy);
-        if (ret0 < 0) {
-            exit(EXIT_FAILURE);
-        }
-        slow5_file_out->header->num_read_groups = 0;
-        if (user_opts.flag_lossy == 0) {
-            slow5_aux_meta_t *aux_ptr = input_slow5_file_i->header->aux_meta;
-            uint32_t num_aux_attrs = aux_ptr->num;
-            int aux_add_fail = 0;
-            for (uint32_t r = 0; r < num_aux_attrs; r++) {
-                if (aux_ptr->types[r] == SLOW5_ENUM || aux_ptr->types[r] == SLOW5_ENUM_ARRAY) {
-                    uint8_t n;
-                    const char **enum_labels = (const char **) slow5_get_aux_enum_labels(input_slow5_file_i->header,
-                                                                                         aux_ptr->attrs[r], &n);
-                    if (!enum_labels) {
-                        aux_add_fail = 1;
-                    }
-                    if (slow5_aux_meta_add_enum(slow5_file_out->header->aux_meta, aux_ptr->attrs[r],
-                                                aux_ptr->types[r], enum_labels, n)) {
-                        aux_add_fail = 1;
-                    }
-                } else {
-                    if (slow5_aux_meta_add(slow5_file_out->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])) {
-                        aux_add_fail = 1;
-                    }
-                }
-                if (aux_add_fail) {
-                    ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
-                    exit(EXIT_FAILURE);
-                }
-            }
-        }
-        khash_t(slow5_s2s) *rg = slow5_hdr_get_data(0, input_slow5_file_i->header); // extract 0th read_group related data from ith slow5file
-        if (slow5_hdr_add_rg_data(slow5_file_out->header, rg) < 0) {
-            ERROR("Could not add read group to %s\n", slow5_path_out.c_str());
-            exit(EXIT_FAILURE);
-        }
-
-        if (slow5_hdr_fwrite(slow5_file_out->fp, slow5_file_out->header, user_opts.fmt_out, press_out) == -1) { //now write the header to the slow5File
-            ERROR("Could not write the header to %s\n", slow5_path_out.c_str());
-            exit(EXIT_FAILURE);
-        }
-        size_t record_count = 0;
-        if(flag_single_threaded_execution){
-            int ret_single_threaded_read_split_execution = single_threaded_read_split_execution(input_slow5_path,
+    int flag_EOF = 0;
+    int64_t record_count = 0;
+    int64_t number_of_records_per_file = INT64_MAX;
+    int ret_multi_threaded_read_file_split_execution = multi_threaded_read_file_split_execution(input_slow5_path,
                                                                                                 user_opts, extension,
                                                                                                 press_out,
                                                                                                 number_of_records_per_file,
-                                                                                                &record_count, &flag_EOF, input_slow5_file_i, slow5_file_out);
-        }else{
-            int ret_multi_threaded_read_split_execution = multi_threaded_read_split_execution(input_slow5_path,
-                                                                                              user_opts, extension,
-                                                                                              press_out,
-                                                                                              number_of_records_per_file,
-                                                                                              &record_count, &flag_EOF, input_slow5_file_i, slow5_file_out);
-        }
-        if (user_opts.fmt_out == SLOW5_FORMAT_BINARY) {
-            slow5_eof_fwrite(slow5_file_out->fp);
-        }
-        slow5_close(slow5_file_out);
+                                                                                                &record_count, &flag_EOF, input_slow5_file_i, output_slow5_files);
 
-        if (flag_EOF) {
-            if (record_count == 0) {
-                int del = remove(slow5_path_out.c_str());
-                if (del) {
-                    WARNING("Deleting additional file %s failed\n", slow5_path_out.c_str());
-                    perror("");
-                }
-            }
-            break;
+    if(ret_multi_threaded_read_file_split_execution){
+        return -1;
+    }
+    for(uint32_t j=0; j<read_group_count_i; j++){
+        if (user_opts.fmt_out == SLOW5_FORMAT_BINARY) {
+            slow5_eof_fwrite(output_slow5_files[j]->fp);
         }
-        file_count++;
+        slow5_close(output_slow5_files[j]);
     }
     slow5_close(input_slow5_file_i);
+    return 0;
+}
+
+int create_output_slow5(slow5_file_t *input_slow5_file_i, slow5_file_t *&slow5_file_out, opt_t user_opts,
+                        std::basic_string<char> &input_slow5_path, char** slow5_path_out_char_array, slow5_press_method_t press_out,
+                        std::string extension, uint32_t file_index, uint32_t read_group_index) {
+    int last_slash = input_slow5_path.find_last_of('/');
+    if (last_slash == -1) {
+        last_slash = 0;
+    }
+    std::string substr_path_slow5_out =
+            input_slow5_path.substr(last_slash, input_slow5_path.length() - last_slash - extension.length()) +
+            "_" + std::to_string(file_index) + extension;
+    std::string slow5_path_out = std::string(user_opts.arg_dir_out) + "/";
+    slow5_path_out += substr_path_slow5_out;
+    *slow5_path_out_char_array = strdup(slow5_path_out.c_str());
+    FILE *slow5_file_pointer_out = NULL;
+    slow5_file_pointer_out = fopen(slow5_path_out.c_str(), "w");
+    if (!slow5_file_pointer_out) {
+        ERROR("Output file %s could not be opened - %s.", slow5_path_out.c_str(), strerror(errno));
+        return -1;
+    }
+    slow5_file_out = slow5_init_empty(slow5_file_pointer_out, slow5_path_out.c_str(), user_opts.fmt_out);
+    int ret0 = slow5_hdr_initialize(slow5_file_out->header, user_opts.flag_lossy);
+    if (ret0 < 0) {
+        ERROR("Could not initialize the header for %s - %s.", slow5_path_out.c_str(), strerror(errno));
+        return -1;
+    }
+    slow5_file_out->header->num_read_groups = 0;
+    if (user_opts.flag_lossy == 0) {
+        slow5_aux_meta_t *aux_ptr = input_slow5_file_i->header->aux_meta;
+        uint32_t num_aux_attrs = aux_ptr->num;
+        int aux_add_fail = 0;
+        for (uint32_t r = 0; r < num_aux_attrs; r++) {
+            if (aux_ptr->types[r] == SLOW5_ENUM || aux_ptr->types[r] == SLOW5_ENUM_ARRAY) {
+                uint8_t n;
+                const char **enum_labels = (const char **) slow5_get_aux_enum_labels(input_slow5_file_i->header,
+                                                                                     aux_ptr->attrs[r], &n);
+                if (!enum_labels) {
+                    aux_add_fail = 1;
+                }
+                if (slow5_aux_meta_add_enum(slow5_file_out->header->aux_meta, aux_ptr->attrs[r],
+                                            aux_ptr->types[r], enum_labels, n)) {
+                    aux_add_fail = 1;
+                }
+            } else {
+                if (slow5_aux_meta_add(slow5_file_out->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r])) {
+                    aux_add_fail = 1;
+                }
+            }
+            if (aux_add_fail) {
+                ERROR("Could not initialize the record attribute '%s'", aux_ptr->attrs[r]);
+                return -1;
+            }
+        }
+    }
+    khash_t(slow5_s2s) *rg = slow5_hdr_get_data(read_group_index, input_slow5_file_i->header);
+    if (slow5_hdr_add_rg_data(slow5_file_out->header, rg) < 0) {
+        ERROR("Could not add read group to %s\n", slow5_path_out.c_str());
+        return -1;
+    }
+
+    if (slow5_hdr_fwrite(slow5_file_out->fp, slow5_file_out->header, user_opts.fmt_out, press_out) == -1) { //now write the header to the slow5File
+        ERROR("Could not write the header to %s\n", slow5_path_out.c_str());
+        return -1;
+    }
     return 0;
 }
