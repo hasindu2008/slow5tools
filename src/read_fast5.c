@@ -1154,7 +1154,11 @@ int create_dir(const char *dir_name) {
 //if count_dir==1; then list dir as well
 //if count_dir==2; then list only dir
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
+    std::string extension_string;
+    size_t extension_length = 0;
     if(extension){
+        extension_string = std::string(extension);
+        extension_length = extension_string.length();
         STDERR("Looking for '*%s' files in %s", extension, path.c_str());
     }
     if(is_directory(path) && count_dir==1){
@@ -1177,7 +1181,12 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
             }else{
                 //add to the list
                 if(extension){
-                    if(full_fn.find(extension) != std::string::npos && count_dir!=2){
+                    std::string full_fn_last_part = full_fn.substr(full_fn.length()-extension_length, extension_length);
+                    int ret_strcmp = strcmp(full_fn_last_part.c_str(), extension);
+                    if(strcmp(extension,".slow5")==0 && ret_strcmp!=0){
+                        ret_strcmp = strcmp(full_fn_last_part.c_str(), ".blow5");
+                    }
+                    if(ret_strcmp==0 && count_dir!=2){
                         files.push_back(full_fn);
                     }
                 }else{
@@ -1189,7 +1198,12 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
         }
     }else{
         if(extension){
-            if(path.find(extension) != std::string::npos && count_dir!=2){
+            std::string full_fn_last_part = path.substr(path.length()-extension_length, extension_length);
+            int ret_strcmp = strcmp(full_fn_last_part.c_str(), extension);
+            if(strcmp(extension,".slow5")==0 && ret_strcmp!=0){
+                ret_strcmp = strcmp(full_fn_last_part.c_str(), ".blow5");
+            }
+            if(ret_strcmp==0 && count_dir!=2){
                 files.push_back(path);
             }
         }else{

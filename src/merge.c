@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <queue>
 #include <pthread.h>
 
 #include "error.h"
@@ -42,13 +43,12 @@ int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64
 void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
     //
     struct slow5_rec *read = NULL;
-    if (slow5_rec_depress_parse(&db->mem_records[i], &db->mem_bytes[i], NULL, &read, core->fp) != 0) {
+    if (slow5_rec_depress_parse(&db->mem_records[i], &db->mem_bytes[i], NULL, &read, db->slow5_file_pointers[i]) != 0) {
         exit(EXIT_FAILURE);
     } else {
         free(db->mem_records[i]);
     }
-    read->read_group = db->list[core->slow5_file_index][read->read_group]; //write records of the ith slow5file with the updated read_group value
-
+    read->read_group = db->list[db->slow5_file_indices[i]][read->read_group]; //write records of the ith slow5file with the updated read_group value
     struct slow5_press *press_ptr = slow5_press_init(core->press_method);
     if(!press_ptr){
         ERROR("Could not initialize the slow5 compression method%s","");
@@ -182,12 +182,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     double realtime0 = slow5_realtime();
     std::vector<std::string> files;
     for (int i = optind; i < argc; ++i) {
-        list_all_items(argv[i], files, 0, NULL);
+        list_all_items(argv[i], files, 0, ".slow5");
     }
     VERBOSE("%ld files found - took %.3fs\n", files.size(), slow5_realtime() - realtime0);
 
     if(files.size()==0){
-        ERROR("No slow5/blow5 files found for conversion. Exiting.%s","");
+        ERROR("No slow5/blow5 files found. Exiting.%s","");
         return EXIT_FAILURE;
     }
 
@@ -364,25 +364,31 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     double time_get_to_mem = 0;
     double time_thread_execution = 0;
+    int flag_end_of_records = 0;
     double time_write = 0;
 
     int64_t batch_size = user_opts.read_id_batch_capacity;
     size_t slow5_file_index = 0;
-    int flag_EOF = 0;
+    std::queue<struct slow5_file*> open_files_pointers;
+    std::vector<int> slow5_file_indices(batch_size);
 
     struct slow5_file *from = slow5_open(slow5_files[slow5_file_index].c_str(), "r");
     if (from == NULL) {
         ERROR("File '%s' could not be opened - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
         return EXIT_FAILURE;
     }
-
+    open_files_pointers.push(from);
+    size_t open_file_from = slow5_file_index;
     while(1) {
-
         db_t db = { 0 };
         db.mem_records = (char **) malloc(batch_size * sizeof(char*));
         db.mem_bytes = (size_t *) malloc(batch_size * sizeof(size_t));
+        db.slow5_file_pointers = (slow5_file_t **) malloc(batch_size * sizeof(slow5_file_t*));
+
         MALLOC_CHK(db.mem_records);
         MALLOC_CHK(db.mem_bytes);
+        MALLOC_CHK(db.slow5_file_pointers);
+
         int64_t record_count = 0;
         size_t bytes;
         char *mem;
@@ -392,32 +398,44 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 if (slow5_errno != SLOW5_ERR_EOF) {
                     return EXIT_FAILURE;
                 } else { //EOF file reached
-                    flag_EOF = 1;
-                    break;
+                    slow5_file_index++;
+                    if(slow5_file_index == slow5_files.size()){
+                        flag_end_of_records = 1;
+                        break;
+                    }else{
+                        from = slow5_open(slow5_files[slow5_file_index].c_str(), "r");
+                        if (from == NULL) {
+                            ERROR("File '%s' could not be opened - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
+                            return EXIT_FAILURE;
+                        }
+                        open_files_pointers.push(from);
+                    }
+                    continue;
                 }
             } else {
                 db.mem_records[record_count] = mem;
                 db.mem_bytes[record_count] = bytes;
+                db.slow5_file_pointers[record_count] = from;
+                slow5_file_indices[record_count] = slow5_file_index;
                 record_count++;
             }
         }
-        time_get_to_mem += slow5_realtime() - realtime;
 
+        time_get_to_mem += slow5_realtime() - realtime;
         realtime = slow5_realtime();
         // Setup multithreading structures
         core_t core;
         core.num_thread = user_opts.num_threads;
-        core.fp = from;
         core.aux_meta = slow5File->header->aux_meta;
         core.format_out = user_opts.fmt_out;
         core.press_method = method;
         core.lossy = user_opts.flag_lossy;
-        core.slow5_file_index = slow5_file_index;
 
         db.n_batch = record_count;
         db.read_record = (raw_record_t*) malloc(record_count * sizeof *db.read_record);
         MALLOC_CHK(db.read_record);
         db.list = list;
+        db.slow5_file_indices = slow5_file_indices;
         work_db(&core,&db,parallel_reads_model);
         time_thread_execution += slow5_realtime() - realtime;
 
@@ -432,23 +450,18 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         free(db.mem_bytes);
         free(db.mem_records);
         free(db.read_record);
+        free(db.slow5_file_pointers);
 
-        if(flag_EOF){
-            flag_EOF = 0;
-            if (slow5_close(from) == EOF) { //close file
-                ERROR("File '%s' failed on closing - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
+        for(size_t j=open_file_from; j<slow5_file_index; j++){
+            if (slow5_close(open_files_pointers.front()) == EOF) { //close file
+                ERROR("File '%s' failed on closing - %s.", slow5_files[j].c_str(), strerror(errno));
                 return EXIT_FAILURE;
             }
-            slow5_file_index++;
-            if(slow5_file_index == slow5_files.size()){
-                break;
-            }else{
-                from = slow5_open(slow5_files[slow5_file_index].c_str(), "r");
-                if (from == NULL) {
-                    ERROR("File '%s' could not be opened - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
-                    return EXIT_FAILURE;
-                }
-            }
+            open_files_pointers.pop();
+        }
+        open_file_from = slow5_file_index;
+        if(flag_end_of_records){
+            break;
         }
     }
     DEBUG("time_get_to_mem\t%.3fs", time_get_to_mem);

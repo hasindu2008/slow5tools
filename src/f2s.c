@@ -431,6 +431,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     for (; i < argc; ++ i) {
         list_all_items(argv[i], fast5_files, 0, ".fast5");
     }
+
+    VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
+    if(fast5_files.size()==0){
+        ERROR("No fast5 files found. Exiting.%s","");
+        return EXIT_FAILURE;
+    }
+
     int flag_one_input = i==optind+1;
 
     if(fast5_files.size()==1){
@@ -438,12 +445,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     }
     if(user_opts.num_processes>1 && !user_opts.arg_dir_out){
         ERROR("An output directory (-d DIR) must be specified unless the number of  I/O processes is 1 (-p 1). %s","");
-        return EXIT_FAILURE;
-    }
-
-    VERBOSE("%ld fast5 files found - took %.3fs",fast5_files.size(), slow5_realtime() - init_realtime);
-    if(fast5_files.size()==0){
-        ERROR("No fast5 files found. Exiting.%s","");
         return EXIT_FAILURE;
     }
 

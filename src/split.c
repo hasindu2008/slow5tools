@@ -236,7 +236,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             }
         }
     }
-
     std::vector<std::string> slow5_files_input;
 
     if(meta_split_method_object.splitMethod == READS_SPLIT){
@@ -250,21 +249,18 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     //measure file listing time
     double realtime0 = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
-        list_all_items(argv[i], slow5_files_input, 0, NULL);
+        list_all_items(argv[i], slow5_files_input, 0, ".slow5");
     }
     VERBOSE("%ld slow5 files found - took %.3fs", slow5_files_input.size(), slow5_realtime() - realtime0);
     if(slow5_files_input.size() == 0){
         ERROR("No slow5/blow5 files found. Exiting...%s","");
         return EXIT_FAILURE;
     }
-    //measure slow5 splitting time
 
-    //split threading start
     int ret_split_func = split_func(slow5_files_input, user_opts, meta_split_method_object);
     if(ret_split_func){
         return EXIT_FAILURE;
     }
-    //split threading end
 
     VERBOSE("Splitting %ld s/blow5 files took %.3fs", slow5_files_input.size(), slow5_realtime() - init_realtime);
 
