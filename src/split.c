@@ -49,19 +49,19 @@ typedef struct {
 
 int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta_split_method  meta_split_method_object);
 
-int read_file_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int read_file_split_func(std::basic_string<char> &input_slow5_path, slow5_file_t * input_slow5_file_i, opt_t user_opts, std::string extension,
                     slow5_press_method_t press_out, meta_split_method meta_split_method_object,
                     int flag_single_threaded_execution);
 
-int single_threaded_read_file_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int single_threaded_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
                                               slow5_press_method_t press_out, int64_t read_limit,
                                               int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out);
 
-int multi_threaded_read_file_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int multi_threaded_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
                                              slow5_press_method_t press_out, int64_t read_limit,
                                              int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, std::vector<slow5_file_t*> output_slow5_files);
 
-int group_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int group_split_func(std::basic_string<char> &input_slow5_path, slow5_file_t * input_slow5_file_i, opt_t user_opts, std::string extension,
                          slow5_press_method_t press_out, meta_split_method meta_split_method_object,
                          int flag_single_threaded_execution);
 
@@ -73,6 +73,7 @@ void split_thread_func(core_t *core, db_t *db, int32_t i) {
     //
     struct slow5_rec *read = NULL;
     if (slow5_rec_depress_parse(&db->mem_records[i], &db->mem_bytes[i], NULL, &read, core->fp) != 0) {
+        ERROR("Could not decompress the slow5 record%s","");
         exit(EXIT_FAILURE);
     } else {
         free(db->mem_records[i]);
@@ -116,11 +117,12 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {"sig-compress",required_argument,  NULL, 's'}, //3
             {"out-dir",     required_argument, NULL, 'd' },  //4
             {"threads",     required_argument, NULL, 't'},   //5
-            {"lossless",    required_argument, NULL, 'l'}, //6
-            {"groups",      no_argument, NULL, 'g'}, //7
-            {"files",       required_argument, NULL, 'f'}, //8
-            {"reads",       required_argument, NULL, 'r'}, //9
-            {"batchsize",   required_argument, NULL, 'K'}, //8
+            { "iop",        required_argument, NULL, 'p'},   //6
+            {"lossless",    required_argument, NULL, 'l'}, //7
+            {"groups",      no_argument, NULL, 'g'},       //8
+            {"files",       required_argument, NULL, 'f'}, //9
+            {"reads",       required_argument, NULL, 'r'}, //10
+            {"batchsize",   required_argument, NULL, 'K'}, //11
             {NULL, 0, NULL, 0 }
     };
 
@@ -134,7 +136,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -170,6 +172,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 user_opts.arg_lossless = optarg;
                 break;
             case 't':
+                user_opts.arg_num_threads = optarg;
+                break;
+            case 'p':
+                WARNING("'--iop' is deprecated. Use '--threads' instead%s", ".");
                 user_opts.arg_num_threads = optarg;
                 break;
             case 'K':
@@ -231,7 +237,6 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         }
     }
 
-    reads_count readsCount;
     std::vector<std::string> slow5_files_input;
 
     if(meta_split_method_object.splitMethod == READS_SPLIT){
@@ -297,54 +302,42 @@ int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta
         if(user_opts.fmt_out==SLOW5_FORMAT_ASCII && input_slow5_file_i->format==user_opts.fmt_out){
             flag_single_threaded_execution = 1;
         }
-        slow5_close(input_slow5_file_i); //todo-implement a method to fseek() to the first record of the slow5File_i
         if (meta_split_method_object.splitMethod == READS_SPLIT || meta_split_method_object.splitMethod == FILE_SPLIT) {
-            int ret_read_file_split_func = read_file_split_func(slow5_files_input[i], user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
+            int ret_read_file_split_func = read_file_split_func(slow5_files_input[i], input_slow5_file_i, user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
             if(ret_read_file_split_func){
                 return -1;
             }
         }
         else if (meta_split_method_object.splitMethod == GROUP_SPLIT) {
-            int ret_group_split_func = group_split_func(slow5_files_input[i], user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
+            int ret_group_split_func = group_split_func(slow5_files_input[i], input_slow5_file_i, user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
             if(ret_group_split_func){
                 return -1;
             }
         }
+        slow5_close(input_slow5_file_i); //todo-implement a method to fseek() to the first record of the slow5File_i
     }
     return 0;
 }
 
-int read_file_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int read_file_split_func(std::basic_string<char> &input_slow5_path, slow5_file_t * input_slow5_file_i, opt_t user_opts, std::string extension,
                     slow5_press_method_t press_out, meta_split_method meta_split_method_object,
                     int flag_single_threaded_execution) {
     int flag_EOF = 0;
-    slow5_file_t * input_slow5_file_i = slow5_open(input_slow5_path.c_str(), "r");
-    if (!input_slow5_file_i) {
-        ERROR("Cannot open %s. Skipping.\n", input_slow5_path.c_str());
-        return -1;
-    }
-
     int64_t rem = 0;
     int64_t limit = 0;
     if(meta_split_method_object.splitMethod==FILE_SPLIT){
-            int64_t number_of_records = 0;
-            size_t bytes;
-            char *mem;
-            while ((mem = (char *) slow5_get_next_mem(&bytes, input_slow5_file_i))) {
-                free(mem);
-                number_of_records++;
-            }
+        long current_pos = ftell(input_slow5_file_i->fp);
+        int64_t number_of_records = 0;
+        size_t bytes;
+        char *mem;
+        while ((mem = (char *) slow5_get_next_mem(&bytes, input_slow5_file_i))) {
+            free(mem);
+            number_of_records++;
+        }
+        fseek(input_slow5_file_i->fp, current_pos, SEEK_SET);
 
-            slow5_close(input_slow5_file_i); //todo-implement a method to fseek() to the first record of the slow5File_i
-
-            input_slow5_file_i = slow5_open(input_slow5_path.c_str(), "r");
-            if (!input_slow5_file_i) {
-                ERROR("Cannot open %s. Skipping.\n", input_slow5_path.c_str());
-                return -1;
-            }
-
-            limit = number_of_records/meta_split_method_object.n;
-            rem = number_of_records%meta_split_method_object.n;
+        limit = number_of_records/meta_split_method_object.n;
+        rem = number_of_records%meta_split_method_object.n;
     };
     int64_t number_of_records_per_file = meta_split_method_object.n;
     size_t file_count = 0;
@@ -363,21 +356,21 @@ int read_file_split_func(std::basic_string<char> &input_slow5_path, opt_t user_o
         }
         int64_t record_count = 0;
         if(flag_single_threaded_execution){
-            int ret_single_threaded_read_file_split_execution = single_threaded_read_file_split_execution(input_slow5_path,
+            int ret_single_threaded_split_execution = single_threaded_split_execution(input_slow5_path,
                                                                                                 user_opts, extension,
                                                                                                 press_out,
                                                                                                 number_of_records_per_file,
                                                                                                 &record_count, &flag_EOF, input_slow5_file_i, output_slow5_files[0]);
-            if(ret_single_threaded_read_file_split_execution){
+            if(ret_single_threaded_split_execution){
                 return -1;
             }
         }else{
-            int ret_multi_threaded_read_file_split_execution = multi_threaded_read_file_split_execution(input_slow5_path,
+            int ret_multi_threaded_split_execution = multi_threaded_split_execution(input_slow5_path,
                                                                                               user_opts, extension,
                                                                                               press_out,
                                                                                               number_of_records_per_file,
                                                                                               &record_count, &flag_EOF, input_slow5_file_i, output_slow5_files);
-            if(ret_multi_threaded_read_file_split_execution){
+            if(ret_multi_threaded_split_execution){
                 return -1;
             }
         }
@@ -398,13 +391,15 @@ int read_file_split_func(std::basic_string<char> &input_slow5_path, opt_t user_o
             }
             break;
         }
+        if(slow5_path_out){
+            free(slow5_path_out);
+        }
         file_count++;
     }
-    slow5_close(input_slow5_file_i);
     return 0;
 }
 
-int multi_threaded_read_file_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int multi_threaded_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
                                     slow5_press_method_t press_out, int64_t read_limit,
                                     int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, std::vector<slow5_file_t*> output_slow5_files) {
 
@@ -473,7 +468,7 @@ int multi_threaded_read_file_split_execution(std::basic_string<char> &input_slow
     return 0;
 }
 
-int single_threaded_read_file_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int single_threaded_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
                                      slow5_press_method_t press_out, int64_t read_limit,
                                      int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out) {
 
@@ -495,6 +490,7 @@ int single_threaded_read_file_split_execution(std::basic_string<char> &input_slo
         if(user_opts.fmt_out == SLOW5_FORMAT_ASCII){
             fwrite("\n",1,1,slow5_file_out->fp);
         }
+        free(buffer);
         record_count++;
     }
     *flag_EOF_ptr = flag_EOF;
@@ -502,14 +498,9 @@ int single_threaded_read_file_split_execution(std::basic_string<char> &input_slo
     return 0;
 }
 
-int group_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
+int group_split_func(std::basic_string<char> &input_slow5_path, slow5_file_t * input_slow5_file_i, opt_t user_opts, std::string extension,
                      slow5_press_method_t press_out, meta_split_method meta_split_method_object,
                      int flag_single_threaded_execution){
-    slow5_file_t * input_slow5_file_i = slow5_open(input_slow5_path.c_str(), "r");
-    if (!input_slow5_file_i) {
-        ERROR("Cannot open %s. Skipping.\n", input_slow5_path.c_str());
-        return -1;
-    }
     uint32_t read_group_count_i = input_slow5_file_i->header->num_read_groups;
     std::vector<slow5_file_t*> output_slow5_files(read_group_count_i);
     for(uint32_t j=0; j<read_group_count_i; j++){
@@ -523,13 +514,8 @@ int group_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts,
     int flag_EOF = 0;
     int64_t record_count = 0;
     int64_t number_of_records_per_file = INT64_MAX;
-    int ret_multi_threaded_read_file_split_execution = multi_threaded_read_file_split_execution(input_slow5_path,
-                                                                                                user_opts, extension,
-                                                                                                press_out,
-                                                                                                number_of_records_per_file,
-                                                                                                &record_count, &flag_EOF, input_slow5_file_i, output_slow5_files);
-
-    if(ret_multi_threaded_read_file_split_execution){
+    int ret_multi_threaded_split_execution = multi_threaded_split_execution(input_slow5_path, user_opts, extension, press_out, number_of_records_per_file, &record_count, &flag_EOF, input_slow5_file_i, output_slow5_files);
+    if(ret_multi_threaded_split_execution){
         return -1;
     }
     for(uint32_t j=0; j<read_group_count_i; j++){
@@ -538,7 +524,6 @@ int group_split_func(std::basic_string<char> &input_slow5_path, opt_t user_opts,
         }
         slow5_close(output_slow5_files[j]);
     }
-    slow5_close(input_slow5_file_i);
     return 0;
 }
 
