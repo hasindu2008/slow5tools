@@ -427,6 +427,11 @@ echo "------------------- f2s testcase $TESTCASE_NO >>> aux field 'channel numbe
 $SLOW5_EXEC f2s $FAST5_DIR/err_fast5/aux_field_wrong_type.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+TESTCASE_NO=56
+echo "------------------- f2s testcase $TESTCASE_NO >>> R7 file   -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/R7_1.fast5 -o $OUTPUT_DIR/err.slow5 && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
 ## Unusual stuff
 TESTCASE_NO=56
 echo "------------------- f2s testcase $TESTCASE_NO >>> new non string attribute in context tags  -------------------"
@@ -466,12 +471,10 @@ $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_group.fast5 > /dev/null  2> $OUTPUT
 grep -q "WARNING" $OUTPUT_DIR/err.slow5.log || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
-
 TESTCASE_NO=63
 echo "------------------- f2s testcase $TESTCASE_NO >>> pore type set   -------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/pore_set.fast5 -o $OUTPUT_DIR/err.slow5 && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
-
 
 ## Output formats
 
