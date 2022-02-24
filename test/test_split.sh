@@ -42,12 +42,13 @@ TESTCASE=0
 echo "-------------------testcase ${TESTCASE}: slow5tools version-------------------"
 $SLOW5_EXEC --version || die "testcase ${TESTCASE}: slow5tools versio"
 
-echo
-TESTCASE=1
-echo "-------------------testcase ${TESTCASE}: spliting groups-------------------"
 OUTPUT_DIR="$REL_PATH/data/out/split"
 test -d  $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
 mkdir "$OUTPUT_DIR" || die "Creating $OUTPUT_DIR failed"
+
+echo
+TESTCASE=1
+echo "-------------------testcase ${TESTCASE}: spliting groups-------------------"
 $SLOW5_EXEC split -g $REL_PATH/data/raw/split/multi_group_slow5s/rg.slow5 -d $OUTPUT_DIR/splitted_groups_slow5s --to slow5 || die "testcase ${TESTCASE}: splitting groups failed"
 echo "comparing group split: output and expected"
 check "group split" $REL_PATH/data/exp/split/expected_group_split_slow5s $OUTPUT_DIR/splitted_groups_slow5s
