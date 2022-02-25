@@ -119,7 +119,7 @@ else
     fi
 fi
 
-TESTCASE_NAME="split integrity test"
+TESTCASE_NAME="split test"
 echo_test $TESTCASE_NAME
 if [ $mem -eq 1 ]; then
     if ! ./test/test_split.sh mem; then

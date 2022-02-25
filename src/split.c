@@ -86,7 +86,11 @@ void split_thread_func(core_t *core, db_t *db, int32_t i) {
         exit(EXIT_FAILURE);
     }
     size_t len;
-    if ((db->read_record[i].buffer = slow5_rec_to_mem(read, core->fp->header->aux_meta, core->format_out, press_ptr, &len)) == NULL) {
+    slow5_aux_meta_t *aux_meta = core->aux_meta;
+    if(core->lossy){
+        aux_meta = NULL;
+    }
+    if ((db->read_record[i].buffer = slow5_rec_to_mem(read, aux_meta, core->format_out, press_ptr, &len)) == NULL) {
         slow5_press_free(press_ptr);
         slow5_rec_free(read);
         exit(EXIT_FAILURE);
@@ -292,11 +296,15 @@ int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta
             continue;
         }
         int flag_single_threaded_execution = 0;
+        int flag_auxiliary_data_available = (input_slow5_file_i->header->aux_meta==NULL)?0:1;
         if(user_opts.fmt_out==SLOW5_FORMAT_BINARY && input_slow5_file_i->format==user_opts.fmt_out && input_slow5_file_i->compress->record_press->method==user_opts.record_press_out && input_slow5_file_i->compress->signal_press->method==user_opts.signal_press_out){
             flag_single_threaded_execution = 1;
         }
         if(user_opts.fmt_out==SLOW5_FORMAT_ASCII && input_slow5_file_i->format==user_opts.fmt_out){
             flag_single_threaded_execution = 1;
+        }
+        if(user_opts.flag_lossy==flag_auxiliary_data_available){
+            flag_single_threaded_execution = 0;
         }
         if (meta_split_method_object.splitMethod == READS_SPLIT || meta_split_method_object.splitMethod == FILE_SPLIT) {
             int ret_read_file_split_func = read_file_split_func(slow5_files_input[i], input_slow5_file_i, user_opts, extension, press_out, meta_split_method_object, flag_single_threaded_execution);
@@ -432,7 +440,7 @@ int multi_threaded_split_execution(std::basic_string<char> &input_slow5_path, op
         core_t core;
         core.num_thread = user_opts.num_threads;
         core.fp = input_slow5_file_i;
-        core.aux_meta = input_slow5_file_i->header->aux_meta;
+        core.aux_meta = output_slow5_files[0]->header->aux_meta;
         core.format_out = user_opts.fmt_out;
         core.press_method = press_out;
         core.lossy = user_opts.flag_lossy;
@@ -467,7 +475,6 @@ int multi_threaded_split_execution(std::basic_string<char> &input_slow5_path, op
 int single_threaded_split_execution(std::basic_string<char> &input_slow5_path, opt_t user_opts, std::string extension,
                                      slow5_press_method_t press_out, int64_t read_limit,
                                      int64_t *record_count_ptr, int* flag_EOF_ptr, slow5_file_t * input_slow5_file_i, slow5_file_t * slow5_file_out) {
-
     int64_t record_count = *record_count_ptr;
     int flag_EOF = *flag_EOF_ptr;
     size_t bytes;
@@ -556,13 +563,11 @@ int create_output_slow5(slow5_file_t *input_slow5_file_i, slow5_file_t *&slow5_f
         for (uint32_t r = 0; r < num_aux_attrs; r++) {
             if (aux_ptr->types[r] == SLOW5_ENUM || aux_ptr->types[r] == SLOW5_ENUM_ARRAY) {
                 uint8_t n;
-                const char **enum_labels = (const char **) slow5_get_aux_enum_labels(input_slow5_file_i->header,
-                                                                                     aux_ptr->attrs[r], &n);
+                const char **enum_labels = (const char **) slow5_get_aux_enum_labels(input_slow5_file_i->header, aux_ptr->attrs[r], &n);
                 if (!enum_labels) {
                     aux_add_fail = 1;
                 }
-                if (slow5_aux_meta_add_enum(slow5_file_out->header->aux_meta, aux_ptr->attrs[r],
-                                            aux_ptr->types[r], enum_labels, n)) {
+                if (slow5_aux_meta_add_enum(slow5_file_out->header->aux_meta, aux_ptr->attrs[r], aux_ptr->types[r], enum_labels, n)) {
                     aux_add_fail = 1;
                 }
             } else {
