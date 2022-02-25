@@ -478,6 +478,7 @@ int single_threaded_split_execution(std::basic_string<char> &input_slow5_path, o
     int64_t record_count = *record_count_ptr;
     int flag_EOF = *flag_EOF_ptr;
     size_t bytes;
+    slow5_rec_size_t record_size;
     char *buffer;
     while (record_count < read_limit) {
         if (!(buffer = (char *) slow5_get_next_mem(&bytes, input_slow5_file_i))) {
@@ -488,6 +489,10 @@ int single_threaded_split_execution(std::basic_string<char> &input_slow5_path, o
                 flag_EOF = 1;
                 break;
             }
+        }
+        if(user_opts.fmt_out == SLOW5_FORMAT_BINARY){
+            record_size = bytes;
+            fwrite(&record_size, 1, sizeof record_size, slow5_file_out->fp);
         }
         fwrite(buffer,1,bytes,slow5_file_out->fp);
         if(user_opts.fmt_out == SLOW5_FORMAT_ASCII){
