@@ -55,7 +55,6 @@ void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
         exit(EXIT_FAILURE);
     }
     size_t len;
-//    slow5_aux_meta_t *aux_meta = core->fp->header->aux_meta;
     slow5_aux_meta_t *aux_meta = core->aux_meta;
     if(core->lossy){
         aux_meta = NULL;

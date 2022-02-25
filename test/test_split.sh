@@ -51,21 +51,21 @@ TESTCASE=1
 echo "-------------------testcase ${TESTCASE}: spliting groups-------------------"
 $SLOW5_EXEC split -g $REL_PATH/data/raw/split/multi_group_slow5s/rg.slow5 -d $OUTPUT_DIR/splitted_groups_slow5s --to slow5 || die "testcase ${TESTCASE}: splitting groups failed"
 echo "comparing group split: output and expected"
-check "group split" $REL_PATH/data/exp/split/expected_group_split_slow5s $OUTPUT_DIR/splitted_groups_slow5s
+check "Testcase:$TESTCASE group split" $REL_PATH/data/exp/split/expected_group_split_slow5s $OUTPUT_DIR/splitted_groups_slow5s
 
 TESTCASE=2
 echo
 echo "-------------------testcase ${TESTCASE}: lossy spliting groups-------------------"
 $SLOW5_EXEC split -g -l false $REL_PATH/data/raw/split/multi_group_slow5s/lossy_rg.slow5 -d $OUTPUT_DIR/lossy_splitted_groups_slow5s --to slow5 || die "testcase ${TESTCASE}: lossy splitting groups failed"
 echo "comparing lossy group split : output and expected"
-check "lossy splitting groups" $REL_PATH/data/exp/split/lossy_expected_slow5s $OUTPUT_DIR/lossy_splitted_groups_slow5s
+check "Testcase:$TESTCASE lossy splitting groups" $REL_PATH/data/exp/split/lossy_expected_slow5s $OUTPUT_DIR/lossy_splitted_groups_slow5s
 
 TESTCASE=3
 echo
 echo "-------------------testcase ${TESTCASE}: split a multi read group slow5 file and produce blow5 output-------------------"
 $SLOW5_EXEC split -g $REL_PATH/data/raw/split/multi_group_slow5s/rg.slow5 -d $OUTPUT_DIR/splitted_groups_blow5_output -c zlib -s svb-zd || die "testcase ${TESTCASE}: splitting groups failed"
 echo "comparing group split: output and expected"
-check "splitting groups" $REL_PATH/data/exp/split/expected_group_split_blow5_output $OUTPUT_DIR/splitted_groups_blow5_output
+check "Testcase:$TESTCASE splitting groups" $REL_PATH/data/exp/split/expected_group_split_blow5_output $OUTPUT_DIR/splitted_groups_blow5_output
 
 
 TESTCASE=4
@@ -73,39 +73,38 @@ echo
 echo "-------------------testcase ${TESTCASE}: split a multi read group v0.1.0 zlib blow5 file -------------------"
 $SLOW5_EXEC split -g $REL_PATH/data/raw/split/multi_group_blow5s/example_multi_rg_v0.1.0.blow5 -d $OUTPUT_DIR/splitted_groups_blow5_input --to slow5 || die "testcase ${TESTCASE}: splitting groups failed"
 echo "comparing group split: output and expected"
-check "splitting groups" $REL_PATH/data/exp/split/expected_group_split_blow5_input $OUTPUT_DIR/splitted_groups_blow5_input
+check "Testcase:$TESTCASE splitting groups" $REL_PATH/data/exp/split/expected_group_split_blow5_input $OUTPUT_DIR/splitted_groups_blow5_input
 
 
 TESTCASE=5
 echo
-echo "-------------------testcase ${TESTCASE}: split a multi read group with and without enum type -------------------"
+echo "-------------------testcase ${TESTCASE}: split a multi read group with and without enum type single file-------------------"
 $SLOW5_EXEC split -g $REL_PATH/data/raw/split/multi_group_enum/with_and_without_enum.slow5 -d $OUTPUT_DIR/splitted_groups_enum --to slow5 || die "testcase ${TESTCASE}: splitting groups failed"
 echo "comparing group split: output and expected"
-check "splitting groups" $REL_PATH/data/exp/split/expected_group_split_enum $OUTPUT_DIR/splitted_groups_enum
+check "Testcase:$TESTCASE splitting groups" $REL_PATH/data/exp/split/expected_group_split_enum $OUTPUT_DIR/splitted_groups_enum
 
 
 TESTCASE=6
 echo
-echo "-------------------testcase ${TESTCASE}: split by reads-------------------"
+echo "-------------------testcase ${TESTCASE}: split by reads single file -------------------"
 $SLOW5_EXEC split -r 2 -l false $REL_PATH/data/raw/split/single_group_slow5s/11reads.slow5 -d $OUTPUT_DIR/split_reads_slow5s --to slow5 || die "testcase ${TESTCASE}:  split by reads failed"
 echo "comparing reads split: output and expected"
-check "read splitting" $REL_PATH/data/exp/split/expected_split_reads_slow5s $OUTPUT_DIR/split_reads_slow5s
+check "Testcase:$TESTCASE read splitting" $REL_PATH/data/exp/split/expected_split_reads_slow5s $OUTPUT_DIR/split_reads_slow5s
 
 
 TESTCASE=7
 echo
-echo "-------------------testcase ${TESTCASE}: split to files-------------------"
+echo "-------------------testcase ${TESTCASE}: split to files single file-------------------"
 $SLOW5_EXEC split -f 3 -l false $REL_PATH/data/raw/split/single_group_slow5s/11reads.slow5 -d $OUTPUT_DIR/split_files_slow5s --to slow5 || die "testcase ${TESTCASE}: split to files failed"
 echo "comparing files split: output and expected"
-check "files splitting" $REL_PATH/data/exp/split/expected_split_files_slow5s $OUTPUT_DIR/split_files_slow5s
+check "Testcase:$TESTCASE files splitting" $REL_PATH/data/exp/split/expected_split_files_slow5s $OUTPUT_DIR/split_files_slow5s
 
 TESTCASE=8
 echo
 rm -r $OUTPUT_DIR/split_files_slow5s
 echo "-------------------testcase ${TESTCASE}: split by groups input:directory-------------------"
-$SLOW5_EXEC split -g -l false $REL_PATH/data/raw/split/multi_group_slow5s/ -d $OUTPUT_DIR/split_files_slow5s --to slow5 || die "testcase ${TESTCASE}: split by groups input:directory failed"
-echo -e "${GREEN}SUCCESS: testcase ${TESTCASE}${NC}"
-
+$SLOW5_EXEC split -g -l false $REL_PATH/data/raw/split/multi_group_slow5s/ -d $OUTPUT_DIR/split_groups_slow5s --to slow5 || die "testcase ${TESTCASE}: split by groups input:directory failed"
+check "Testcase:$TESTCASE group splitting" $REL_PATH/data/exp/split/expected_split_groups_slow5s $OUTPUT_DIR/split_groups_slow5s
 
 TESTCASE=9
 echo
@@ -116,7 +115,7 @@ echo -e "${GREEN}SUCCESS: testcase ${TESTCASE}${NC}"
 
 TESTCASE=10
 echo
-echo "-------------------testcase ${TESTCASE}: split to files current directory:fast5 file stored directory-------------------"
+echo "-------------------testcase ${TESTCASE}: split to files current directory:slow5 file stored directory-------------------"
 rm -r $OUTPUT_DIR/split_files_slow5s
 pwd
 cd $REL_PATH/data/raw/split/single_group_slow5s
@@ -127,8 +126,6 @@ if ! $CD_BACK/slow5tools split -f 3 -l false 11reads.slow5 -d $CD_BACK/$OUTPUT_D
 fi
 echo -e "${GREEN}SUCCESS: testcase ${TESTCASE}${NC}"
 cd -
-
-
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
