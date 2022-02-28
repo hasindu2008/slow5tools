@@ -8,6 +8,8 @@ Usage="split_integrity.sh"
 # Relative path to "slow5/tests/"
 REL_PATH="$(dirname $0)/"
 
+SLOW5_EXEC_WITHOUT_VALGRIND=$REL_PATH/../slow5tools
+
 if [ "$1" = 'mem' ]; then
     SLOW5_EXEC="valgrind --leak-check=full --error-exitcode=1 $REL_PATH/../slow5tools"
 else
@@ -34,8 +36,9 @@ fi
 
 
 slow5tools_quickcheck() {
+    #todo: use valgrind enabled slow5tools after svb valgrind leak fix
     info "running slow5tools_quickcheck for files in $PWD/${1}"
-    ls -1 $PWD/${1}/**.[bs]low5 | xargs -n1 $SLOW5_EXEC quickcheck &> /dev/null
+    ls -1 $PWD/${1}/**.[bs]low5 | xargs -n1 $SLOW5_EXEC_WITHOUT_VALGRIND quickcheck
     if [ $? -eq 0 ]; then
         info "SUCCESS: slow5tools_quickcheck passed!"
     elif [ $? -eq 1 ]; then
@@ -61,14 +64,14 @@ check() {
         exit 1
     fi
 }
+OUTPUT_DIR="$REL_PATH/data/out/split"
+test -d  $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
+mkdir "$OUTPUT_DIR" || die "Creating $OUTPUT_DIR failed"
 
 TESTCASE=0
 info "-------------------testcase ${TESTCASE}: slow5tools version-------------------"
 $SLOW5_EXEC --version || die "testcase ${TESTCASE}: slow5tools versio"
 
-OUTPUT_DIR="$REL_PATH/data/out/split"
-test -d  $OUTPUT_DIR && rm -r "$OUTPUT_DIR"
-mkdir "$OUTPUT_DIR" || die "Creating $OUTPUT_DIR failed"
 
 TESTCASE=1
 info "-------------------testcase ${TESTCASE}: spliting groups-------------------"
