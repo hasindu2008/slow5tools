@@ -4,16 +4,9 @@
 # Relative path to "slow5/tests/"
 REL_PATH="$(dirname $0)/"
 
-NC='\033[0m' # No Color
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-
-# terminate script
-die() {
-    echo -e "${RED}$1${NC}" 1>&3 2>&4
-    echo
-    exit 1
-}
+RED='\033[0;31m' ; GREEN='\033[0;32m' ; NC='\033[0m' # No Color
+die() { echo -e "${RED}$1${NC}" 1>&3 2>&4 ; echo ; exit 1 ; } # terminate script
+info() {  echo ; echo -e "${GREEN}$1${NC}" 1>&3 2>&4 ; }
 
 #redirect
 verbose=0
@@ -41,39 +34,39 @@ else
     SLOW5_EXEC=$SLOW5_EXEC_WITHOUT_VALGRIND
 fi
 
-echo "-------------------slow5tools version-------------------"
+info "-------------------slow5tools version-------------------"
 $SLOW5_EXEC --version || die "slow5tools version failed"
 
-echo
-echo "------------------- slow5tools index testcase 1 -------------------"
+TESTCASE=1
+info "------------------- slow5tools index testcase $TESTCASE -------------------"
 $SLOW5_EXEC index $SLOW5_DIR/example_multi_rg_v0.1.0.blow5 || die "testcase 1 failed"
 diff -q $SLOW5_DIR/example_multi_rg_v0.1.0.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.1.0.blow5.idx &>/dev/null
 if [ $? -ne 0 ]; then
-    echo -e "${RED}ERROR: diff failed for 'slow5tools index testcase 1'${NC}" 1>&3 2>&4
+    info "ERROR: diff failed for 'slow5tools index testcase 1'"
     exit 1
 fi
-echo -e "${GREEN}testcase 1 passed${NC}" 1>&3 2>&4
+info "testcase $TESTCASE passed"
 
-echo
-echo "------------------- slow5tools index testcase 2 -------------------"
+TESTCASE=2
+info "------------------- slow5tools index testcase $TESTCASE -------------------"
 $SLOW5_EXEC index $SLOW5_DIR/example_multi_rg_v0.1.0.slow5 || die "testcase 2 failed"
 diff -q $SLOW5_DIR/example_multi_rg_v0.1.0.slow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.1.0.slow5.idx &>/dev/null
 if [ $? -ne 0 ]; then
-    echo -e "${RED}ERROR: diff failed for 'slow5tools index testcase 2'${NC}" 1>&3 2>&4
+    info "ERROR: diff failed for 'slow5tools index testcase 2'"
     exit 1
 fi
-echo -e "${GREEN}testcase 2 passed${NC}" 1>&3 2>&4
+info "testcase $TESTCASE passed"
 
-echo
-echo "------------------- slow5tools index testcase 3 -------------------"
+TESTCASE=3
+info "------------------- slow5tools index testcase $TESTCASE -------------------"
 $SLOW5_EXEC index $SLOW5_DIR/example_multi_rg_v0.2.0.blow5 || die "testcase 3 failed"
 diff -q $SLOW5_DIR/example_multi_rg_v0.2.0.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.2.0.blow5.idx &>/dev/null
 if [ $? -ne 0 ]; then
-    echo -e "${RED}ERROR: diff failed for 'slow5tools index testcase 3'${NC}" 1>&3 2>&4
+    info "ERROR: diff failed for 'slow5tools index testcase 3'"
     exit 1
 fi
-echo -e "${GREEN}testcase 3 passed${NC}" 1>&3 2>&4
+info "testcase $TESTCASE passed"
 
-rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed" 1>&3 2>&4
+rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
