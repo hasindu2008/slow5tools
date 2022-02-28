@@ -25,15 +25,46 @@ die() {
     exit 1
 }
 
-check() {
-    diff ${2} ${3} &>/dev/null
+#redirect
+verbose=0
+exec 3>&1
+exec 4>&2
+if ((verbose)); then
+  echo "verbose=1"
+else
+  echo "verbose=0"
+  exec 1>/dev/null
+  exec 2>/dev/null
+fi
+#echo "this should be seen if verbose"
+#echo "this should always be seen" 1>&3 2>&4
+
+
+slow5tools_quickcheck() {
+    echo -e "${GREEN}running slow5tools_quickcheck for files in $PWD/${1}${NC}" 1>&3 2>&4
+    ls -1 $PWD/${1}/**.[bs]low5 | xargs -n1 $SLOW5_EXEC quickcheck &> /dev/null
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}SUCCESS: ${1} worked properly!${NC}"
+        echo -e "${GREEN}SUCCESS: slow5tools_quickcheck passed!${NC}" 1>&3 2>&4
     elif [ $? -eq 1 ]; then
-        echo -e "${RED}FAILURE: ${1} not working properly${NC}"
+        echo -e "${RED}FAILURE: ${1} files are corrupted${NC}" 1>&3 2>&4
         exit 1
     else
-        echo -e "${RED}ERROR: diff failed for some weird reason${NC}"
+        echo -e "${RED}ERROR: slow5tools_quickcheck failed for some weird reason${NC}" 1>&3 2>&4
+        exit 1
+    fi
+}
+
+check() {
+    echo -e "${GREEN}${1}${NC}" 1>&3 2>&4
+    slow5tools_quickcheck ${2} ${3}
+    diff ${2} ${3} &>/dev/null
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}SUCCESS: ${1} worked properly!${NC}"  1>&3 2>&4
+    elif [ $? -eq 1 ]; then
+        echo -e "${RED}FAILURE: ${1} not working properly${NC}" 1>&3 2>&4
+        exit 1
+    else
+        echo -e "${RED}ERROR: diff failed for some weird reason${NC}" 1>&3 2>&4
         exit 1
     fi
 }
@@ -111,6 +142,7 @@ echo
 rm -r $OUTPUT_DIR/split_files_slow5s
 echo "-------------------testcase ${TESTCASE}: split to files input:directory-------------------"
 $SLOW5_EXEC split -f 3 -l false $REL_PATH/data/raw/split/single_group_slow5s/ -d $OUTPUT_DIR/split_files_slow5s --to slow5 || die "testcase ${TESTCASE}: split to files input:directory failed"
+slow5tools_quickcheck $OUTPUT_DIR/split_files_slow5s
 echo -e "${GREEN}SUCCESS: testcase ${TESTCASE}${NC}"
 
 TESTCASE=10
@@ -124,8 +156,45 @@ if ! $CD_BACK/slow5tools split -f 3 -l false 11reads.slow5 -d $CD_BACK/$OUTPUT_D
     echo -e "testcase ${TESTCASE}: split to files current directory:fast5 file stored directory"
     exit 1
 fi
-echo -e "${GREEN}SUCCESS: testcase ${TESTCASE}${NC}"
 cd -
+slow5tools_quickcheck $OUTPUT_DIR/split_files_slow5s
+echo -e "${GREEN}SUCCESS: testcase ${TESTCASE}${NC}"
+
+TESTCASE=11
+echo
+echo "-------------------testcase ${TESTCASE}: split by reads single file -------------------"
+$SLOW5_EXEC split -r 2 -l false $REL_PATH/data/raw/split/single_group_slow5s/11reads.slow5 -d $OUTPUT_DIR/split_reads_blow5s_lossy --to blow5 || die "testcase ${TESTCASE}:  split by reads failed"
+slow5tools_quickcheck $OUTPUT_DIR/split_reads_blow5s_lossy
+
+TESTCASE=12
+echo
+echo "-------------------testcase ${TESTCASE}: split by reads single file -------------------"
+$SLOW5_EXEC split -r 2 -l true $REL_PATH/data/raw/split/single_group_slow5s/11reads.slow5 -d $OUTPUT_DIR/split_reads_blow5s_lossless --to blow5 || die "testcase ${TESTCASE}:  split by reads failed"
+slow5tools_quickcheck $OUTPUT_DIR/split_reads_blow5s_lossless
+
+TESTCASE=13
+echo
+echo "-------------------testcase ${TESTCASE}: split to files single file-------------------"
+$SLOW5_EXEC split -f 3 -l false $REL_PATH/data/raw/split/single_group_slow5s/11reads.slow5 -d $OUTPUT_DIR/split_files_blow5s_lossy --to blow5 || die "testcase ${TESTCASE}: split to files failed"
+slow5tools_quickcheck $OUTPUT_DIR/split_files_blow5s_lossy
+
+TESTCASE=14
+echo
+echo "-------------------testcase ${TESTCASE}: split to files single file-------------------"
+$SLOW5_EXEC split -f 3 -l true $REL_PATH/data/raw/split/single_group_slow5s/11reads.slow5 -d $OUTPUT_DIR/split_files_blow5s_lossless --to blow5 || die "testcase ${TESTCASE}: split to files failed"
+slow5tools_quickcheck $OUTPUT_DIR/split_files_blow5s_lossless
+
+TESTCASE=15
+echo
+echo "-------------------testcase ${TESTCASE}: lossy spliting groups-------------------"
+$SLOW5_EXEC split -g -l false $REL_PATH/data/raw/split/multi_group_slow5s/lossy_rg.slow5 -d $OUTPUT_DIR/split_groups_blow5s_lossy --to blow5 || die "testcase ${TESTCASE}: lossy splitting groups failed"
+slow5tools_quickcheck $OUTPUT_DIR/split_groups_blow5s_lossy
+
+TESTCASE=16
+echo
+echo "-------------------testcase ${TESTCASE}: lossy spliting groups-------------------"
+$SLOW5_EXEC split -g -l true $REL_PATH/data/raw/split/multi_group_slow5s/rg.slow5 -d $OUTPUT_DIR/split_groups_blow5s_lossless --to blow5 || die "testcase ${TESTCASE}: lossy splitting groups failed"
+slow5tools_quickcheck $OUTPUT_DIR/split_groups_blow5s_lossless
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 

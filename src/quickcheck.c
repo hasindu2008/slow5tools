@@ -80,10 +80,8 @@ int quickcheck_main(int argc, char **argv, struct program_meta *meta){
     int ret_get_next = 0;
     slow5_rec_t *rec = NULL;
     if((ret_get_next=slow5_get_next(&rec,slow5File)) < 0){
-        if(ret_get_next!=SLOW5_ERR_EOF){
-            ERROR("%s", "Could not read the first slow5 record from the file");
-            exit(EXIT_FAILURE);
-        }
+        ERROR("%s does not have a proper slow5 record/format", argv[optind]);
+        exit(EXIT_FAILURE);
     }
 
     if(slow5File->format==SLOW5_FORMAT_BINARY){
