@@ -45,7 +45,7 @@ echo "-------------------slow5tools version-------------------"
 $SLOW5_EXEC --version || die "slow5tools version failed"
 echo
 
-##### Single process tests
+#### Single process tests
 
 TESTCASE_NO=1.1
 echo "------------------- f2s testcase $TESTCASE_NO: format:single-fast5 input:file process:single_process output:stdout-------------------"
@@ -407,6 +407,7 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 TESTCASE_NO=6.8
 echo "------------------- f2s testcase $TESTCASE_NO >>> new non string attribute in context tags  -------------------"
 # This is a header attribute, thus should be converted to string, but with a warning
+mkdir -p $OUTPUT_DIR/unusual_fast5 || die "creating $OUTPUT_DIR/unusual_fast5 failed"
 LOG=$OUTPUT_DIR/unusual_fast5/new_attrib_in_context.log
 OUTPUT_FILE=$OUTPUT_DIR/unusual_fast5/new_attrib_in_context.slow5
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_context.fast5 -o $OUTPUT_FILE 2> $LOG  || die "testcase $TESTCASE_NO failed"
@@ -417,10 +418,10 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 TESTCASE_NO=6.9
 echo "------------------- f2s testcase $TESTCASE_NO >>> new non string attribute in tracking id  -------------------"
 # This is a header attribute, thus should be converted to string, but with a warning
-LOG=$OUTPUT_DIR/unusual_fast5/new_attrib_in_tracking.log
+LOG="$OUTPUT_DIR/unusual_fast5/new_attrib_in_tracking.log"
 OUTPUT_FILE=$OUTPUT_DIR/unusual_fast5/new_attrib_in_tracking.slow5
-$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_tracking.fast5 -o $OUTPUT_FILE  || die "testcase $TESTCASE_NO failed"
-grep -q -i $LOG "WARNING.*converting.*to string" || die "Warning in testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_tracking.fast5 -o $OUTPUT_FILE 2> $LOG || die "testcase $TESTCASE_NO failed"
+grep -q -i "WARNING.*converting.*to string" $LOG || die "Warning in testcase $TESTCASE_NO failed"
 diff $EXP_SLOW5_DIR/unusual_fast5/new_attrib_in_tracking.slow5 $OUTPUT_FILE  > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
@@ -440,6 +441,7 @@ TESTCASE_NO=6.12
 echo "------------------- f2s testcase $TESTCASE_NO >>> new attribute in raw  -------------------"
 #This is likely to be a per-read attribute that we need to inspect manually. So must Error out unless -a is specified.
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_raw.fast5 -o $OUTPUT_DIR/err.slow5  2> $OUTPUT_DIR/err.log  && die "testcase $TESTCASE_NO failed"
+cat $OUTPUT_DIR/err.log
 grep -q "ERROR" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
