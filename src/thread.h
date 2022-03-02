@@ -61,7 +61,8 @@ typedef struct {
     std::vector<int> slow5_file_indices;
     std::string output_dir;
     slow5_file_t **slow5_file_pointers;
-
+    //for split
+    uint32_t* read_group_vector;
 } db_t;
 
 /* argument wrapper for the multithreaded framework used for data processing */

@@ -718,6 +718,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    VERBOSE("Just before forking, peak RAM = %.3f GB", slow5_peakrss_child() / 1024.0 / 1024.0 / 1024.0);
     reads_count readsCount;
     //measure s2f conversion time
     init_realtime = slow5_realtime();
