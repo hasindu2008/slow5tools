@@ -16,7 +16,7 @@
 @exp_script_purpose	sequencing_run
 @exp_start_time	1481657610
 @experiment_kit	genomic_dna
-@file_version	0.0
+@file_version	0.6
 @filename	odw_genlab4209_20161213_fn_mn16303_sequencing_run_sample_id_32395
 @flow_cell_id	.
 @heatsink_temp	33.9765625
