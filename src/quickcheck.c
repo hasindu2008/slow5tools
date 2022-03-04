@@ -77,6 +77,14 @@ int quickcheck_main(int argc, char **argv, struct program_meta *meta){
         exit(EXIT_FAILURE);
     }
 
+    int ret_get_next = 0;
+    slow5_rec_t *rec = NULL;
+    if((ret_get_next=slow5_get_next(&rec,slow5File)) < 0){
+        ERROR("%s does not have a proper slow5 record/format", argv[optind]);
+        exit(EXIT_FAILURE);
+    }
+    slow5_rec_free(rec);
+
     if(slow5File->format==SLOW5_FORMAT_BINARY){
         if(fseek(slow5File->fp , 0, SEEK_END) !=0 ){
             ERROR("%s","Fseek to the end of the BLOW file failed.");

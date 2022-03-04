@@ -282,18 +282,22 @@ int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta
         slow5_file_t *input_slow5_file_i = slow5_open(slow5_files_input[i].c_str(), "r");
         if (!input_slow5_file_i) {
             ERROR("Cannot open %s. Skipping.\n", slow5_files_input[i].c_str());
-            continue;
+            return -1;
         }
         uint32_t read_group_count_i = input_slow5_file_i->header->num_read_groups;
 
         if (read_group_count_i == 1 && meta_split_method_object.splitMethod == GROUP_SPLIT) {
             ERROR("The file %s already has a single read group", slow5_files_input[i].c_str());
-            continue;
+            return -1;
         }
         if (read_group_count_i > 1 && meta_split_method_object.splitMethod != GROUP_SPLIT) {
-            ERROR("The file %s contains multiple read groups. You must first separate the read groups using -g. See https://slow5.page.link/faq for more info.",
-                  slow5_files_input[i].c_str());
-            continue;
+            ERROR("The file %s contains multiple read groups. You must first separate the read groups using -g. See https://slow5.page.link/faq for more info.", slow5_files_input[i].c_str());
+            return -1;
+        }
+        if(user_opts.flag_lossy==0 && input_slow5_file_i->header->aux_meta == NULL){
+            ERROR("%s has no auxiliary fields. Specify -l false to merge files with no auxiliary fields.", slow5_files_input[i].c_str());
+            slow5_close(input_slow5_file_i);
+            return -1;
         }
         int flag_single_threaded_execution = 0;
         int flag_auxiliary_data_available = (input_slow5_file_i->header->aux_meta==NULL)?0:1;
@@ -478,6 +482,7 @@ int single_threaded_split_execution(std::basic_string<char> &input_slow5_path, o
     int64_t record_count = *record_count_ptr;
     int flag_EOF = *flag_EOF_ptr;
     size_t bytes;
+    slow5_rec_size_t record_size;
     char *buffer;
     while (record_count < read_limit) {
         if (!(buffer = (char *) slow5_get_next_mem(&bytes, input_slow5_file_i))) {
@@ -488,6 +493,10 @@ int single_threaded_split_execution(std::basic_string<char> &input_slow5_path, o
                 flag_EOF = 1;
                 break;
             }
+        }
+        if(user_opts.fmt_out == SLOW5_FORMAT_BINARY){
+            record_size = bytes;
+            fwrite(&record_size, 1, sizeof record_size, slow5_file_out->fp);
         }
         fwrite(buffer,1,bytes,slow5_file_out->fp);
         if(user_opts.fmt_out == SLOW5_FORMAT_ASCII){
