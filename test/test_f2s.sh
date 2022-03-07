@@ -554,6 +554,19 @@ echo "------------------- f2s testcase $TESTCASE_NO >>> all fast5 files were ski
 $SLOW5_EXEC f2s $FAST5_DIR/err_fast5/ -o $OUTPUT_DIR/err.slow5 -p1 && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+####################### Various versions of FAST5 ########################
+# TESTCASE_NO=8.1
+# echo "------------------- f2s testcase $TESTCASE_NO >>> FAST5 v2.3 -------------------"
+# $SLOW5_EXEC f2s $FAST5_DIR/various_versions/multi_fast5_v2.3.fast5 -o $OUTPUT_DIR/various_versions/multi_fast5_v2.3.slow5 || die "testcase $TESTCASE_NO failed"
+# diff -q $EXP_SLOW5_DIR/various_versions/multi_fast5_v2.3.slow5 $OUTPUT_DIR/various_versions/multi_fast5_v2.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for fast5 v2.3"
+# echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+# TESTCASE_NO=8.2
+# echo "------------------- f2s testcase $TESTCASE_NO >>> FAST5 compressed using compress_fast5 -------------------"
+# $SLOW5_EXEC f2s $FAST5_DIR/various_versions/compress_fast5.fast5 -o $OUTPUT_DIR/various_versions/compress_fast5.slow5|| die "testcase $TESTCASE_NO failed"
+# diff -q $EXP_SLOW5_DIR/various_versions/compress_fast5.slow5 $OUTPUT_DIR/various_versions/compress_fast5.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for compress_fast5"
+# echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
