@@ -2,7 +2,7 @@ file path	test/data/raw/stats/zlib_svb-zd_multi_rg_v0.2.0.blow5
 file version	0.2.0
 file format	BLOW5
 record compression method	zlib
-sigal compression method	svb-zd
+signal compression method	svb-zd
 number of read groups	5
 number of auxiliary fields	5
 auxiliary fields	channel_number,median_before,read_number,start_mux,start_time
