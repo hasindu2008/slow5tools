@@ -126,12 +126,12 @@ while read filename; do
 
             if [ $? -eq "0" ]; then # If the file has been processed
                 ((i_old ++))
-                >&2 echo -e $RED"[ensure.sh] old file ($i_old): $filename"$NORMAL
+                >&2 echo -e "[ensure.sh] Already converted file ($i_old): $filename"
                 continue # Wait for next input
 
             else # Else it is new
                 ((i_new ++))
-                >&2 echo -e $YELLOW"[ensure.sh] new file ($i_new): $filename"$NORMAL
+                >&2 echo -e $YELLOW"[ensure.sh] Missed file ($i_new): $filename"$NORMAL
             fi
 
         fi

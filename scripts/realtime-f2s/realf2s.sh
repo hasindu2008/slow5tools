@@ -6,33 +6,32 @@
 #+    ${SCRIPT_NAME} -m [directory] [options ...]
 #%
 #% DESCRIPTION
-#%    Runs realtime FAST5 to SLOW5 conversion of sequenced genomes
-#%    given input directory.
+#%    Runs realtime FAST5 to SLOW5 conversion of for a given sequencing directory.
 #%
 #% OPTIONS
 #%
 #%    -h, --help                                    Print help message
 #%    -i, --info                                    Print script information
-#%    -m [directory]                                Monitor a specific directory
-#%    -r                                            Resumes from last processing position
-#%    -t [time]                                     Timeout format in seconds (default 10800 s)
+#%    -m [directory]                                The sequencing experiment directory to be monitored
+#%    -r                                            Resumes a previous live conversion
+#%    -t [time]                                     Timeout in seconds [default: 10800]
 #%
-#% ADVANCED OPTIONS
+#% ADVANCED/DEBUGGING OPTIONS
 #%
 #%    -n                                            Specify non-realtime analysis
-#%    -d [filename]                                 Specify location of temporary file (default: monitor_dir/realtime_f2s_attempted_list.log)
-#%    -l [filename]                                 Specify log filename for logs (default: monitor_dir/realtime_f2s.log)
-#%    -f [file]                                     Specify location of files that failed to convert (default: monitor_dir/realtime_f2s_failed_list.log)
-#%    -s [file]                                     Specify script for processing files (default: script_location/pipeline.sh)
-#%    -y, --yes                                     Say yes to 'Are you sure?' message in advance
+#%    -d [filename]                                 Specify custom location for the list of attempted files [default: monitor_dir/realtime_f2s_attempted_list.log]
+#%    -l [filename]                                 Specify custom log filename [default: monitor_dir/realtime_f2s.log]
+#%    -f [file]                                     Specify location for the list of files that failed to convert [default: monitor_dir/realtime_f2s_failed_list.log]
+#%    -s [file]                                     Specify custom script for handling conversion [default: script_location/pipeline.sh]
+#%    -y, --yes                                     Say yes to 'Are you sure?' message in advance for overwriting
 #%
 #% EXAMPLES
 #%    convert
 #%        ${SCRIPT_NAME} -m [directory]
 #%    resume convert
 #%        ${SCRIPT_NAME} -m [directory] -r
-#%    non realtime
-#%        ${SCRIPT_NAME} -m [directory] -n
+#%    one hour timeout
+#%        ${SCRIPT_NAME} -m [directory] -t 3600
 #%
 #================================================================
 #- IMPLEMENTATION

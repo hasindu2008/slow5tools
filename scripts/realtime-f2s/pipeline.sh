@@ -47,11 +47,30 @@ do
     # name of the .fast5 file without the extension
     F5_PREFIX=${F5_FILENAME%.*}
 
-    test -d $PARENT_DIR/slow5/ || { mkdir $PARENT_DIR/slow5/; echo "[pipeline.sh] Created $PARENT_DIR/slow5/. Converted SLOW5 files will be here."; }
-    test -d $PARENT_DIR/slow5_logs/ || { mkdir $PARENT_DIR/slow5_logs/; echo "[pipeline.sh] Created $PARENT_DIR/slow5_logs/. SLOW5 individual logs for each conversion will be here."; }
+    # deduce the directory for slow5 files
+    if [[ "$F5_DIR" =~ .*"fast5_pass".* ]]; then
+        SLOW5_DIR=$(echo $F5_DIR | sed 's/fast5_pass/slow5_pass/g')
+        SLOW5_LOG_DIR=$(echo $F5_DIR | sed 's/fast5_pass/slow5_pass_logs/g')
+    elif [[ "$F5_DIR" =~ .*"fast5_fail".* ]]; then
+        SLOW5_DIR=$(echo $F5_DIR | sed 's/fast5_fail/slow5_fail/g')
+        SLOW5_LOG_DIR=$(echo $F5_DIR | sed 's/fast5_fail/slow5_fail_logs/g')
+    elif [[ "$F5_DIR" =~ .*"fast5_skip".* ]]; then
+        SLOW5_DIR=$(echo $F5_DIR | sed 's/fast5_skip/slow5_skip/g')
+        SLOW5_LOG_DIR=$(echo $F5_DIR | sed 's/fast5_skip/slow5_skip_logs/g')
+    else
+        SLOW5_DIR=$PARENT_DIR/slow5/
+        SLOW5_LOG_DIR=$PARENT_DIR/slow5_logs/
+    fi
+    if [ -z "$SLOW5_DIR" ] || [ -z "$SLOW5_LOG_DIR" ] ; then
+        SLOW5_DIR=$PARENT_DIR/slow5/
+        SLOW5_LOG_DIR=$PARENT_DIR/slow5_logs/
+    fi
 
-    SLOW5_FILEPATH=$PARENT_DIR/slow5/$F5_PREFIX.blow5
-    LOG_FILEPATH=$PARENT_DIR/slow5_logs/$F5_PREFIX.log
+    test -d $SLOW5_DIR/ || { mkdir -p $SLOW5_DIR/; echo "[pipeline.sh] Created $SLOW5_DIR/. Converted SLOW5 files will be here."; }
+    test -d $SLOW5_LOG_DIR/ || { mkdir -p $SLOW5_LOG_DIR/; echo "[pipeline.sh] Created $SLOW5_LOG_DIR/. SLOW5 individual logs for each conversion will be here."; }
+
+    SLOW5_FILEPATH=$SLOW5_DIR/$F5_PREFIX.blow5
+    LOG_FILEPATH=$SLOW5_LOG_DIR/$F5_PREFIX.log
 
     START_TIME=$(date)
     echo "[pipeline.sh::${START_TIME}]  Converting $FILE to $SLOW5_FILEPATH"
