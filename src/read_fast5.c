@@ -453,7 +453,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         }
     }
     if(strcmp("pore_type",name)==0){
-        if(strcmp(value.attr_string,"")!=0){
+        if(strcmp(value.attr_string,"not_set")!=0){
             ERROR("The value of the attribute %s/%s in %s is supposed to be empty. Please report this to the slow5tools development team at 'https://github.com/hasindu2008/slow5tools/issues'", operator_data->group_name, name, operator_data->fast5_path);
             return -1;
         }
@@ -465,7 +465,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         size_t buf_cap = BUFFER_CAP;
         char* warn_message = (char*) malloc(buf_cap * sizeof(char));
         MALLOC_CHK(warn_message);
-        sprintf(warn_message,"The attribute '%s/%s' in %s is empty and will be stored in the SLOW5 header", operator_data->group_name, name, operator_data->fast5_path);
+        sprintf(warn_message,"The attribute '%s/%s' in %s is empty (not_set) and will be stored in the SLOW5 header", operator_data->group_name, name, operator_data->fast5_path);
 //        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
         search_and_warn(operator_data,key,warn_message);
         free(warn_message);
