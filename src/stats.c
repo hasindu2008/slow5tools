@@ -127,7 +127,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     }else if(slow5File->compress->signal_press->method==SLOW5_COMPRESS_SVB_ZD){
         signal_compression_method = "svb-zd";
     }
-    fprintf(stdout, "sigal compression method\t%s\n", signal_compression_method.c_str());
+    fprintf(stdout, "signal compression method\t%s\n", signal_compression_method.c_str());
 
     fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
 
