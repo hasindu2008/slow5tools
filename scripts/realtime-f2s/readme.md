@@ -26,11 +26,11 @@ The monitoring script will terminate if it idles for 3 hours, i.e., no new FAST5
 
 ### Options
 
-* -m STR
+* `-m STR`:  
     The sequencing experiment directory to be monitored. This is usually where MinKNOW writes data for your experiment e.g., */data/my_sequencing_experiment/* or */var/lib/minknow/data/my_sequencing_experiment/*.
-* -r
+* `-r`:  
     Resumes a previous live conversion. This option is useful if the real-time conversion abruptly stopped in the middle and you now want to resume the live conversion.
-* -t INT
+* `-t INT`:  
     Timeout in seconds [default: 10800]. The script will end if no new FAST5 were written for this specified period of time.
 
 
