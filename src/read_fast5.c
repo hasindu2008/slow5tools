@@ -685,7 +685,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             size_t buf_cap = BUFFER_CAP;
             char* warn_message = (char*) malloc(buf_cap * sizeof(char));
             MALLOC_CHK(warn_message);
-            sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to string",operator_data->group_name, name, h5t_class_string.c_str());
+            sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to string for consitency",operator_data->group_name, name, h5t_class_string.c_str());
             search_and_warn(operator_data,key,warn_message);
             free(warn_message);
         }
@@ -851,7 +851,7 @@ void type_inconsistency_warn(const char *name, operator_obj *operator_data, std:
     size_t buf_cap = BUFFER_CAP;
     char* warn_message = (char*) malloc(buf_cap * sizeof(char));
     MALLOC_CHK(warn_message);
-    sprintf(warn_message,"The datatype of the attribute %s/%s in %s is %s instead of %s. Hence converting from %s to %s.",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), expected_type, slow5_class.c_str(), slow5_expected_type);
+    sprintf(warn_message,"Weird or ancient fast5: converting the attribute %s/%s from %s to %s for consitency",operator_data->group_name, name, h5t_class_string.c_str(),slow5_expected_type);
     search_and_warn(operator_data,key,warn_message);
     free(warn_message);
 }

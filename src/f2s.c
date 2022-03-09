@@ -458,12 +458,16 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     if (check_for_similar_file_names(fast5_files)){
         if(user_opts.flag_retain_dir_structure || !user_opts.arg_dir_out){
-            WARNING("%s","Two or more fast5 files have the same filename");
+            WARNING("%s","Two or more fast5 files have the same filename.");
         }
         else{
             ERROR("Two or more fast5 files have the same filename. Exiting.%s","");
             return EXIT_FAILURE;
         }
+    }
+
+    if(user_opts.flag_retain_dir_structure==1 && !user_opts.arg_dir_out){
+        WARNING("%s", "--retain requires an output directoru (-d DIR) and will be ignored.");
     }
 
     if(user_opts.arg_dir_out){
