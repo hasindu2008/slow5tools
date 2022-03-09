@@ -454,21 +454,21 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
     if(strcmp("pore_type",name)==0){
         if(strcmp(value.attr_string,"not_set")!=0){
-            ERROR("The value of the attribute %s/%s in %s is supposed to be empty. Please report this to the slow5tools development team at 'https://github.com/hasindu2008/slow5tools/issues'", operator_data->group_name, name, operator_data->fast5_path);
+            ERROR("The value of the attribute %s/%s is expected to be 'not_set', which is '%s' in %s. Please report this with an example FAST5 file at 'https://github.com/hasindu2008/slow5tools/issues' for us to investigate.", operator_data->group_name, name, value.attr_string, operator_data->fast5_path);
             return -1;
         }
         flag_new_group_or_new_attribute_read_group = 0;
         if(H5Tclass!=H5T_STRING){
             type_inconsistency_warn(name, operator_data, h5t_class_string, "H5T_STRING", slow5_class_string, "SLOW5_STRING");
         }
-        std::string key = "sh_" + std::string(name); //stored in header
-        size_t buf_cap = BUFFER_CAP;
-        char* warn_message = (char*) malloc(buf_cap * sizeof(char));
-        MALLOC_CHK(warn_message);
-        sprintf(warn_message,"The attribute '%s/%s' in %s is empty (not_set) and will be stored in the SLOW5 header", operator_data->group_name, name, operator_data->fast5_path);
-//        sprintf(warn_message,"Not stored: Attribute read/pore_type is not stored because it is empty");
-        search_and_warn(operator_data,key,warn_message);
-        free(warn_message);
+        // no warning required as this is quite common
+        // std::string key = "sh_" + std::string(name); //stored in header
+        // size_t buf_cap = BUFFER_CAP;
+        // char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+        // MALLOC_CHK(warn_message);
+        // sprintf(warn_message,"The attribute '%s/%s' in %s is empty (not_set) and will be stored in the SLOW5 header", operator_data->group_name, name, operator_data->fast5_path);
+        // search_and_warn(operator_data,key,warn_message);
+        // free(warn_message);
     }
 
 //            RAW
@@ -564,6 +564,15 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         if(H5Tclass!=H5T_ENUM && H5Tclass!=H5T_INTEGER) {
             ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM or H5T_INTEGER");
             return -1;
+        }
+        if(H5Tclass==H5T_INTEGER) {
+            std::string key = "sh_" + std::string(name); //stored in header
+            size_t buf_cap = BUFFER_CAP;
+            char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+            MALLOC_CHK(warn_message);
+            sprintf(warn_message,"Attribute %s/%s in %s is corrupted (datatype %s instead of expected %s). This is a known issue in ont_fast5_api's compress_fast5. Please see https://github.com/hasindu2008/slow5tools/issues/59 for more information.",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM");
+            search_and_warn(operator_data,key,warn_message);
+            free(warn_message);
         }
         if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1) {
             ERROR("Could not add the auxiliary attribute %s/%s in %s to the slow5 record", operator_data->group_name, name, operator_data->fast5_path);
@@ -745,7 +754,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             search_and_warn(operator_data,key,warn_message);
             free(warn_message);
         }else{
-            ERROR("Attribute %s/%s in %s is unexpected. Please report this to the slow5tools development team at 'https://github.com/hasindu2008/slow5tools/issues'", operator_data->group_name, name, operator_data->fast5_path);
+            ERROR("Attribute %s/%s in %s is unexpected. Please report this with an example FAST5 file at 'https://github.com/hasindu2008/slow5tools/issues' for us to investigate.", operator_data->group_name, name, operator_data->fast5_path);
             return -1;
         }
 

@@ -25,7 +25,7 @@
     "    -d, --out-dir DIR             output to directory\n"
 
 #define HELP_MSG_LOSSLESS \
-    "        --lossless                retain information in auxiliary fields during the conversion [true].\n"
+    "        --lossless                retain information in auxiliary fields during the conversion [true]\n"
 
 //except for view
 #define HELP_MSG_OUTPUT_FORMAT \
@@ -48,8 +48,9 @@
 #define HELP_MSG_BATCH \
     "    -K, --batchsize INT           number of records loaded to the memory at once. [" TO_STR(DEFAULT_BATCH_SIZE) "]\n"
 
+//for f2s
 #define HELP_MSG_RETAIN_DIR_STRUCTURE \
-    "        --retain                  retain directory structure in the output\n"
+    "        --retain                  retain the same directory structure in the converted output as the input (experimental)\n"
 
 #define HELP_MSG_CONTINUE_MERGE \
     "        --allow                   continue to merge the files despite the WARNINGS about the differences in run_id groups [false].\n"

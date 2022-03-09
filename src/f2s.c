@@ -204,7 +204,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
         }
         slow5_close(slow5File); //if stdout was used stdout is now closed.
     }
-    INFO("Summary - total fast5: %lu, bad fast5: %lu\n", readsCount->total_5, readsCount->bad_5_file);
+    INFO("Summary - total fast5: %lu, bad fast5: %lu", readsCount->total_5, readsCount->bad_5_file);
 }
 
 void f2s_iop(opt_t *user_opts, std::vector<std::string> &fast5_files, reads_count *readsCount, char *input_dir) {
@@ -321,17 +321,17 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     static struct option long_opts[] = {
-            {"to",          required_argument, NULL, 'b'},  //0
+            {"to",          required_argument, NULL,  0 },  //0
             {"compress",    required_argument, NULL, 'c'},  //1
-            {"sig-compress",required_argument,  NULL,'s'},  //2
-            {"help",        no_argument, NULL,       'h'},  //3
+            {"sig-compress",required_argument, NULL, 's'},  //2
+            {"help",        no_argument,       NULL, 'h'},  //3
             {"output",      required_argument, NULL, 'o'},  //4
-            { "iop",        required_argument, NULL, 'p'},  //5
-            { "lossless",   required_argument, NULL, 'l'},  //6
-            { "out-dir",    required_argument, NULL, 'd'},  //7
-            { "allow",      no_argument, NULL,       'a'},  //8
-            { "retain",      no_argument, NULL,       'r'},  //9
-            { "dump-all",   required_argument, NULL, 'e'},  //10
+            {"iop",         required_argument, NULL, 'p'},  //5
+            {"lossless",    required_argument, NULL,  0 },  //6
+            {"out-dir",     required_argument, NULL, 'd'},  //7
+            {"allow",       no_argument,       NULL, 'a'},  //8
+            {"retain",      no_argument,       NULL,  0 },  //9
+            {"dump-all",    required_argument, NULL,  0 },  //10
             {NULL, 0, NULL, 0 }
     };
 
@@ -342,27 +342,18 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:s:ho:p:l:d:are:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:s:ho:p:d:a", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
-            case 'b':
-                user_opts.arg_fmt_out = optarg;
-                break;
             case 'c':
                 user_opts.arg_record_press_out = optarg;
                 break;
             case 's':
                 user_opts.arg_signal_press_out = optarg;
                 break;
-            case 'l':
-                user_opts.arg_lossless = optarg;
-                break;
             case 'a':
                 user_opts.flag_allow_run_id_mismatch = 1;
-                break;
-            case 'r':
-                user_opts.flag_retain_dir_structure = 1;
                 break;
             case 'h':
                 DEBUG("Displaying the large help message%s","");
@@ -378,8 +369,25 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             case 'o':
                 user_opts.arg_fname_out = optarg;
                 break;
-            case 'e':
-                user_opts.arg_dump_all = optarg;
+            case 0  :
+                switch (longindex) {
+                    case 0:
+                        user_opts.arg_fmt_out = optarg;
+                        break;
+                    case 6:
+                        user_opts.arg_lossless = optarg;
+                        break;
+                    case 9:
+                        user_opts.flag_retain_dir_structure = 1;
+                        break;
+                    case 10:
+                        user_opts.arg_dump_all = optarg;
+                        break;
+                    default:
+                        fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+                        EXIT_MSG(EXIT_FAILURE, argv, meta);
+                        return EXIT_FAILURE;
+                }
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -448,9 +456,11 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    if(user_opts.flag_retain_dir_structure==0){
-        int ret_check_for_similar_file_names = check_for_similar_file_names(fast5_files);
-        if(ret_check_for_similar_file_names){
+    if (check_for_similar_file_names(fast5_files)){
+        if(user_opts.flag_retain_dir_structure || !user_opts.arg_dir_out){
+            WARNING("%s","Two or more fast5 files have the same filename");
+        }
+        else{
             ERROR("Two or more fast5 files have the same filename. Exiting.%s","");
             return EXIT_FAILURE;
         }

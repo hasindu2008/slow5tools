@@ -48,6 +48,7 @@ On OS X : brew install hdf5 zlib
 
 ### Building from GitHub
 
+**WARNING: Building from GitHub is meant for advanced users to test latest features. For production purposes, use the latest release version that is throughly tested.**
 
 Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake`.
 
