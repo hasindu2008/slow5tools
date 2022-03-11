@@ -1102,10 +1102,10 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                         herr_t ret_run_id = H5Aexists(group, "run_id");
                         *(operator_data->flag_run_id_tracking_id) = ret_run_id;
                     }
-                    if (strcmp(name, "tracking_id") == 0 && *(operator_data->flag_tracking_id) == 0) {
+                    if (strcmp(name, "tracking_id") == 0){// && *(operator_data->flag_tracking_id) == 0) {
                         return_val = H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &next_op);
                         *(operator_data->flag_tracking_id) = 1;
-                    } else if (strcmp(name, "context_tags") == 0 && *(operator_data->flag_context_tags) == 0) {
+                    } else if (strcmp(name, "context_tags") == 0){// && *(operator_data->flag_context_tags) == 0) {
                         return_val = H5Aiterate2(group, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &next_op);
                         *(operator_data->flag_context_tags) = 1;
                     } else if (strcmp(name, "tracking_id") != 0 && strcmp(name, "context_tags") != 0) {
