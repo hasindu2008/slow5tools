@@ -691,7 +691,6 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             search_and_warn(operator_data,key,warn_message);
             free(warn_message);
         }
-
         int flag_attribute_exists = 0;
         char* existing_attribute;
         int flag_existing_attr_value_mismatch = 0;
@@ -744,7 +743,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 
     if(flag_new_group_or_new_attribute_read_group){
-        if(*(operator_data->flag_dump_all)==1 || strcmp(name,"file_version")==0){
+        if(*(operator_data->flag_dump_all)==1){
             if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1){
                 return -1;
             }
@@ -755,9 +754,29 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected", operator_data->group_name, name, operator_data->fast5_path);
             search_and_warn(operator_data,key,warn_message);
             free(warn_message);
-        }else{
+        }else if(strcmp(name,"file_version")){
             ERROR("Bad fast5: Attribute %s/%s in %s is unexpected." REPORT_MESG , operator_data->group_name, name, operator_data->fast5_path);
             return -1;
+        }
+
+        if(strcmp(name, "file_version")==0){
+            int flag_attribute_exists = 0;
+            ret = slow5_hdr_add_attr(name, operator_data->slow5File->header);
+            if(ret == -1 || ret == -3){
+                ERROR("Could not add the header attribute '%s/%s'. Internal error occured.", operator_data->group_name, name);
+                return -1;
+            } else if(ret == -2){
+                flag_attribute_exists = 1;
+            }
+
+            if(flag_attribute_exists==0){
+                ret = slow5_hdr_set(name, value.attr_string, 0, operator_data->slow5File->header);
+                if(ret == -1){
+                    ERROR("Could not set the header attribute '%s/%s' value to %s.", operator_data->group_name, name, value.attr_string);
+                    return -1;
+                }
+            }
+
         }
 
     }
