@@ -66,10 +66,11 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
         fast5_file.fast5_path = fast5_files[i].c_str();
 
         if (fast5_file.hdf5_file < 0){
-            WARNING("Bad fast5: Fast5 file '%s' is unreadable and will be skipped.", fast5_files[i].c_str());
+            ERROR("Bad fast5: Fast5 file '%s' could not be opened or is corrupted.", fast5_files[i].c_str());
             H5Fclose(fast5_file.hdf5_file);
             readsCount->bad_5_file++;
-            continue;
+            exit(EXIT_FAILURE);
+            //continue;
         }
         if(output_dir){
             if (fast5_file.is_multi_fast5) {

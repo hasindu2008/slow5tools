@@ -23,6 +23,8 @@
 
 #define BUFFER_CAP (20*1024*1024)
 
+#define REPORT_MESG " Please report this with an example FAST5 file at 'https://github.com/hasindu2008/slow5tools/issues' for us to investigate."
+
 extern int slow5tools_verbosity_level;
 
 // Operator function to be called by H5Aiterate.
@@ -393,7 +395,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             h5t_class_string = "H5T_ENUM";
             break;
         default:
-            ERROR("Weird fast5: In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.", operator_data->fast5_path, operator_data->group_name, name);
+            ERROR("Bad fast5: In fast5 file %s, H5TClass of the atttribute %s/%s is 'UNKNOWN'.", operator_data->fast5_path, operator_data->group_name, name);
             return -1;
     }
 
@@ -421,14 +423,14 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 
     if (strcmp(name,".")==0){
-        ERROR("Weird fast5: Name of the attribute '%s/%s' in %s has a prohibited character '%s'.", operator_data->group_name, name, operator_data->fast5_path, name);
+        ERROR("Bad fast5: Name of the attribute '%s/%s' in %s has a prohibited character '%s'.", operator_data->group_name, name, operator_data->fast5_path, name);
         return -1;
     }
     size_t index = 0;
     while(name[index]){
         int result = isspace(name[index]);
         if (result && name[index]!=' '){
-            ERROR("Weird fast5: Name of the attribute '%s/%s' in %s  has a white-space character other than a space ('%s).", operator_data->group_name, name, operator_data->fast5_path, name);
+            ERROR("Bad fast5: Name of the attribute '%s/%s' in %s  has a white-space character other than a space ('%s')." REPORT_MESG , operator_data->group_name, name, operator_data->fast5_path, name);
             return -1;
         }
         index++;
@@ -438,7 +440,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
     if(H5Tclass==H5T_STRING){
         if (strcmp(value.attr_string,".")==0){
-            ERROR("Weird fast5: Attribute '%s/%s' in %s has a prohibited character '.' '%s'.", operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
+            ERROR("Bad fast5: Attribute '%s/%s' in %s has a prohibited character '.' '%s'.", operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
             return -1;
         }
         size_t index = 0;
@@ -446,7 +448,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         while(value.attr_string[index]){
             int result = isspace(value.attr_string[index]);
             if (result && value.attr_string[index]!=' '){
-                ERROR("Weird fast5: Attribute '%s/%s' in %s  has a white-space character other than a space ('%s).", operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
+                ERROR("Bad fast5: Attribute '%s/%s' in %s  has a white-space character other than a space ('%s')." REPORT_MESG, operator_data->group_name, name, operator_data->fast5_path, value.attr_string);
                 return -1;
             }
             index++;
@@ -454,7 +456,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
     if(strcmp("pore_type",name)==0){
         if(strcmp(value.attr_string,"not_set")!=0){
-            ERROR("The value of the attribute %s/%s is expected to be 'not_set', which is '%s' in %s. Please report this with an example FAST5 file at 'https://github.com/hasindu2008/slow5tools/issues' for us to investigate.", operator_data->group_name, name, value.attr_string, operator_data->fast5_path);
+            ERROR("The value of the attribute %s/%s is expected to be 'not_set', which is '%s' in %s." REPORT_MESG , operator_data->group_name, name, value.attr_string, operator_data->fast5_path);
             return -1;
         }
         flag_new_group_or_new_attribute_read_group = 0;
@@ -736,7 +738,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                 }
             }
         }else if(flag_existing_attr_value_mismatch && *(operator_data->flag_header_is_written)==0){
-            ERROR("Attribute %s/%s in %s is duplicated and has two different values in two different places.", operator_data->group_name, name, operator_data->fast5_path);
+            ERROR("Bad fast5: Attribute %s/%s in %s is duplicated and has two different values in two different places." REPORT_MESG , operator_data->group_name, name, operator_data->fast5_path);
             return -1;
         }
     }
@@ -754,7 +756,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             search_and_warn(operator_data,key,warn_message);
             free(warn_message);
         }else{
-            ERROR("Attribute %s/%s in %s is unexpected. Please report this with an example FAST5 file at 'https://github.com/hasindu2008/slow5tools/issues' for us to investigate.", operator_data->group_name, name, operator_data->fast5_path);
+            ERROR("Bad fast5: Attribute %s/%s in %s is unexpected." REPORT_MESG , operator_data->group_name, name, operator_data->fast5_path);
             return -1;
         }
 

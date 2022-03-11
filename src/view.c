@@ -24,7 +24,7 @@
     HELP_MSG_PRESS \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
-    "    --from FORMAT                 specify input file format [auto]\n" \
+    "        --from FORMAT             specify input file format [auto]\n" \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 

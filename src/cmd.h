@@ -46,7 +46,7 @@
     "    -p, --iop INT                 number of I/O processes [" TO_STR(DEFAULT_NUM_PROCESSES) "]\n"
 
 #define HELP_MSG_BATCH \
-    "    -K, --batchsize INT           number of records loaded to the memory at once. [" TO_STR(DEFAULT_BATCH_SIZE) "]\n"
+    "    -K, --batchsize INT           number of records loaded to the memory at once [" TO_STR(DEFAULT_BATCH_SIZE) "]\n"
 
 //for f2s
 #define HELP_MSG_RETAIN_DIR_STRUCTURE \

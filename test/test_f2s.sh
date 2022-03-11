@@ -359,7 +359,12 @@ $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason2.fast5 -o $OUTPUT_DIR/end
 diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason2.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason2.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
-
+TESTCASE_NO=5.4
+echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason datatype is string-------------------"
+LOG=$OUTPUT_DIR/end_reason_fast5/err.log
+$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_string.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_string.slow5 2> $LOG  && die "testcase $TESTCASE_NO failed"
+grep -q -i "ERROR.*The datatype of the attribute Raw/end_reason.*H5T_STRING instead of H5T_ENUM.* " $LOG || die "Error in testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 #--------------------------------------Unusual FAST5------------------------------------
 
@@ -477,12 +482,12 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=7.1
 echo "------------------- f2s testcase $TESTCASE_NO >>> not a fast5 -------------------"
-$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/not_a_fast5.fast5  ||  die "testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/not_a_fast5.fast5  &&  die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=7.2
 echo "------------------- f2s testcase $TESTCASE_NO >>> non existent file -------------------"
-$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/there_is_no_such_fast5.fast5  ||  die "testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/err_fast5/there_is_no_such_fast5.fast5  &&  die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=7.3
@@ -502,7 +507,7 @@ $SLOW5_EXEC f2s $FAST5_DIR/err_fast5/malformed_readid1.fast5 -o $OUTPUT_DIR/err.
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=7.6
-echo "------------------- f2s testcase $TESTCASE_NO >>> @ in reead id at the beginning -------------------"
+echo "------------------- f2s testcase $TESTCASE_NO >>> @ in read id at the beginning -------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/err_fast5/malformed_readid1.fast5 -o $OUTPUT_DIR/err.slow5  && die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
