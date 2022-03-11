@@ -459,24 +459,32 @@ echo "------------------- f2s testcase $TESTCASE_NO >>> new attribute in raw  --
 #This is likely to be a per-read attribute that we need to inspect manually. So must Error out unless -a is specified.
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_raw.fast5 -o $OUTPUT_DIR/err.slow5  2> $OUTPUT_DIR/err.log  && die "testcase $TESTCASE_NO failed"
 cat $OUTPUT_DIR/err.log
-grep -q "Attribute .* in .* is unexpected" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
+grep -q "ERROR.*Attribute .* in .* is unexpected" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=6.13
 echo "------------------- f2s testcase $TESTCASE_NO >>> new attribute in read -------------------"
 # #This is likely to be a per-read attribute that we need to inspect manually. So must Error out unless -a is specified.
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_read.fast5 -o $OUTPUT_DIR/err.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE_NO failed"
-grep -q "ERROR" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
+grep -q "ERROR.*unexpected" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=6.14
+echo "------------------- f2s testcase $TESTCASE_NO >>> new attribute in channel -------------------"
+# #This is likely to be a per-read attribute that we need to inspect manually. So must Error out unless -a is specified.
+$SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_attrib_in_channel.fast5 -o $OUTPUT_DIR/err.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE_NO failed"
+grep -q "ERROR.*Attribute .* in .* is unexpected" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+TESTCASE_NO=6.15
 echo "------------------- f2s testcase $TESTCASE_NO >>> new group   -------------------"
 # Unless the group is /Analyses which we ignore anyway, we will need to manually inspect what the newly added group is
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/new_group.fast5 -o $OUTPUT_DIR/err.slow5  2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE_NO failed"
-grep -q "ERROR" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
+grep -q "ERROR.*Attribute .* in .* is unexpected" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
-TESTCASE_NO=6.15
+TESTCASE_NO=6.16
 echo "------------------- f2s testcase $TESTCASE_NO >>> pore type set   -------------------"
 # if pore type is something othe rthan being empty or "no_set", we need to manually investigate what the heck thi sis
 $SLOW5_EXEC f2s $FAST5_DIR/unusual_fast5/pore_set.fast5 -o $OUTPUT_DIR/err.slow5 2> $OUTPUT_DIR/err.log  && die "testcase $TESTCASE_NO failed"
@@ -576,25 +584,40 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 mkdir -p $OUTPUT_DIR/various_versions || die "creating $OUTPUT_DIR/various_versions failed"
 
 TESTCASE_NO=8.1
-FILE_NAME=multi_fast5_v2.3
-echo "------------------- f2s testcase $TESTCASE_NO >>> ${FILE_NAME} -------------------"
-$SLOW5_EXEC f2s $FAST5_DIR/various_versions/${FILE_NAME}.fast5 -o $OUTPUT_DIR/various_versions/${FILE_NAME}.slow5 || die "testcase $TESTCASE_NO failed"
-diff -q $EXP_SLOW5_DIR/various_versions/${FILE_NAME}.slow5 $OUTPUT_DIR/various_versions/${FILE_NAME}.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for ${FILE_NAME}"
-echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
-
-TESTCASE_NO=8.2
 echo "------------------- f2s testcase $TESTCASE_NO >>> FAST5 compressed using compress_fast5 -------------------"
 $SLOW5_EXEC f2s $FAST5_DIR/various_versions/compress_fast5.fast5 -o $OUTPUT_DIR/various_versions/compress_fast5.slow5  2> $OUTPUT_DIR/err.log|| die "testcase $TESTCASE_NO failed"
 diff -q $EXP_SLOW5_DIR/various_versions/compress_fast5.slow5 $OUTPUT_DIR/various_versions/compress_fast5.slow5 || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for compress_fast5"
 grep -q -i "WARNING.*Attribute Raw/end_reason in.*is corrupted" $OUTPUT_DIR/err.log || die "Warning in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
-TESTCASE_NO=8.3
-FILE_NAME=multi_fast5_v2.2_basecalled
-echo "------------------- f2s testcase $TESTCASE_NO >>> ${FILE_NAME} -------------------"
-$SLOW5_EXEC f2s $FAST5_DIR/various_versions/${FILE_NAME}.fast5 -o $OUTPUT_DIR/various_versions/${FILE_NAME}.slow5 || die "testcase $TESTCASE_NO failed"
-diff -q $EXP_SLOW5_DIR/various_versions/${FILE_NAME}.slow5 $OUTPUT_DIR/various_versions/${FILE_NAME}.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for ${FILE_NAME}"
-echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+TEST_FAST5_VERSION () {
+  FILE_NAME=$1
+  echo "------------------- f2s testcase $TESTCASE_NO >>> ${FILE_NAME} -------------------"
+  $SLOW5_EXEC f2s $FAST5_DIR/various_versions/${FILE_NAME}.fast5 -o $OUTPUT_DIR/various_versions/${FILE_NAME}.slow5 || die "testcase $TESTCASE_NO failed"
+  diff -q $EXP_SLOW5_DIR/various_versions/${FILE_NAME}.slow5 $OUTPUT_DIR/various_versions/${FILE_NAME}.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for ${FILE_NAME}"
+  echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+}
+
+TESTCASE_NO=8.2 TEST_FAST5_VERSION multi_fast5_v1.0
+TESTCASE_NO=8.3 TEST_FAST5_VERSION multi_fast5_v1.0
+TESTCASE_NO=8.4 TEST_FAST5_VERSION multi_fast5_v2.2_basecalled
+TESTCASE_NO=8.5 TEST_FAST5_VERSION multi_fast5_v2.3_barcoded
+TESTCASE_NO=8.6 TEST_FAST5_VERSION multi_fast5_v2.3
+TESTCASE_NO=8.7 TEST_FAST5_VERSION single_fast5_v0.6
+TESTCASE_NO=8.8 TEST_FAST5_VERSION single_fast5_v1.0
+TESTCASE_NO=8.9 TEST_FAST5_VERSION single_fast5_v2.0
+TESTCASE_NO=8.10 TEST_FAST5_VERSION single_v0.6_to_multi_v2.0_fast5
+
+# TESTCASE_NO=8.11
+# echo "------------------- f2s testcase $TESTCASE_NO >>> single_v1.0_to_multi_v2.0_fast5_diff_run_id -------------------"
+# $SLOW5_EXEC f2s $FAST5_DIR/various_versions/single_v1.0_to_multi_v2.0_fast5_diff_run_id.fast5 -o $OUTPUT_DIR/various_versions/single_v1.0_to_multi_v2.0_fast5_diff_run_id.slow5  2> $OUTPUT_DIR/err.log || die "testcase $TESTCASE_NO failed"
+# grep -q -i "ERROR.*Attribute Raw/end_reason in.*is corrupted" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
+# echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
+# TESTCASE_NO=8.12 TEST_FAST5_VERSION single_v1.0_to_multi_v2.0_fast5_same_run_id
+# TESTCASE_NO=8.13 TEST_FAST5_VERSION single_vnull_to_multi_2.0
+
 
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
