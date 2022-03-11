@@ -606,7 +606,7 @@ TESTCASE_NO=8.6 TEST_FAST5_VERSION multi_fast5_v2.3
 TESTCASE_NO=8.7 TEST_FAST5_VERSION single_fast5_v0.6
 TESTCASE_NO=8.8 TEST_FAST5_VERSION single_fast5_v1.0
 TESTCASE_NO=8.9 TEST_FAST5_VERSION single_fast5_v2.0
-TESTCASE_NO=8.10 TEST_FAST5_VERSION single_v0.6_to_multi_v2.0_fast5
+# TESTCASE_NO=8.10 TEST_FAST5_VERSION single_v0.6_to_multi_v2.0_fast5
 
 # TESTCASE_NO=8.11
 # echo "------------------- f2s testcase $TESTCASE_NO >>> single_v1.0_to_multi_v2.0_fast5_diff_run_id -------------------"
