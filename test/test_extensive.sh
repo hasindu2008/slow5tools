@@ -39,5 +39,6 @@ rm -r $TMP_DIR
 # test/merge_split_integrity_test.sh $TMP_DIR/slow5_tmp $TMP_DIR/tmp ./slow5tools || die "merge_split_integrity_test failed"
 # rm -r $TMP_DIR
 
+echo "all done!"
 
 exit 0
