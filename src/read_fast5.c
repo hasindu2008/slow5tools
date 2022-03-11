@@ -744,7 +744,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
 
     if(flag_new_group_or_new_attribute_read_group){
-        if(*(operator_data->flag_dump_all)==1){
+        if(*(operator_data->flag_dump_all)==1 || strcmp(name,"file_version")==0){
             if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1){
                 return -1;
             }
@@ -1029,7 +1029,13 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
     unsigned spaces = 2*(operator_data->group_level + 1);
 
     // if group is 'Analyses'; then skip
-    if(strcmp(name,"Analyses")==0)return return_val;
+    if(strcmp(name,"Analyses")==0){
+        return return_val;
+    }
+    // if group is 'PreviousReadInfo'; then skip
+    if(strcmp(name,"PreviousReadInfo")==0){
+        return return_val;
+    }
     /*
      * Get type of the object and display its name and type.
      * The name of the object is passed to this function by
