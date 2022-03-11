@@ -563,11 +563,11 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     }
     else if(strcmp("end_reason",name)==0){
         flag_new_group_or_new_attribute_read_group = 0;
-        if(H5Tclass!=H5T_ENUM && H5Tclass!=H5T_INTEGER) {
-            ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM or H5T_INTEGER");
+        if(H5Tclass!=H5T_ENUM && H5Tequal(H5T_STD_U8LE,native_type)<=0) {
+            ERROR("The datatype of the attribute %s/%s in %s is %s instead of %s",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM or H5T_STD_U8LE");
             return -1;
         }
-        if(H5Tclass==H5T_INTEGER) {
+        if(H5Tequal(H5T_STD_U8LE,native_type)>0) {
             std::string key = "sh_" + std::string(name); //stored in header
             size_t buf_cap = BUFFER_CAP;
             char* warn_message = (char*) malloc(buf_cap * sizeof(char));

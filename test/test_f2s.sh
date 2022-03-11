@@ -366,6 +366,13 @@ $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_string.fast5 -o $OUTPUT_D
 grep -q -i "ERROR.*The datatype of the attribute Raw/end_reason.*H5T_STRING instead of H5T_ENUM.* " $LOG || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+TESTCASE_NO=5.5
+echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason datatype is int32_t-------------------"
+LOG=$OUTPUT_DIR/end_reason_fast5/err.log
+$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_int32.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_int32.slow5 2> $LOG  && die "testcase $TESTCASE_NO failed"
+grep -q -i "ERROR.*The datatype of the attribute Raw/end_reason.*H5T_STD_I32LE instead of H5T_ENUM.* " $LOG || die "Error in testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
 #--------------------------------------Unusual FAST5------------------------------------
 
 echo
