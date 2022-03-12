@@ -37,7 +37,6 @@ test -d "$OUTPUT_DIR" && ask "$OUTPUT_DIR"
 test -d  $OUTPUT_DIR && rm -r $OUTPUT_DIR
 mkdir $OUTPUT_DIR || die "mkdir $OUTPUT_DIR failed"
 
-
 IOP=40
 
 if [ -d "$FAST5_DIR/single" ]; then
