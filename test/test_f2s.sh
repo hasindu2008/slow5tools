@@ -606,18 +606,23 @@ TESTCASE_NO=8.6 TEST_FAST5_VERSION multi_fast5_v2.3
 TESTCASE_NO=8.7 TEST_FAST5_VERSION single_fast5_v0.6
 TESTCASE_NO=8.8 TEST_FAST5_VERSION single_fast5_v1.0
 TESTCASE_NO=8.9 TEST_FAST5_VERSION single_fast5_v2.0
-# TESTCASE_NO=8.10 TEST_FAST5_VERSION single_v0.6_to_multi_v2.0_fast5
+TESTCASE_NO=8.10 TEST_FAST5_VERSION single_v0.6_to_multi_v2.0_fast5_same_run_id
+TESTCASE_NO=8.11 TEST_FAST5_VERSION single_v1.0_to_multi_v2.0_fast5_same_run_id
+TESTCASE_NO=8.12 TEST_FAST5_VERSION single_vnull_to_multi_2.0
 
-# TESTCASE_NO=8.11
-# echo "------------------- f2s testcase $TESTCASE_NO >>> single_v1.0_to_multi_v2.0_fast5_diff_run_id -------------------"
-# $SLOW5_EXEC f2s $FAST5_DIR/various_versions/single_v1.0_to_multi_v2.0_fast5_diff_run_id.fast5 -o $OUTPUT_DIR/various_versions/single_v1.0_to_multi_v2.0_fast5_diff_run_id.slow5  2> $OUTPUT_DIR/err.log || die "testcase $TESTCASE_NO failed"
-# grep -q -i "ERROR.*Attribute Raw/end_reason in.*is corrupted" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
-# echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+TESTCASE_NO=8.13
+FILE=single_v0.6_to_multi_v2.0_fast5_diff_run_id
+echo "------------------- f2s testcase $TESTCASE_NO >>>  $FILE -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/various_versions/$FILE.fast5 -o $OUTPUT_DIR/various_versions/$FILE.slow5  2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE_NO failed"
+grep -q -i "ERROR.*Ancient fast5: Different run_ids found in an individual multi-fast5 file. Cannot create a single header slow5/blow5" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
-
-# TESTCASE_NO=8.12 TEST_FAST5_VERSION single_v1.0_to_multi_v2.0_fast5_same_run_id
-# TESTCASE_NO=8.13 TEST_FAST5_VERSION single_vnull_to_multi_2.0
-
+TESTCASE_NO=8.14
+FILE=single_v1.0_to_multi_v2.0_fast5_diff_run_id
+echo "------------------- f2s testcase $TESTCASE_NO >>>  $FILE -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/various_versions/$FILE.fast5 -o $OUTPUT_DIR/various_versions/$FILE.slow5  2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE_NO failed"
+grep -q -i "ERROR.*Ancient fast5: Different run_ids found in an individual multi-fast5 file. Cannot create a single header slow5/blow5" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"

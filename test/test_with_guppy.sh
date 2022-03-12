@@ -60,7 +60,7 @@ $SLOW5TOOLS split -c zstd -s none $OUTPUT_DIR/binary.blow5  -d $OUTPUT_DIR/split
 $SLOW5TOOLS s2f $OUTPUT_DIR/split -d $S2F_OUTPUT_DIR --iop $IOP || die "slow5tools s2f failed"
 
 $GUPPY_BASECALLER -c ${CONFIG} -i $FAST5_DIR -s $GUPPY_OUTPUT_ORIGINAL -r --device cuda:all || die "Guppy failed"
-$GUPPY_BASECALLER -c dna_r9.4.1_450bps_hac_prom.cfg -i $S2F_OUTPUT_DIR -s $GUPPY_OUTPUT_S2F -r --device cuda:all || die "Guppy failed"
+$GUPPY_BASECALLER -c ${CONFIG}  -i $S2F_OUTPUT_DIR -s $GUPPY_OUTPUT_S2F -r --device cuda:all || die "Guppy failed"
 
 find $GUPPY_OUTPUT_S2F/ -name '*.fastq' -exec cat {} + | paste - - - -  | sort -k1,1  | tr '\t' '\n' > $OUTPUT_DIR/guppy_output_s2f_sorted.fastq  || die "GUPPY_OUTPUT_S2F/*.fastq cat failed"
 find $GUPPY_OUTPUT_ORIGINAL/ -name '*.fastq' -exec cat {} + | paste - - - - | sort -k1,1  | tr '\t' '\n' > $OUTPUT_DIR/guppy_output_original_sorted.fastq || die "GUPPY_OUTPUT_ORIGINAL/*.fastq cat failed"
