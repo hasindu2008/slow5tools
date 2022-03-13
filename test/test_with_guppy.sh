@@ -47,7 +47,7 @@ if [ -d "$FAST5_DIR/single" ]; then
     do
         $SLOW5TOOLS f2s -c zlib -s svb-zd $dir -d $F2S_OUTPUT_DIR/single/$(basename $dir)/ --iop $IOP || die "slow5tools f2s failed"
     done
-    $SLOW5TOOLS merge $F2S_OUTPUT_DIR/single/ $F2S_OUTPUT_DIR/multi/{7.blow5,batch*,FAL*,FAN*,PAD*,PAF*,PAG*}  -o $F2S_OUTPUT_DIR/merge1.blow5 || die "slow5tools f2s failed"
+    $SLOW5TOOLS merge $F2S_OUTPUT_DIR/single/ $F2S_OUTPUT_DIR/multi/{7.blow5,batch*,FAL*,FAN*,PAD*,PAF*,PAG*}  -o $OUTPUT_DIR/merge1.blow5 || die "slow5tools f2s failed"
     $SLOW5TOOLS merge $F2S_OUTPUT_DIR/multi/{FAO*,FAQ*,PAH*} -o $OUTPUT_DIR/merge2.blow5 || die "slow5tools f2s failed"
     $SLOW5TOOLS split -g $OUTPUT_DIR/merge* -d $OUTPUT_DIR/split || die "slow5tools f2s failed"
     CONFIG=dna_r9.4.1_450bps_fast.cfg
