@@ -85,6 +85,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
                 return EXIT_FAILURE;
         }
     }
+    fprintf(stdout,"file path\t%s\n", argv[optind]);
 
     slow5_file_t* slow5File = slow5_open(argv[optind], "r");
     if(!slow5File){
@@ -126,7 +127,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
     }else if(slow5File->compress->signal_press->method==SLOW5_COMPRESS_SVB_ZD){
         signal_compression_method = "svb-zd";
     }
-    fprintf(stdout, "sigal compression method\t%s\n", signal_compression_method.c_str());
+    fprintf(stdout, "signal compression method\t%s\n", signal_compression_method.c_str());
 
     fprintf(stdout,"number of read groups\t%u\n", read_group_count_i);
 

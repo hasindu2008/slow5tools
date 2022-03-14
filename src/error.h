@@ -25,7 +25,6 @@
 #define DEBUG2_PREFIX "[%s::DEBUG] "
 #define NO_COLOUR "\033[0m\n"
 
-
 #define VERBOSE(msg, ...) { \
     if (slow5tools_verbosity_level >= LOG_VERBOSE) { \
         fprintf(stderr, VERBOSE_PREFIX msg "\n", __func__, __VA_ARGS__); \

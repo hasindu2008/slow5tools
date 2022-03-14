@@ -80,10 +80,19 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
                 if(err == 0){
                     ret_atr = add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
                 }
-                if(check_aux_fields_in_header(header, "end_reason", 0) == 0){
-                    uint8_t end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
-                    if(err == 0){
-                        ret_atr = add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                uint32_t attribute_index;
+                if(check_aux_fields_in_header(header, "end_reason", 0, &attribute_index) == 0){
+                    uint8_t end_reason;
+                    if((*end_reason_enum_id)>0) {
+                        end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
+                        if(err == 0){
+                            ret_atr = add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                        }
+                    } else {
+                        end_reason = slow5_aux_get_uint8(slow5_record, "end_reason", &err);
+                        if(err == 0){
+                            ret_atr = add_attribute(group_id,"end_reason",end_reason,H5T_STD_U8LE);
+                        }
                     }
                 }
             }
@@ -254,25 +263,33 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
     }
 }
 
-void initialize_end_reason(slow5_hdr_t* header, hid_t* end_reason_enum_id) {
+int initialize_end_reason(slow5_hdr_t* header, hid_t* end_reason_enum_id) {
 // create end_reason enum
     //    https://support.hdfgroup.org/HDF5/doc/H5.user/DatatypesEnum.html
 //    end_reason_enum_id = H5Tcreate(H5T_ENUM, sizeof(uint8_t));
     *end_reason_enum_id = H5Tenum_create(H5T_STD_U8LE);
+    if((*end_reason_enum_id)<0) {
+        ERROR("Could not create end_reason enum%s", ".");
+        return -1;
+    }
     uint8_t n;
     char **enum_labels = slow5_get_aux_enum_labels(header, "end_reason", &n);
-
     for(uint8_t i=0; i<n; i++){
         uint8_t val;
-        H5Tenum_insert(*end_reason_enum_id, enum_labels[i], (val=i,&val));
+        herr_t ret = H5Tenum_insert(*end_reason_enum_id, enum_labels[i], (val=i,&val));
+        if(ret<0) {
+            ERROR("Could not insert enum label %s", enum_labels[i]);
+            return -1;
+        }
     }
+    return 0;
 }
 
 void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const char *slow5_filename) {
     hid_t   file_id;
     hid_t group_read, group_raw, group_channel_id, group_tracking_id, group_context_tags;
     herr_t  status;
-    hid_t end_reason_enum_id;
+    hid_t end_reason_enum_id = -1;
     struct slow5_rec *slow5_record = NULL;
 
     int ret = slow5_get_next(&slow5_record, slow5File);
@@ -287,15 +304,23 @@ void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const cha
     }
     uint32_t num_essential_aux_attrs = ESSENTIAL_AUX_ATTR_COUNT;
     for(uint32_t i=0; i<num_essential_aux_attrs; i++){
-        if(slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, ESSENTIAL_AUX_ATTRS[i], 1)){
+        uint32_t attribute_index;
+        if(slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, ESSENTIAL_AUX_ATTRS[i], 1, &attribute_index)){
             ERROR("%s is missing an essential auxiliary field. s2f only creates fast5 that can be basecalled using guppy.",slow5_filename);
             exit(EXIT_FAILURE);
         }
     }
-    if(slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, "end_reason", 0) == 0){
-        initialize_end_reason(slow5File->header, &end_reason_enum_id);
+    // end_reason datatype
+    uint32_t end_reason_index;
+    if(slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, "end_reason", 0, &end_reason_index) == 0){
+        enum slow5_aux_type end_reason_datatype = slow5File->header->aux_meta->types[end_reason_index];
+        if (end_reason_datatype == SLOW5_ENUM) {
+            int ret_initialize_end_reason = initialize_end_reason(slow5File->header, &end_reason_enum_id);
+            if(ret_initialize_end_reason<0){
+                exit(EXIT_FAILURE);
+            }
+        }
     }
-
 
     /* Create a new file using default properties. */
     file_id = H5Fcreate(fast5_file_path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
@@ -436,10 +461,11 @@ void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const cha
         //to check if peak RAM increase over time
         //fprintf(stderr, "peak RAM = %.3f GB\n", slow5_peakrss() / 1024.0 / 1024.0 / 1024.0);
     }
-
-    if (slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, "end_reason", 0) == 0){
+    uint32_t attribute_index;
+    if (slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, "end_reason", 0, &attribute_index) == 0){
         H5Tclose(end_reason_enum_id);
     }
+
     status = H5Gclose (group_read_first);
     slow5_rec_free(slow5_record);
     status = H5Fclose(file_id);
@@ -606,7 +632,6 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
             {NULL, 0, NULL, 0 }
     };
 
-    std::string format_low5 =  "low5";
     std::string format_fast5 =  ".fast5";
 
     opt_t user_opts;
@@ -615,7 +640,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     int longindex = 0;
     int opt;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "h:o:d:p:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "ho:d:p:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -656,7 +681,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
     std::vector<std::string> slow5_files;
     double realtime0 = slow5_realtime();
     for (int i = optind; i < argc; ++ i) {
-        list_all_items(argv[i], slow5_files, 0, format_low5.c_str());
+        list_all_items(argv[i], slow5_files, 0, ".slow5");
     }
     VERBOSE("%ld files found - took %.3fs",slow5_files.size(), slow5_realtime() - realtime0);
     if(slow5_files.size()==0){
@@ -693,11 +718,14 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    VERBOSE("Just before forking, peak RAM = %.3f GB", slow5_peakrss_child() / 1024.0 / 1024.0 / 1024.0);
     reads_count readsCount;
     //measure s2f conversion time
     init_realtime = slow5_realtime();
     s2f_iop(user_opts.num_processes, slow5_files, user_opts.arg_dir_out, user_opts.arg_fname_out, meta, &readsCount);
     VERBOSE("Converting %ld s/blow5 files took %.3fs", slow5_files.size(), slow5_realtime() - init_realtime);
+    VERBOSE("Children processes: CPU time = %.3f sec | peak RAM = %.3f GB", slow5_cputime_child(), slow5_peakrss_child() / 1024.0 / 1024.0 / 1024.0);
+
 
     return EXIT_SUCCESS;
 }

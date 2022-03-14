@@ -58,8 +58,8 @@ struct operator_obj {
     int *flag_context_tags;
     int *flag_tracking_id;
     int *flag_run_id;
+    int *flag_run_id_tracking_id;
     int *flag_lossy;
-    int *flag_write_header;
     int *flag_allow_run_id_mismatch;
     int *flag_header_is_written;
     int *flag_dump_all;
@@ -79,8 +79,11 @@ int read_fast5(opt_t *user_opts,
 fast5_file_t fast5_open(const char* filename);
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 std::vector< std::string > list_directory(const std::string& file_name);
+
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
 int slow5_hdr_initialize(slow5_hdr *header, int lossy);
+int check_for_similar_file_names(std::vector<std::string> file_list);
+int create_dir(const char *dir_name);
 
 // args for processes
 typedef struct {
@@ -90,7 +93,11 @@ typedef struct {
 }proc_arg_t;
 
 union attribute_data {
-    int attr_int;
+    int32_t attr_int32_t;
+    int64_t attr_int64_t;
+    uint32_t attr_uint32_t;
+    uint64_t attr_uint64_t;
+    float attr_float;
     double attr_double;
     uint8_t attr_uint8_t;
     char* attr_string;

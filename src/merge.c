@@ -8,6 +8,7 @@
 
 #include <string>
 #include <vector>
+#include <queue>
 #include <pthread.h>
 
 #include "error.h"
@@ -30,31 +31,30 @@
     HELP_MSG_PRESS \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
-    HELP_MSG_LOSSLESS \
+    HELP_MSG_LOSSLESS  \
+    HELP_MSG_CONTINUE_MERGE \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
 
-int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64_t output_g, int64_t input_g);
+int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64_t output_g, int64_t input_g, const char *i_file_path, char *j_run_id);
 
 void parallel_reads_model(core_t *core, db_t *db, int32_t i) {
     //
     struct slow5_rec *read = NULL;
-    if (slow5_rec_depress_parse(&db->mem_records[i], &db->mem_bytes[i], NULL, &read, core->fp) != 0) {
+    if (slow5_rec_depress_parse(&db->mem_records[i], &db->mem_bytes[i], NULL, &read, db->slow5_file_pointers[i]) != 0) {
         exit(EXIT_FAILURE);
     } else {
         free(db->mem_records[i]);
     }
-    read->read_group = db->list[core->slow5_file_index][read->read_group]; //write records of the ith slow5file with the updated read_group value
-
+    read->read_group = db->list[db->slow5_file_indices[i]][read->read_group]; //write records of the ith slow5file with the updated read_group value
     struct slow5_press *press_ptr = slow5_press_init(core->press_method);
     if(!press_ptr){
         ERROR("Could not initialize the slow5 compression method%s","");
         exit(EXIT_FAILURE);
     }
     size_t len;
-//    slow5_aux_meta_t *aux_meta = core->fp->header->aux_meta;
     slow5_aux_meta_t *aux_meta = core->aux_meta;
     if(core->lossy){
         aux_meta = NULL;
@@ -88,9 +88,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {"compress", required_argument, NULL, 'c'},  //3
             {"sig-compress",    required_argument,  NULL, 's'}, //4
             { "lossless", required_argument, NULL, 'l'}, //5
-            {"output", required_argument, NULL, 'o'}, //6
-            {"batchsize", required_argument, NULL, 'K'}, //7
-
+            { "allow", required_argument, NULL, 'a'}, //6
+            {"output", required_argument, NULL, 'o'}, //7
+            {"batchsize", required_argument, NULL, 'K'}, //8
             {NULL, 0, NULL, 0 }
     };
 
@@ -101,7 +101,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:s:hl:t:o:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:s:hl:t:o:a:K:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -128,6 +128,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 'l':
                 user_opts.arg_lossless = optarg;
                 break;
+            case 'a':
+                user_opts.arg_continue_merge = optarg;
+                break;
             case 'o':
                 user_opts.arg_fname_out = optarg;
                 break;
@@ -141,7 +144,15 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
+    if(parse_batch_size(&user_opts,argc,argv) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
     if(parse_arg_lossless(&user_opts, argc, argv, meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(parse_arg_continue_merge(&user_opts, argc, argv, meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
@@ -170,12 +181,12 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     double realtime0 = slow5_realtime();
     std::vector<std::string> files;
     for (int i = optind; i < argc; ++i) {
-        list_all_items(argv[i], files, 0, NULL);
+        list_all_items(argv[i], files, 0, ".slow5");
     }
     VERBOSE("%ld files found - took %.3fs\n", files.size(), slow5_realtime() - realtime0);
 
     if(files.size()==0){
-        ERROR("No slow5/blow5 files found for conversion. Exiting.%s","");
+        ERROR("No slow5/blow5 files found. Exiting.%s","");
         return EXIT_FAILURE;
     }
 
@@ -214,6 +225,9 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     size_t index = 0;
     std::vector<std::string> slow5_files;
     size_t num_files = files.size();
+
+    int flag_warnings_occured = 0;
+
     for(size_t i=0; i<num_files; i++) { //iterate over slow5files
         DEBUG("input file\t%s", files[i].c_str());
 
@@ -234,7 +248,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 if(aux_ptr->types[r] == SLOW5_ENUM || aux_ptr->types[r] == SLOW5_ENUM_ARRAY){
                     int aux_avail = -1;
                     if(slow5File->header->aux_meta) {
-                        aux_avail = check_aux_fields_in_header(slow5File->header, aux_ptr->attrs[r], 0);
+                        uint32_t attribute_index;
+                        aux_avail = check_aux_fields_in_header(slow5File->header, aux_ptr->attrs[r], 0, &attribute_index);
                     }
                     if(aux_avail == -1){
                         uint8_t n;
@@ -298,14 +313,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 if(strcmp(run_id_j,run_id_k) == 0){
                     flag_run_id_found = 1;
                     list[index][j] = k; //assumption0: if run_ids are similar the rest of the header attribute values of jth and kth read_groups are similar.
-                    int ret_compare = compare_headers(slow5File->header, slow5File_i->header, k, j);
-                    if(ret_compare == -1){
-                        WARNING("In file %s, read_group %" PRIu64 " has a different number of header attributes than what the processed files had", files[i].c_str(), j);
-                    }else if(ret_compare == -2){
-                        WARNING("In file %s, read_group %" PRIu64 " has a different set of header attributes than what the processed files had", files[i].c_str(), j);
-                    }else if(ret_compare == -3){
-                        WARNING("In file %s, read_group %" PRIu64 " has different values for the header attributes than what the processed files had", files[i].c_str(), j);
-                    }
+                    flag_warnings_occured = compare_headers(slow5File->header, slow5File_i->header, k, j, files[i].c_str(),
+                                                            run_id_j);
                     break;
                 }
             }
@@ -323,6 +332,11 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         index++;
         slow5_files.push_back(files[i]);
 
+    }
+
+    if(flag_warnings_occured == 1 && user_opts.flag_continue_merge == DEFAULT_CONTINUE_MERGE){
+        ERROR("There were warning about attribute differences for the same run_id(s). Please set flag '--continue' to 'true' if you still want to merge files%s", ".");
+        return EXIT_FAILURE;
     }
 
     if(user_opts.flag_lossy==0){
@@ -349,23 +363,30 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
 
     double time_get_to_mem = 0;
     double time_thread_execution = 0;
+    int flag_end_of_records = 0;
     double time_write = 0;
 
     int64_t batch_size = user_opts.read_id_batch_capacity;
     size_t slow5_file_index = 0;
-    int flag_EOF = 0;
+    std::queue<struct slow5_file*> open_files_pointers;
+    std::vector<int> slow5_file_indices(batch_size);
 
     struct slow5_file *from = slow5_open(slow5_files[slow5_file_index].c_str(), "r");
     if (from == NULL) {
         ERROR("File '%s' could not be opened - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
         return EXIT_FAILURE;
     }
-
+    open_files_pointers.push(from);
+    size_t open_file_from = slow5_file_index;
     while(1) {
-
         db_t db = { 0 };
-        db.mem_records = (char **) malloc(batch_size * sizeof *db.read_id);
-        db.mem_bytes = (size_t *) malloc(batch_size * sizeof *db.read_id);
+        db.mem_records = (char **) malloc(batch_size * sizeof(char*));
+        db.mem_bytes = (size_t *) malloc(batch_size * sizeof(size_t));
+        db.slow5_file_pointers = (slow5_file_t **) malloc(batch_size * sizeof(slow5_file_t*));
+
+        MALLOC_CHK(db.mem_records);
+        MALLOC_CHK(db.mem_bytes);
+        MALLOC_CHK(db.slow5_file_pointers);
 
         int64_t record_count = 0;
         size_t bytes;
@@ -376,31 +397,44 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 if (slow5_errno != SLOW5_ERR_EOF) {
                     return EXIT_FAILURE;
                 } else { //EOF file reached
-                    flag_EOF = 1;
-                    break;
+                    slow5_file_index++;
+                    if(slow5_file_index == slow5_files.size()){
+                        flag_end_of_records = 1;
+                        break;
+                    }else{
+                        from = slow5_open(slow5_files[slow5_file_index].c_str(), "r");
+                        if (from == NULL) {
+                            ERROR("File '%s' could not be opened - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
+                            return EXIT_FAILURE;
+                        }
+                        open_files_pointers.push(from);
+                    }
+                    continue;
                 }
             } else {
                 db.mem_records[record_count] = mem;
                 db.mem_bytes[record_count] = bytes;
+                db.slow5_file_pointers[record_count] = from;
+                slow5_file_indices[record_count] = slow5_file_index;
                 record_count++;
             }
         }
-        time_get_to_mem += slow5_realtime() - realtime;
 
+        time_get_to_mem += slow5_realtime() - realtime;
         realtime = slow5_realtime();
         // Setup multithreading structures
         core_t core;
         core.num_thread = user_opts.num_threads;
-        core.fp = from;
         core.aux_meta = slow5File->header->aux_meta;
         core.format_out = user_opts.fmt_out;
         core.press_method = method;
         core.lossy = user_opts.flag_lossy;
-        core.slow5_file_index = slow5_file_index;
 
         db.n_batch = record_count;
         db.read_record = (raw_record_t*) malloc(record_count * sizeof *db.read_record);
+        MALLOC_CHK(db.read_record);
         db.list = list;
+        db.slow5_file_indices = slow5_file_indices;
         work_db(&core,&db,parallel_reads_model);
         time_thread_execution += slow5_realtime() - realtime;
 
@@ -415,23 +449,18 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         free(db.mem_bytes);
         free(db.mem_records);
         free(db.read_record);
+        free(db.slow5_file_pointers);
 
-        if(flag_EOF){
-            flag_EOF = 0;
-            if (slow5_close(from) == EOF) { //close file
-                ERROR("File '%s' failed on closing - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
+        for(size_t j=open_file_from; j<slow5_file_index; j++){
+            if (slow5_close(open_files_pointers.front()) == EOF) { //close file
+                ERROR("File '%s' failed on closing - %s.", slow5_files[j].c_str(), strerror(errno));
                 return EXIT_FAILURE;
             }
-            slow5_file_index++;
-            if(slow5_file_index == slow5_files.size()){
-                break;
-            }else{
-                from = slow5_open(slow5_files[slow5_file_index].c_str(), "r");
-                if (from == NULL) {
-                    ERROR("File '%s' could not be opened - %s.", slow5_files[slow5_file_index].c_str(), strerror(errno));
-                    return EXIT_FAILURE;
-                }
-            }
+            open_files_pointers.pop();
+        }
+        open_file_from = slow5_file_index;
+        if(flag_end_of_records){
+            break;
         }
     }
     DEBUG("time_get_to_mem\t%.3fs", time_get_to_mem);
@@ -448,29 +477,66 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     return EXIT_SUCCESS;
 }
 
-int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64_t output_g, int64_t input_g) {
-    uint32_t output_num_attrs, input_num_attrs;
-    output_num_attrs = output_header->data.num_attrs;
-    input_num_attrs = input_header->data.num_attrs;
-    if(output_num_attrs != input_num_attrs){
-        return -1; //number of attributes are different
-    }
+// return 0 if no warnings
+// return 1 if warnings are found
+int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64_t output_g, int64_t input_g, const char *i_file_path, char *j_run_id) {
+    int flag_warnings = 0;
     khash_t(slow5_s2s) *rg_o = slow5_hdr_get_data(output_g, output_header);
     khash_t(slow5_s2s) *rg_i = slow5_hdr_get_data(input_g, input_header);
 
+    size_t size_rg_o = kh_size(rg_o);
+    size_t size_rg_i = kh_size(rg_i);
+
+//    fprintf(stderr,"size_rg_i,size_rg_i\t%zu,%zu\n",size_rg_i,size_rg_i);
+    if(size_rg_i != size_rg_o){
+        flag_warnings = 1;
+        WARNING("Input file %s (run_id-%s) has a different number of attributes (%zu) than seen in the previous files processed so far (%zu)", i_file_path, j_run_id, size_rg_i, size_rg_o);
+    }
+
     for (khint_t itr = kh_begin(rg_o); itr != kh_end(rg_o); ++itr) {  // traverse hash_table_o
         if (kh_exist(rg_o, itr)) {
+            int flag_set_attr_value_to_empty = 0;
             const char* key_o = kh_key(rg_o, itr);
             khint_t pos_i = kh_get(slow5_s2s, rg_i, key_o);
             if(pos_i == kh_end(rg_i)){
-                return -2; //an attribute in hash_table_o is not available in hash_table_i
+                WARNING("Attribute '%s' is not available in input file %s (run_id-%s)", key_o, i_file_path, j_run_id);
+                flag_warnings = 1;
+                flag_set_attr_value_to_empty = 1;
+            } else{
+                const char *value_o = kh_value(rg_o, itr);
+                const char *value_i = kh_value(rg_i, pos_i);
+                if(strcmp(value_o,value_i)){
+                    WARNING("Attribute '%s' in input file %s (run_id-%s) has a different value (%s) than what has been seen so far (%s)", key_o, i_file_path, j_run_id, value_i, value_o);
+                    flag_warnings = 1;
+                    flag_set_attr_value_to_empty = 1;
+                }
             }
-            const char *value_o = kh_value(rg_o, itr);
-            const char *value_i = kh_value(rg_i, pos_i);
-            if(strcmp(value_o,value_i)){
-                return -3; //the attribute values are different
+            if(flag_set_attr_value_to_empty){
+                INFO("Setting output header's attribute '%s' (run_id-%s) to empty", key_o, j_run_id);
+                int ret_hdr_attr_set = slow5_hdr_set(key_o, "", output_g, output_header);
+                if(ret_hdr_attr_set<0){
+                    ERROR("Could not set attribute '%s' value to empty", key_o);
+                    exit(EXIT_FAILURE);
+                }
             }
         }
     }
-    return 0;
+
+    for (khint_t itr = kh_begin(rg_i); itr != kh_end(rg_i); ++itr) {  // traverse hash_table_o
+        if (kh_exist(rg_i, itr)) {
+            const char* key_i = kh_key(rg_i, itr);
+            khint_t pos_o = kh_get(slow5_s2s, rg_o, key_i);
+            if(pos_o == kh_end(rg_o)){
+                const char *value_i = kh_value(rg_i, itr);
+                flag_warnings = 1;
+                INFO("Attribute '%s' in input file %s (run_id-%s) is not seen in previous files. It will be added to the output header but its value (%s) will not be set in the output header.", key_i, i_file_path, j_run_id, value_i);
+                int ret_attr_header = slow5_hdr_add_attr(key_i, output_header);
+                if(ret_attr_header==-1){
+                    ERROR("Could not add the new attribute %s to the output header", key_i);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    return flag_warnings;
 }

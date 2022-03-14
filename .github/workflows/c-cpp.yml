@@ -2,14 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [ master, dev ]
+    branches: [ '*' ]
   pull_request:
     branches: [ master, dev ]
 
 jobs:
   ubuntu_14:
     name: ubuntu_14
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     container: ubuntu:14.04
     steps:
     - name: install git
@@ -27,15 +27,16 @@ jobs:
       run: make test
   ubuntu_16:
     name: Ubuntu 16
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
+    container: ubuntu:16.04
     steps:
     - name: install git
-      run: sudo add-apt-repository ppa:git-core/ppa && sudo apt-get update -y && sudo apt-get install git -y
+      run: apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:git-core/ppa && apt-get update -y && apt-get install git -y
     - uses: actions/checkout@v2
       with:
         submodules: recursive
     - name: install packages
-      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libhdf5-dev libzstd1-dev
+      run: apt-get update && apt-get install -y zlib1g-dev libhdf5-dev libzstd1-dev gcc g++ autoconf automake make
     - name: build
       run: autoreconf && ./configure && make -j8
     - name: test

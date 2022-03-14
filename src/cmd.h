@@ -8,7 +8,9 @@
 #define DEFAULT_BATCH_SIZE 4096
 #define DEFAULT_AUXILIARY_FIELDS_NOT_OUT 0
 #define DEFAULT_ALLOW_RUN_ID_MISMATCH 0
-#define DEFAULT_DUMP_ALL 1
+#define DEFAULT_RETAIN_DIR_STRUCTURE 0
+#define DEFAULT_DUMP_ALL 0
+#define DEFAULT_CONTINUE_MERGE 0
 
 #define TO_STR(x) TO_STR2(x)
 #define TO_STR2(x) #x
@@ -23,7 +25,7 @@
     "    -d, --out-dir DIR             output to directory\n"
 
 #define HELP_MSG_LOSSLESS \
-    "        --lossless                retain information in auxiliary fields during the conversion [true].\n"
+    "        --lossless                retain information in auxiliary fields during the conversion [true]\n"
 
 //except for view
 #define HELP_MSG_OUTPUT_FORMAT \
@@ -44,7 +46,14 @@
     "    -p, --iop INT                 number of I/O processes [" TO_STR(DEFAULT_NUM_PROCESSES) "]\n"
 
 #define HELP_MSG_BATCH \
-    "    -K, --batchsize INT           number of records loaded to the memory at once. [" TO_STR(DEFAULT_BATCH_SIZE) "]\n"
+    "    -K, --batchsize INT           number of records loaded to the memory at once [" TO_STR(DEFAULT_BATCH_SIZE) "]\n"
+
+//for f2s
+#define HELP_MSG_RETAIN_DIR_STRUCTURE \
+    "        --retain                  retain the same directory structure in the converted output as the input (experimental)\n"
+
+#define HELP_MSG_CONTINUE_MERGE \
+    "        --allow                   continue to merge the files despite the WARNINGS about the differences in run_id groups [false].\n"
 
 #define HELP_MSG_HELP \
     "    -h, --help                    display this message and exit\n" \

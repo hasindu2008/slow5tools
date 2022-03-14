@@ -24,7 +24,7 @@
     HELP_MSG_PRESS \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
-    "    --from FORMAT                 specify input file format [auto]\n" \
+    "        --from FORMAT             specify input file format [auto]\n" \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
@@ -254,9 +254,10 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
     while(1) {
 
         db_t db = { 0 };
-        db.mem_records = (char **) malloc(batch_size * sizeof *db.read_id);
-        db.mem_bytes = (size_t *) malloc(batch_size * sizeof *db.read_id);
-
+        db.mem_records = (char **) malloc(batch_size * sizeof(char*));
+        db.mem_bytes = (size_t *) malloc(batch_size * sizeof(size_t));
+        MALLOC_CHK(db.mem_records);
+        MALLOC_CHK(db.mem_bytes);
         int64_t record_count = 0;
         size_t bytes;
         char *mem;
@@ -287,6 +288,7 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
 
         db.n_batch = record_count;
         db.read_record = (raw_record_t*) malloc(record_count * sizeof *db.read_record);
+        MALLOC_CHK(db.read_record);
         work_db(&core,&db,depress_parse_rec_to_mem);
         time_thread_execution += slow5_realtime() - realtime;
 

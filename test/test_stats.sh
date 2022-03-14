@@ -5,8 +5,23 @@
 # diff ouput with the expected
 
 RED='\033[0;31m' ; GREEN='\033[0;32m' ; NC='\033[0m' # No Color
-die() { echo -e "${RED}$1${NC}" >&2 ; echo ; exit 1 ; } # terminate script
-info() {  echo ; echo -e "${GREEN}$1${NC}" >&2 ; }
+die() { echo -e "${RED}$1${NC}" 1>&3 2>&4 ; echo ; exit 1 ; } # terminate script
+info() {  echo ; echo -e "${GREEN}$1${NC}" 1>&3 2>&4 ; }
+
+#redirect
+verbose=0
+exec 3>&1
+exec 4>&2
+if ((verbose)); then
+  echo "verbose=1"
+else
+  echo "verbose=0"
+  exec 1>/dev/null
+  exec 2>/dev/null
+fi
+#echo "this should be seen if verbose"
+#echo "this should always be seen" 1>&3 2>&4
+
 #...directories files tools arguments commands clean
 # Relative path to "slow5tools/tests/"
 REL_PATH="$(dirname $0)/"
@@ -46,7 +61,6 @@ TESTCASE=5
 info "testcase$TESTCASE"
 $SLOW5TOOLS stats $RAW_DIR/zlib_svb-zd_multi_rg_v0.2.0.blow5> $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
 diff $OUTPUT_DIR/output.log "$EXP_DIR/zlib_svb-zd_multi_rg_v0.2.0.stdout"  > /dev/null || die "testcase$TESTCASE: diff failed"
-
 
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 info "all $TESTCASE testcases passed"
