@@ -91,7 +91,7 @@ monitor_dir_specified=false
 MONITOR_PARENT_DIR=
 
 ## Handle flags
-while getopts "ihnrym:l:t:d:f:" o; do
+while getopts "ihnrym:l:t:d:f:s:" o; do
     case "${o}" in
         m)
             MONITOR_PARENT_DIR=${OPTARG}
@@ -208,7 +208,7 @@ fi
 if ! $realtime; then # If non-realtime option set
     echo "[realf2s.sh] Non realtime conversion of all files in $MONITOR_PARENT_DIR"
     test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
-    find $MONITOR_PARENT_DIR/ -name *.fast5 | "$PIPELINE_SCRIPT"  |&
+    find $MONITOR_PARENT_DIR/ -name "*.fast5" | "$PIPELINE_SCRIPT"  |&
     tee $LOG
 
 else # Else assume realtime analysis is desired
@@ -231,7 +231,7 @@ else # Else assume realtime analysis is desired
     fi
     echo "[realf2s.sh] No new fast5 files found in last ${TIME_INACTIVE} seconds."
     echo "[realf2s.sh] converting left overs"
-    find $MONITOR_PARENT_DIR/ -name *.fast5   |
+    find $MONITOR_PARENT_DIR/ -name "*.fast5"   |
     "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
     "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
     tee -a $LOG

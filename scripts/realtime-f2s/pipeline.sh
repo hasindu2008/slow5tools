@@ -85,6 +85,6 @@ do
     fi
 
     echo "[pipeline.sh] $F5_FILEPATH" >> $TMP_FILE
-    echo -e $F5_FILEPATH"\t"$SLOW5_FILEPATH"\t"$START_TIME"\t"$END_TIME >> ${LOG}
+    echo -e "${F5_FILEPATH}\t${SLOW5_FILEPATH}\t${START_TIME}\t${END_TIME}" >> ${LOG}
 
 done
