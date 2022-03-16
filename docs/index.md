@@ -6,6 +6,12 @@
 
 [Example workflows](workflows.md)
 
+[Bash one-liners](oneliners.md)
+
+[Compatibility table](compatibility.md)
+
 [Frequently asked questions](faq.md)
 
 [SLOW5 specification](https://hasindu2008.github.io/slow5specs)
+
+
