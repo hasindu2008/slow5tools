@@ -68,6 +68,11 @@ struct operator_obj {
     slow5_file_t* slow5File;
     std::unordered_map<std::string, uint32_t>* warning_map;
     int *primary_fields_count;
+    double* dataset_read_time;
+    double* print_slow5_record_time;
+    double* fast5_attribute_itr_time;
+    double* H5O_TYPE_GROUP_time;
+    double* fast5_group_itr_first_part_time;
 };
 
 //implemented in read_fast5.c

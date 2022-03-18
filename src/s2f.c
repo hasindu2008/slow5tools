@@ -366,7 +366,7 @@ void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const cha
         ERROR("Could not close the tracking_id group in fast5 file '%s'.", fast5_file_path);
         exit(EXIT_FAILURE);
     }
-
+    double dataset_write_time = 0;
     size_t i = 0;
     while(1){
         if(i){
@@ -416,6 +416,7 @@ void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const cha
             }
         }
 
+        double start_dataset_write_time = slow5_realtime();
         // signal
         // Create the data space for the dataset
         hsize_t nsample = slow5_record->len_raw_signal;
@@ -445,6 +446,7 @@ void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const cha
         status = H5Pclose (dcpl);
         status = H5Dclose(dataset_id);
         status = H5Sclose(dataspace_id);
+        dataset_write_time = dataset_write_time + slow5_realtime() - start_dataset_write_time;
 
         set_hdf5_attributes(group_raw, RAW, slow5File->header, slow5_record, &end_reason_enum_id);
         status = H5Gclose (group_raw);
@@ -465,6 +467,8 @@ void write_fast5(slow5_file_t *slow5File, const char *fast5_file_path, const cha
     if (slow5File->header->aux_meta &&  check_aux_fields_in_header(slow5File->header, "end_reason", 0, &attribute_index) == 0){
         H5Tclose(end_reason_enum_id);
     }
+
+    fprintf(stderr,"101 dataset_write_time %.3f\n", dataset_write_time);
 
     status = H5Gclose (group_read_first);
     slow5_rec_free(slow5_record);

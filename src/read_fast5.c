@@ -133,10 +133,18 @@ int read_fast5(opt_t *user_opts,
     int flag_header_is_written = write_header_flag;
     int flag_allow_run_id_mismatch = user_opts->flag_allow_run_id_mismatch;
     int flag_dump_all = user_opts->flag_dump_all;
-
+    double dataset_read_time = 0;
+    double print_slow5_record_time = 0;
+    double fast5_attribute_itr_time = 0;
+    double H5O_TYPE_GROUP_time = 0;
+    double fast5_group_itr_first_part_time = 0;
 
     size_t zero0 = 0;
-
+    tracker.H5O_TYPE_GROUP_time = &H5O_TYPE_GROUP_time;
+    tracker.dataset_read_time = &dataset_read_time;
+    tracker.print_slow5_record_time = &print_slow5_record_time;
+    tracker.fast5_attribute_itr_time = &fast5_attribute_itr_time;
+    tracker.fast5_group_itr_first_part_time = &fast5_group_itr_first_part_time;
     tracker.flag_context_tags = &flag_context_tags;
     tracker.flag_tracking_id = &flag_tracking_id;
     tracker.flag_run_id = &flag_run_id;
@@ -159,6 +167,8 @@ int read_fast5(opt_t *user_opts,
 
     herr_t iterator_ret;
 
+    double exec_time_1 = slow5_realtime();
+    double exec_time_2 = 0;
     if (fast5_file->is_multi_fast5) {
         hsize_t number_of_groups = 0;
         herr_t h5_get_num_objs = H5Gget_num_objs(fast5_file->hdf5_file,&number_of_groups);
@@ -172,12 +182,14 @@ int read_fast5(opt_t *user_opts,
             ERROR("Bad fast5: Could not obtain root group attributes from the fast5 file %s.", tracker.fast5_path);
             return -1;
         }
+        exec_time_2 = slow5_realtime();
         //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
         iterator_ret =H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
         if(iterator_ret < 0){
             ERROR("Bad fast5: Could not iterate over the read groups in the fast5 file %s.", tracker.fast5_path);
             return -1;
         }
+        exec_time_2 = slow5_realtime() - exec_time_2;
     }else{ // single-fast5
         //obtain the root group attributes
         iterator_ret = H5Aiterate2(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_NATIVE, 0, fast5_attribute_itr, (void *) &tracker);
@@ -217,10 +229,20 @@ int read_fast5(opt_t *user_opts,
         slow5_rec_free(tracker.slow5_record);
     }
     slow5_press_free(tracker.press_ptr);
+    fprintf(stderr,"0 total_execution time %.3f sec\n", slow5_realtime() - exec_time_1);
+//    fprintf(stderr,"101 exec_time_2 %.3f sec\n", exec_time_2);
+    fprintf(stderr,"0.0 fast5_group_itr_first_part_time %.3f sec\n", fast5_group_itr_first_part_time);
+    fprintf(stderr,"0.1 H5O_TYPE_GROUP_time %.3f sec\n", H5O_TYPE_GROUP_time);
+    fprintf(stderr,"0.1.0 fast5_attribute_itr_time %.3f sec\n", fast5_attribute_itr_time);
+    fprintf(stderr,"0.1.1 print_slow5_record_time %.3f sec\n", print_slow5_record_time);
+    fprintf(stderr,"0.2 dataset_read_time %.3f sec\n", dataset_read_time);
+
+
     return 1;
 }
 
 herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data){
+    double start_fast5_attribute_itr_time = slow5_realtime();
     hid_t attribute, attribute_type, native_type;
     herr_t return_val = 0;
     htri_t ret_H5Aread = 0;
@@ -789,6 +811,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
     H5Tclose(native_type);
     H5Tclose(attribute_type);
     H5Aclose(attribute);
+    *(operator_data->fast5_attribute_itr_time) = *(operator_data->fast5_attribute_itr_time) + slow5_realtime() - start_fast5_attribute_itr_time;
 
     return return_val;
 }
@@ -1041,6 +1064,11 @@ int read_dataset(hid_t loc_id, const char *name, slow5_rec_t* slow5_record) {
  ************************************************************/
 herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, void *opdata){
 
+    double start_dataset_read_time;
+    double start_print_slow5_record_time;
+    double start_H5O_TYPE_GROUP;
+    double start_fast5_group_itr_first_part = slow5_realtime();
+
     herr_t return_val = 0;
     H5O_info_t infobuf;
     struct operator_obj *operator_data = (struct operator_obj *) opdata;
@@ -1060,10 +1088,17 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
      * The name of the object is passed to this function by
      * the Library.
      */
-    H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+    herr_t ret_H5Oget_info_by_name = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+    if(ret_H5Oget_info_by_name<0){
+        ERROR("Bad fast5: In fast5 file %s, failed to get the information of the HDF5 object '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+        return -1;
+    }
+
+    *(operator_data->fast5_group_itr_first_part_time) = *(operator_data->fast5_group_itr_first_part_time) + slow5_realtime() - start_fast5_group_itr_first_part;
+
     switch (infobuf.type) {
         case H5O_TYPE_GROUP:
-
+            start_H5O_TYPE_GROUP = slow5_realtime();
             /*
              * Check group address against linked list of operator
              * data structures.  We will always run the check, as the
@@ -1164,10 +1199,12 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
 //                                WARNING("run_id is missing in the %s in read_id %s group.", operator_data->fast5_path, operator_data->slow5_record->read_id);
                                 free(warn_message);
                             }
+                            start_print_slow5_record_time = slow5_realtime();
                             int ret = print_record(operator_data);
                             if(ret < 0){
                                 return ret;
                             }
+                            *(operator_data->print_slow5_record_time) = *(operator_data->print_slow5_record_time) + slow5_realtime() - start_print_slow5_record_time;
                             *(operator_data->primary_fields_count) = 0;
                             *(operator_data->flag_run_id) = 0;
                             *(operator_data->flag_run_id_tracking_id) = 0;
@@ -1182,13 +1219,18 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
                     }
                 }
             }
+            if (operator_data->group_level == ROOT) {
+                *(operator_data->H5O_TYPE_GROUP_time) = *(operator_data->H5O_TYPE_GROUP_time) + slow5_realtime() - start_H5O_TYPE_GROUP;
+            }
             break;
         case H5O_TYPE_DATASET:
+            start_dataset_read_time = slow5_realtime();
             return_val = read_dataset(loc_id, name, operator_data->slow5_record);
             if(return_val < 0){
                 return return_val;
             }
             *(operator_data->primary_fields_count) = *(operator_data->primary_fields_count) + 2;
+            *(operator_data->dataset_read_time) = *(operator_data->dataset_read_time) + slow5_realtime() - start_dataset_read_time;
             break;
         case H5O_TYPE_NAMED_DATATYPE:
             WARNING("Weird fast5: Datatype %s in %s is unexpected", name, operator_data->fast5_path);
