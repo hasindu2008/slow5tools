@@ -17,7 +17,7 @@
 
 #define USAGE_MSG "Usage: %s [SLOW5_FILE/DIR]\n"
 #define HELP_LARGE_MSG \
-    "Concatenate slow5s with same run_id, compression type, and file extension\n" \
+    "Quickly concatenate SLOW5/BLOW5 files of same type (same header, extension, compression) [experimental]\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n"       \
@@ -117,6 +117,8 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
             user_opts.f_out = new_file;
         }
     }
+
+    WARNING("%s","slow5tools cat is experimental. Use with caution.");
 
     slow5_file_t* slow5File = NULL;
     int first_iteration = 1;

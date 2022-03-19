@@ -27,3 +27,5 @@ data/out/merge/
 data/out/split/
 data/out/slow5tools_get/
 test_all_dir/
+NA12878_prom_subsubsample/
+fast5_soup/

@@ -478,7 +478,7 @@ void s2f_child_worker(proc_arg_t args,
                       program_meta *meta,
                       reads_count *readsCount) {
     for (int i = args.starti; i < args.endi; i++) {
-        VERBOSE("Converting %s to fast5", slow5_files[i].c_str());
+        DEBUG("Converting %s to fast5", slow5_files[i].c_str());
         slow5_file_t* slow5File_i = slow5_open(slow5_files[i].c_str(), "r");
         if(!slow5File_i){
             ERROR("cannot open %s. skipping...\n",slow5_files[i].c_str());
