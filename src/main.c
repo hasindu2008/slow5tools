@@ -37,7 +37,7 @@
     "    get                   display the read entry for each specified read id\n" \
     "    view                  view the contents of a SLOW5/BLOW5 file or convert between different SLOW5/BLOW5 formats and compressions\n" \
     "    stats                 prints statistics of a SLOW5/BLOW5 file to the stdout\n" \
-    "    cat                   quickly concatenate SLOW5/BLOW5 files of same type [experimental]\n" \
+    "    cat                   quickly concatenate SLOW5/BLOW5 files of same type (same header, extension, compression) [experimental]\n" \
     "    quickcheck            quickly checks if a SLOW5/BLOW5 file is intact\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \

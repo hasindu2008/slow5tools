@@ -12,6 +12,8 @@
          Create an index for a SLOW5/BLOW5 file.        
 * `merge`:  
          Merge multiple SLOW5/BLOW5 files to a single file.
+* `cat`:   
+		 Quickly concatenate SLOW5/BLOW5 files of same read group [experimental]	
 * `split`:  
          Split a single a SLOW5/BLOW5 file into multiple separate files.
 * `get`:  
@@ -92,6 +94,21 @@ If multiple samples (different run ids) are detected, the header and the *read_g
 *  `-h, --help`:  
    Prints the help menu.
 
+### cat 
+
+```
+slow5tools cat file1.blow5 file2.blow5  -o output.blow5
+slow5tools cat blow5_dir1 -o output.blow5
+```
+
+Note: This subtools is experimental. Use with caution.
+Quickly concatenate SLOW5/BLOW5 files of same type (same header, extension, compression).
+
+*  `-o, --output FILE`:  
+      Outputs concatenated data to FILE [default value: stdout].
+*  `-h, --help`:  
+   Prints the help menu.
+
 
 ### index
 
@@ -136,7 +153,6 @@ Retrieves records for specified read IDs from a SLOW5/BLOW5 file.
 slow5tools get [OPTIONS] file1.blow5 readid1 readid2 ....
 slow5tools get [OPTIONS] file1.blow5 --list readids.txt
 ```
-
 
 *  `--to format_type`:  
     Specifies the format of output files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: blow5].   

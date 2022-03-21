@@ -8,6 +8,8 @@
 
 [Bash one-liners](oneliners.md)
 
+[SLOW5 for archiving](archive.md)
+
 [Compatibility table](compatibility.md)
 
 [Frequently asked questions](faq.md)
