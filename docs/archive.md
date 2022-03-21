@@ -1,7 +1,7 @@
 # Paranoid's guide on using slow5 for archiving
 
-BLOW5 is a great alternative to archive raw nanopore signal data, not only for doing fast analysis. You can save heaps of space, for instance, our in-house data from 2021 which were xx TB in FAST5 format reduced to XX TB with BLOW5. A concern one might be having is on whether the integrity of original data be retained with BLOW5. We assure  that BLOW5 conversion is fully lossless, and can be converted back to FAST5 any time. But still many of you (including us) can be a bit paranoid on deleting FAST5 after BLOW5 conversion. 
-This article walks you through a number of sanity checks that remedies those concerns. Note that some of these tests are redundant and  very are time-consuming. Depending on how paranoid you are, you can pick the tests you want.
+BLOW5 format is not only useful for fast signal-level analysis, it is also a great alternative for archiving raw nanopore signal data. You can save heaps of space, for instance, our in-house data generated at the Garvan Institute during 2021 comprised 245 TB FAST5 files, which were reduced to just 109 TB after conversion to BLOW5. A concern one might be having is on whether the integrity of original data be retained with BLOW5. We assure users that FAST5 to BLOW5 conversion is fully lossless, and can be converted back to FAST5 any time. But still many users (including us) can be a bit paranoid about deleting the original FAST5 files. 
+This vignette walks you through a number of sanity checks that remedies those concerns. Note that some of these tests are redundant and very time-consuming. Depending on how paranoid you are, you can pick the tests you want.
 
 # Suggested conversion structure
 
@@ -23,7 +23,7 @@ rm -r ${DIR_TMP_SLOW5}
 
 ## Sanity check by counting number of reads
 
-One of the simplest sanity checks is to check if the read count in the merged BLWO5 file s same as those in input FAST files. Getting the number of read records in a merged BLOW5 file is quite simple. A bash command that gets the number of read records using `slow5tools stats` and save the count into a variable:
+One of the simplest sanity checks is to check if the read count in the merged BLOW5 file is same as those in input FAST5 files. Getting the number of read records in a merged BLOW5 file is quite simple. A bash command that gets the number of read records using `slow5tools stats` and save the count into a variable:
 
 ```bash
 NUM_SLOW5_READS=$(slow5tools stats $SLOW5_FILE | grep "number of records" | awk '{print $NF}')
@@ -144,14 +144,14 @@ sanity_check_fast5_num_reads_estimate(){
 
 ## Sanity check through Read ID uniqueness
 
-What if the counts of reads are matching, but one file got merged twice (extremely unlikely). You can do eleminate this doubt by checking if the read IDs are all unqiue.
+What if the counts of reads are matching, but one file got merged twice (note: this is extremely unlikely). You can eleminate this doubt by checking if the read IDs are all unqiue.
 The easiest way is to call `slow5tools index` on you merged BLOW5 file, as it will fail if there are duplicate read IDs. As `slow5tools index` goes through the whole BLOW5 file, this test complimentarily checks for the unlikely scaniro of file being corrupted or truncated. Also, the generated index can be archived if necessary as then one could skip this index step to save time later during analysis. Following is a code snippet:
 
 ```bash
 slow5tools index ${SLOW5_FILE} || { echo "Indexing failed"; exit 1; }
 ```
 
-A very expesnsive and time-consuming uniqueness test can be done using `slow5tools view`. Unlike index command, slow5tools view will also decomporess and parse each and every record, so this test will paranoidly verify if indivudual birs in each and every record is perfect. Follwoing is a bash code snippet that uses `slow5tools view` to print all the read IDs, sort them and count occurances of each read id using `uniq -c` command, sort them based on the counts and then using `awk` to see if the largest count is still 1.
+A very expesnsive and time-consuming uniqueness test can be done using `slow5tools view`. Unlike index command, slow5tools view will decompress and parse each and every record, so this test will verify if indivudual bits in each and every record is perfect. Following is a bash code snippet that uses `slow5tools view` to print all the read IDs, sort them and count occurances of each read id using `uniq -c` command, sort them based on the counts and then using `awk` to see if the largest count is still 1.
 
 ```bash
 slow5tools view -t ${NUM_THREADS} $SLOW5_FILE |  awk '{print $1}' | grep  -v "^[#@]" |  sort | uniq -c  | sort -rn | awk '{if($1!=1){print "Duplicate read ID found",$2; exit 1}}' || { echo "ERROR: Sanity check failed. Duplicate reads in SLOW5"; exit 1; }
@@ -185,7 +185,7 @@ rm -r split_reads_tmp/
 
 ```
 
-Now basecall the original FAST5 files as well as the reconverted FAST5 files. Following are osme example commands, but make sure to set the basecalling profile to match your dataset and the CPU/GPU device based on your system.
+Now basecall the original FAST5 files as well as the reconverted FAST5 files. Following are some example commands, but make sure to set the basecalling profile to match your dataset and the CPU/GPU device based on your system.
 
 ```
 guppy_basecaller -c dna_r9.4.1_450bps_fast.cfg -i ${FAST5_DIR} -s fast5_basecalls/  -r --device cuda:all
