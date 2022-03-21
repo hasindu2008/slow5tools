@@ -69,7 +69,7 @@ sanity_check_fast5_num_reads(){
 
 	if [ ${NUM_READS} -ne ${NUM_SLOW5_READS} ]
 	then
-		echo "ERROR: fall back sanity check also failed. $NUM_READS in FAST5, but $NUM_SLOW5_READS reads in SLOW5"
+		echo "ERROR: Sanity check also failed. $NUM_READS in FAST5, but $NUM_SLOW5_READS reads in SLOW5"
 		exit 1
 	else
 		echo "$NUM_READS in FAST5, $NUM_SLOW5_READS reads in SLOW5"
@@ -133,7 +133,7 @@ sanity_check_fast5_num_reads_estimate(){
 	if [ ${NUMFAST5} -gt 20 ] && [ ${PASS_PERCENTINT} -lt 95 ]
 	then
 		echo "Estimated sanity check failed - Only $NUM_SLOW5_READS in SLOW5 out of $NUM_FAST5_READS estimated raw reads in FAST5 (${PASS_PERCENT}%). Trying accurate method."
-        sanity_check_fast5_num_reads $FAST5_DIR $NUM_SLOW5_READS
+        	sanity_check_fast5_num_reads $FAST5_DIR $NUM_SLOW5_READS
 	else
 		echo "$NUM_SLOW5_READS in SLOW5, $NUM_FAST5_READS estimated raw reads in FAST5 (${PASS_PERCENT}%)"
 	fi
