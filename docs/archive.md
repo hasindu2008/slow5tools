@@ -1,7 +1,7 @@
-# Paranoid's guide on using slow5 for archiving
+# A pedant's guide on using slow5 for archiving
 
-BLOW5 format is not only useful for fast signal-level analysis, it is also a great alternative for archiving raw nanopore signal data. You can save heaps of space, for instance, our in-house data generated at the Garvan Institute during 2021 comprised 245 TB FAST5 files, which were reduced to just 109 TB after conversion to BLOW5. A concern one might be having is on whether the integrity of original data be retained with BLOW5. We assure users that FAST5 to BLOW5 conversion is fully lossless, and can be converted back to FAST5 any time. But still many users (including us) can be a bit paranoid about deleting the original FAST5 files. 
-This vignette walks you through a number of sanity checks that remedies those concerns. Note that some of these tests are redundant and very time-consuming. Depending on how paranoid you are, you can pick the tests you want.
+BLOW5 format is not only useful for fast signal-level analysis, it is also a great alternative for archiving raw nanopore signal data. You can save heaps of space, for instance, our in-house data generated at the Garvan Institute during 2021 comprised 245 TB FAST5 files, which were reduced to just 109 TB after conversion to BLOW5. A concern one might be having is on whether the integrity of original data be retained with BLOW5. We assure users that FAST5 to BLOW5 conversion is fully lossless, and can be converted back to FAST5 any time. But still many users (including us) can be a bit paranoid and it's good to be pedantic when it comes to potential data loss.
+This vignette walks you through a number of sanity checks that remedies those concerns. Note that some of these tests are redundant and very time-consuming. Depending on how pedantic you are, you can pick the tests you want.
 
 # Suggested conversion structure
 
