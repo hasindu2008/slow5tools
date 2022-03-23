@@ -1060,7 +1060,11 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
      * The name of the object is passed to this function by
      * the Library.
      */
-    H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+    herr_t ret_H5Oget_info_by_name = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+    if(ret_H5Oget_info_by_name<0){
+        ERROR("Bad fast5: In fast5 file %s, failed to get the information of the HDF5 object '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+        return -1;
+    }
     switch (infobuf.type) {
         case H5O_TYPE_GROUP:
 
