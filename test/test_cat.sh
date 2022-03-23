@@ -109,6 +109,10 @@ TESTCASE=9
 info "testcase:$TESTCASE - cat different compression types files. $SLOW5TOOLS_ERROR"
 $SLOW5TOOLS cat "$RAW_DIR/mixed_compression/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools cat failed"
 
+TESTCASE=10
+info "testcase:$TESTCASE - cat different auxiliary attribute order. $SLOW5TOOLS_ERROR"
+$SLOW5TOOLS cat "$RAW_DIR/different_aux_order/" > "$OUTPUT_DIR/output.slow5" && die "testcase:$TESTCASE slow5tools cat failed"
+
 info "all $TESTCASE cat testcases passed"
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 exit 0

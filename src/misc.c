@@ -325,6 +325,5 @@ int check_aux_fields_in_header(slow5_hdr *slow5_header, const char *attr, int ve
     }else {
         *index = kh_val(slow5_header->aux_meta->attr_to_pos, pos);
     }
-
     return 0;
 }

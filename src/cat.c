@@ -26,6 +26,87 @@
 extern int slow5tools_verbosity_level;
 int close_files_and_exit(slow5_file_t *slow5_file, slow5_file_t *slow5_file_i, char *arg_fname_out);
 
+// return 0 if no warnings
+// return 1 if warnings are found
+int compare_headers(slow5_hdr_t *output_header, slow5_hdr_t *input_header, int64_t output_g, int64_t input_g, const char *i_file_path, const char *j_run_id) {
+    int flag_warnings = 0;
+    khash_t(slow5_s2s) *rg_o = slow5_hdr_get_data(output_g, output_header);
+    khash_t(slow5_s2s) *rg_i = slow5_hdr_get_data(input_g, input_header);
+
+    size_t size_rg_o = kh_size(rg_o);
+    size_t size_rg_i = kh_size(rg_i);
+
+//    fprintf(stderr,"size_rg_i,size_rg_i\t%zu,%zu\n",size_rg_i,size_rg_i);
+    if(size_rg_i != size_rg_o){
+        flag_warnings = 1;
+        WARNING("Input file %s (run_id-%s) has a different number of attributes (%zu) than seen in the previous files processed so far (%zu)", i_file_path, j_run_id, size_rg_i, size_rg_o);
+    }
+
+    for (khint_t itr = kh_begin(rg_o); itr != kh_end(rg_o); ++itr) {  // traverse hash_table_o
+        if (kh_exist(rg_o, itr)) {
+            int flag_set_attr_value_to_empty = 0;
+            const char* key_o = kh_key(rg_o, itr);
+            khint_t pos_i = kh_get(slow5_s2s, rg_i, key_o);
+            if(pos_i == kh_end(rg_i)){
+                WARNING("Attribute '%s' is not available in input file %s (run_id-%s)", key_o, i_file_path, j_run_id);
+                flag_warnings = 1;
+                flag_set_attr_value_to_empty = 1;
+            } else{
+                const char *value_o = kh_value(rg_o, itr);
+                const char *value_i = kh_value(rg_i, pos_i);
+                if(strcmp(value_o,value_i)){
+                    WARNING("Attribute '%s' in input file %s (run_id-%s) has a different value (%s) than what has been seen so far (%s)", key_o, i_file_path, j_run_id, value_i, value_o);
+                    flag_warnings = 1;
+                    flag_set_attr_value_to_empty = 1;
+                }
+            }
+            if(flag_set_attr_value_to_empty){
+                INFO("Setting output header's attribute '%s' (run_id-%s) to empty", key_o, j_run_id);
+                int ret_hdr_attr_set = slow5_hdr_set(key_o, "", output_g, output_header);
+                if(ret_hdr_attr_set<0){
+                    ERROR("Could not set attribute '%s' value to empty", key_o);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+
+    for (khint_t itr = kh_begin(rg_i); itr != kh_end(rg_i); ++itr) {  // traverse hash_table_o
+        if (kh_exist(rg_i, itr)) {
+            const char* key_i = kh_key(rg_i, itr);
+            khint_t pos_o = kh_get(slow5_s2s, rg_o, key_i);
+            if(pos_o == kh_end(rg_o)){
+                const char *value_i = kh_value(rg_i, itr);
+                flag_warnings = 1;
+                INFO("Attribute '%s' in input file %s (run_id-%s) is not seen in previous files. It will be added to the output header but its value (%s) will not be set in the output header.", key_i, i_file_path, j_run_id, value_i);
+                int ret_attr_header = slow5_hdr_add_attr(key_i, output_header);
+                if(ret_attr_header==-1){
+                    ERROR("Could not add the new attribute %s to the output header", key_i);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
+    }
+    return flag_warnings;
+}
+
+int compare_aux_attrs(slow5_hdr_t *output_header, slow5_hdr_t *input_header, const char *i_file_path) {
+    uint32_t num_axu_o = output_header->aux_meta->num;
+    uint32_t num_axu_i = input_header->aux_meta->num;
+    if(num_axu_o != num_axu_i){
+        ERROR("Input file %s has a different number of auxiliary attributes (%" PRIu32 ") than seen in the previous files processed so far (%" PRIu32 ")", i_file_path, num_axu_o, num_axu_i);
+        return -1;
+    }
+    for(uint32_t i=0; i<num_axu_o; i++){
+        DEBUG("%s\t%s\n", output_header->aux_meta->attrs[i], input_header->aux_meta->attrs[i]);
+        if(strcmp(output_header->aux_meta->attrs[i],input_header->aux_meta->attrs[i])){
+            ERROR("Input file %s has a different order of auxiliary attributes from the order seen in the previous files processed so far", i_file_path);
+            return -1;
+        }
+    }
+    return 0;
+}
+
 int cat_main(int argc, char **argv, struct program_meta *meta){
 
     print_args(argc,argv);
@@ -181,7 +262,7 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
             }
             //set run_ids
             for(uint32_t j=0; j<num_read_groups; j++){
-                char* temp = slow5_hdr_get("run_id", 0, slow5File_i->header);
+                char* temp = slow5_hdr_get("run_id", j, slow5File_i->header);
                 if(!temp){
                     ERROR("No run_id information found in %s.", slow5_files[i].c_str());
                     return close_files_and_exit(slow5File, slow5File_i, user_opts.arg_fname_out);
@@ -236,7 +317,7 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
                 return close_files_and_exit(slow5File, slow5File_i, user_opts.arg_fname_out);
             }
             for (uint32_t j = 0; j < num_read_groups; j++) {
-                char *temp = slow5_hdr_get("run_id", 0, slow5File_i->header);
+                char *temp = slow5_hdr_get("run_id", j, slow5File_i->header);
                 if (!temp) {
                     ERROR("No run_id information found in %s.", slow5_files[i].c_str());
                     return close_files_and_exit(slow5File, slow5File_i, user_opts.arg_fname_out);
@@ -244,6 +325,18 @@ int cat_main(int argc, char **argv, struct program_meta *meta){
                 if (strcmp(temp, run_ids[j].c_str())) {
                     ERROR("%s has a different run_id. Use merge (instead of cat) to merge files.",
                           slow5_files[i].c_str());
+                    return close_files_and_exit(slow5File, slow5File_i, user_opts.arg_fname_out);
+                }
+                /// compare headers
+                int ret_compare_headers = compare_headers(slow5File->header, slow5File_i->header, j, j, slow5_files[i].c_str(), run_ids[j].c_str());
+                if(ret_compare_headers){
+                    return close_files_and_exit(slow5File, slow5File_i, user_opts.arg_fname_out);
+                }
+
+            }
+            if(lossy == 0){
+                int ret_compare_aux_attrs = compare_aux_attrs(slow5File->header, slow5File_i->header, slow5_files[i].c_str());
+                if(ret_compare_aux_attrs){
                     return close_files_and_exit(slow5File, slow5File_i, user_opts.arg_fname_out);
                 }
             }
