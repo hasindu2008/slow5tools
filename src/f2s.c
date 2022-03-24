@@ -437,6 +437,13 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     double init_realtime = slow5_realtime();
     std::vector<std::string> fast5_files;
     int i = optind;
+    int flag_one_input = i==(argc-1);
+
+    if(user_opts.arg_dir_out && user_opts.flag_retain_dir_structure==1 && flag_one_input==0){
+        ERROR("Cannot retain the directory structure when there are multiple inputs. Please provide one input path%s",".");
+        return EXIT_FAILURE;
+    }
+
     for (; i < argc; ++ i) {
         list_all_items(argv[i], fast5_files, 0, ".fast5");
     }
@@ -447,7 +454,6 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
 
-    int flag_one_input = i==optind+1;
 
     if(fast5_files.size()==1){
         user_opts.num_processes = 1;
