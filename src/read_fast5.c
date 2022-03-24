@@ -401,14 +401,26 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
     std::vector<std::string> enum_labels_list;
     std::vector<const char*> enum_labels_list_ptrs;
-    if(H5Tclass==H5T_ENUM && *(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
+    if(H5Tclass==H5T_ENUM && *(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){ //assumption - same run_id has the same order and labels for the enum array
         //https://support.hdfgroup.org/HDF5/doc/H5.user/DatatypesEnum.html
         int n = H5Tget_nmembers(native_type);
+        if(n<0){
+            ERROR("Bad fast5: In fast5 file %s, H5Tget_nmembers() failed for the attribute %s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+            return -1;
+        }
         unsigned u;
         for (u=0; u<(unsigned)n; u++) {
             char *symbol = H5Tget_member_name(native_type, u);
+            if(symbol==NULL){
+                ERROR("Bad fast5: In fast5 file %s, H5Tget_member_name() failed for the attribute %s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+                return -1;
+            }
             short val;
-            H5Tget_member_value(native_type, u, &val);
+            herr_t ret_H5Tget_member_value = H5Tget_member_value(native_type, u, &val);
+            if(ret_H5Tget_member_value<0){
+                ERROR("Bad fast5: In fast5 file %s, H5Tget_member_name() failed for the attribute %s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+                return -1;
+            }
             enum_labels_list.push_back(std::string(symbol));
 //            fprintf(stderr,"#%u %20s = %d\n", u, symbol, val);
             free(symbol);
