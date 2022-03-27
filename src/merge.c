@@ -88,7 +88,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             {"compress", required_argument, NULL, 'c'},  //3
             {"sig-compress",    required_argument,  NULL, 's'}, //4
             { "lossless", required_argument, NULL, 'l'}, //5
-            { "allow", required_argument, NULL, 'a'}, //6
+            { "allow", no_argument, NULL, 'a'}, //6
             {"output", required_argument, NULL, 'o'}, //7
             {"batchsize", required_argument, NULL, 'K'}, //8
             {NULL, 0, NULL, 0 }
@@ -101,7 +101,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:s:hl:t:o:a:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "b:c:s:hl:t:o:aK:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -129,7 +129,8 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
                 user_opts.arg_lossless = optarg;
                 break;
             case 'a':
-                user_opts.arg_continue_merge = optarg;
+                user_opts.flag_continue_merge = 1;
+                WARNING("%s", "You have requested to merge files despite the warnings. Generated files are only to be used for intermediate analysis and NOT for archiving.\n");
                 break;
             case 'o':
                 user_opts.arg_fname_out = optarg;
@@ -149,10 +150,6 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
         return EXIT_FAILURE;
     }
     if(parse_arg_lossless(&user_opts, argc, argv, meta) < 0){
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
-    }
-    if(parse_arg_continue_merge(&user_opts, argc, argv, meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
@@ -335,7 +332,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
 
     if(flag_warnings_occured == 1 && user_opts.flag_continue_merge == DEFAULT_CONTINUE_MERGE){
-        ERROR("There were warning about attribute differences for the same run_id(s). Please set flag '--continue' to 'true' if you still want to merge files%s", ".");
+        ERROR("Attributes are different for the same run_id(s). Set -a of you still want to merge files%s", ".");
         return EXIT_FAILURE;
     }
 

@@ -51,9 +51,12 @@
 //for f2s
 #define HELP_MSG_RETAIN_DIR_STRUCTURE \
     "        --retain                  retain the same directory structure in the converted output as the input (experimental)\n"
-
+//for f2s    
+#define HELP_MSG_CONTINUE_F2S    \
+    "    -a, --allow                   allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
+//for merge
 #define HELP_MSG_CONTINUE_MERGE \
-    "        --allow                   continue to merge the files despite the WARNINGS about the differences in run_id groups [false].\n"
+    "    -a, --allow                   allow merging despite attribute differences in the same run_id\n"
 
 #define HELP_MSG_HELP \
     "    -h, --help                    display this message and exit\n" \

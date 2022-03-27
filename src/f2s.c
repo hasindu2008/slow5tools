@@ -32,7 +32,7 @@
     HELP_MSG_PRESS \
     HELP_MSG_PROCESSES \
     HELP_MSG_LOSSLESS \
-    "    -a, --allow                   allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
+    HELP_MSG_CONTINUE_F2S \
     HELP_MSG_RETAIN_DIR_STRUCTURE \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
@@ -355,6 +355,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 break;
             case 'a':
                 user_opts.flag_allow_run_id_mismatch = 1;
+                WARNING("%s", "You have requested to allow run ID mismatches. Generated files are only to be used for intermediate analysis and NOT for archiving.\n");
                 break;
             case 'h':
                 DEBUG("Displaying the large help message%s","");
