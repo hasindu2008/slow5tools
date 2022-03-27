@@ -32,7 +32,7 @@ fi
 NUM_THREADS=4
 
 #redirect
-verbose=0
+verbose=1
 exec 3>&1
 exec 4>&2
 if ((verbose)); then
@@ -117,11 +117,19 @@ diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/mer
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
 TESTCASE=1.6
-TESTNAME="merging files where one header attr is missing in one file"
+TESTNAME="merging files where one header attr is missing in one read group while it is there in the other"
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0_asic_id_missing.slow5 $RAW_DIR/rg1.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
-diff -q $REL_PATH/data/exp/merge/asic_id_missing_expected_rg1.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
+diff -q $REL_PATH/data/exp/merge/rg0_asic_id_missing_with_rg1.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+
+TESTCASE=1.7
+TESTNAME="merging files where one header attr is missing in one read group while it is there in the other (reversed input order)"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/rg1.slow5 $RAW_DIR/rg0_asic_id_missing.slow5 "
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/rg1_with_rg0_asic_id_missing.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
 ## bloody enum
