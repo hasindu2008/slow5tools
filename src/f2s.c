@@ -355,7 +355,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                 break;
             case 'a':
                 user_opts.flag_allow_run_id_mismatch = 1;
-                WARNING("%s", "You have requested to allow run ID mismatches. Generated files are only to be used for intermediate analysis and NOT for archiving.\n");
+                WARNING("%s", "You have requested to allow run ID mismatches. Generated files are only to be used for intermediate analysis and are not recommended for archiving.");
                 break;
             case 'h':
                 DEBUG("Displaying the large help message%s","");

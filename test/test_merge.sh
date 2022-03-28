@@ -32,7 +32,7 @@ fi
 NUM_THREADS=4
 
 #redirect
-verbose=1
+verbose=0
 exec 3>&1
 exec 4>&2
 if ((verbose)); then
@@ -48,19 +48,13 @@ fi
 
 # quick check if redundant here as we any way do a diff
 slow5tools_quickcheck() {
-    echo -e "${GREEN}running slow5tools_quickcheck for files in $PWD/${1}${NC}" 1>&3 2>&4
-    ls -1 $PWD/${1}/**.[sb]low5 | xargs -n1 $SLOW5_EXEC quickcheck &> /dev/null
-    if [ $? -eq 0 ]; then
-        echo -e "${GREEN}SUCCESS: slow5tools_quickcheck passed!${NC}" 1>&3 2>&4
-    elif [ $? -eq 1 ]; then
-        echo -e "${RED}FAILURE: $PWD/${1} files are corrupted${NC}" 1>&3 2>&4
-        exit 1
+    if $REL_PATH/../slow5tools quickcheck $1; then
+        echo -e "${GREEN}SUCCESS: slow5tools_quickcheck passed!${NC}" 
     else
-        echo -e "${RED}ERROR: slow5tools_quickcheck failed for some weird reason${NC}" 1>&3 2>&4
+        echo -e "${RED}ERROR: slow5tools_quickcheck failed${NC}" 1>&3 2>&4
         exit 1
     fi
 }
-
 
 TESTCASE=0
 info "-------------------tesetcase $TESTCASE: slow5tools version-------------------"
@@ -107,12 +101,12 @@ diff -q $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
 TESTCASE=1.5
-# covers BLOW5 output including EOF
+# coverts BLOW5 output including EOF
 TESTNAME="blow5 output"
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg2.slow5 $RAW_DIR/rg3.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -c zlib -s svb-zd -o $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
-slow5tools_quickcheck $OUTPUT_DIR
+slow5tools_quickcheck $OUTPUT_DIR/merged_output.blow5
 diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/merged_output.blow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
@@ -121,6 +115,7 @@ TESTNAME="merging files where one header attr is missing in one read group while
 info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0_asic_id_missing.slow5 $RAW_DIR/rg1.slow5"
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+slow5tools_quickcheck $OUTPUT_DIR/merged_output.slow5
 diff -q $REL_PATH/data/exp/merge/rg0_asic_id_missing_with_rg1.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
@@ -130,6 +125,22 @@ info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg1.slow5 $RAW_DIR/rg0_asic_id_missing.slow5 "
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
 diff -q $REL_PATH/data/exp/merge/rg1_with_rg0_asic_id_missing.slow5  $OUTPUT_DIR/merged_output.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+
+TESTCASE=1.7
+TESTNAME="merge same read group"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg0_1.slow5 "
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/same_rg.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/same_rg.slow5  $OUTPUT_DIR/same_rg.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+
+TESTCASE=1.7
+TESTNAME="merge same read group + diff readgroup"
+info "-------------------tesetcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg0_1.slow5 "
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/same_rg_and_diff_rg.slow5 || die "tesetcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/same_rg_and_diff_rg.slow5  $OUTPUT_DIR/same_rg_and_diff_rg.slow5 || die "tesetcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
 ## bloody enum

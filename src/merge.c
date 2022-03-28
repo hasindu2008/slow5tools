@@ -82,15 +82,15 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     }
 
     static struct option long_opts[] = {
-            {"help", no_argument, NULL, 'h'},  //0
-            {"threads", required_argument, NULL, 't' }, //1
-            {"to", required_argument, NULL, 'b'},    //2
-            {"compress", required_argument, NULL, 'c'},  //3
-            {"sig-compress",    required_argument,  NULL, 's'}, //4
-            { "lossless", required_argument, NULL, 'l'}, //5
-            { "allow", no_argument, NULL, 'a'}, //6
-            {"output", required_argument, NULL, 'o'}, //7
-            {"batchsize", required_argument, NULL, 'K'}, //8
+            {"help", no_argument, NULL, 'h'},                //0
+            {"threads", required_argument, NULL, 't' },      //1
+            {"to", required_argument, NULL, 0},              //2
+            {"compress", required_argument, NULL, 'c'},      //3
+            {"sig-compress", required_argument,  NULL, 's'}, //4
+            {"lossless", required_argument, NULL, 0},        //5
+            {"allow", no_argument, NULL, 'a'},               //6
+            {"output", required_argument, NULL, 'o'},        //7
+            {"batchsize", required_argument, NULL, 'K'},     //8
             {NULL, 0, NULL, 0 }
     };
 
@@ -101,10 +101,20 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "b:c:s:hl:t:o:aK:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "c:s:ht:o:aK:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
+            case 'c':
+                user_opts.arg_record_press_out = optarg;
+                break;   
+            case 's':
+                user_opts.arg_signal_press_out = optarg;
+                break;     
+            case 'a':
+                user_opts.flag_continue_merge = 1;
+                WARNING("%s", "You have requested to merge files despite attribute differences in same read ID. Generated files are for intermediate analysis and are not recommended for archiving.");
+                break;                                    
             case 'h':
                 DEBUG("displaying large help message%s","");
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
@@ -113,27 +123,21 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
             case 't':
                 user_opts.arg_num_threads = optarg;
                 break;
-            case 'b':
-                user_opts.arg_fmt_out = optarg;
+            case 'o':
+                user_opts.arg_fname_out = optarg;
                 break;
             case 'K':
                 user_opts.arg_batch = optarg;
                 break;
-            case 'c':
-                user_opts.arg_record_press_out = optarg;
-                break;
-            case 's':
-                user_opts.arg_signal_press_out = optarg;
-                break;
-            case 'l':
-                user_opts.arg_lossless = optarg;
-                break;
-            case 'a':
-                user_opts.flag_continue_merge = 1;
-                WARNING("%s", "You have requested to merge files despite the warnings. Generated files are only to be used for intermediate analysis and NOT for archiving.\n");
-                break;
-            case 'o':
-                user_opts.arg_fname_out = optarg;
+            case 0  :
+                switch (longindex) {
+                    case 2:
+                        user_opts.arg_fmt_out = optarg;
+                        break;
+                    case 5:
+                        user_opts.arg_lossless = optarg;
+                        break;
+                }
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
