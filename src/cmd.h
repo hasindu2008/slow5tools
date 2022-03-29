@@ -1,7 +1,7 @@
 #ifndef CMD_H
 #define CMD_H
 
-#define SLOW5TOOLS_VERSION "0.3.0-dirty"
+#define SLOW5TOOLS_VERSION "0.4.0"
 
 #define DEFAULT_NUM_THREADS 8
 #define DEFAULT_NUM_PROCESSES 8
