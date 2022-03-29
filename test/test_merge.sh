@@ -32,7 +32,7 @@ fi
 NUM_THREADS=4
 
 #redirect
-verbose=0
+verbose=1
 exec 3>&1
 exec 4>&2
 if ((verbose)); then
@@ -182,17 +182,53 @@ $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum2.slow5 || die "
 diff -q $REL_PATH/data/exp/merge/merged_output_enum2.slow5  $OUTPUT_DIR/merged_output_enum2.slow5 || die "testcase $TESTCASE: diff for $TESTNAME failed"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-# enum different labels in same read group
+# enum different labels 
+TESTCASE=2.3
+TESTNAME="different enum labels"
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/aux_enum.slow5 $RAW_DIR/aux_enum_diff_label.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/aux_enum_err.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE: $TESTNAME failed"
+grep -q "ERROR.* Attribute end_reason has different order/name of the enum labels in different files" $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+
 # enum labels order different
-# enum different labels in different read groups
+TESTCASE=2.3
+TESTNAME="different enum label order"
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/aux_enum.slow5 $RAW_DIR/aux_enum_order_label.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/aux_enum_err.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE: $TESTNAME failed"
+grep -q "ERROR.* Attribute end_reason has different order/name of the enum labels in different files" $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-# enum data type different
+# enum new label
+TESTCASE=2.4
+TESTNAME="new enum label"
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/aux_enum.slow5 $RAW_DIR/aux_enum_new_label.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/aux_enum_err.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE: $TESTNAME failed"
+grep -q "ERROR.* Attribute end_reason has different number of enum labels in different files" $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-# data type mismatch in aux fields
+# enum data type is uint8_t
+TESTCASE=2.4
+TESTNAME="enum is of uint8_t type"
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/aux_enum.slow5 $RAW_DIR/aux_enum_uint8_t.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/aux_enum_err.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE: $TESTNAME failed"
+grep -q "ERROR.*" $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+
+# enum data type is uint8_t (reverse file order)
+TESTCASE=2.4
+TESTNAME="enum is of uint8_t type "
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/aux_enum_uint8_t.slow5  $RAW_DIR/aux_enum.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/aux_enum_err.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE: $TESTNAME failed"
+grep -q "ERROR.* " $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
 
-
-## weird cases where merging should fail unless --allow is specified
+## header attribute differences in same readgroup thta must fail unless --allow is specified
 TESTCASE=3.1
 TESTNAME="merging files where one header attr is missing in one file in same read group"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
@@ -246,7 +282,44 @@ diff -q $REL_PATH/data/exp/merge/same_run_id_different_attribute_values.slow5  $
 grep -q "WARNING" $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-# different aux fields in same read group
+
+## Differences in aux fields
+
+TESTCASE=4.1
+TESTNAME="different datatype in aux field in same read group"
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg0_1_diff_aux_type.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE: $TESTNAME failed"
+grep -q "ERROR" $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+
+TESTCASE=4.2
+TESTNAME="different datatype in aux field in different read group"
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1_1_diff_aux_type.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE: $TESTNAME failed"
+grep -q "ERROR" $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+
+different aux fields in same read group (should merge with warning)
+TESTCASE=4.3
+TESTNAME="different aux fields in same read group"
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg0_1_diff_aux_field.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/same_rg_diff_aux_field.slow5 2> $OUTPUT_DIR/err.log || die "testcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/same_rg_diff_aux_field.slow5  $OUTPUT_DIR/same_rg_diff_aux_field.slow5 || die "testcase $TESTCASE: diff for $TESTNAME"
+grep -q "WARNING" $OUTPUT_DIR/err.log || die "ERROR: testcase $TESTCASE: $TESTNAME failed"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+
+
+# different aux fields in different read groups
+TESTCASE=4.4
+TESTNAME="different aux fields in different read group"
+info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
+INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1_1_new_aux_field.slow5"
+$SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/diff_rg_diff_aux_field.slow5 2> $OUTPUT_DIR/err.log || die "testcase $TESTCASE: $TESTNAME failed"
+diff -q $REL_PATH/data/exp/merge/diff_rg_diff_aux_field.slow5  $OUTPUT_DIR/diff_rg_diff_aux_field.slow5 || die "testcase $TESTCASE: diff for $TESTNAME"
+echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 info "done"
