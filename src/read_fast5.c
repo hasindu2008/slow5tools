@@ -580,13 +580,15 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             return -1;
         }
         if(H5Tequal(H5T_STD_U8LE,native_type)>0) {
-            std::string key = "sh_" + std::string(name); //stored in header
-            size_t buf_cap = BUFFER_CAP;
-            char* warn_message = (char*) malloc(buf_cap * sizeof(char));
-            MALLOC_CHK(warn_message);
-            sprintf(warn_message,"Attribute %s/%s in %s is corrupted (datatype %s instead of expected %s). This is a known issue in ont_fast5_api's compress_fast5 (see https://github.com/hasindu2008/slow5tools/issues/59 and https://github.com/nanoporetech/ont_fast5_api/issues/70).\nCorrupted attribute will be dumped as it is, but would cause issues when merging. It is recommended that you fix your FAST5 files before SLOW5 coversion, by bugging ONT through GitHub issues",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM");
-            search_and_warn(operator_data,key,warn_message);
-            free(warn_message);
+            ERROR("Attribute %s/%s in %s is corrupted (datatype %s instead of expected %s). This is a known issue in ont_fast5_api's compress_fast5 (see https://github.com/hasindu2008/slow5tools/issues/59 and https://github.com/nanoporetech/ont_fast5_api/issues/70).\n Please get your FAST5 files fixed before SLOW5 coversion, by bugging ONT through GitHub issues.",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM");
+            return -1;
+            // std::string key = "sh_" + std::string(name); //stored in header
+            // size_t buf_cap = BUFFER_CAP;
+            // char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+            // MALLOC_CHK(warn_message);
+            // sprintf(warn_message,"Attribute %s/%s in %s is corrupted (datatype %s instead of expected %s). This is a known issue in ont_fast5_api's compress_fast5 (see https://github.com/hasindu2008/slow5tools/issues/59 and https://github.com/nanoporetech/ont_fast5_api/issues/70).\nCorrupted attribute will be dumped as it is, but would cause issues when merging. It is recommended that you fix your FAST5 files before SLOW5 coversion, by bugging ONT through GitHub issues",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM");
+            // search_and_warn(operator_data,key,warn_message);
+            // free(warn_message);
         }
         if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1) {
             ERROR("Could not add the auxiliary attribute %s/%s in %s to the slow5 record", operator_data->group_name, name, operator_data->fast5_path);
