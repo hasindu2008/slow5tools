@@ -401,14 +401,26 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
 
     std::vector<std::string> enum_labels_list;
     std::vector<const char*> enum_labels_list_ptrs;
-    if(H5Tclass==H5T_ENUM && *(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){
+    if(H5Tclass==H5T_ENUM && *(operator_data->flag_header_is_written)==0 && *(operator_data->flag_lossy)==0){ //assumption - same run_id has the same order and labels for the enum array
         //https://support.hdfgroup.org/HDF5/doc/H5.user/DatatypesEnum.html
         int n = H5Tget_nmembers(native_type);
+        if(n<0){
+            ERROR("Bad fast5: In fast5 file %s, H5Tget_nmembers() failed for the attribute %s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+            return -1;
+        }
         unsigned u;
         for (u=0; u<(unsigned)n; u++) {
             char *symbol = H5Tget_member_name(native_type, u);
+            if(symbol==NULL){
+                ERROR("Bad fast5: In fast5 file %s, H5Tget_member_name() failed for the attribute %s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+                return -1;
+            }
             short val;
-            H5Tget_member_value(native_type, u, &val);
+            herr_t ret_H5Tget_member_value = H5Tget_member_value(native_type, u, &val);
+            if(ret_H5Tget_member_value<0){
+                ERROR("Bad fast5: In fast5 file %s, H5Tget_member_name() failed for the attribute %s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+                return -1;
+            }
             enum_labels_list.push_back(std::string(symbol));
 //            fprintf(stderr,"#%u %20s = %d\n", u, symbol, val);
             free(symbol);
@@ -568,13 +580,15 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             return -1;
         }
         if(H5Tequal(H5T_STD_U8LE,native_type)>0) {
-            std::string key = "sh_" + std::string(name); //stored in header
-            size_t buf_cap = BUFFER_CAP;
-            char* warn_message = (char*) malloc(buf_cap * sizeof(char));
-            MALLOC_CHK(warn_message);
-            sprintf(warn_message,"Attribute %s/%s in %s is corrupted (datatype %s instead of expected %s). This is a known issue in ont_fast5_api's compress_fast5. Please see https://github.com/hasindu2008/slow5tools/issues/59 for more information.",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM");
-            search_and_warn(operator_data,key,warn_message);
-            free(warn_message);
+            ERROR("Attribute %s/%s in %s is corrupted (datatype %s instead of expected %s). This is a known issue in ont_fast5_api's compress_fast5 (see https://github.com/hasindu2008/slow5tools/issues/59 and https://github.com/nanoporetech/ont_fast5_api/issues/70).\n Please get your FAST5 files fixed before SLOW5 coversion, by bugging ONT through GitHub issues.",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM");
+            return -1;
+            // std::string key = "sh_" + std::string(name); //stored in header
+            // size_t buf_cap = BUFFER_CAP;
+            // char* warn_message = (char*) malloc(buf_cap * sizeof(char));
+            // MALLOC_CHK(warn_message);
+            // sprintf(warn_message,"Attribute %s/%s in %s is corrupted (datatype %s instead of expected %s). This is a known issue in ont_fast5_api's compress_fast5 (see https://github.com/hasindu2008/slow5tools/issues/59 and https://github.com/nanoporetech/ont_fast5_api/issues/70).\nCorrupted attribute will be dumped as it is, but would cause issues when merging. It is recommended that you fix your FAST5 files before SLOW5 coversion, by bugging ONT through GitHub issues",operator_data->group_name, name, operator_data->fast5_path, h5t_class_string.c_str(), "H5T_ENUM");
+            // search_and_warn(operator_data,key,warn_message);
+            // free(warn_message);
         }
         if(add_aux_slow5_attribute(name, operator_data, H5Tclass, value, slow5_class, enum_labels_list_ptrs) == -1) {
             ERROR("Could not add the auxiliary attribute %s/%s in %s to the slow5 record", operator_data->group_name, name, operator_data->fast5_path);
@@ -1060,7 +1074,11 @@ herr_t fast5_group_itr (hid_t loc_id, const char *name, const H5L_info_t *info, 
      * The name of the object is passed to this function by
      * the Library.
      */
-    H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+    herr_t ret_H5Oget_info_by_name = H5Oget_info_by_name (loc_id, name, &infobuf, H5P_DEFAULT);
+    if(ret_H5Oget_info_by_name<0){
+        ERROR("Bad fast5: In fast5 file %s, failed to get the information of the HDF5 object '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
+        return -1;
+    }
     switch (infobuf.type) {
         case H5O_TYPE_GROUP:
 

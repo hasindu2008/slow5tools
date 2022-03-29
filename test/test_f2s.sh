@@ -341,20 +341,15 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 TESTCASE_NO=5.2
 echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason datatype is uint8_t-------------------"
 mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
-$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 || die "testcase $TESTCASE_NO failed"
-diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
+LOG=$OUTPUT_DIR/end_reason_fast5/err.log
+#$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 || die "testcase $TESTCASE_NO failed"
+#diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
+$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_datatype_uint8_t.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_datatype_uint8_t.slow5 2> $LOG && die "testcase $TESTCASE_NO failed"
+grep -q -i "ERROR.*This is a known issue in ont_fast5_api's compress_fast5" $LOG || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
-
-#TESTCASE_NO=35
-#echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason found only in the second read group fast5 1-------------------"
-#mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
-#$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason1.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason1.slow5 || die "testcase $TESTCASE_NO failed"
-#diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason1.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason1.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
-#echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=5.3
 echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason found only in the first read group fast5 2-------------------"
-mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
 $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason2.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason2.slow5 || die "testcase $TESTCASE_NO failed"
 diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason2.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason2.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
@@ -372,6 +367,33 @@ LOG=$OUTPUT_DIR/end_reason_fast5/err.log
 $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_int32.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_int32.slow5 2> $LOG  && die "testcase $TESTCASE_NO failed"
 grep -q -i "ERROR.*The datatype of the attribute Raw/end_reason.*H5T_STD_I32LE instead of H5T_ENUM.* " $LOG || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=5.6
+echo "------------------- f2s testcase $TESTCASE_NO >>> a different key label-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_differnt_key.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_differnt_key.slow5 || die "testcase $TESTCASE_NO failed"
+diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason_differnt_key.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason_differnt_key.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=5.7
+echo "------------------- f2s testcase $TESTCASE_NO >>> a different order of label-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_differnt_key_order.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_differnt_key_order.slow5 || die "testcase $TESTCASE_NO failed"
+diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason_differnt_key_order.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason_differnt_key_order.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=5.8
+echo "------------------- f2s testcase $TESTCASE_NO >>> a new keylabel-------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason_new_key.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason_new_key.slow5 || die "testcase $TESTCASE_NO failed"
+diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason_new_key.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason_new_key.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+# we assume that if the run_id are the same, enum_labels are the same - so we don't test this
+# also we assume that if the first read does not have the enum, the rest will not as well
+# TESTCASE_NO=35
+# echo "------------------- f2s testcase $TESTCASE_NO >>> end_reason found only in the second read group fast5 1-------------------"
+# mkdir -p $OUTPUT_DIR/end_reason_fast5 || die "creating $OUTPUT_DIR/end_reason_fast5 failed"
+# $SLOW5_EXEC f2s $FAST5_DIR/end_reason_fast5/end_reason1.fast5 -o $OUTPUT_DIR/end_reason_fast5/end_reason1.slow5 || die "testcase $TESTCASE_NO failed"
+# diff -q $EXP_SLOW5_DIR/end_reason_fast5/end_reason1.slow5 $OUTPUT_DIR/end_reason_fast5/end_reason1.slow5 > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for end_reason fast5"
+# echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 #--------------------------------------Unusual FAST5------------------------------------
 
@@ -585,9 +607,11 @@ mkdir -p $OUTPUT_DIR/various_versions || die "creating $OUTPUT_DIR/various_versi
 
 TESTCASE_NO=8.1
 echo "------------------- f2s testcase $TESTCASE_NO >>> FAST5 compressed using compress_fast5 -------------------"
-$SLOW5_EXEC f2s $FAST5_DIR/various_versions/compress_fast5.fast5 -o $OUTPUT_DIR/various_versions/compress_fast5.slow5  2> $OUTPUT_DIR/err.log|| die "testcase $TESTCASE_NO failed"
-diff -q $EXP_SLOW5_DIR/various_versions/compress_fast5.slow5 $OUTPUT_DIR/various_versions/compress_fast5.slow5 || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for compress_fast5"
-grep -q -i "WARNING.*Attribute Raw/end_reason in.*is corrupted" $OUTPUT_DIR/err.log || die "Warning in testcase $TESTCASE_NO failed"
+# $SLOW5_EXEC f2s $FAST5_DIR/various_versions/compress_fast5.fast5 -o $OUTPUT_DIR/various_versions/compress_fast5.slow5  2> $OUTPUT_DIR/err.log|| die "testcase $TESTCASE_NO failed"
+# diff -q $EXP_SLOW5_DIR/various_versions/compress_fast5.slow5 $OUTPUT_DIR/various_versions/compress_fast5.slow5 || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO for compress_fast5"
+# grep -q -i "WARNING.*Attribute Raw/end_reason in.*is corrupted" $OUTPUT_DIR/err.log || die "Warning in testcase $TESTCASE_NO failed"
+$SLOW5_EXEC f2s $FAST5_DIR/various_versions/compress_fast5.fast5 -o $OUTPUT_DIR/various_versions/compress_fast5.slow5  2> $OUTPUT_DIR/err.log && die "testcase $TESTCASE_NO failed"
+grep -q -i "ERROR.*Attribute Raw/end_reason in.*is corrupted" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TEST_FAST5_VERSION () {
