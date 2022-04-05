@@ -32,7 +32,6 @@ slow5tools view file.blow5 | grep -v '^[#@]' | datamash mean 7 median 7 sstdev 7
 ## Operatings on multiple files in parallel
 
 ```
-
 # merge every 10 files together in INPUT_DIR and save to OUTPUT_DIR:
 find -name INPUT_DIR/*.blow5 | parallel -I% --max-args 10 slow5tools merge % -o OUTPUT_DIR/{#}.blow5
 
