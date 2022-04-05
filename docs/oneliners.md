@@ -1,6 +1,10 @@
 # Bash One-liners with slow5tools
 
 
+## Extracting information for eye-balling and inspecting
+
+**Note that these commands are not efficient to be run routinely on giagntic datasets, instead are only for quickly eyeballing and inspecting relatively smaller datasets.**
+
 ```
 # print slow5 header:
 slow5tools view file.blow5 | grep '^[#@]'
@@ -22,6 +26,12 @@ slow5tools get --to slow5 file.blow5 "r1" | grep -v '^[#@]' | awk '{print $8}'
 
 # get statistics of raw signal length (column 7):
 slow5tools view file.blow5 | grep -v '^[#@]' | datamash mean 7 median 7 sstdev 7 min 7 max 7 sum 7
+
+```
+
+## Operatings on multiple files in parallel
+
+```
 
 # merge every 10 files together in INPUT_DIR and save to OUTPUT_DIR:
 find -name INPUT_DIR/*.blow5 | parallel -I% --max-args 10 slow5tools merge % -o OUTPUT_DIR/{#}.blow5
