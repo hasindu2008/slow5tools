@@ -12,6 +12,9 @@ die() {
 
 LOG=start_end_trace.log
 
+MAX_PROC=$(nproc)
+MAX_PROC=$(echo "${MAX_PROC}/2" | bc)
+
 ## Handle flags
 while getopts "d:l:f:" o; do
     case "${o}" in
@@ -35,10 +38,12 @@ shift $((OPTIND-1))
 
 $SLOW5TOOLS --version &> /dev/null || die "[pipeline.sh] slow5tools not found in path. Exiting."
 
+echo "[pipeline.sh] Starting pipeline with $MAX_PROC max processes"
 #test -e ${LOG}  && rm ${LOG}
-
+counter=0
 while read FILE
 do
+(
     F5_FILEPATH=$FILE # first argument
     F5_DIR=${F5_FILEPATH%/*} # strip filename from .fast5 filepath
     PARENT_DIR=${F5_DIR%/*} # get folder one heirarchy higher
@@ -86,5 +91,12 @@ do
 
     echo "[pipeline.sh] $F5_FILEPATH" >> $TMP_FILE
     echo -e "${F5_FILEPATH}\t${SLOW5_FILEPATH}\t${START_TIME}\t${END_TIME}" >> ${LOG}
-
+)&
+    ((counter++))
+    if [ $counter -ge $MAX_PROC ]; then
+        echo "[pipeline.sh] Waiting for $counter jobs to finish."
+        wait
+        counter=0
+    fi
 done
+wait
