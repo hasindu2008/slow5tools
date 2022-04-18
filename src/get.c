@@ -124,10 +124,6 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     opt_t user_opts;
     init_opt(&user_opts);
 
-    // Default options
-    int32_t num_threads = DEFAULT_NUM_THREADS;
-    int64_t read_id_batch_capacity = DEFAULT_BATCH_SIZE;
-
     // Input arguments
     char* read_list_file_in = NULL;
 
@@ -272,7 +268,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
         // Setup multithreading structures
         core_t core;
-        core.num_thread = num_threads;
+        core.num_thread = user_opts.num_threads;
         core.fp = slow5file;
         core.format_out = user_opts.fmt_out;
         core.press_method = press_out;
@@ -287,7 +283,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         bool end_of_file = false;
         while (!end_of_file) {
             int64_t num_ids = 0;
-            while (num_ids < read_id_batch_capacity) {
+            while (num_ids < user_opts.read_id_batch_capacity) {
                 char *buf = NULL;
                 size_t cap_buf = 0;
                 ssize_t nread;
