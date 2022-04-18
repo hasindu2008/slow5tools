@@ -85,9 +85,9 @@ make
     Similarly, to locally build *zstd* and link against that:
 
     ```
-    scripts/install-zstd.sh        # download and compiles HDF5 in the current folder
+    scripts/install-zstd.sh        # download and compiles zstd in the current folder
     ./configure --enable-localzstd
-    make
+    make			# don't run make zstd=1. libzstd.a is statically linked this time.
     ```
 
 - You can build a docker image as follows.
