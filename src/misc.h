@@ -49,6 +49,7 @@ typedef struct {
     size_t num_threads;
     size_t num_processes;
     int64_t read_id_batch_capacity;
+    int64_t number_of_records;
     int flag_lossy;
     int flag_allow_run_id_mismatch;
     int flag_retain_dir_structure;
@@ -65,6 +66,7 @@ typedef struct {
     char *arg_num_threads;
     char *arg_num_processes;
     char *arg_batch;
+    char *arg_num_recs;
     char *arg_dir_out;
     char *arg_lossless;
     char *arg_dump_all;
@@ -130,6 +132,7 @@ int parse_num_processes(opt_t *opt, int argc, char **argv, struct program_meta *
 int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_arg_dump_all(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_batch_size(opt_t *opt, int argc, char **arg);
+int parse_num_recs(opt_t *opt, int argc, char **arg);
 int parse_format_args(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int auto_detect_formats(opt_t *opt, int set_default_output_format = 1);
 int parse_compression_opts(opt_t *opt);

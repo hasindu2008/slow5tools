@@ -42,6 +42,7 @@ void init_opt(opt_t *opt){
     opt->arg_signal_press_out = NULL;
     opt->arg_num_threads = NULL;
     opt->arg_batch = NULL;
+    opt->arg_num_recs = NULL;
     opt->arg_dir_out = NULL;
     opt->arg_lossless = NULL;
     opt->arg_dump_all = NULL;
@@ -56,6 +57,7 @@ void init_opt(opt_t *opt){
     opt->num_threads = DEFAULT_NUM_THREADS;
     opt->num_processes = DEFAULT_NUM_PROCESSES;
     opt->read_id_batch_capacity = DEFAULT_BATCH_SIZE;
+    opt->number_of_records = DEFAULT_NUMBER_OF_RECORDS;
     opt->flag_lossy = DEFAULT_AUXILIARY_FIELDS_NOT_OUT;
     opt->flag_allow_run_id_mismatch = DEFAULT_ALLOW_RUN_ID_MISMATCH;
     opt->flag_retain_dir_structure = DEFAULT_RETAIN_DIR_STRUCTURE;
@@ -122,6 +124,27 @@ int parse_arg_dump_all(opt_t *opt, int argc, char **argv, struct program_meta *m
             opt->flag_dump_all = 0;
         } else {
             ERROR("Incorrect argument%s", "");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int parse_num_recs(opt_t *opt, int argc, char **argv){
+    if(opt->arg_num_recs != NULL){
+        char *endptr;
+        long ret = strtol(opt->arg_num_recs, &endptr, 10);
+
+        if (*endptr == '\0') {
+            opt->number_of_records = ret;
+            if(opt->number_of_records < 0){
+                ERROR("invalid number of records -- '%s'", opt->arg_num_recs);
+                fprintf(stderr, HELP_SMALL_MSG, argv[0]);
+                return -1;
+            }
+        } else {
+            ERROR("invalid number of records -- '%s'", opt->arg_num_recs);
+            fprintf(stderr, HELP_SMALL_MSG, argv[0]);
             return -1;
         }
     }

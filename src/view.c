@@ -30,7 +30,7 @@
 
 extern int slow5tools_verbosity_level;
 
-int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta);
+int slow5_convert_parallel(slow5_file *from, FILE *to_fp, slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, program_meta *meta, opt_t* user_opts);
 
 void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
     //
@@ -78,6 +78,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         {"to",              required_argument,  NULL, 'b'},
         {"threads",         required_argument,  NULL, 't' },
         {"batchsize",       required_argument, NULL, 'K'},
+        {"num_records",     required_argument, NULL, 'R'},
         {NULL, 0, NULL, 0}
     };
 
@@ -88,7 +89,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     int longindex = 0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "s:c:f:ho:b:t:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "s:c:f:ho:b:t:K:R:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
 
@@ -104,6 +105,9 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
                 break;
             case 'K':
                 user_opts.arg_batch = optarg;
+                break;
+            case 'R':
+                user_opts.arg_num_recs = optarg;
                 break;
             case 'h':
                 DEBUG("displaying large help message%s","");
@@ -131,6 +135,10 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
     if(parse_batch_size(&user_opts,argc,argv) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(parse_num_recs(&user_opts,argc,argv) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }
@@ -199,7 +207,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
         // TODO if output is the same format just duplicate file
         slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
-        if (slow5_convert_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta) != 0) {
+        if (slow5_convert_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta, &user_opts) != 0) {
             ERROR("File conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
         }
@@ -238,7 +246,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     return view_ret;
 }
 
-int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta) {
+int slow5_convert_parallel(slow5_file *from, FILE *to_fp, slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, program_meta *meta, opt_t* user_opts) {
     if (from == NULL || to_fp == NULL || to_format == SLOW5_FORMAT_UNKNOWN) {
         return -1;
     }
@@ -251,8 +259,9 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
     double time_thread_execution = 0;
     double time_write = 0;
     int flag_end_of_file = 0;
-    while(1) {
-
+    int64_t total_record_count = (user_opts->number_of_records>0)?0:-1;
+    batch_size = (user_opts->number_of_records>batch_size)?user_opts->number_of_records:batch_size;
+    while(total_record_count < user_opts->number_of_records) {
         db_t db = { 0 };
         db.mem_records = (char **) malloc(batch_size * sizeof(char*));
         db.mem_bytes = (size_t *) malloc(batch_size * sizeof(size_t));
@@ -263,6 +272,7 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
         char *mem;
         double realtime = slow5_realtime();
         while (record_count < batch_size) {
+
             if (!(mem = (char *) slow5_get_next_mem(&bytes, from))) {
                 if (slow5_errno != SLOW5_ERR_EOF) {
                     return EXIT_FAILURE;
@@ -306,6 +316,9 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
 
         if(flag_end_of_file == 1){
             break;
+        }
+        if(user_opts->number_of_records>0){
+            total_record_count += record_count;
         }
 
     }
