@@ -260,7 +260,9 @@ int slow5_convert_parallel(slow5_file *from, FILE *to_fp, slow5_fmt to_format, s
     double time_write = 0;
     int flag_end_of_file = 0;
     int64_t total_record_count = (user_opts->number_of_records>0)?0:-1;
-    batch_size = (user_opts->number_of_records>batch_size)?user_opts->number_of_records:batch_size;
+    if(user_opts->number_of_records>0){
+        batch_size = (user_opts->number_of_records>batch_size)?batch_size:user_opts->number_of_records;
+    }
     while(total_record_count < user_opts->number_of_records) {
         db_t db = { 0 };
         db.mem_records = (char **) malloc(batch_size * sizeof(char*));
