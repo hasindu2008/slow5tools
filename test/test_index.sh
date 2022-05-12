@@ -62,7 +62,7 @@ echo -e "${GREEN}testcase ${TESTCASE_NO} passed${NC}"  1>&3 2>&4
 echo
 TESTCASE_NO=4
 echo "------------------- slow5tools index testcase ${TESTCASE_NO} -------------------"
-$SLOW5_EXEC view $SLOW5_DIR/example_multi_rg_v0.2.0.blow5 -c none -s none -o $SLOW5_DIR/example_multi_rg_v0.2.0_none_none.blow5 || die "testcase ${TESTCASE_NO} failed"
+$SLOW5_EXEC_WITHOUT_VALGRIND view $SLOW5_DIR/example_multi_rg_v0.2.0.blow5 -c none -s none -o $SLOW5_DIR/example_multi_rg_v0.2.0_none_none.blow5 || die "testcase ${TESTCASE_NO} failed"
 $SLOW5_EXEC index $o $SLOW5_DIR/example_multi_rg_v0.2.0_none_none.blow5 || die "testcase ${TESTCASE_NO} failed"
 diff -q $SLOW5_DIR/example_multi_rg_v0.2.0_none_none.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.2.0_none_none.blow5.idx || die "ERROR: diff failed for testcase ${TESTCASE_NO}"
 echo -e "${GREEN}testcase ${TESTCASE_NO} passed${NC}"  1>&3 2>&4
@@ -71,7 +71,8 @@ if [ "$zstd" = "1" ]; then
   echo
   TESTCASE_NO=5
   echo "------------------- slow5tools index testcase ${TESTCASE_NO} -------------------"
-  $SLOW5_EXEC view $SLOW5_DIR/example_multi_rg_v0.2.0.blow5 -c zstd -s svb-zd -o $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5 || die "testcase ${TESTCASE_NO} failed"
+  #run without valgrind becasue of that fake svb simd invalid read
+  $SLOW5_EXEC_WITHOUT_VALGRIND view $SLOW5_DIR/example_multi_rg_v0.2.0.blow5 -c zstd -s svb-zd -o $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5 || die "testcase ${TESTCASE_NO} failed"
   $SLOW5_EXEC index $o $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5  || die "testcase ${TESTCASE_NO} failed"
   diff -q $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5.idx || die "ERROR: diff failed for testcase ${TESTCASE_NO}"
   echo -e "${GREEN}testcase ${TESTCASE_NO} passed${NC}"  1>&3 2>&4
