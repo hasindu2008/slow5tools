@@ -9,7 +9,7 @@ die() { echo -e "${RED}$1${NC}" 1>&3 2>&4 ; echo ; exit 1 ; } # terminate script
 info() {  echo ; echo -e "${GREEN}$1${NC}" 1>&3 2>&4 ; }
 
 #redirect
-verbose=1
+verbose=0
 exec 3>&1
 exec 4>&2
 if ((verbose)); then
