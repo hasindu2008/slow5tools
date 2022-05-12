@@ -9,7 +9,7 @@ die() { echo -e "${RED}$1${NC}" 1>&3 2>&4 ; echo ; exit 1 ; } # terminate script
 info() {  echo ; echo -e "${GREEN}$1${NC}" 1>&3 2>&4 ; }
 
 #redirect
-verbose=0
+verbose=1
 exec 3>&1
 exec 4>&2
 if ((verbose)); then
@@ -71,8 +71,7 @@ if [ "$zstd" = "1" ]; then
   echo
   TESTCASE_NO=5
   echo "------------------- slow5tools index testcase ${TESTCASE_NO} -------------------"
-  #run without valgrind becasue of that fake svb simd invalid read
-  $SLOW5_EXEC_WITHOUT_VALGRIND view $SLOW5_DIR/example_multi_rg_v0.2.0.blow5 -c zstd -s svb-zd -o $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5 || die "testcase ${TESTCASE_NO} failed"
+  # file included as the file may differ based on zstd version
   $SLOW5_EXEC index $o $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5  || die "testcase ${TESTCASE_NO} failed"
   diff -q $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5.idx || die "ERROR: diff failed for testcase ${TESTCASE_NO}"
   echo -e "${GREEN}testcase ${TESTCASE_NO} passed${NC}"  1>&3 2>&4
