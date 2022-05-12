@@ -146,7 +146,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     } else if (optind != argc - 1) { // TODO handle more than 1 file?
-        ERROR(">1 input file%s", "");
+        ERROR("more than 1 input file is given%s", "");
         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
