@@ -70,7 +70,7 @@ make
 
 ### Other building options
 
-- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.3 or higher development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer slightly smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable' (also see [notes](https://github.com/hasindu2008/slow5tools#notes)).
+- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.3 or higher development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable' (also see [notes](https://github.com/hasindu2008/slow5tools#notes)).
 
 - *slow5tools* from version 0.3.0 onwards by default requires vector instructions (SSSE3 or higher for Intel/AMD and neon for ARM). If your processor is an ancient processor with no such vector instructions, invoke make as `make no_simd=1`.
 
@@ -99,7 +99,7 @@ make
 
 ## Usage
 
-Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options.
+Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options. See [here](https://hasindu2008.github.io/slow5tools/oneliners.html) for example bash one-liners with slow5tools. A guide on using BLOW5 for archiving and steps to verify if data integrity is preserved is [here](https://hasindu2008.github.io/slow5tools/archive.html).
 
 ### Examples
 
@@ -140,6 +140,11 @@ slow5tools s2f blow5_dir -d fast5
 ```
 
 Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for example workflows.
+
+
+### Troubleshooting
+
+Visit the [frequently asked questions](https://hasindu2008.github.io/slow5tools/faq.html) or open an [issue](https://github.com/hasindu2008/slow5tools/issues).
 
 ### Notes
 
