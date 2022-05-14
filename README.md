@@ -30,7 +30,6 @@ You can also use conda to install *slow5tools* as `conda install slow5tools -c b
 
 ### Building a release
 
-
 Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball.
 
 Quick example for Ubuntu :
@@ -99,7 +98,7 @@ make
 
 ## Usage
 
-Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options. See [here](https://hasindu2008.github.io/slow5tools/oneliners.html) for example bash one-liners with slow5tools. A guide on using BLOW5 for archiving and steps to verify if data integrity is preserved is [here](https://hasindu2008.github.io/slow5tools/archive.html).
+Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options. See [here](https://hasindu2008.github.io/slow5tools/oneliners.html) for example bash one-liners with slow5tools. A guide on using BLOW5 for archiving and steps to verify if data integrity is preserved is [here](https://hasindu2008.github.io/slow5tools/archive.html). A script for performing real-time FAST5 to BLOW5 conversion during sequencing is provided [here](https://github.com/hasindu2008/slow5tools/tree/master/scripts/realtime-f2s).
 
 ### Examples
 
@@ -142,9 +141,22 @@ slow5tools s2f blow5_dir -d fast5
 Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for example workflows.
 
 
-### Troubleshooting
+### Troubleshooting/Questions
 
 Visit the [frequently asked questions](https://hasindu2008.github.io/slow5tools/faq.html) or open an [issue](https://github.com/hasindu2008/slow5tools/issues).
+
+
+### Upcoming features and optimisations
+
+Following are some features and optimisations in our todo list which will be implemented based on the need. If anyone is interested please request [here](https://github.com/hasindu2008/slow5tools/issues). Contributions are welcome.
+
+- pipelining input, processing and output in *merge, get, etc.* (expected runtime improvement upto 2X)
+- reading from stdin for *view*
+- binary releases for ARM64 processors on Linux
+- binary releases for MacOS
+- decoupling conversion modules (currently f2s and s2f; any future formats) so that slow5tools only deal with S/BLOW5 files and thus can be easily compiled. Currently, compiling slow5tools is not straight forward due to the HDF5 (FAST5) dependency
+- any other features that are potentially useful to many
+
 
 ### Notes
 
