@@ -33,7 +33,7 @@ f5c eventalign -t 8 -r reads.fq -g ref.fa -b reads.bam --slow5 signals.blow5 > m
 
 ## Nanopolish
 
-[Nanopolish](https://github.com/jts/nanopolish) master branch now supports SLOW5 file format.
+[Nanopolish](https://github.com/jts/nanopolish) version 0.14.0 onwards supports SLOW5 file format.
 
 ```bash
 #convert fast5 files to slow5 files using 8 I/O processes
@@ -57,3 +57,10 @@ slow5tools f2s fast5_dir -d blow5_dir -p 8
 # run sigmap
 ./sigmap -m -r ref.fa -p <model> -x index -s blow5_dir -o mapping.paf -t 8
 ```
+
+## Bonito
+
+SLOW5 support for ONT's Bonito basecaller is now available as a [pull request](https://github.com/nanoporetech/bonito/pull/252) along with usage instructions and benchmarks.
+
+
+

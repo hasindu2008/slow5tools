@@ -84,6 +84,12 @@ make
     ./configure --enable-localzstd
     make
     ```
+	
+- On Mac M1 or in any system if `./configure` cannot find the hdf5 libraries installed through the package manager, you can specify the location as *LDFLAGS=-L/path/to/shared/lib/ CPPFLAGS=-I/path/to/headers/*. For example on Mac M1:
+	```
+	./configure LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/
+	make
+
 
 - You can build a docker image as follows.
 	```

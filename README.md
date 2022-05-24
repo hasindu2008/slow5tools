@@ -30,7 +30,6 @@ You can also use conda to install *slow5tools* as `conda install slow5tools -c b
 
 ### Building a release
 
-
 Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball.
 
 Quick example for Ubuntu :
@@ -70,7 +69,7 @@ make
 
 ### Other building options
 
-- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.3 or higher development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer slightly smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable' (also see [notes](https://github.com/hasindu2008/slow5tools#notes)).
+- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.3 or higher development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable' (also see [notes](https://github.com/hasindu2008/slow5tools#notes)).
 
 - *slow5tools* from version 0.3.0 onwards by default requires vector instructions (SSSE3 or higher for Intel/AMD and neon for ARM). If your processor is an ancient processor with no such vector instructions, invoke make as `make no_simd=1`.
 
@@ -85,10 +84,16 @@ make
     Similarly, to locally build *zstd* and link against that:
 
     ```
-    scripts/install-zstd.sh        # download and compiles HDF5 in the current folder
+    scripts/install-zstd.sh        # download and compiles zstd in the current folder
     ./configure --enable-localzstd
-    make
+    make			# don't run make zstd=1. libzstd.a is statically linked this time.
     ```
+
+- On Mac M1 or in any system if `./configure` cannot find the hdf5 libraries installed through the package manager, you can specify the location as *LDFLAGS=-L/path/to/shared/lib/ CPPFLAGS=-I/path/to/headers/*. For example on Mac M1:
+	```
+	./configure LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/
+	make
+	```
 
 - You can build a docker image as follows.
 	```
@@ -99,7 +104,7 @@ make
 
 ## Usage
 
-Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options.
+Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options. See [here](https://hasindu2008.github.io/slow5tools/oneliners.html) for example bash one-liners with slow5tools. A guide on using BLOW5 for archiving and steps to verify if data integrity is preserved is [here](https://hasindu2008.github.io/slow5tools/archive.html). A script for performing real-time FAST5 to BLOW5 conversion during sequencing is provided [here](https://github.com/hasindu2008/slow5tools/tree/master/scripts/realtime-f2s).
 
 ### Examples
 
@@ -140,6 +145,24 @@ slow5tools s2f blow5_dir -d fast5
 ```
 
 Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for example workflows.
+
+
+### Troubleshooting/Questions
+
+Visit the [frequently asked questions](https://hasindu2008.github.io/slow5tools/faq.html) or open an [issue](https://github.com/hasindu2008/slow5tools/issues).
+
+
+### Upcoming features and optimisations
+
+Following are some features and optimisations in our todo list which will be implemented based on the need. If anyone is interested please request [here](https://github.com/hasindu2008/slow5tools/issues). Contributions are welcome.
+
+- pipelining input, processing and output in *merge, get, etc.* (expected runtime improvement upto 2X)
+- reading from stdin for *view*
+- binary releases for ARM64 processors on Linux
+- binary releases for MacOS
+- decoupling conversion modules (currently f2s and s2f; any future formats) so that slow5tools only deal with S/BLOW5 files and thus can be easily compiled. Currently, compiling slow5tools is not straight forward due to the HDF5 (FAST5) dependency
+- any other features that are potentially useful to many
+
 
 ### Notes
 
