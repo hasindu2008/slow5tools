@@ -14,7 +14,7 @@
 #%    -i, --info                                    Print script information
 #%    -m [directory]                                The sequencing experiment directory to be monitored
 #%    -r                                            Resumes a previous live conversion
-#%    -t [time]                                     Timeout in seconds [default: 10800]
+#%    -t [time]                                     Timeout in seconds [default: 21600]
 #%
 #% ADVANCED/DEBUGGING OPTIONS
 #%
@@ -83,8 +83,8 @@ resuming=false
 realtime=true
 say_yes=false
 
-# Default timeout of 3 hours
-TIME_INACTIVE=10800
+# Default timeout of 6 hours
+TIME_INACTIVE=21600
 
 # Assume necessary options not set
 monitor_dir_specified=false
@@ -206,7 +206,7 @@ fi
 # echo "[realf2s.sh] SLOW5 f2s individual logs will be written to $MONITOR_PARENT_DIR/slow5_logs"
 
 if ! $realtime; then # If non-realtime option set
-    echo "[realf2s.sh] Non realtime conversion of all files in $MONITOR_PARENT_DIR"
+    echo "[realf2s.sh] Non realtime conversion of all files in $MONITOR_PARENT_DIR" | tee $LOG
     test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
     find $MONITOR_PARENT_DIR/ -name "*.fast5" | "$PIPELINE_SCRIPT"  |&
     tee $LOG
@@ -216,21 +216,21 @@ else # Else assume realtime analysis is desired
     # Monitor the new file creation in fast5 folder and execute realtime f5-pipeline script
     # Close after timeout met
     if $resuming; then # If resuming option set
-        echo "[realf2s.sh] resuming"
+        echo "[realf2s.sh] resuming" | tee $LOG
         "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/  |
         "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
         "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE |&
         tee -a $LOG
     else
-        echo "[realf2s.sh] running"
+        echo "[realf2s.sh] running" | tee $LOG
         test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
         "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/  |
         "$SCRIPT_PATH"/monitor/ensure.sh -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
         "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
         tee -a $LOG
     fi
-    echo "[realf2s.sh] No new fast5 files found in last ${TIME_INACTIVE} seconds."
-    echo "[realf2s.sh] converting left overs"
+    echo "[realf2s.sh] No new fast5 files found in last ${TIME_INACTIVE} seconds." | tee $LOG
+    echo "[realf2s.sh] converting left overs" | tee $LOG
     find $MONITOR_PARENT_DIR/ -name "*.fast5"   |
     "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
     "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
@@ -238,20 +238,24 @@ else # Else assume realtime analysis is desired
 
 fi
 
-test -e $FAILED_LIST && echo "[realf2s.sh] $(wc -l $FAILED_LIST) fast5 files failed to convert. See $FAILED_LIST for the list"
+test -e $FAILED_LIST && echo "[realf2s.sh] $(wc -l $FAILED_LIST) fast5 files failed to convert. See $FAILED_LIST for the list" | tee $LOG
 NUMFAST5=$(find $MONITOR_PARENT_DIR/ -name '*.fast5' | wc -l)
 NUMBLOW5=$(find $MONITOR_PARENT_DIR/ -name '*.blow5' | wc -l)
 if [ ${NUMFAST5} -ne ${NUMBLOW5} ] ; then
-    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, but only $NUMBLOW5 blow5 files. Check the logs for any failures."
+    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, but only $NUMBLOW5 blow5 files. Check the logs for any failures." | tee $LOG
 else
-    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, $NUMBLOW5 blow5 files."
+    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, $NUMBLOW5 blow5 files." | tee $LOG
 fi
 FAST5_SIZE=$(find $MONITOR_PARENT_DIR/ -name '*.fast5' -printf "%s\t%p\n" | awk 'BEGIN{sum=0}{sum=sum+$1}END{print sum/(1024*1024*1024)}')
 BLOW5_SIZE=$(find $MONITOR_PARENT_DIR/ -name '*.blow5' -printf "%s\t%p\n" | awk 'BEGIN{sum=0}{sum=sum+$1}END{print sum/(1024*1024*1024)}')
 SAVINGS=$(echo $FAST5_SIZE - $BLOW5_SIZE | bc)
 SAVINGS_PERCENT=$(echo "scale=2; $SAVINGS/$FAST5_SIZE*100" | bc)
-echo "FAST5 size: $FAST5_SIZE GB"
-echo "BLOW5 size: $BLOW5_SIZE GB"
-echo "Savings: $SAVINGS GB ($SAVINGS_PERCENT%)"
+echo "FAST5 size: $FAST5_SIZE GB" | tee $LOG
+echo "BLOW5 size: $BLOW5_SIZE GB" | tee $LOG
+echo "Savings: $SAVINGS GB ($SAVINGS_PERCENT%)" | tee $LOG
 
-echo "[realf2s.sh] exiting" # testing
+echo "Scanning for errors in log files" | tee $LOG
+find $MONITOR_PARENT_DIR/ -name '*.log' -exec cat {} \; | grep -i "ERROR" | tee $LOG
+echo "Scanning for warnings in log files" | tee $LOG
+find $MONITOR_PARENT_DIR/ -name '*.log' -exec cat {} \; | grep -i "WARNING" | tee $LOG
+echo "[realf2s.sh] exiting" | tee $LOG

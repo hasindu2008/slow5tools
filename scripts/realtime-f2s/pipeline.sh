@@ -12,8 +12,9 @@ die() {
 
 LOG=start_end_trace.log
 
-MAX_PROC=$(nproc)
-MAX_PROC=$(echo "${MAX_PROC}/2" | bc)
+# MAX_PROC=$(nproc)
+# MAX_PROC=$(echo "${MAX_PROC}/2" | bc)
+MAX_PROC=1
 
 ## Handle flags
 while getopts "d:l:f:" o; do
