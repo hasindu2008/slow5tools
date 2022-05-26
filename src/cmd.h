@@ -1,7 +1,7 @@
 #ifndef CMD_H
 #define CMD_H
 
-#define SLOW5TOOLS_VERSION "0.4.0-dirty"
+#define SLOW5TOOLS_VERSION "0.5.0"
 
 #define DEFAULT_NUM_THREADS 8
 #define DEFAULT_NUM_PROCESSES 8
@@ -51,7 +51,7 @@
 //for f2s
 #define HELP_MSG_RETAIN_DIR_STRUCTURE \
     "        --retain                  retain the same directory structure in the converted output as the input (experimental)\n"
-//for f2s    
+//for f2s
 #define HELP_MSG_CONTINUE_F2S    \
     "    -a, --allow                   allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
 //for merge
