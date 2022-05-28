@@ -11,6 +11,7 @@
 #define DEFAULT_RETAIN_DIR_STRUCTURE 0
 #define DEFAULT_DUMP_ALL 0
 #define DEFAULT_CONTINUE_MERGE 0
+#define DEFAULT_THREADING_METHOD_MERGE 0
 
 #define TO_STR(x) TO_STR2(x)
 #define TO_STR2(x) #x
@@ -57,6 +58,8 @@
 //for merge
 #define HELP_MSG_CONTINUE_MERGE \
     "    -a, --allow                   allow merging despite attribute differences in the same run_id\n"
+#define HELP_MSG_THREADING_METHOD_MERGE \
+    "    --threading_method            use threading method 0,1,2  [" TO_STR(DEFAULT_THREADING_METHOD_MERGE) "]\n"
 
 #define HELP_MSG_HELP \
     "    -h, --help                    display this message and exit\n" \

@@ -9,6 +9,7 @@
 #include <slow5/slow5.h>
 #include "error.h"
 #include <vector>
+#include <queue>
 #include <string>
 
 /**********************************
@@ -61,6 +62,7 @@ typedef struct {
     std::vector<int> slow5_file_indices;
     std::string output_dir;
     slow5_file_t **slow5_file_pointers;
+    std::queue<struct slow5_file*> files_pointers_that_can_be_closed;
     //for split
     uint32_t* read_group_vector;
 } db_t;

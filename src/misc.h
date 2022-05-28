@@ -54,6 +54,7 @@ typedef struct {
     int flag_retain_dir_structure;
     int flag_dump_all;
     int flag_continue_merge;
+    int flag_threading_method_merge;
 
     // Input arguments
     char *arg_fname_in;
