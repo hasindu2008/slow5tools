@@ -39,6 +39,7 @@ typedef struct {
     int lossy;
     int slow5_file_index;
     slow5_aux_meta_t* aux_meta;
+    FILE* output_fp;
 } core_t;
 
 typedef struct{
@@ -59,10 +60,14 @@ typedef struct {
     //for merge
     std::vector<std::string> slow5_files;
     std::vector<std::vector<size_t>> list;
+    size_t** list_array;
     std::vector<int> slow5_file_indices;
+    int* slow5_file_indices_array;
+    int* files_pointers_that_can_be_closed_array;
     std::string output_dir;
     slow5_file_t **slow5_file_pointers;
-    std::queue<struct slow5_file*> files_pointers_that_can_be_closed;
+    std::vector<int> files_pointers_that_can_be_closed;
+    size_t number_of_files_that_can_be_closed;
     //for split
     uint32_t* read_group_vector;
 } db_t;
@@ -78,6 +83,12 @@ typedef struct {
 #ifdef WORK_STEAL
     void *all_pthread_args;
 #endif
+
+//    arguments for multithreaded framework used for input/processing/output interleaving
+//    conditional variable for notifying the processing to the output threads
+    pthread_cond_t cond;
+    pthread_mutex_t mutex;
+    int8_t finished;
 } pthread_arg_t;
 
 
