@@ -116,6 +116,9 @@ slow5tools f2s file.fast5 -o file.slow5
 # convert a directory of fast5 files into BLOW5 files with zstd+svb-zd compression (similar to ONT's vbz compression)
 slow5tools f2s fast5_dir -d blow5_dir -c zstd -s svb-zd
 
+# concatenate all BLOW5 fils in a directory into a single BLOW5 file (works only if all the BLOW5 files have the same header, otherwise use merge)
+slow5tools cat blow5_dir -o file.blow5
+
 # merge all BLOW5 files in a directory into a single BLOW5 file (default compression: zlib+svb-zd)
 slow5tools merge blow5_dir -o file.blow5
 # merge all BLOW5 files in a directory into a single BLOW5 file with zstd+svb-zd compression (similar to ONT's vbz compression)
