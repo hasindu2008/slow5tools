@@ -768,7 +768,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
             sprintf(warn_message,"Weird fast5: Attribute %s/%s in %s is unexpected", operator_data->group_name, name, operator_data->fast5_path);
             search_and_warn(operator_data,key,warn_message);
             free(warn_message);
-        }else if(strcmp(name,"file_version")){
+        }else if(strcmp(name,"file_version")!=0 && !(strcmp(operator_data->group_name,"Raw")==0 && strcmp(name,"num_minknow_events")==0)){
             ERROR("Bad fast5: Attribute %s/%s in %s is unexpected." REPORT_MESG , operator_data->group_name, name, operator_data->fast5_path);
             return -1;
         }
