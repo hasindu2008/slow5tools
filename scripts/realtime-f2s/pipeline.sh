@@ -5,7 +5,7 @@ TMP_FILE="attempted_list.log"
 TMP_FAILED="failed_list.log"
 # terminate script
 die() {
-	echo "$1" >&2
+	echo -e "$1" >&2
 	echo
 	exit 1
 }
@@ -16,8 +16,13 @@ LOG=start_end_trace.log
 # MAX_PROC=$(echo "${MAX_PROC}/2" | bc)
 MAX_PROC=1
 
+# Colour codes for printing
+YELLOW="\e[33m"
+RED="\e[31m"
+NORMAL="\033[0;39m"
+
 ## Handle flags
-while getopts "d:l:f:" o; do
+while getopts "d:l:f:p:" o; do
     case "${o}" in
         d)
             TMP_FILE=${OPTARG}
@@ -28,16 +33,18 @@ while getopts "d:l:f:" o; do
         f)
             TMP_FAILED=${OPTARG}
             ;;
+        p)
+            MAX_PROC=${OPTARG}
+            ;;
         *)
             echo "[pipeline.sh] Incorrect args"
-            usagefull
             exit 1
             ;;
     esac
 done
 shift $((OPTIND-1))
 
-$SLOW5TOOLS --version &> /dev/null || die "[pipeline.sh] slow5tools not found in path. Exiting."
+$SLOW5TOOLS --version &> /dev/null || die $RED"[pipeline.sh] slow5tools not found in path. Exiting."$NORMAL
 
 echo "[pipeline.sh] Starting pipeline with $MAX_PROC max processes"
 #test -e ${LOG}  && rm ${LOG}
@@ -80,13 +87,13 @@ do
 
     START_TIME=$(date)
     echo "[pipeline.sh::${START_TIME}]  Converting $FILE to $SLOW5_FILEPATH"
-    test -e $SLOW5_FILEPATH &&  { echo "$SLOW5_FILEPATH already exists. Converting $FILE to $SLOW5_FILEPATH failed."; echo $FILE >> $TMP_FAILED; }
+    test -e $SLOW5_FILEPATH &&  { echo -e $RED"$SLOW5_FILEPATH already exists. Converting $FILE to $SLOW5_FILEPATH failed."$NORMAL; echo $FILE >> $TMP_FAILED; }
     if ${SLOW5TOOLS} f2s -p1 $FILE -o $SLOW5_FILEPATH 2> $LOG_FILEPATH
     then
         END_TIME=$(date)
         echo "[pipeline.sh::${END_TIME}]  Finished converting $FILE to $SLOW5_FILEPATH"
     else
-        echo "Converting $FILE to $SLOW5_FILEPATH failed. Please check log at $LOG_FILEPATH"
+        echo -e $RED"Converting $FILE to $SLOW5_FILEPATH failed. Please check log at $LOG_FILEPATH"$NORMAL
         echo $FILE >> $TMP_FAILED;
     fi
 

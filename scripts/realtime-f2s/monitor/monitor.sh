@@ -193,6 +193,15 @@ while $timeout; do
     if (( $(echo "$time_elapsed > $TIME_INACTIVE" | bc -l) )) || [ "$(cat $TEMP_FILE)" = "-1" ]; then
         exit 0
     fi
+
+    if [ "$REALF2S_AUTO" = "1" ]; then
+        SAMPLE=${monitor_dirs[0]}
+        NUM_RESTARTS=$(find ${SAMPLE}/*/* -maxdepth 0 -type d | wc -l)
+        NUM_SUMS=$(find $SAMPLE -type f -name "final_summary*.txt" -mmin +60 | wc -l)
+        if [ $NUM_SUMS -eq $NUM_RESTARTS ]; then
+            exit 0
+        fi
+    fi
     sleep 1
 
 done

@@ -131,7 +131,7 @@ while read filename; do
 
             else # Else it is new
                 ((i_new ++))
-                >&2 echo -e $YELLOW"[ensure.sh] Missed file ($i_new): $filename"$NORMAL
+                >&2 echo -e "[ensure.sh] Missed file ($i_new): $filename"
             fi
 
         fi

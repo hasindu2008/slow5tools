@@ -15,6 +15,7 @@
 #%    -m [directory]                                The sequencing experiment directory to be monitored
 #%    -r                                            Resumes a previous live conversion
 #%    -t [time]                                     Timeout in seconds [default: 21600]
+#%    -p [processes]                                Maximum number of parallel conversion processes [default: 1]
 #%
 #% ADVANCED/DEBUGGING OPTIONS
 #%
@@ -86,12 +87,15 @@ say_yes=false
 # Default timeout of 6 hours
 TIME_INACTIVE=21600
 
+# maximum number of parallel coversion processes
+MAX_PROC=1
+
 # Assume necessary options not set
 monitor_dir_specified=false
 MONITOR_PARENT_DIR=
 
 ## Handle flags
-while getopts "ihnrym:l:t:d:f:s:" o; do
+while getopts "ihnrym:l:t:d:f:s:p:" o; do
     case "${o}" in
         m)
             MONITOR_PARENT_DIR=${OPTARG}
@@ -131,6 +135,9 @@ while getopts "ihnrym:l:t:d:f:s:" o; do
         f)
             FAILED_LIST=${OPTARG}
             ;;
+        p)
+            MAX_PROC=${OPTARG}
+            ;;
         *)
             usage
             ;;
@@ -138,7 +145,10 @@ while getopts "ihnrym:l:t:d:f:s:" o; do
 done
 shift $((OPTIND-1))
 
-
+# Colour codes for printing
+YELLOW="\e[33m"
+RED="\e[31m"
+NORMAL="\033[0;39m"
 
 # If either format or monitor option not set
 if ! ($monitor_dir_specified); then
@@ -165,8 +175,8 @@ test -d ${MONITOR_PARENT_DIR} || { echo "[realf2s.sh] Monitor directory does not
 
 
 
-${SLOW5TOOLS} --version &> /dev/null || { echo "[realf2s.sh] slow5tools not found! Either put slow5tools under path or set SLOW5TOOLS variable, e.g.,export SLOW5TOOLS=/path/to/slow5tools"; exit 1;}
-which inotifywait &> /dev/null || { echo "[realf2s.sh] inotifywait not found! On ubuntu: sudo apt install inotify-tools"; exit 1; }
+${SLOW5TOOLS} --version &> /dev/null || { echo -e $RED"[realf2s.sh] slow5tools not found! Either put slow5tools under path or set SLOW5TOOLS variable, e.g.,export SLOW5TOOLS=/path/to/slow5tools"$NORMAL; exit 1;}
+which inotifywait &> /dev/null || { echo -e $RED"[realf2s.sh] inotifywait not found! On ubuntu: sudo apt install inotify-tools"$NORMAL; exit 1; }
 
 #== Begin Run ==#
 
@@ -219,30 +229,30 @@ else # Else assume realtime analysis is desired
         echo "[realf2s.sh] resuming" | tee -a $LOG
         "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/  |
         "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
-        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE |&
+        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -p $MAX_PROC |&
         tee -a $LOG
     else
         echo "[realf2s.sh] running" | tee $LOG
         test -e $TMP_FILE_PATH && rm $TMP_FILE_PATH
         "$SCRIPT_PATH"/monitor/monitor.sh -t $TIME_INACTIVE -f -d ${MONITOR_TEMP} $MONITOR_PARENT_DIR/  |
         "$SCRIPT_PATH"/monitor/ensure.sh -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
-        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
+        "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST -p $MAX_PROC |&
         tee -a $LOG
     fi
     echo "[realf2s.sh] No new fast5 files found in last ${TIME_INACTIVE} seconds." | tee -a $LOG
     echo "[realf2s.sh] converting left overs" | tee -a $LOG
     find $MONITOR_PARENT_DIR/ -name "*.fast5"   |
     "$SCRIPT_PATH"/monitor/ensure.sh -r -d $TMP_FILE_PATH -l ${MONITOR_TRACE}  |
-    "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST |&
+    "$PIPELINE_SCRIPT" -d $TMP_FILE_PATH -l $START_END_TRACE -f $FAILED_LIST -p $MAX_PROC |&
     tee -a $LOG
 
 fi
 
-test -e $FAILED_LIST && echo "[realf2s.sh] $(wc -l $FAILED_LIST) fast5 files failed to convert. See $FAILED_LIST for the list" | tee -a $LOG
+test -e $FAILED_LIST && echo -e $RED"[realf2s.sh] $(wc -l $FAILED_LIST) fast5 files failed to convert. See $FAILED_LIST for the list"$NORMAL | tee -a $LOG
 NUMFAST5=$(find $MONITOR_PARENT_DIR/ -name '*.fast5' | wc -l)
 NUMBLOW5=$(find $MONITOR_PARENT_DIR/ -name '*.blow5' | wc -l)
 if [ ${NUMFAST5} -ne ${NUMBLOW5} ] ; then
-    echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, but only $NUMBLOW5 blow5 files. Check the logs for any failures." | tee -a $LOG
+    echo -e $RED"[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, but only $NUMBLOW5 blow5 files. Check the logs for any failures."$NORMAL | tee -a $LOG
 else
     echo "[realf2s.sh] In $MONITOR_PARENT_DIR, $NUMFAST5 fast5 files, $NUMBLOW5 blow5 files." | tee -a $LOG
 fi
