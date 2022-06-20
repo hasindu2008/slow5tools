@@ -159,7 +159,7 @@ Visit the [frequently asked questions](https://hasindu2008.github.io/slow5tools/
 
 Following are some features and optimisations in our todo list which will be implemented based on the need. If anyone is interested please request [here](https://github.com/hasindu2008/slow5tools/issues). Contributions are welcome.
 
-- pipelining input, processing and output in *merge, get, etc.* (expected runtime improvement upto 2X)
+- pipelining input, processing and output in *merge, get, etc.* (improved runtime upto 2X, please find the implementation [here](https://github.com/hasindu2008/slow5tools/tree/interleave_merge))
 - reading from stdin for *view*
 - binary releases for ARM64 processors on Linux
 - binary releases for MacOS
