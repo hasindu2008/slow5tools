@@ -2,18 +2,18 @@
 
 Slow5tools is a simple toolkit for converting (FAST5 <-> SLOW5), compressing, viewing, indexing and manipulating data in SLOW5 format.
 
-**About SLOW5 format:**  
+**About SLOW5 format:**
 SLOW5 is a new file format for storing signal data from Oxford Nanopore Technologies (ONT) devices. SLOW5 was developed to overcome inherent limitations in the standard FAST5 signal data format that prevent efficient, scalable analysis and cause many headaches for developers. SLOW5 can be encoded in human-readable ASCII format, or a more compact and efficient binary format (BLOW5) - this is analogous to the seminal SAM/BAM format for storing DNA sequence alignments. The BLOW5 binary format supports  *zlib* (DEFLATE) compression, or other compression methods (see notes at the end), thereby minimising the data storage footprint while still permitting efficient parallel access. Detailed benchmarking experiments have shown that SLOW5 format is an order of magnitude faster and significantly smaller than FAST5.
 
-Pre-print: https://www.biorxiv.org/content/10.1101/2021.06.29.450255v1  
-Publication: https://www.nature.com/articles/s41587-021-01147-4   
+Pre-print: https://www.biorxiv.org/content/10.1101/2021.06.29.450255v1
+Publication: https://www.nature.com/articles/s41587-021-01147-4
 SLOW5 specification: https://hasindu2008.github.io/slow5specs
 
 ## Quick start
 
 If you are a Linux user on x86_64 architecture and want to quickly try slow5tools out, download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
 ```sh
-VERSION=v0.5.0
+VERSION=v0.5.1
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-x86_64-linux-binaries.tar.gz" && tar xvf slow5tools-$VERSION-x86_64-linux-binaries.tar.gz && cd slow5tools-$VERSION/
 ./slow5tools
 ```
@@ -32,7 +32,7 @@ Quick example for Ubuntu:
 
 ```sh
 sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development libraries
-VERSION=v0.5.0
+VERSION=v0.5.1
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-release.tar.gz" && tar xvf slow5tools-$VERSION-release.tar.gz && cd slow5tools-$VERSION/
 ./configure
 make
@@ -84,7 +84,7 @@ make
     ./configure --enable-localzstd
     make
     ```
-	
+
 - On Mac M1 or in any system if `./configure` cannot find the hdf5 libraries installed through the package manager, you can specify the location as *LDFLAGS=-L/path/to/shared/lib/ CPPFLAGS=-I/path/to/headers/*. For example on Mac M1:
 	```
 	./configure LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/
