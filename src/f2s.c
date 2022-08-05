@@ -4,6 +4,9 @@
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au) Sasha Jenner (jenner.sasha@gmail.com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
  * @date 27/02/2021
  */
+
+#ifndef DISABLE_HDF5
+
 #include <getopt.h>
 #include <sys/wait.h>
 
@@ -526,3 +529,17 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
     return EXIT_SUCCESS;
 }
+
+#else
+
+#include "error.h"
+extern int slow5tools_verbosity_level;
+
+int f2s_main(int argc, char **argv, struct program_meta *meta) {
+
+    ERROR("%s", "slow5tools has been compiled with no FAST5/HDF5 support. f2s unavailable. Recompile with FAST5/HDF5 support.");
+
+    return EXIT_FAILURE;
+}
+
+#endif

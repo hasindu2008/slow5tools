@@ -4,6 +4,8 @@ CPPFLAGS = @CPPFLAGS@
 
 HDF5 = @hdf_tar_install@
 
+disable_hdf5 = @disable_hdf5@
+
 ifeq "locallibhdf5-@locallibhdf5@" "locallibhdf5-yes"
     CPPFLAGS += -I./hdf5/include/
     LDFLAGS += hdf5/lib/libhdf5.a -ldl

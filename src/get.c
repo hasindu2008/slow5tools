@@ -317,8 +317,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
             double end = slow5_realtime();
             read_time += end - start;
 
-            VERBOSE("Fetched %ld reads - %ld failed",
-                    num_ids - db.n_err, db.n_err);
+            VERBOSE("Fetched %ld reads of %ld", num_ids - db.n_err, num_ids);
 
             // Print records
             if(benchmark == false){

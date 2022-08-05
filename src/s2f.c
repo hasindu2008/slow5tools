@@ -5,6 +5,8 @@
  * @date 27/02/2021
  */
 
+#ifndef DISABLE_HDF5
+
 #include <getopt.h>
 #include <sys/wait.h>
 
@@ -688,6 +690,9 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
         ERROR("No slow5/blow5 files found. Exiting...%s","");
         return EXIT_FAILURE;
     }
+    if(slow5_files.size() < user_opts.num_processes){
+        INFO("No. of input files (%ld) < no. of processes (%ld). For faster parallel conversion, consider splitting your input into multiple files using slow5tools split.", slow5_files.size(), user_opts.num_processes);
+    }
     if(slow5_files.size()==1){
        user_opts.num_processes = 1;
     }
@@ -717,6 +722,7 @@ int s2f_main(int argc, char **argv, struct program_meta *meta) {
             return EXIT_FAILURE;
         }
     }
+
 
     VERBOSE("Just before forking, peak RAM = %.3f GB", slow5_peakrss_child() / 1024.0 / 1024.0 / 1024.0);
     reads_count readsCount;
@@ -834,3 +840,17 @@ int add_attribute(hid_t file_id, const char* attr_name, double attr_value, hid_t
 int add_attribute(hid_t file_id, const char* attr_name, uint8_t attr_value, hid_t datatype) {
     ADD_HDF5_ATTR(file_id, attr_name, attr_value, datatype);
 }
+
+#else
+
+#include "error.h"
+extern int slow5tools_verbosity_level;
+
+int s2f_main(int argc, char **argv, struct program_meta *meta) {
+
+    ERROR("%s", "slow5tools has been compiled with no FAST5/HDF5 support. s2f unavailable. Recompile with FAST5/HDF5 support.");
+
+    return EXIT_FAILURE;
+}
+
+#endif

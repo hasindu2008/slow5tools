@@ -37,6 +37,7 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
 
         fprintf(stdout, "slow5 library version\t%s\n", SLOW5_LIB_VERSION);
 
+    #ifndef DISABLE_HDF5
         std::string hdf5_environment = "";
         #ifdef HAVE_HDF5_SERIAL_HDF5_H
                 hdf5_environment = "HAVE_HDF5_SERIAL_HDF5_H ";
@@ -56,6 +57,8 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         fprintf(stdout, "hdf5 library version\t%u.%u.%u\n", major, minor, release);
         fprintf(stdout, "hdf5_macro_activated\t%s\n", hdf5_environment.c_str());
         //    free(&major);free(&minor);free(&release);H5dont_atexit();H5garbage_collect();H5close();
+    #endif
+
         return EXIT_SUCCESS;
     }
 

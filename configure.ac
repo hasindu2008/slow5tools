@@ -17,6 +17,11 @@ endif
 EOF
    AC_MSG_ERROR([$1], [$2])])
 
+AC_ARG_ENABLE([hdf5],
+  [AS_HELP_STRING([--disable-hdf5],
+                  [Compile without HDF5/FAST5 support. Default is with HDF5/FAST5 support.])],
+  [enable_hdf5=$enableval], [enable_hdf5=yes])
+
 AC_ARG_ENABLE([localhdf5],
   [AS_HELP_STRING([--enable-localhdf5],
                   [Use local HDF5. Default is disabled.])],
@@ -65,6 +70,8 @@ is installed.
 ])
 fi
 
+if test "$enable_hdf5" = yes; then
+
 hdf_tar_install=autoconf
 
 locallibhdf5=no
@@ -98,6 +105,10 @@ else
 	fi
 fi
 
+else
+	disable_hdf5=1
+fi
+
 locallibzstd=no
 if test "$enable_localzstd" = yes; then
 	libzstd=yes
@@ -114,6 +125,7 @@ fi
 AC_SUBST([locallibhdf5])
 AC_SUBST([locallibzstd])
 AC_SUBST([hdf_tar_install])
+AC_SUBST([disable_hdf5])
 
 AC_CONFIG_FILES([config.mk])
 AC_OUTPUT

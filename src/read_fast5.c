@@ -7,15 +7,129 @@
 
 #include <string>
 #include <vector>
-#include <set>
 
 #include <slow5/slow5.h>
 #include "error.h"
 #include "slow5_extra.h"
-#include "read_fast5.h"
+
+int slow5_hdr_initialize(slow5_hdr *header, int lossy){
+    if (slow5_hdr_add_rg(header) < 0){
+        return -1;
+    }
+    header->num_read_groups = 1;
+    if(lossy==0){
+        struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
+        header->aux_meta = aux_meta;
+    }
+    return 0;
+}
+
+// from nanopolish
+// ref: http://stackoverflow.com/a/612176/717706
+// return true if the given name is a directory
+bool is_directory(const std::string& file_name){
+    DIR * dir = opendir(file_name.c_str());
+    if(!dir) {
+        return false;
+    }
+    closedir(dir);
+    return true;
+}
+
+// from nanopolish
+std::vector< std::string > list_directory(const std::string& file_name)
+{
+    std::vector< std::string > res;
+    DIR* dir;
+    struct dirent *ent;
+
+    dir = opendir(file_name.c_str());
+    if(not dir) {
+        return res;
+    }
+    while((ent = readdir(dir))) {
+        res.push_back(ent->d_name);
+    }
+    closedir(dir);
+    return res;
+}
+
+// from nanopolish
+// given a directory path, recursively find all files
+//if count_dir==0; then don't list dir
+//if count_dir==1; then list dir as well
+//if count_dir==2; then list only dir
+void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
+    std::string extension_string;
+    size_t extension_length = 0;
+    if(extension){
+        extension_string = std::string(extension);
+        extension_length = extension_string.length();
+        STDERR("Looking for '*%s' files in %s", extension, path.c_str());
+    }
+    if(is_directory(path) && count_dir==1){
+        files.push_back(path);
+    }
+    if(is_directory(path) && count_dir==2){
+        files.push_back(path);
+    }
+    if (is_directory(path)) {
+        std::vector< std::string > dir_list = list_directory(path);
+        for (const auto& fn : dir_list) {
+            if(fn == "." or fn == "..") {
+                continue;
+            }
+            std::string full_fn = path + "/" + fn;
+            // JTS 04/19: is_directory is painfully slow
+            if(is_directory(full_fn)){
+                // recurse
+                list_all_items(full_fn, files, count_dir, extension);
+            }else{
+                //add to the list
+                if(extension){
+                    std::string full_fn_last_part = full_fn.substr(full_fn.length()-extension_length, extension_length);
+                    int ret_strcmp = strcmp(full_fn_last_part.c_str(), extension);
+                    if(strcmp(extension,".slow5")==0 && ret_strcmp!=0){
+                        ret_strcmp = strcmp(full_fn_last_part.c_str(), ".blow5");
+                    }
+                    if(ret_strcmp==0 && count_dir!=2){
+                        files.push_back(full_fn);
+                    }
+                }else{
+                    if(count_dir!=2){
+                        files.push_back(full_fn);
+                    }
+                }
+            }
+        }
+    }else{
+        if(extension){
+            std::string full_fn_last_part = path.substr(path.length()-extension_length, extension_length);
+            int ret_strcmp = strcmp(full_fn_last_part.c_str(), extension);
+            if(strcmp(extension,".slow5")==0 && ret_strcmp!=0){
+                ret_strcmp = strcmp(full_fn_last_part.c_str(), ".blow5");
+            }
+            if(ret_strcmp==0 && count_dir!=2){
+                files.push_back(path);
+            }
+        }else{
+            if(count_dir!=2){
+                files.push_back(path);
+            }
+        }
+    }
+}
+
+
+#ifndef DISABLE_HDF5
+
+
+#include <set>
 #include "cmd.h"
 #include "slow5_misc.h"
 #include "misc.h"
+#include "read_fast5.h"
+
 
 #define WARNING_LIMIT 1
 #define PRIMARY_FIELD_COUNT 7 //without read_group number
@@ -1235,36 +1349,6 @@ int group_check(struct operator_obj *od, haddr_t target_addr){
     /* Recursively examine the next node */
 }
 
-// from nanopolish
-// ref: http://stackoverflow.com/a/612176/717706
-// return true if the given name is a directory
-bool is_directory(const std::string& file_name){
-    DIR * dir = opendir(file_name.c_str());
-    if(!dir) {
-        return false;
-    }
-    closedir(dir);
-    return true;
-}
-
-// from nanopolish
-std::vector< std::string > list_directory(const std::string& file_name)
-{
-    std::vector< std::string > res;
-    DIR* dir;
-    struct dirent *ent;
-
-    dir = opendir(file_name.c_str());
-    if(not dir) {
-        return res;
-    }
-    while((ent = readdir(dir))) {
-        res.push_back(ent->d_name);
-    }
-    closedir(dir);
-    return res;
-}
-
 int check_for_similar_file_names(std::vector<std::string> file_list) {
     std::set<std::string> file_set;
     for(size_t i=0; i<file_list.size(); i++){
@@ -1298,83 +1382,7 @@ int create_dir(const char *dir_name) {
     return 0;
 }
 
-// from nanopolish
-// given a directory path, recursively find all files
-//if count_dir==0; then don't list dir
-//if count_dir==1; then list dir as well
-//if count_dir==2; then list only dir
-void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension){
-    std::string extension_string;
-    size_t extension_length = 0;
-    if(extension){
-        extension_string = std::string(extension);
-        extension_length = extension_string.length();
-        STDERR("Looking for '*%s' files in %s", extension, path.c_str());
-    }
-    if(is_directory(path) && count_dir==1){
-        files.push_back(path);
-    }
-    if(is_directory(path) && count_dir==2){
-        files.push_back(path);
-    }
-    if (is_directory(path)) {
-        std::vector< std::string > dir_list = list_directory(path);
-        for (const auto& fn : dir_list) {
-            if(fn == "." or fn == "..") {
-                continue;
-            }
-            std::string full_fn = path + "/" + fn;
-            // JTS 04/19: is_directory is painfully slow
-            if(is_directory(full_fn)){
-                // recurse
-                list_all_items(full_fn, files, count_dir, extension);
-            }else{
-                //add to the list
-                if(extension){
-                    std::string full_fn_last_part = full_fn.substr(full_fn.length()-extension_length, extension_length);
-                    int ret_strcmp = strcmp(full_fn_last_part.c_str(), extension);
-                    if(strcmp(extension,".slow5")==0 && ret_strcmp!=0){
-                        ret_strcmp = strcmp(full_fn_last_part.c_str(), ".blow5");
-                    }
-                    if(ret_strcmp==0 && count_dir!=2){
-                        files.push_back(full_fn);
-                    }
-                }else{
-                    if(count_dir!=2){
-                        files.push_back(full_fn);
-                    }
-                }
-            }
-        }
-    }else{
-        if(extension){
-            std::string full_fn_last_part = path.substr(path.length()-extension_length, extension_length);
-            int ret_strcmp = strcmp(full_fn_last_part.c_str(), extension);
-            if(strcmp(extension,".slow5")==0 && ret_strcmp!=0){
-                ret_strcmp = strcmp(full_fn_last_part.c_str(), ".blow5");
-            }
-            if(ret_strcmp==0 && count_dir!=2){
-                files.push_back(path);
-            }
-        }else{
-            if(count_dir!=2){
-                files.push_back(path);
-            }
-        }
-    }
-}
 
-int slow5_hdr_initialize(slow5_hdr *header, int lossy){
-    if (slow5_hdr_add_rg(header) < 0){
-        return -1;
-    }
-    header->num_read_groups = 1;
-    if(lossy==0){
-        struct slow5_aux_meta *aux_meta = slow5_aux_meta_init_empty();
-        header->aux_meta = aux_meta;
-    }
-    return 0;
-}
 
 // from nanopolish_fast5_io.cpp
 static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std::string& group_name, const std::string& attribute_name)
@@ -1479,3 +1487,5 @@ static inline  std::string fast5_get_string_attribute(fast5_file_t fh, const std
 
     return out;
 }
+
+#endif

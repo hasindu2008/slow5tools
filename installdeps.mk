@@ -1,3 +1,5 @@
+ifeq ($(disable_hdf5),)
+
 HDF5 ?= install
 
 HDF5_VERSION = 1.10.4
@@ -21,3 +23,5 @@ endif
 
 CPPFLAGS += $(HDF5_INC)
 LDFLAGS += $(HDF5_SYS_LIB)
+
+endif

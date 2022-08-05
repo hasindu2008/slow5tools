@@ -1,5 +1,24 @@
 // definitions used for FAST5 to SLOW5 conversion
+#include <unordered_map>
+#include "misc.h"
 #include <vector>
+
+//void free_attributes(group_flags group_flag, operator_obj* operator_data);
+std::vector< std::string > list_directory(const std::string& file_name);
+
+void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
+int slow5_hdr_initialize(slow5_hdr *header, int lossy);
+int check_for_similar_file_names(std::vector<std::string> file_list);
+int create_dir(const char *dir_name);
+
+// args for processes
+typedef struct {
+    int32_t starti;
+    int32_t endi;
+    int32_t proc_index;
+}proc_arg_t;
+
+#ifndef DISABLE_HDF5
 
 #ifndef HAVE_CONFIG_H
     #define HAVE_CONFIG_H
@@ -23,8 +42,7 @@
 #ifdef HAVE___HDF5_INCLUDE_HDF5_H
 #    include <hdf5.h>
 #endif
-#include <unordered_map>
-#include "misc.h"
+
 
 typedef struct {
     uint64_t bad_5_file = 0;
@@ -77,20 +95,7 @@ int read_fast5(opt_t *user_opts,
                int write_header_flag,
                std::unordered_map<std::string, uint32_t>* warning_map);
 fast5_file_t fast5_open(const char* filename);
-//void free_attributes(group_flags group_flag, operator_obj* operator_data);
-std::vector< std::string > list_directory(const std::string& file_name);
 
-void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
-int slow5_hdr_initialize(slow5_hdr *header, int lossy);
-int check_for_similar_file_names(std::vector<std::string> file_list);
-int create_dir(const char *dir_name);
-
-// args for processes
-typedef struct {
-    int32_t starti;
-    int32_t endi;
-    int32_t proc_index;
-}proc_arg_t;
 
 union attribute_data {
     int32_t attr_int32_t;
@@ -102,3 +107,5 @@ union attribute_data {
     uint8_t attr_uint8_t;
     char* attr_string;
 };
+
+#endif

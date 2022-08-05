@@ -14,6 +14,11 @@ ifeq ($(zstd),1)
 LDFLAGS		+= -lzstd
 endif
 
+ifeq ($(disable_hdf5),1)
+CPPFLAGS += -DDISABLE_HDF5
+endif
+
+
 BINARY = slow5tools
 OBJ_BIN = $(BUILD_DIR)/main.o \
       $(BUILD_DIR)/f2s.o \
