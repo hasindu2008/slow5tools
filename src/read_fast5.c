@@ -120,16 +120,13 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
     }
 }
 
-
 #ifndef DISABLE_HDF5
-
 
 #include <set>
 #include "cmd.h"
 #include "slow5_misc.h"
 #include "misc.h"
 #include "read_fast5.h"
-
 
 #define WARNING_LIMIT 1
 #define PRIMARY_FIELD_COUNT 7 //without read_group number

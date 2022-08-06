@@ -1,4 +1,4 @@
-// definitions used for FAST5 to SLOW5 conversion
+// definitions used for FAST5 to SLOW5 conversion (some of the functions must be moved to elsewhere as they are common)
 #include <unordered_map>
 #include "misc.h"
 #include <vector>
@@ -8,8 +8,6 @@ std::vector< std::string > list_directory(const std::string& file_name);
 
 void list_all_items(const std::string& path, std::vector<std::string>& files, int count_dir, const char* extension);
 int slow5_hdr_initialize(slow5_hdr *header, int lossy);
-int check_for_similar_file_names(std::vector<std::string> file_list);
-int create_dir(const char *dir_name);
 
 // args for processes
 typedef struct {
@@ -43,6 +41,8 @@ typedef struct {
 #    include <hdf5.h>
 #endif
 
+int check_for_similar_file_names(std::vector<std::string> file_list);
+int create_dir(const char *dir_name);
 
 typedef struct {
     uint64_t bad_5_file = 0;
