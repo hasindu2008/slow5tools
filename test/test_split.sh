@@ -36,9 +36,8 @@ fi
 
 
 slow5tools_quickcheck() {
-    #todo: use valgrind enabled slow5tools after svb valgrind leak fix
     info "running slow5tools_quickcheck for files in $PWD/${1}"
-    ls -1 $PWD/${1}/**.[bs]low5 | xargs -n1 $SLOW5_EXEC_WITHOUT_VALGRIND quickcheck
+    ls -1 $PWD/${1}/**.[bs]low5 | xargs -n1 $SLOW5_EXEC quickcheck
     if [ $? -eq 0 ]; then
         info "SUCCESS: slow5tools_quickcheck passed!"
     elif [ $? -eq 1 ]; then
