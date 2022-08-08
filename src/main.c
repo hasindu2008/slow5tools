@@ -61,6 +61,7 @@ int (view_main)(int, char **, struct program_meta *);
 int (stats_main)(int, char **, struct program_meta *);
 int (cat_main)(int argc, char **argv, struct program_meta *meta);
 int (quickcheck_main)(int, char **, struct program_meta *);
+int (skim_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
 void segv_handler(int sig) {
@@ -117,6 +118,7 @@ int main(const int argc, char **argv){
             {"index",        index_main},
             {"get",          get_main},
             {"view",         view_main},
+            {"skim",         skim_main},
             {"stats",        stats_main},
             {"cat",          cat_main},
             {"quickcheck",   quickcheck_main}
