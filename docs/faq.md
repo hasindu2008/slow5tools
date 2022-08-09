@@ -15,7 +15,6 @@ The number of slow5 files in `out_dir2` depends on how many number of reads were
 
 **Q2:** `slow5tools get` or `int slow5_get(const char *read_id, slow5_rec_t **read, slow5_file_t *s5p)` fails to fetch a record.
 
-
 This is the normal behaviour if the slow5 file does not have the querying record. If you are certain that the record should not be missing, delete the slow5 index file and try again. If the slow5 file was replaced with a different slow5 file but has the same name, the old index should be deleted.
 
 **Q3:** The fast5 file is compressed with VBZ but the required plugin is not loaded when trying to convert fast5 to slow5
@@ -32,3 +31,15 @@ A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for b
 The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329).
 The direct link to the ~500K reads subset is available [here](https://slow5.page.link/na12878_prom_sub).
 The direct link to the complete PromethION dataset (~9M reads) is [here](https://slow5.page.link/na12878_prom).
+
+**Q5:** How can I make SLOW5 to FAST5 conversion fast?
+
+If your SLOW5 to FAST5 conversion takes ages, it is likely that you called `slow5tools s2f` on a single SLOW5 file which will only use one processor. For parallelising the conversion, first split the SLOW5 file into multiple files using `slow5tools split -r` (you may have to use `slow5tools split -g` first if you BLOW5 file has multiple read groups). Then call `slow5tools s2f` with `-p <num_processes>` so that multiple CPU processors can be used for parallel conversion.
+
+**Q5:** When I convert from FAST5 to BLOW5 and then reconvert to FAST5, why are the new FAST5 files are different in size to original FAST5 files?
+
+This is normal behaviour and be assured that difference in sizes does not mean that data has been lost. Please see the issues [#70](https://github.com/hasindu2008/slow5tools/issues/70), [#76](https://github.com/hasindu2008/slow5tools/issues/76) and [#58](https://github.com/hasindu2008/slow5tools/issues/58).
+
+**Q6** Can I upload my BLOW5 files to public archives like SRA?
+
+Yes you can. Follow the same method you use to upload unbasecalled FAST5 files. Simply create a tar ball containing your BLOW5 file/files (optionally .blow5.idx files as well), select ONT_NATIVE under the SRA submission format and upload as you would usually do. When the loading fails (happens for unbasecalled FAST5 as well - and now ONT does not store basecalls on FAST5 anyway), email the SRA helpdesk and they will complete your submission.
