@@ -165,9 +165,7 @@ Following are some features and optimisations in our todo list which will be imp
 - reading from stdin for *view*
 - binary releases for ARM64 processors on Linux
 - binary releases for MacOS
-- decoupling conversion modules (currently f2s and s2f; any future formats) so that slow5tools only deal with S/BLOW5 files and thus can be easily compiled. Currently, compiling slow5tools is not straight forward due to the HDF5 (FAST5) dependency
 - any other features that are potentially useful to many
-
 
 ### Notes
 
