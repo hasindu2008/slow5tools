@@ -159,6 +159,9 @@ static void start_time_print(struct aux_print_param *p){ //uint64_t
     }
 
 }
+static void just_the_dot(struct aux_print_param *p){
+    cpy_str(p,1,".");
+}
 static void (*aux_print_func(char *field))(struct aux_print_param *p){
     void (*aux_func)(struct aux_print_param *p) = NULL;
     if(strcmp(field,"channel_number")==0){ //char*
@@ -172,7 +175,7 @@ static void (*aux_print_func(char *field))(struct aux_print_param *p){
     } else if(strcmp(field,"start_time")==0){ //uint64_t
         aux_func = start_time_print;
     } else{
-        aux_func = NULL;
+        aux_func = just_the_dot;
         WARNING("Field '%s' is not yet handled or not present in the input file. A '.' will be printed\n",field);
     }
     return aux_func;

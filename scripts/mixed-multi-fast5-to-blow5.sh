@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# An example script that properly converts a set of multi-fast5 generated 
+# An example script that properly converts a set of multi-fast5 generated
 # using ONT's multi_to_single_fast5 utility.
 # ONT's multi_to_single_fast5 packs reads with mutltiple run_ids in to an individual multi-fast5 file
 # slow5tools f2s does directly support converting such files and this script is an example of how to do it.
@@ -91,8 +91,15 @@ NUM_READS=$(find $FAST5_DIR -name '*.fast5' | parallel -I% --max-args 1 strings 
 
 if [ ${NUM_READS} -ne ${NUM_SLOW5_READS} ]
 then
-	echo "WARNING: Sanity check also failed. $NUM_READS in FAST5, but $NUM_SLOW5_READS reads in SLOW5"
-	exit 1
+	echo "WARNING: Sanity check failed. $NUM_READS in FAST5, but $NUM_SLOW5_READS reads in SLOW5"
+	echo "Trying fallback method of checking with multi_to_single_fast5 file count"
+	NUM_READS_SINGLE=$(find $TMP_FAST5 -name '*.fast5' | wc -l)
+	if [ ${NUM_READS_SINGLE} -ne ${NUM_SLOW5_READS} ]
+	then
+		echo "ERROR: Sanity check failed. $NUM_READS_SINGLE in TMP_FAST5, but $NUM_SLOW5_READS reads in SLOW5"
+		exit 1
+	fi
+	echo "$NUM_READS_SINGLE in TMP_FAST5, $NUM_SLOW5_READS reads in SLOW5"
 else
 	echo "$NUM_READS in FAST5, $NUM_SLOW5_READS reads in SLOW5"
 fi
