@@ -65,7 +65,9 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
     if(extension){
         extension_string = std::string(extension);
         extension_length = extension_string.length();
-        STDERR("Looking for '*%s' files in %s", extension, path.c_str());
+        if (is_directory(path)) {
+            STDERR("Looking for '*%s' files in %s", extension, path.c_str());
+        }
     }
     if(is_directory(path) && count_dir==1){
         files.push_back(path);
