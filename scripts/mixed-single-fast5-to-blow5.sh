@@ -70,7 +70,7 @@ then
     echo "ERROR: Sanity check failed. $NUM_READS_SINGLE in TMP_FAST5, but $NUM_SLOW5_READS reads in SLOW5"
     exit 1
 fi
-echo "$NUM_READS_SINGLE in TMP_FAST5, $NUM_SLOW5_READS reads in SLOW5"
+echo "$NUM_READS_SINGLE in FAST5, $NUM_SLOW5_READS reads in SLOW5"
 
 #check if unique read id
 slow5tools index $MERGED_BLOW5 || die "Indexing BLOW5 failed"

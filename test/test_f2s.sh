@@ -648,6 +648,7 @@ $SLOW5_EXEC f2s $FAST5_DIR/various_versions/$FILE.fast5 -o $OUTPUT_DIR/various_v
 grep -q -i "ERROR.*Ancient fast5: Different run_ids found in an individual multi-fast5 file. Cannot create a single header slow5/blow5" $OUTPUT_DIR/err.log || die "Error in testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+TESTCASE_NO=8.15 TEST_FAST5_VERSION single_fast5_v1.0_starttime0
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
