@@ -956,22 +956,22 @@ int convert_to_correct_datatype(attribute_data data, slow5_aux_type from_type, s
         return 1;
     }
     if(from_type == SLOW5_INT32_T && to_type == SLOW5_UINT8_T){
-        return data.attr_int32_t > 0 && data.attr_int32_t < UINT8_MAX;
+        return data.attr_int32_t >= 0 && data.attr_int32_t < UINT8_MAX;
     }
     if(from_type == SLOW5_INT32_T && to_type == SLOW5_UINT32_T){
-        return data.attr_int32_t > 0;
+        return data.attr_int32_t >= 0;
     }
     if(from_type == SLOW5_INT32_T && to_type == SLOW5_UINT64_T){
-        return data.attr_int32_t > 0;
+        return data.attr_int32_t >= 0;
     }
     if(from_type == SLOW5_INT64_T && to_type == SLOW5_UINT8_T){
-        return data.attr_int64_t > 0 && data.attr_int64_t < UINT8_MAX;
+        return data.attr_int64_t >= 0 && data.attr_int64_t < UINT8_MAX;
     }
     if(from_type == SLOW5_INT64_T && to_type == SLOW5_INT32_T){
         return data.attr_int64_t < INT32_MAX;
     }
     if(from_type == SLOW5_INT64_T && to_type == SLOW5_UINT64_T){
-        return data.attr_int64_t > 0;
+        return data.attr_int64_t >= 0;
     }
     if(from_type == SLOW5_UINT32_T && to_type == SLOW5_UINT8_T){
         return data.attr_uint32_t < UINT8_MAX;
