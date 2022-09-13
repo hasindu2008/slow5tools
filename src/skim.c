@@ -9,6 +9,7 @@
 #include "error.h"
 #include "cmd.h"
 #include "misc.h"
+#include "thread.h"
 #include <slow5/slow5.h>
 #include "slow5_misc.h"
 
@@ -19,9 +20,11 @@
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
-    "    -h, --help         display this message and exit\n" \
-    "    --hdr              print the header only\n" \
-    "    --rid              print the list of read ids only\n" \
+    HELP_MSG_THREADS \
+    HELP_MSG_BATCH \
+    "    --hdr              		  print the header only\n" \
+    "    --rid              		  print the list of read ids only\n" \
+    HELP_MSG_HELP \
 
 extern int slow5tools_verbosity_level;
 
@@ -181,7 +184,82 @@ static void (*aux_print_func(char *field))(struct aux_print_param *p){
     return aux_func;
 }
 
-static void print_data(slow5_file_t* sp){
+typedef struct {
+    struct aux_print_param p;
+    char **aux;
+    uint64_t num_aux;
+    void (**aux_func)(struct aux_print_param *);
+} skim_param_t;
+
+static char* process_read(slow5_rec_t *rec, struct aux_print_param p, char **aux, uint64_t num_aux, void (**aux_func)(struct aux_print_param *)){
+    char *mem = NULL;
+    char *digitisation_str = slow5_double_to_str(rec->digitisation, NULL);
+    char *offset_str = slow5_double_to_str(rec->offset, NULL);
+    char *range_str = slow5_double_to_str(rec->range, NULL);
+    char *sampling_rate_str = slow5_double_to_str(rec->sampling_rate, NULL);
+
+    int curr_len_tmp = slow5_asprintf(&mem,"%s\t%" PRIu32 "\t%s\t%s\t%s\t%s\t%" PRIu64 "\t.",
+            rec->read_id, rec->read_group, digitisation_str, offset_str, range_str, sampling_rate_str, rec->len_raw_signal);
+
+    free(digitisation_str);
+    free(offset_str);
+    free(range_str);
+    free(sampling_rate_str);
+    if (curr_len_tmp <= 0) {
+        fprintf(stderr, "Error in printing read record\n");
+        exit(EXIT_FAILURE);
+    }
+    size_t c = curr_len_tmp+1024;
+    char *buff = (char *) malloc(c* sizeof(char));
+    MALLOC_CHK(buff);
+    size_t n=curr_len_tmp;
+    strcpy(buff,mem);
+    free(mem);
+
+    if(aux != NULL){
+        p.rec = rec;
+        p.buff = buff;
+        p.c = c;
+        p.n = n;
+
+        for(uint64_t i=0; i<num_aux; i++) {
+            p.field = aux[i];
+            if(aux_func[i] !=NULL) aux_func[i](&p);
+        }
+        n=p.n;
+        c=p.c;
+    }
+    assert(c-2>=n);
+    buff[n] = '\n';
+    buff[n+1] = '\0';
+
+    return buff;
+
+}
+
+
+void process_read(core_t *core, db_t *db, int32_t i) {
+    //
+    struct slow5_rec *read = NULL;
+    void *record = db->mem_records[i];
+    if (slow_decode(&record, &db->mem_bytes[i], &read, core->fp) < 0 ) {
+        exit(EXIT_FAILURE);
+    } else {
+        free(record);
+    }
+
+    skim_param_t *param = (skim_param_t *) core->param;
+
+    struct aux_print_param p = param->p;
+    char **aux = param->aux;
+    uint64_t num_aux  = param->num_aux;
+    void (**aux_func)(struct aux_print_param *) = param->aux_func;
+
+    db->read_record[i].buffer = process_read(read,p,aux,num_aux,aux_func);
+    slow5_rec_free(read);
+}
+
+static void skim_data_parallel(slow5_file_t* sp,size_t num_threads, int64_t batch_size){
     int ret = 0;
     slow5_rec_t *rec = NULL;
 
@@ -205,53 +283,79 @@ static void print_data(slow5_file_t* sp){
     }
     printf("\n");
 
-    while((ret = slow5_get_next(&rec,sp)) >= 0){
+    double time_get_to_mem = 0;
+    double time_thread_execution = 0;
+    double time_write = 0;
+    int flag_end_of_file = 0;
 
-        char *mem = NULL;
-        char *digitisation_str = slow5_double_to_str(rec->digitisation, NULL);
-        char *offset_str = slow5_double_to_str(rec->offset, NULL);
-        char *range_str = slow5_double_to_str(rec->range, NULL);
-        char *sampling_rate_str = slow5_double_to_str(rec->sampling_rate, NULL);
+    skim_param_t param;
+    param.p = p;
+    param.aux = aux;
+    param.num_aux = num_aux;
+    param.aux_func = aux_func;
 
-        int curr_len_tmp = slow5_asprintf(&mem,"%s\t%" PRIu32 "\t%s\t%s\t%s\t%s\t%" PRIu64 "\t.",
-                rec->read_id, rec->read_group, digitisation_str, offset_str, range_str, sampling_rate_str, rec->len_raw_signal);
+    while(1) {
 
-        free(digitisation_str);
-        free(offset_str);
-        free(range_str);
-        free(sampling_rate_str);
-        if (curr_len_tmp <= 0) {
-            fprintf(stderr, "Error in printing read record\n");
-            exit(EXIT_FAILURE);
-        }
-        size_t c = curr_len_tmp+1024;
-        char *buff = (char *) malloc(c* sizeof(char));
-        MALLOC_CHK(buff);
-        size_t n=curr_len_tmp;
-        strcpy(buff,mem);
-        free(mem);
-
-        if(aux != NULL){
-            p.rec = rec;
-            p.buff = buff;
-            p.c = c;
-            p.n = n;
-
-            for(uint64_t i=0; i<num_aux; i++) {
-                p.field = aux[i];
-                if(aux_func[i] !=NULL) aux_func[i](&p);
+        db_t db = { 0 };
+        db.mem_records = (char **) malloc(batch_size * sizeof(char*));
+        db.mem_bytes = (size_t *) malloc(batch_size * sizeof(size_t));
+        MALLOC_CHK(db.mem_records);
+        MALLOC_CHK(db.mem_bytes);
+        int64_t record_count = 0;
+        size_t bytes;
+        void *mem = NULL;
+        double realtime = slow5_realtime();
+        while (record_count < batch_size) {
+            if ((ret = slow5_get_next_bytes(&mem,&bytes,sp)) <0) {
+                if (slow5_errno != SLOW5_ERR_EOF) {
+                    exit(EXIT_FAILURE);
+                } else {
+                    flag_end_of_file = 1;
+                    break;
+                }
+            } else {
+                db.mem_records[record_count] = (char *)mem;
+                db.mem_bytes[record_count] = bytes;
+                record_count++;
             }
-            n=p.n;
-            c=p.c;
         }
-        assert(c-2>=n);
-        buff[n] = '\n';
-        buff[n+1] = '\0';
-        printf("%s", buff);
+        time_get_to_mem += slow5_realtime() - realtime;
 
-        free(buff);
+        realtime = slow5_realtime();
+        // Setup multithreading structures
+        core_t core;
+        core.num_thread = num_threads;
+        core.fp = sp;
+        core.param = &param;
+
+        db.n_batch = record_count;
+        db.read_record = (raw_record_t*) malloc(record_count * sizeof *db.read_record);
+        MALLOC_CHK(db.read_record);
+        work_db(&core,&db,process_read);
+        time_thread_execution += slow5_realtime() - realtime;
+
+        realtime = slow5_realtime();
+        for (int64_t i = 0; i < record_count; i++) {
+            char *buff = (char *)db.read_record[i].buffer;
+            printf("%s", buff);
+            free(buff);
+        }
+        time_write += slow5_realtime() - realtime;
+
+        // Free everything
+        free(db.mem_bytes);
+        free(db.mem_records);
+        free(db.read_record);
+
+        if(flag_end_of_file == 1){
+            break;
+        }
 
     }
+
+    DEBUG("time_get_to_mem\t%.3fs", time_get_to_mem);
+    DEBUG("time_skim\t%.3fs", time_thread_execution);
+    DEBUG("time_write\t%.3fs", time_write);
 
     free(aux_func);
     if(ret != SLOW5_ERR_EOF){  //check if proper end of file has been reached
@@ -273,8 +377,13 @@ int skim_main(int argc, char **argv, struct program_meta *meta){
             {"help", no_argument, NULL, 'h' }, //0
             {"rid", no_argument, NULL, 0 },    //1
             {"hdr", no_argument, NULL, 0 }, //2
+            {"threads",required_argument,  NULL, 't' }, //3
+            {"batchsize",required_argument, NULL, 'K'}, //4
             {NULL, 0, NULL, 0 }
     };
+
+    opt_t user_opts;
+    init_opt(&user_opts);
 
     // Input arguments
     int longindex = 0;
@@ -294,6 +403,12 @@ int skim_main(int argc, char **argv, struct program_meta *meta){
 
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
+            case 'K':
+                user_opts.arg_batch = optarg;
+                break;
+            case 't':
+                user_opts.arg_num_threads = optarg;
+                break;
             case 0  :
                 switch (longindex) {
                     case 1:
@@ -313,6 +428,15 @@ int skim_main(int argc, char **argv, struct program_meta *meta){
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
+    }
+
+    if(parse_num_threads(&user_opts,argc,argv,meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(parse_batch_size(&user_opts,argc,argv) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
     }
 
     if (argc - optind < 1){
@@ -348,7 +472,7 @@ int skim_main(int argc, char **argv, struct program_meta *meta){
         print_hdr(slow5File);
     }
     else {
-        print_data(slow5File);
+        skim_data_parallel(slow5File, user_opts.num_threads, user_opts.read_id_batch_capacity);
     }
 
     slow5_close(slow5File);
