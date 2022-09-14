@@ -241,8 +241,8 @@ static char* process_read(slow5_rec_t *rec, struct aux_print_param p, char **aux
 void process_read(core_t *core, db_t *db, int32_t i) {
     //
     struct slow5_rec *read = NULL;
-    void *record = db->mem_records[i];
-    if (slow_decode(&record, &db->mem_bytes[i], &read, core->fp) < 0 ) {
+    char *record = db->mem_records[i];
+    if (slow5_decode(&record, &db->mem_bytes[i], &read, core->fp) < 0 ) {
         exit(EXIT_FAILURE);
     } else {
         free(record);
@@ -303,7 +303,7 @@ static void skim_data_parallel(slow5_file_t* sp,size_t num_threads, int64_t batc
         MALLOC_CHK(db.mem_bytes);
         int64_t record_count = 0;
         size_t bytes;
-        void *mem = NULL;
+        char *mem = NULL;
         double realtime = slow5_realtime();
         while (record_count < batch_size) {
             if ((ret = slow5_get_next_bytes(&mem,&bytes,sp)) <0) {
