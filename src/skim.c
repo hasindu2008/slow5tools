@@ -392,7 +392,7 @@ int skim_main(int argc, char **argv, struct program_meta *meta){
     int hdr=0;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "h", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "ht:K:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
