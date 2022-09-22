@@ -102,7 +102,9 @@ make
 
 ## Usage
 
-Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options.
+* Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options.
+* A guide on using BLOW5 for archiving and steps to verify if data integrity is preserved is [here](https://hasindu2008.github.io/slow5tools/archive.html).
+* A script for performing real-time FAST5 to BLOW5 conversion during sequencing is provided [here](https://github.com/hasindu2008/slow5tools/tree/master/scripts/realtime-f2s).
 
 ### Examples
 
@@ -113,6 +115,9 @@ slow5tools f2s fast5_dir -d blow5_dir
 slow5tools f2s file.fast5 -o file.slow5
 # convert a directory of fast5 files into BLOW5 files with zstd+svb-zd compression (similar to ONT's vbz compression)
 slow5tools f2s fast5_dir -d blow5_dir -c zstd -s svb-zd
+
+# concatenate all BLOW5 fils in a directory into a single BLOW5 file (works only if all the BLOW5 files have the same header, otherwise use merge)
+slow5tools cat blow5_dir -o file.blow5
 
 # merge all BLOW5 files in a directory into a single BLOW5 file (default compression: zlib+svb-zd)
 slow5tools merge blow5_dir -o file.blow5
@@ -131,6 +136,8 @@ slow5tools index file.blow5
 
 # extract records from a slow5/blow5 file corresponding to given read ids
 slow5tools get file.blow5 readid1 readid2 -o output.slow5
+# extract records from a slow5/blow5 file based on a list of read ids
+slow5tools get file.blow5 -l readids_list.txt -o output.slow5
 
 # split a BLOW5 file into separate BLOW5 files based on the read groups
 slow5tools split file.blow5 -d blow5_dir -g
@@ -140,9 +147,34 @@ slow5tools split file.blow5 -d blow5_dir -r 4000
 # convert a directory of blow5 files to fast5
 slow5tools s2f blow5_dir -d fast5
 
+# print summary statistics (e.g., number of read groups, compression method, number of records, etc)
+slow5tools stats file.blow5
+# quickly check if a blow5 file is intact
+slow5tools quickcheck file.blow5
+
+# print all per-read metadata (except the raw signal)
+slow5tools skim file.blow5
+#print the list of read IDs
+slow5tools skim --rid file.blow5
+#print the SLOW5 header
+slow5tools skim --hdr file.blow5
 ```
 
-Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for example workflows.
+Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for example workflows. See [here](https://hasindu2008.github.io/slow5tools/oneliners.html) for example bash one-liners with slow5tools.
+
+### Troubleshooting/Questions
+
+Visit the [frequently asked questions](https://hasindu2008.github.io/slow5tools/faq.html) or open an [issue](https://github.com/hasindu2008/slow5tools/issues).
+
+### Upcoming features and optimisations
+
+Following are some features and optimisations in our todo list which will be implemented based on the need. If anyone is interested please request [here](https://github.com/hasindu2008/slow5tools/issues). Contributions are welcome.
+
+- pipelining input, processing and output in *merge, get, etc.* (improved runtime upto 2X, please find the implementation [here](https://github.com/hasindu2008/slow5tools/tree/interleave_merge))
+- reading from stdin for *view*
+- binary releases for ARM64 processors on Linux
+- binary releases for MacOS
+- any other features that are potentially useful to many
 
 ### Notes
 

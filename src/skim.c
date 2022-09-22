@@ -15,7 +15,7 @@
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [SLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
-    "Skims through requested components in a SLOW5/BLOW5 file."\
+    "Skims through requested components in a SLOW5/BLOW5 file. "\
     "If no options are provided, all the SLOW5 records except the raw signal will be printed.\n" \
     USAGE_MSG \
     "\n" \

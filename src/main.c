@@ -39,6 +39,7 @@
     "    stats                 prints statistics of a SLOW5/BLOW5 file to the stdout\n" \
     "    cat                   quickly concatenate SLOW5/BLOW5 files of same type (same header, extension, compression) [experimental]\n" \
     "    quickcheck            quickly checks if a SLOW5/BLOW5 file is intact\n" \
+    "    skim                  skims through requested components in a SLOW5/BLOW5 file\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
 

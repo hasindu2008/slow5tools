@@ -106,7 +106,9 @@ make
 
 ## Usage
 
-Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options. See [here](https://hasindu2008.github.io/slow5tools/oneliners.html) for example bash one-liners with slow5tools. A guide on using BLOW5 for archiving and steps to verify if data integrity is preserved is [here](https://hasindu2008.github.io/slow5tools/archive.html). A script for performing real-time FAST5 to BLOW5 conversion during sequencing is provided [here](https://github.com/hasindu2008/slow5tools/tree/master/scripts/realtime-f2s).
+* Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options.
+* A guide on using BLOW5 for archiving and steps to verify if data integrity is preserved is [here](https://hasindu2008.github.io/slow5tools/archive.html).
+* A script for performing real-time FAST5 to BLOW5 conversion during sequencing is provided [here](https://github.com/hasindu2008/slow5tools/tree/master/scripts/realtime-f2s).
 
 ### Examples
 
@@ -138,6 +140,8 @@ slow5tools index file.blow5
 
 # extract records from a slow5/blow5 file corresponding to given read ids
 slow5tools get file.blow5 readid1 readid2 -o output.slow5
+# extract records from a slow5/blow5 file based on a list of read ids
+slow5tools get file.blow5 -l readids_list.txt -o output.slow5
 
 # split a BLOW5 file into separate BLOW5 files based on the read groups
 slow5tools split file.blow5 -d blow5_dir -g
@@ -147,9 +151,20 @@ slow5tools split file.blow5 -d blow5_dir -r 4000
 # convert a directory of blow5 files to fast5
 slow5tools s2f blow5_dir -d fast5
 
+# print summary statistics (e.g., number of read groups, compression method, number of records, etc)
+slow5tools stats file.blow5
+# quickly check if a blow5 file is intact
+slow5tools quickcheck file.blow5
+
+# print all per-read metadata (except the raw signal)
+slow5tools skim file.blow5
+#print the list of read IDs
+slow5tools skim --rid file.blow5
+#print the SLOW5 header
+slow5tools skim --hdr file.blow5
 ```
 
-Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for example workflows.
+Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for example workflows. See [here](https://hasindu2008.github.io/slow5tools/oneliners.html) for example bash one-liners with slow5tools.
 
 
 ### Troubleshooting/Questions

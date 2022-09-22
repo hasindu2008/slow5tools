@@ -33,7 +33,7 @@ slow5tools view file.blow5 | grep -v '^[#@]' | datamash mean 7 median 7 sstdev 7
 
 ```
 # merge every 10 files together in INPUT_DIR and save to OUTPUT_DIR:
-find -name INPUT_DIR/*.blow5 | parallel -I% --max-args 10 slow5tools merge % -o OUTPUT_DIR/{#}.blow5
+find INPUT_DIR/ -name '*.blow5' | parallel -I% --max-args 10 slow5tools merge % -o OUTPUT_DIR/{#}.blow5
 
 # Get the sum of read counts in all BLOW5 files in a directory:
 find INPUT_DIR/ -name '*.blow5' | parallel -I% --max-args 1 slow5tools stats % | grep "number of records" | awk 'BEGIN {count=0;} {count=count+$NF} END {print count;}'
