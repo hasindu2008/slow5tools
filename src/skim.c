@@ -57,6 +57,7 @@ static void print_hdr(slow5_file_t* sp){
 }
 
 struct aux_print_param {
+    slow5_file_t *sp;
     slow5_rec_t *rec;
     char* field;
     char* buff;
@@ -160,8 +161,30 @@ static void start_time_print(struct aux_print_param *p){ //uint64_t
     } else {
         cpy_str(p,1,".");
     }
-
 }
+static void end_reason_print(struct aux_print_param *p){ //uint8_t
+    int ret=0;
+    uint8_t t = slow5_aux_get_enum(p->rec, p->field, &ret);
+    if(ret!=0){
+        fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n",p->field,ret);
+        exit(EXIT_FAILURE);
+    }
+    if(t != SLOW5_ENUM_NULL){
+        uint8_t num_label = 0;
+        char **labels = slow5_get_aux_enum_labels(p->sp->header, "end_reason", &num_label);
+        if(labels==NULL){
+            fprintf(stderr,"Error in getting list of enum labels\n");
+            exit(EXIT_FAILURE);
+        }
+        char *str = labels[t];
+        int len = strlen(str);
+        cpy_str(p,len,str);
+    } else {
+        cpy_str(p,1,".");
+    }
+}
+
+
 static void just_the_dot(struct aux_print_param *p){
     cpy_str(p,1,".");
 }
@@ -177,6 +200,8 @@ static void (*aux_print_func(char *field))(struct aux_print_param *p){
         aux_func = start_mux_print;
     } else if(strcmp(field,"start_time")==0){ //uint64_t
         aux_func = start_time_print;
+    } else if(strcmp(field,"end_reason")==0){ //int8_t
+        aux_func = end_reason_print;
     } else{
         aux_func = just_the_dot;
         WARNING("Field '%s' is not yet handled or not present in the input file. A '.' will be printed\n",field);
@@ -191,7 +216,7 @@ typedef struct {
     void (**aux_func)(struct aux_print_param *);
 } skim_param_t;
 
-static char* process_read(slow5_rec_t *rec, struct aux_print_param p, char **aux, uint64_t num_aux, void (**aux_func)(struct aux_print_param *)){
+static char* process_read2(slow5_rec_t *rec, struct aux_print_param p, char **aux, uint64_t num_aux, void (**aux_func)(struct aux_print_param *)){
     char *mem = NULL;
     char *digitisation_str = slow5_double_to_str(rec->digitisation, NULL);
     char *offset_str = slow5_double_to_str(rec->offset, NULL);
@@ -255,7 +280,7 @@ void process_read(core_t *core, db_t *db, int32_t i) {
     uint64_t num_aux  = param->num_aux;
     void (**aux_func)(struct aux_print_param *) = param->aux_func;
 
-    db->read_record[i].buffer = process_read(read,p,aux,num_aux,aux_func);
+    db->read_record[i].buffer = process_read2(read,p,aux,num_aux,aux_func);
     slow5_rec_free(read);
 }
 
@@ -267,6 +292,7 @@ static void skim_data_parallel(slow5_file_t* sp,size_t num_threads, int64_t batc
     char **aux = slow5_get_aux_names(sp->header, &num_aux);
     void (**aux_func)(struct aux_print_param *) = NULL;
     struct aux_print_param p;
+    p.sp = sp;
 
     if(aux!=NULL){
         aux_func = (void ((**)(struct aux_print_param *)))malloc(sizeof(void (*)(struct aux_print_param *))*num_aux);
@@ -371,7 +397,7 @@ int skim_main(int argc, char **argv, struct program_meta *meta){
     // Debug: print arguments
     print_args(argc,argv);
 
-    WARNING("%s","slow5tools skim is under construction. Bugs would ample and anticipate changes to the commandline interface.");
+    WARNING("%s","slow5tools is experiemental. Use with caution. Report any bugs under GitHub issues");
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
