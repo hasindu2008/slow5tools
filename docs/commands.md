@@ -13,7 +13,7 @@
 * `merge`:<br/>
          Merge multiple SLOW5/BLOW5 files to a single file.
 * `cat`:<br/>
-		 Quickly concatenate SLOW5/BLOW5 files of same read group [experimental]
+		 Quickly concatenate SLOW5/BLOW5 files of same read group.
 * `split`:<br/>
          Split a single a SLOW5/BLOW5 file into multiple separate files.
 * `get`:<br/>
@@ -101,8 +101,8 @@ slow5tools cat file1.blow5 file2.blow5  -o output.blow5
 slow5tools cat blow5_dir1 -o output.blow5
 ```
 
-Note: This subtools is experimental. Use with caution.
 Quickly concatenate SLOW5/BLOW5 files of same type (same header, extension, compression).
+Note: This subtool is is much faster than merge, but performs minimal input validation. Use with caution.
 
 *  `-o, --output FILE`:<br/>
       Outputs concatenated data to FILE [default value: stdout].

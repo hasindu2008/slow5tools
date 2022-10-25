@@ -397,7 +397,7 @@ int skim_main(int argc, char **argv, struct program_meta *meta){
     // Debug: print arguments
     print_args(argc,argv);
 
-    WARNING("%s","slow5tools is experiemental. Use with caution. Report any bugs under GitHub issues");
+    //WARNING("%s","slow5tools is experiemental. Use with caution. Report any bugs under GitHub issues");
 
     static struct option long_opts[] = {
             {"help", no_argument, NULL, 'h' }, //0
