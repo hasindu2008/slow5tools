@@ -27,6 +27,7 @@
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     "    -l --list [FILE]              list of read ids provided as a single-column text file with one read id per line.\n" \
+    "    --skip                        warn and continue if a read_id was not found.\n" \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
@@ -45,7 +46,9 @@ void work_per_single_read_get(core_t *core, db_t *db, int32_t i) {
     if (record == NULL || len < 0) {
         fprintf(stderr, "Error locating %s\n", id);
         ++ db->n_err;
+        db->read_record[i].flag_0 = 1;
     }else {
+        db->read_record[i].flag_0 = 0;
         if (core->benchmark == false){
             size_t record_size;
             struct slow5_press* compress = slow5_press_init(core->press_method);
@@ -112,9 +115,10 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         {"batchsize",   required_argument, NULL, 'K'},  //3
         {"output",      required_argument, NULL, 'o'}, //4
         {"list",        required_argument, NULL, 'l'},  //5
-        {"threads",     required_argument, NULL, 't' }, //6
-        {"help",        no_argument, NULL, 'h' }, //7
-        {"benchmark",   no_argument, NULL, 'e' }, //8
+        {"skip",        no_argument, NULL, 0},  //6
+        {"threads",     required_argument, NULL, 't' }, //7
+        {"help",        no_argument, NULL, 'h' }, //8
+        {"benchmark",   no_argument, NULL, 'e' }, //9
         {NULL, 0, NULL, 0 }
     };
 
@@ -128,8 +132,12 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     char* read_list_file_in = NULL;
 
     int opt;
+    int longindex = 0;
+
+    int get_flag_SLOW5_EXIT_ON_ERR = 1;
+
     // Parse options
-    while ((opt = getopt_long(argc, argv, "o:b:c:s:K:l:t:he", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:b:c:s:K:l:t:he", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -162,12 +170,23 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
+            case 0  :
+                switch (longindex) {
+                    case 6:
+                        get_flag_SLOW5_EXIT_ON_ERR = 0;
+                        break;
+                }
+                break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
     }
+    if(get_flag_SLOW5_EXIT_ON_ERR == 0){
+        slow5_set_exit_condition(SLOW5_EXIT_OFF);
+    }
+
     if(parse_num_threads(&user_opts,argc,argv,meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -240,22 +259,23 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     char *f_in_name = argv[optind];
 
-
-    slow5_file_t *slow5file = slow5_open(f_in_name, "r");
-    if (!slow5file) {
+    slow5_file_t *slow5_file_in = slow5_open(f_in_name, "r");
+    if (!slow5_file_in) {
         ERROR("cannot open %s. \n", f_in_name);
         return EXIT_FAILURE;
     }
 
     slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
+    slow5_file_t* slow5_file_out = slow5_init_empty(user_opts.f_out, user_opts.arg_fname_out, user_opts.fmt_out);
+
     if(benchmark == false){
-        if(slow5_hdr_fwrite(user_opts.f_out, slow5file->header, user_opts.fmt_out, press_out) == -1){
+        if(slow5_hdr_fwrite(slow5_file_out->fp, slow5_file_in->header, slow5_file_out->format, press_out) == -1){
             ERROR("Could not write the output header%s\n", "");
             return EXIT_FAILURE;
         }
     }
 
-    int ret_idx = slow5_idx_load(slow5file);
+    int ret_idx = slow5_idx_load(slow5_file_in);
     if (ret_idx < 0) {
         ERROR("Error loading index file for %s\n", f_in_name);
         EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -269,7 +289,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         // Setup multithreading structures
         core_t core;
         core.num_thread = user_opts.num_threads;
-        core.fp = slow5file;
+        core.fp = slow5_file_in;
         core.format_out = user_opts.fmt_out;
         core.press_method = press_out;
         core.benchmark = benchmark;
@@ -322,13 +342,16 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
             // Print records
             if(benchmark == false){
                 for (int64_t i = 0; i < num_ids; ++ i) {
+                    if(db.read_record[i].flag_0 == 1){
+                        continue;
+                    }
                     void *buffer = db.read_record[i].buffer;
                     int len = db.read_record[i].len;
                     if (buffer == NULL || len < 0) {
                         ERROR("Could not write the fetched read.%s","");
                         return EXIT_FAILURE;
                     } else {
-                        fwrite(buffer,1,len,user_opts.f_out);
+                        fwrite(buffer,1,len,slow5_file_out->fp);
                         free(buffer);
                     }
                 }
@@ -341,7 +364,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         free(db.read_record);
     } else {
         for (int i = optind + 1; i < argc; ++ i){
-            bool success = fetch_record(slow5file, argv[i], argv, meta, user_opts.fmt_out, press_out, benchmark, user_opts.f_out);
+            bool success = fetch_record(slow5_file_in, argv[i], argv, meta, user_opts.fmt_out, press_out, benchmark, user_opts.f_out);
             if (!success) {
                 ERROR("Could not fetch records.%s","");
                 return EXIT_FAILURE;
@@ -350,12 +373,13 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     if(benchmark == false){
-        if (user_opts.fmt_out == SLOW5_FORMAT_BINARY) {
-                slow5_eof_fwrite(user_opts.f_out);
+        if (slow5_file_out->format == SLOW5_FORMAT_BINARY) {
+                slow5_eof_fwrite(slow5_file_out->fp);
             }
     }
 
-    slow5_close(slow5file);
+    slow5_close(slow5_file_in);
+    slow5_close(slow5_file_out);
     fclose(read_list_in);
 
     EXIT_MSG(EXIT_SUCCESS, argv, meta);
