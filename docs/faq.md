@@ -37,9 +37,6 @@ The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/
 | ~9M reads complete PromethION dataset (FAST5 format) | [SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access) | [fast5.tar.gz](https://slow5.page.link/na12878_prom)                     | 0adbd2956a54528e92dd8fe6d42d2fce |
 | ~9M reads complete PromethION dataset (BLOW5 format) | [SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access) | [slow5.tar](https://slow5.page.link/na12878_prom_slow5)                         | 3b23f706add38612445cd4f5204ae8b5 |
 
-The direct link to the ~500K reads subset is available [here](https://slow5.page.link/na12878_prom_sub).
-The direct link to the complete PromethION dataset (~9M reads) is [here](https://slow5.page.link/na12878_prom).
-
 **Q5:** How can I make SLOW5 to FAST5 conversion fast?
 
 If your SLOW5 to FAST5 conversion takes ages, it is likely that you called `slow5tools s2f` on a single SLOW5 file which will only use one processor. For parallelising the conversion, first split the SLOW5 file into multiple files using `slow5tools split -r` (you may have to use `slow5tools split -g` first if you BLOW5 file has multiple read groups). Then call `slow5tools s2f` with `-p <num_processes>` so that multiple CPU processors can be used for parallel conversion.
@@ -50,4 +47,11 @@ This is normal behaviour and be assured that difference in sizes does not mean t
 
 **Q7** Can I upload my BLOW5 files to public archives like SRA?
 
-Yes you can. Follow the same method you use to upload unbasecalled FAST5 files. Simply create a tar ball containing your BLOW5 file/files (optionally .blow5.idx files as well), select ONT_NATIVE under the SRA submission format and upload as you would usually do. When the loading fails (happens for unbasecalled FAST5 as well - and now ONT does not store basecalls on FAST5 anyway), email the SRA helpdesk and they will complete your submission.
+Yes you can. Follow the same method you use to upload unbasecalled FAST5 files. Simply create a tar ball containing your BLOW5 file/files (optionally .blow5.idx files as well), select ONT_NATIVE under the SRA submission format and upload as you would usually do. When the loading fails or the submission seem to take forever to process (also happens for latest FAST5 as ONT does not store basecalls in FAST5 now), email the SRA helpdesk and they will complete your submission (they call it provisional loading). I submit fastq data and raw signal data as two separate SRA runs associated to the same BioSample (e.g. [SRR15058167](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058167&display=data-access) and [SRR2218640](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)) as suggested by SRA helpdesk.
+
+**Q8** Does Oxford Nanopore Technologies officially support S/BLOW5 format?
+
+SLOW5 is not formally supported by ONT, instead it is a community-centric format maintained by the Garvan Institute team designed to address [community requirements such as fast analysis performance, simplicty/backward compatibility and file size for long term archiving](https://hasindu2008.github.io/slow5specs/design.html), where as ONT's official formats focus on the instruments' writing performance. ONT provides freedom for the community to select what suits us best: ["What happens after that or ‘off instrument’ is much more a matter for users and using slow5 or anything else is really in their hands. We have conversion tools, and switches."]() - Clive G. Brown, CTO of ONT. 
+
+
+
