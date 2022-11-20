@@ -28,7 +28,15 @@ See [this post](https://github.com/nanoporetech/vbz_compression/issues/5) for tr
 
 A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub).
 
-The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329).
+The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329) and the table below summarises the links:
+
+| Description                                          | SRA run Data access                                                                                        | Direct download link | MD5sum |
+|------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|---|
+| ~500K reads subset (FAST5 format)                    | [SRR15058164](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058164&display=data-access) | [subsample.tar.gz](https://slow5.page.link/na12878_prom_sub)                     | 591ec7d1a2c6d13f7183171be8d31fba |
+| ~500K reads subset (BLOW5 format)                    | [SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access) |     [subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)                 | 6cdbe02c3844960bb13cf94b9c3173bb |
+| ~9M reads complete PromethION dataset (FAST5 format) | [SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access) | [fast5.tar.gz](https://slow5.page.link/na12878_prom)                     | 0adbd2956a54528e92dd8fe6d42d2fce |
+| ~9M reads complete PromethION dataset (BLOW5 format) | [SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access) | [slow5.tar](https://slow5.page.link/na12878_prom_slow5)                         | 3b23f706add38612445cd4f5204ae8b5 |
+
 The direct link to the ~500K reads subset is available [here](https://slow5.page.link/na12878_prom_sub).
 The direct link to the complete PromethION dataset (~9M reads) is [here](https://slow5.page.link/na12878_prom).
 
