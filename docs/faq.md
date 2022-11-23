@@ -19,7 +19,7 @@ This is the normal behaviour if the slow5 file does not have the querying record
 
 **Q3:** The fast5 file is compressed with VBZ but the required plugin is not loaded when trying to convert fast5 to slow5
 
-This is due to the *vbz* compression used in the latest fast5 files. You need to setup the *vbz* plugin for HDF5. We have provided a helper script in *slow5tools* which you can invoke as `scripts/install-vbz.sh`. This script attempts to determine your operating system and the architecture, downloads and extracts the plugin (.so file) to *$HOME/.local/hdf5/lib/plugin*. You must export the path to the plugin by invoking `export HDF5_PLUGIN_PATH=$HOME/.local/hdf5/lib/plugin` . Note that the exported environmental variable will not persist across different shells. For persistence, you must add `export HDF5_PLUGIN_PATH=$HOME/.local/hdf5/lib/plugin` to your *~/.bashrc* or */etc/environment*.
+This is due to the *vbz* compression used in the latest fast5 files. You need to setup the *vbz* plugin for HDF5. We have provided a helper script in *slow5tools* which you can invoke as `scripts/install-vbz.sh`. This script attempts to determine your operating system and the architecture, downloads and extracts the plugin (.so file) to *$HOME/.local/hdf5/lib/plugin*. You must export the path to the plugin by invoking `export HDF5_PLUGIN_PATH=$HOME/.local/hdf5/lib/plugin` . Note that the exported environmental variable will not persist across different shells. For persistence, you must add `export HDF5_PLUGIN_PATH=$HOME/.local/hdf5/lib/plugin` to your *~/.bashrc* or */etc/environment*. Make sure you logout and login back for any changes to *~/.bashrc* or */etc/environment* take effect.
 
 Our helper script currently supports Linux on x86_64 and aarch64 architectures only. If your system is of a different operating system and/or architecture (or if this helper script fails) you have to download and manually install the plugin from [here](https://github.com/nanoporetech/vbz_compression/releases).
 See [this post](https://github.com/nanoporetech/vbz_compression/issues/5) for troubleshooting a manual installation.
@@ -28,9 +28,14 @@ See [this post](https://github.com/nanoporetech/vbz_compression/issues/5) for tr
 
 A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub).
 
-The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329).
-The direct link to the ~500K reads subset is available [here](https://slow5.page.link/na12878_prom_sub).
-The direct link to the complete PromethION dataset (~9M reads) is [here](https://slow5.page.link/na12878_prom).
+The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329) and the table below summarises the links:
+
+| Description                                          | SRA run Data access                                                                                        | Direct download link | MD5sum |
+|------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|---|
+| ~500K reads subset (FAST5 format)                    | [SRR15058164](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058164&display=data-access) | [subsample.tar.gz](https://slow5.page.link/na12878_prom_sub)                     | 591ec7d1a2c6d13f7183171be8d31fba |
+| ~500K reads subset (BLOW5 format)                    | [SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access) |     [subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)                 | 6cdbe02c3844960bb13cf94b9c3173bb |
+| ~9M reads complete PromethION dataset (FAST5 format) | [SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access) | [fast5.tar.gz](https://slow5.page.link/na12878_prom)                     | 0adbd2956a54528e92dd8fe6d42d2fce |
+| ~9M reads complete PromethION dataset (BLOW5 format) | [SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access) | [slow5.tar](https://slow5.page.link/na12878_prom_slow5)                         | 3b23f706add38612445cd4f5204ae8b5 |
 
 **Q5:** How can I make SLOW5 to FAST5 conversion fast?
 
@@ -42,4 +47,11 @@ This is normal behaviour and be assured that difference in sizes does not mean t
 
 **Q7** Can I upload my BLOW5 files to public archives like SRA?
 
-Yes you can. Follow the same method you use to upload unbasecalled FAST5 files. Simply create a tar ball containing your BLOW5 file/files (optionally .blow5.idx files as well), select ONT_NATIVE under the SRA submission format and upload as you would usually do. When the loading fails (happens for unbasecalled FAST5 as well - and now ONT does not store basecalls on FAST5 anyway), email the SRA helpdesk and they will complete your submission.
+Yes you can. Follow the same method you use to upload unbasecalled FAST5 files. Simply create a tar ball containing your BLOW5 file/files (optionally .blow5.idx files as well), select ONT_NATIVE under the SRA submission format and upload as you would usually do. When the loading fails or the submission seem to take forever to process (also happens for latest FAST5 as ONT does not store basecalls in FAST5 now), email the SRA helpdesk and they will complete your submission (they call it provisional loading). I submit fastq data and raw signal data as two separate SRA runs associated to the same BioSample (e.g. [SRR15058167](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058167&display=data-access) and [SRR2218640](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)) as suggested by SRA helpdesk.
+
+**Q8** Does Oxford Nanopore Technologies officially support S/BLOW5 format?
+
+SLOW5 is not formally supported by ONT, instead it is a community-centric format maintained by the Garvan Institute team designed to address [community requirements such as fast analysis performance, simplicty/backward compatibility and file size for long term archiving](https://hasindu2008.github.io/slow5specs/design.html), where as ONT's official formats focus on the instruments' writing performance. ONT provides freedom for the community to select what suits us best: ["What happens after that or ‘off instrument’ is much more a matter for users and using slow5 or anything else is really in their hands. We have conversion tools, and switches."]() - Clive G. Brown, CTO of ONT. 
+
+
+
