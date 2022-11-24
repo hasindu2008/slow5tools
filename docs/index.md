@@ -10,6 +10,10 @@
 
 [SLOW5 for archiving](archive.md)
 
+[Software that support S/BLOW5](software.md)
+
+[Datasets in S/BLOW5 fomat](datasets.md)
+
 [Compatibility table](compatibility.md)
 
 [Frequently asked questions](faq.md)
