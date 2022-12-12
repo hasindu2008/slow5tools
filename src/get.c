@@ -76,7 +76,6 @@ bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_me
     len = slow5_get(read_id, &record,fp);
 
     if (record == NULL || len < 0) {
-        WARNING("Error locating %s", read_id);
         success = false;
 
     } else {
@@ -364,6 +363,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         for (int i = optind + 1; i < argc; ++ i){
             bool success = fetch_record(slow5file, argv[i], argv, meta, user_opts.fmt_out, press_out, benchmark, user_opts.f_out);
             if (!success) {
+                if(skip_flag) continue;
                 ERROR("Could not fetch records.%s","");
                 return EXIT_FAILURE;
             }

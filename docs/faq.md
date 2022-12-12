@@ -15,7 +15,12 @@ The number of slow5 files in `out_dir2` depends on how many number of reads were
 
 **Q2:** `slow5tools get` or `int slow5_get(const char *read_id, slow5_rec_t **read, slow5_file_t *s5p)` fails to fetch a record.
 
-This is the normal behaviour if the slow5 file does not have the querying record. If you are certain that the record should not be missing, delete the slow5 index file and try again. If the slow5 file was replaced with a different slow5 file but has the same name, the old index should be deleted.
+This is the normal behaviour if the slow5 file does not have the querying record. If slwo5tools warns that the slow5 index is older than the slow5 file, delete the index and try again. If the slow5 file was replaced with a different slow5 file but has the same name, the old index should be deleted. Also, it could be that the read ID you are querying has a different parent read ID. You can check if this is the case by inspecting the basecalled FASTQ file (look for the tag called *parent_read_id*).
+
+```bash
+grep <read_id> | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}'
+```
+
 
 **Q3:** The fast5 file is compressed with VBZ but the required plugin is not loaded when trying to convert fast5 to slow5
 
@@ -30,12 +35,12 @@ A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for b
 
 The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329) and the table below summarises the links:
 
-| Description                                          | SRA run Data access                                                                                        | Direct download link | MD5sum |
+| <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link</sub>  | <sub>MD5sum</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|---|
-| ~500K reads subset (FAST5 format)                    | [SRR15058164](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058164&display=data-access) | [subsample.tar.gz](https://slow5.page.link/na12878_prom_sub)                     | 591ec7d1a2c6d13f7183171be8d31fba |
-| ~500K reads subset (BLOW5 format)                    | [SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access) |     [subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)                 | 6cdbe02c3844960bb13cf94b9c3173bb |
-| ~9M reads complete PromethION dataset (FAST5 format) | [SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access) | [fast5.tar.gz](https://slow5.page.link/na12878_prom)                     | 0adbd2956a54528e92dd8fe6d42d2fce |
-| ~9M reads complete PromethION dataset (BLOW5 format) | [SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access) | [slow5.tar](https://slow5.page.link/na12878_prom_slow5)                         | 3b23f706add38612445cd4f5204ae8b5 |
+| <sub>~500K reads subset (FAST5 format)</sub>                    | <sub>[SRR15058164](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058164&display=data-access)</sub> | <sub>[subsample.tar.gz](https://slow5.page.link/na12878_prom_sub)</sub>                     | <sub>591ec7d1a2c6d13f7183171be8d31fba</sub> |
+| <sub>~500K reads subset (BLOW5 format)</sub>                    | <sub>[SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access)</sub> |     <sub>[subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)</sub>                 | <sub>6cdbe02c3844960bb13cf94b9c3173bb</sub> |
+| <sub>~9M reads complete PromethION dataset (FAST5 format)</sub> | <sub>[SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access)</sub> | <sub>[fast5.tar.gz](https://slow5.page.link/na12878_prom)</sub>                     | <sub>0adbd2956a54528e92dd8fe6d42d2fce</sub> |
+| <sub>~9M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)</sub> | <sub>[slow5.tar](https://slow5.page.link/na12878_prom_slow5)</sub>                         | <sub>3b23f706add38612445cd4f5204ae8b5</sub> |
 
 **Q5:** How can I make SLOW5 to FAST5 conversion fast?
 
@@ -51,7 +56,21 @@ Yes you can. Follow the same method you use to upload unbasecalled FAST5 files. 
 
 **Q8** Does Oxford Nanopore Technologies officially support S/BLOW5 format?
 
-SLOW5 is not formally supported by ONT, instead it is a community-centric format maintained by the Garvan Institute team designed to address [community requirements such as fast analysis performance, simplicty/backward compatibility and file size for long term archiving](https://hasindu2008.github.io/slow5specs/design.html), where as ONT's official formats focus on the instruments' writing performance. ONT provides freedom for the community to select what suits us best: ["What happens after that or ‘off instrument’ is much more a matter for users and using slow5 or anything else is really in their hands. We have conversion tools, and switches."]() - Clive G. Brown, CTO of ONT. 
+SLOW5 is not formally supported by ONT, instead it is a community-centric format maintained by the Garvan Institute team designed to address [community requirements such as fast analysis performance, simplicty/backward compatibility and file size for long term archiving](https://hasindu2008.github.io/slow5specs/design.html), where as ONT's official formats focus on the instruments' writing performance. ONT provides freedom for the community to select what suits us best: ["What happens after that or ‘off instrument’ is much more a matter for users and using slow5 or anything else is really in their hands. We have conversion tools, and switches."]() - Clive G. Brown, CTO of ONT.
 
+**Q9** How to compile slow5tools for Apple Silicon (e.g., Mac M1)
 
+Without zstd support:
+```
+brew install hdf5 zlib
+./configure LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/
+make
+```
 
+With zstd support:
+```
+brew install hdf5 zlib
+scripts/install-zstd.sh        # download and compiles zstd in the current folder
+./configure --enable-localzstd LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/
+make
+```
