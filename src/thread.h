@@ -44,7 +44,6 @@ typedef struct {
 
 typedef struct{
     int len;
-    int flag_0; //can be used to flag a read
     void* buffer;
 } raw_record_t;
 
