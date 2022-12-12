@@ -15,7 +15,7 @@ The number of slow5 files in `out_dir2` depends on how many number of reads were
 
 **Q2:** `slow5tools get` or `int slow5_get(const char *read_id, slow5_rec_t **read, slow5_file_t *s5p)` fails to fetch a record.
 
-This is the normal behaviour if the slow5 file does not have the querying record. If slwo5tools warns that the slow5 index is older than the slow5 file, delete the index and try again. If the slow5 file was replaced with a different slow5 file but has the same name, the old index should be deleted. Also, it could be that the read ID you are querying has a different parent read ID. You can check if this is the case by inspecting the basecalled FASTQ file (look for the tag called *parent_read_id*).
+This is the normal behaviour if the slow5 file does not have the querying record. If slow5tools warns that the slow5 index is older than the slow5 file, delete the index and try again. If the slow5 file was replaced with a different slow5 file but has the same name, the old index should be deleted. Also, it could be that the read ID you are querying has a different parent read ID. You can check if this is the case by inspecting the basecalled FASTQ file (look for the tag called *parent_read_id*).
 
 ```bash
 grep <read_id> | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}'
