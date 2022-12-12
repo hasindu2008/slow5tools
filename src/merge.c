@@ -219,6 +219,7 @@ int merge_main(int argc, char **argv, struct program_meta *meta){
     slow5_file_t* slow5File = slow5_init_empty(user_opts.f_out, user_opts.arg_fname_out, user_opts.fmt_out);
     int ret = slow5_hdr_initialize(slow5File->header, user_opts.flag_lossy);
     if(ret<0){
+        ERROR("Could not initialize output file %s", user_opts.arg_fname_out);
         return EXIT_FAILURE;
     }
     slow5File->header->num_read_groups = 0;
