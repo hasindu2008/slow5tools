@@ -91,5 +91,5 @@ buttery-eel -i reads.blow5  -g /path/to/ont-guppy/bin/ --config dna_r9.4.1_450bp
 
 Note: If the read IDs in the BAM file are not the parent IDs (happens when read splitting is enabled during initial basecalling step), you can grab the parent read IDs from the FASTQ file as below and use that as the input the to slow5tools get.
 ```
-grep -F -f rid_list.txt | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}' | sort -u > parent_rid_list.txt
+grep -F -f rid_list.txt reads.fastq | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}' | sort -u > parent_rid_list.txt
 ```
