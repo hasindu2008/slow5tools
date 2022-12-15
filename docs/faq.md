@@ -18,7 +18,7 @@ The number of slow5 files in `out_dir2` depends on how many number of reads were
 This is the normal behaviour if the slow5 file does not have the querying record. If slow5tools warns that the slow5 index is older than the slow5 file, delete the index and try again. If the slow5 file was replaced with a different slow5 file but has the same name, the old index should be deleted. Also, it could be that the read ID you are querying has a different parent read ID. You can check if this is the case by inspecting the basecalled FASTQ file (look for the tag called *parent_read_id*).
 
 ```bash
-grep <read_id> | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}'
+grep <read_id> reads.fastq | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}'
 ```
 
 
