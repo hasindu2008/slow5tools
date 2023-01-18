@@ -93,3 +93,19 @@ Note: If the read IDs in the BAM file are not the parent IDs (happens when read 
 ```
 grep -F -f rid_list.txt reads.fastq | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}' | sort -u > parent_rid_list.txt
 ```
+The above assumes that `parent_read_id` tag is present in all reads including those that are not split, which seem to be the case when doing live-basecalling. But Guppy offline version seem to only output that `parent_read_id` tag for split reads. In that case do this:
+```
+# for split reads, get the parent_read_id tag
+grep -F -f rid_list.txt reads.fastq | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}' > tmp.txt
+# for non split reads, get the normla read ID
+grep -F -f rid_list.txt reads.fastq | grep -v "parent\_read\_id" | awk '{print $1}' | tr -d '@' >> tmp.txt
+# remove duplicates
+sort -u tmp.txt > parent_rid_list.txt
+```
+
+## Extract 20,000 random reads from a BLOW5 file
+
+```
+slow5tools skim --rid reads.blow5 | sort -R | head -20000 > rand_20000_rid.txt # for slow5tools v0.7.0 onwards
+slow5tools get reads.blow5 --list rand_20000_rid.txt -o reads_subsubsample.blow5 
+```
