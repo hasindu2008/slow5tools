@@ -300,7 +300,7 @@ int read_fast5(opt_t *user_opts,
         }
         hsize_t number_of_groups = 1;
         tracker.num_read_groups = &number_of_groups;
-        //now iterate over read groups. loading records and writing them are done inside fast5_group_itr
+        //now iterate over read groups to load records and writing them are done inside fast5_group_itr
         iterator_ret = H5Literate(fast5_file->hdf5_file, H5_INDEX_NAME, H5_ITER_INC, NULL, fast5_group_itr, (void *) &tracker);
         if(iterator_ret < 0){
             ERROR("Bad fast5: Could not iterate over the read groups in the fast5 file %s.", tracker.fast5_path);
@@ -829,7 +829,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
         } else if(ret == -2){
             flag_attribute_exists = 1;
 //            WARNING("Attribute '%s/%s' is already added to the header.", operator_data->group_name, name);
-            existing_attribute = slow5_hdr_get("run_id", 0, operator_data->slow5File->header);
+            existing_attribute = slow5_hdr_get(name, 0, operator_data->slow5File->header);
             if(strcmp(existing_attribute,value.attr_string)){
                 flag_existing_attr_value_mismatch = 1;
             }

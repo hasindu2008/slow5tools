@@ -12,7 +12,7 @@ project(slow5tools)
 
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fPIC -rdynamic -Wall -O2")
 IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -std=c++11 ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -O0 -std=c++11 ")
 ELSEIF()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -rdynamic -Wall -O2 -std=c++11 ")
 ENDIF()
@@ -40,6 +40,7 @@ set_source_files_properties(src/stats.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/cat.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/quickcheck.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/misc.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/skim.c PROPERTIES LANGUAGE CXX)
 
 set(f2s src/f2s.c)
 set(get src/get.c)
@@ -55,10 +56,11 @@ set(stats src/stats.c)
 set(cat src/cat.c)
 set(quickcheck src/quickcheck.c)
 set(misc src/misc.c)
+set(skim src/skim.c)
 
 set(hdf5-static "${PROJECT_SOURCE_DIR}/prebuilt-hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
-add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc})
+add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc} ${skim})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/slow5lib)
 

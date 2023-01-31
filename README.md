@@ -71,7 +71,12 @@ make
 
 - If you only want to manipulate S/BLOW5 files, you can disable FAST5/HDF5 for even easier compilation. Call `./configure --disable-hdf5 && make` or completely bypass the configure step and just call `make disable_hdf5=1`.
 
-- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.3 or higher development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable' (also see [notes](https://github.com/hasindu2008/slow5tools#notes)).
+- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.3 or higher development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable' (also see [notes](https://github.com/hasindu2008/slow5tools#notes)).  For enabling *zstd* on Apple Silicon (e.g., Mac M1) also see [faq](https://hasindu2008.github.io/slow5tools/faq.html). If you cannot install the zstd library system wide you can locally build zstd and build slow5tools against that:
+    ```
+    scripts/install-zstd.sh        # download and compiles zstd in the current folder
+    ./configure --enable-localzstd
+    make			# don't run make zstd=1. libzstd.a is statically linked this time.
+    ```
 
 - *slow5tools* from version 0.3.0 onwards by default requires vector instructions (SSSE3 or higher for Intel/AMD and neon for ARM). If your processor is an ancient processor with no such vector instructions, invoke make as `make no_simd=1`.
 
@@ -83,19 +88,7 @@ make
     make
     ```
 
-    Similarly, to locally build *zstd* and link against that:
-
-    ```
-    scripts/install-zstd.sh        # download and compiles zstd in the current folder
-    ./configure --enable-localzstd
-    make			# don't run make zstd=1. libzstd.a is statically linked this time.
-    ```
-
-- On Mac M1 or in any system if `./configure` cannot find the hdf5 libraries installed through the package manager, you can specify the location as *LDFLAGS=-L/path/to/shared/lib/ CPPFLAGS=-I/path/to/headers/*. For example on Mac M1:
-	```
-	./configure LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/
-	make
-	```
+- On Mac M1 or in any system if `./configure` cannot find the hdf5 libraries installed through the package manager, you can specify the location as *LDFLAGS=-L/path/to/shared/lib/ CPPFLAGS=-I/path/to/headers/*. For an example for  Apple Silicon (e.g., Mac M1) see [faq](https://hasindu2008.github.io/slow5tools/faq.html).
 
 - You can build a docker image as follows.
 	```

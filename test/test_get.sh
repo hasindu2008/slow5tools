@@ -119,5 +119,17 @@ if [ $? -ne 0 ]; then
 fi
 info "testcase $TESTCASE passed"
 
+TESTCASE=7
+info "------------------- slow5tools get testcase $TESTCASE -------------------"
+$SLOW5_EXEC get "$RAW_DIR/example2.slow5" --list "$RAW_DIR/list_with_invalid_reads.txt" --to slow5 > "$OUTPUT_DIR/extracted_reads7.slow5" && die "testcase $TESTCASE failed"
+rm "$OUTPUT_DIR/extracted_reads7.slow5"
+info "testcase $TESTCASE passed"
+
+TESTCASE=8
+info "------------------- slow5tools get testcase $TESTCASE -------------------"
+$SLOW5_EXEC get "$RAW_DIR/example2.slow5" --skip --list "$RAW_DIR/list_with_invalid_reads.txt" --to slow5 > "$OUTPUT_DIR/extracted_reads8.slow5" || die "testcase $TESTCASE failed"
+slow5tools_quickcheck $OUTPUT_DIR
+info "testcase $TESTCASE passed"
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed" 1>&3 2>&4
 exit 0

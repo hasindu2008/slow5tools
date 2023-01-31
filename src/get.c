@@ -27,6 +27,7 @@
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     "    -l --list [FILE]              list of read ids provided as a single-column text file with one read id per line.\n" \
+    "    --skip                        warn and continue if a read_id was not found.\n" \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
@@ -43,8 +44,9 @@ void work_per_single_read_get(core_t *core, db_t *db, int32_t i) {
     len = slow5_get(id,&record,core->fp);
 
     if (record == NULL || len < 0) {
-        fprintf(stderr, "Error locating %s\n", id);
         ++ db->n_err;
+        db->read_record[i].buffer = NULL;
+        db->read_record[i].len = -1;
     }else {
         if (core->benchmark == false){
             size_t record_size;
@@ -74,7 +76,6 @@ bool fetch_record(slow5_file_t *fp, const char *read_id, char **argv, program_me
     len = slow5_get(read_id, &record,fp);
 
     if (record == NULL || len < 0) {
-        WARNING("Error locating %s", read_id);
         success = false;
 
     } else {
@@ -112,9 +113,10 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         {"batchsize",   required_argument, NULL, 'K'},  //3
         {"output",      required_argument, NULL, 'o'}, //4
         {"list",        required_argument, NULL, 'l'},  //5
-        {"threads",     required_argument, NULL, 't' }, //6
-        {"help",        no_argument, NULL, 'h' }, //7
-        {"benchmark",   no_argument, NULL, 'e' }, //8
+        {"skip",        no_argument, NULL, 0},  //6
+        {"threads",     required_argument, NULL, 't' }, //7
+        {"help",        no_argument, NULL, 'h' }, //8
+        {"benchmark",   no_argument, NULL, 'e' }, //9
         {NULL, 0, NULL, 0 }
     };
 
@@ -128,8 +130,12 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     char* read_list_file_in = NULL;
 
     int opt;
+    int longindex = 0;
+
+    int skip_flag = 0;
+
     // Parse options
-    while ((opt = getopt_long(argc, argv, "o:b:c:s:K:l:t:he", long_opts, NULL)) != -1) {
+    while ((opt = getopt_long(argc, argv, "o:b:c:s:K:l:t:he", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -162,12 +168,25 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                 fprintf(stdout, HELP_LARGE_MSG, argv[0]);
                 EXIT_MSG(EXIT_SUCCESS, argv, meta);
                 exit(EXIT_SUCCESS);
+            case 0  :
+                switch (longindex) {
+                    case 6:
+                        skip_flag = 1;
+                        break;
+                }
+                break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
                 return EXIT_FAILURE;
         }
     }
+
+    if(skip_flag){
+        WARNING("Will skip records that are not found%s","");
+        slow5_set_exit_condition(SLOW5_EXIT_OFF);
+    }
+
     if(parse_num_threads(&user_opts,argc,argv,meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
@@ -240,7 +259,6 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     char *f_in_name = argv[optind];
 
-
     slow5_file_t *slow5file = slow5_open(f_in_name, "r");
     if (!slow5file) {
         ERROR("cannot open %s. \n", f_in_name);
@@ -248,6 +266,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
     }
 
     slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
+
     if(benchmark == false){
         if(slow5_hdr_fwrite(user_opts.f_out, slow5file->header, user_opts.fmt_out, press_out) == -1){
             ERROR("Could not write the output header%s\n", "");
@@ -325,6 +344,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     void *buffer = db.read_record[i].buffer;
                     int len = db.read_record[i].len;
                     if (buffer == NULL || len < 0) {
+                        if(skip_flag) continue;
                         ERROR("Could not write the fetched read.%s","");
                         return EXIT_FAILURE;
                     } else {
@@ -343,6 +363,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         for (int i = optind + 1; i < argc; ++ i){
             bool success = fetch_record(slow5file, argv[i], argv, meta, user_opts.fmt_out, press_out, benchmark, user_opts.f_out);
             if (!success) {
+                if(skip_flag) continue;
                 ERROR("Could not fetch records.%s","");
                 return EXIT_FAILURE;
             }

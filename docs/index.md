@@ -10,6 +10,10 @@
 
 [SLOW5 for archiving](archive.md)
 
+[Software that support SLOW5](software.md)
+
+[Datasets in SLOW5 format](datasets.md)
+
 [Compatibility table](compatibility.md)
 
 [Frequently asked questions](faq.md)

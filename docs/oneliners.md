@@ -7,16 +7,16 @@
 
 ```
 # print slow5 header:
-slow5tools view file.blow5 | grep '^[#@]'
+slow5tools view file.blow5 | grep '^[#@]' # from slow5tools v0.7.0: slow5tools skim --hdr file.blow5
 
 # print read records without the header:
 slow5tools view file.blow5 | grep -v '^[#@]'
 
 # print the first 10 read records (without the header):
-slow5tools view file.blow5 | grep -v '^[#@]' | head -10
+slow5tools view file.blow5 | grep -v '^[#@]' | head -10 # from slow5tools v0.7.0: slow5tools skim --rid file.blow5 | head -10
 
 # print the list of read IDs:
-slow5tools view file.blow5 | grep -v '^[#@]' | awk '{print $1}'
+slow5tools view file.blow5 | grep -v '^[#@]' | awk '{print $1}' # from slow5tools v0.7.0: slow5tools skim --rid file.blow5
 
 # print all data columns (including the data type and column name), except the raw signal (column 8):
 slow5tools view file.blow5 | sed -n '/#char*/,$p' | cut -f 1-7,9-
@@ -26,6 +26,9 @@ slow5tools get --to slow5 file.blow5 "r1" | grep -v '^[#@]' | awk '{print $8}'
 
 # get statistics of raw signal length (column 7):
 slow5tools view file.blow5 | grep -v '^[#@]' | datamash mean 7 median 7 sstdev 7 min 7 max 7 sum 7
+
+# extract the signal samples 100-200 (1-indexed) for the read-id r1:
+slow5tools get --to slow5 file.blow5 "r1" | grep -v '^[#@]' | awk '{print $8}' | cut -d, -f 100-200
 
 ```
 
