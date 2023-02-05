@@ -62,6 +62,15 @@ info "testcase$TESTCASE"
 $SLOW5TOOLS stats $RAW_DIR/zlib_svb-zd_multi_rg_v0.2.0.blow5> $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
 diff $OUTPUT_DIR/output.log "$EXP_DIR/zlib_svb-zd_multi_rg_v0.2.0.stdout"  > /dev/null || die "testcase$TESTCASE: diff failed"
 
+TESTCASE=6
+info "testcase$TESTCASE"
+$SLOW5TOOLS stats $RAW_DIR/zlib_svb-zd_multi_rg_v1.0.0.blow5> $OUTPUT_DIR/output.log || die "testcase$TESTCASE: stats failed"
+diff $OUTPUT_DIR/output.log "$EXP_DIR/zlib_svb-zd_multi_rg_v1.0.0.stdout"  > /dev/null || die "testcase$TESTCASE: diff failed"
+
+TESTCASE=7
+info "testcase$TESTCASE"
+$SLOW5TOOLS stats $RAW_DIR/zlib_svb-zd_multi_rg_v1.1.0.blow5> $OUTPUT_DIR/output.log && die "testcase$TESTCASE: stats failed"
+
 rm -r "$OUTPUT_DIR" || die "could not delete $OUTPUT_DIR"
 info "all $TESTCASE testcases passed"
 exit 0
