@@ -258,6 +258,10 @@ enum slow5_press_method name_to_slow5_press_method(const char *name) {
         comp = SLOW5_COMPRESS_SVB_ZD;
     } else if (strcmp(name, "zstd") == 0) {
         comp = SLOW5_COMPRESS_ZSTD;
+    } else if (strcmp(name, "rc") == 0) {
+        comp = SLOW5_COMPRESS_RC;
+    } else if (strcmp(name, "ex-zd") == 0) {
+        comp = SLOW5_COMPRESS_EX_ZD;
     }
     return comp;
 }
