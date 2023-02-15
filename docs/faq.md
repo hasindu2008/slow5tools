@@ -31,9 +31,7 @@ See [this post](https://github.com/nanoporetech/vbz_compression/issues/5) for tr
 
 **Q4:** Are there any small example datasets that can be used for testing slow5tools?
 
-A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub).
-
-The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329) and the table below summarises the links:
+A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub). The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329) and the table below summarises the links:
 
 | <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link</sub>  | <sub>MD5sum</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|---|
@@ -41,6 +39,8 @@ The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/
 | <sub>~500K reads subset (BLOW5 format)</sub>                    | <sub>[SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access)</sub> |     <sub>[subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)</sub>                 | <sub>6cdbe02c3844960bb13cf94b9c3173bb</sub> |
 | <sub>~9M reads complete PromethION dataset (FAST5 format)</sub> | <sub>[SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access)</sub> | <sub>[fast5.tar.gz](https://slow5.page.link/na12878_prom)</sub>                     | <sub>0adbd2956a54528e92dd8fe6d42d2fce</sub> |
 | <sub>~9M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)</sub> | <sub>[slow5.tar](https://slow5.page.link/na12878_prom_slow5)</sub>                         | <sub>3b23f706add38612445cd4f5204ae8b5</sub> |
+
+Links to more datasets can be found [here](https://hasindu2008.github.io/slow5tools/datasets.html).
 
 **Q5:** How can I make SLOW5 to FAST5 conversion fast?
 
