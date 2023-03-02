@@ -24,10 +24,7 @@ wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5
 ```
 Binaries should work on most Linux distributions as the only dependency is `zlib` which is available by default on most distributions. For compiled binaries to work, your processor must support SSSE3 instructions or higher (processors after 2007 have these) and your operating system must have GLIBC 2.17 or higher (Linux distributions from 2014 onwards typically have this).
 
-You can also use conda to install *slow5tools* as `conda install slow5tools -c bioconda -c conda-forge`.
-
-If you run into the error `The fast5 file is compressed with VBZ but the required plugin is not loaded when trying to convert fast5 to slow5` refer to the Q3 in [faq](https://hasindu2008.github.io/slow5tools/faq.html).
-
+You can also use conda to install *slow5tools* as `conda install slow5tools -c bioconda -c conda-forge`. For converting latest vbz compressed FAST5, you will need to setup the ONT vbz plugin as explained in [faq:Q3](https://hasindu2008.github.io/slow5tools/faq.html).
 
 ## Building
 

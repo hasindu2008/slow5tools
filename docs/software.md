@@ -3,7 +3,7 @@
 ## Basecalling
 
 - Guppy via [buttery-eel](https://github.com/Psy-Fer/buttery-eel/)
-- Dorado (through our [fork](https://github.com/hiruna72/dorado/releases))
+- Dorado (through our [fork](https://github.com/hiruna72/slow5-dorado/releases))
 - Bonito (through our [fork](https://github.com/Psy-Fer/bonito))
 - [RODAN](https://github.com/biodlab/RODAN/pull/6)
 - [radian](https://github.com/comprna/radian/pull/5)

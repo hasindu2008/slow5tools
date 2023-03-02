@@ -61,7 +61,7 @@ slow5tools f2s fast5_dir -d blow5_dir -p 8
 ## Basecalling
 
 - SLOW5 support for ONT's Guppy basecaller is available as a [wrapper called buttery-eel here](https://github.com/Psy-Fer/buttery-eel) along with instructions.
-- SLOW5 support for ONT's Dorado basecaller is available in our own [Dorado fork here](https://github.com/hiruna72/dorado/releases) along with instructions.
+- SLOW5 support for ONT's Dorado basecaller (including support for duplex calling) is available in our own [Dorado fork here](https://github.com/hiruna72/slow5-dorado/releases) along with instructions.
 - SLOW5 support for ONT's Bonito basecaller is now available as a [pull request](https://github.com/nanoporetech/bonito/pull/252) along with usage instructions and benchmarks.
 
 ## Extracting a subset from S3 storage
@@ -107,5 +107,5 @@ sort -u tmp.txt > parent_rid_list.txt
 
 ```
 slow5tools skim --rid reads.blow5 | sort -R | head -20000 > rand_20000_rid.txt # for slow5tools v0.7.0 onwards
-slow5tools get reads.blow5 --list rand_20000_rid.txt -o reads_subsubsample.blow5 
+slow5tools get reads.blow5 --list rand_20000_rid.txt -o reads_subsubsample.blow5
 ```

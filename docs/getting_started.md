@@ -19,16 +19,15 @@ wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5
 ```
 Binaries should work on most Linux distributions as the only dependency is `zlib` which is available by default on most distributions. For compiled binaries to work, your processor must support SSSE3 instructions or higher (processors after 2007 have these) and your operating system must have GLIBC 2.17 or higher (Linux distributions from 2014 onwards typically have this).
 
-You can also use conda to install *slow5tools* as `conda install slow5tools -c bioconda -c conda-forge`.
+You can also use conda to install *slow5tools* as `conda install slow5tools -c bioconda -c conda-forge`. For converting latest vbz compressed FAST5, you will need to setup the ONT vbz plugin as explained in [faq:Q3](https://hasindu2008.github.io/slow5tools/faq.html).
 
-If you run into the error `The fast5 file is compressed with VBZ but the required plugin is not loaded when trying to convert fast5 to slow5` refer to the Q3 in [faq](https://hasindu2008.github.io/slow5tools/faq.html)
+## Building
 
 ## Building
 
 ### Building a release
 
-
-Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball.
+Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball. A compiler that supports C++11 is needed to build slow5tools.
 
 Quick example for Ubuntu:
 
@@ -167,9 +166,10 @@ Following are some features and optimisations in our todo list which will be imp
 
 - pipelining input, processing and output in *merge, get, etc.* (improved runtime upto 2X, please find the implementation [here](https://github.com/hasindu2008/slow5tools/tree/interleave_merge))
 - reading from stdin for *view*
-- binary releases for ARM64 processors on Linux
-- binary releases for MacOS
-- any other features that are potentially useful to many
+- binary releases for ARM64 processors on Linux and for MacOS
+- any other useful features
+
+To convert to and from ONT's upcoming POD5 format, you may use (project_blue_crab)[https://github.com/Psy-Fer/project_blue_crab]. Once POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is adhering to C++11 standard for wider compatibility.
 
 ### Notes
 

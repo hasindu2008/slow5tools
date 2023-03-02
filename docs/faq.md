@@ -31,16 +31,7 @@ See [this post](https://github.com/nanoporetech/vbz_compression/issues/5) for tr
 
 **Q4:** Are there any small example datasets that can be used for testing slow5tools?
 
-A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub). The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329) and the table below summarises the links:
-
-| <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link</sub>  | <sub>MD5sum</sub>  |
-|------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|---|
-| <sub>~500K reads subset (FAST5 format)</sub>                    | <sub>[SRR15058164](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058164&display=data-access)</sub> | <sub>[subsample.tar.gz](https://slow5.page.link/na12878_prom_sub)</sub>                     | <sub>591ec7d1a2c6d13f7183171be8d31fba</sub> |
-| <sub>~500K reads subset (BLOW5 format)</sub>                    | <sub>[SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access)</sub> |     <sub>[subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)</sub>                 | <sub>6cdbe02c3844960bb13cf94b9c3173bb</sub> |
-| <sub>~9M reads complete PromethION dataset (FAST5 format)</sub> | <sub>[SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access)</sub> | <sub>[fast5.tar.gz](https://slow5.page.link/na12878_prom)</sub>                     | <sub>0adbd2956a54528e92dd8fe6d42d2fce</sub> |
-| <sub>~9M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)</sub> | <sub>[slow5.tar](https://slow5.page.link/na12878_prom_slow5)</sub>                         | <sub>3b23f706add38612445cd4f5204ae8b5</sub> |
-
-Links to more datasets can be found [here](https://hasindu2008.github.io/slow5tools/datasets.html).
+A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub). Links to more datasets can be found [here](https://hasindu2008.github.io/slow5tools/datasets.html).
 
 **Q5:** How can I make SLOW5 to FAST5 conversion fast?
 
@@ -75,9 +66,6 @@ scripts/install-zstd.sh        # download and compiles zstd in the current folde
 make
 ```
 
-**Q10** Why there is a size difference between the original FAST5 file and the file created using `s2f`
+**Q10** Why is there a size difference between the original FAST5 file and the file created using `s2f`?
 
-The observation about FAST5 file sizes is a common one, and has been reported by us and others:
-https://github.com/hasindu2008/slow5tools/issues/76
-
-The explanation lies in the complex structure of the HDF5 format underpinning FAST5 files. Unlike a BLOW5 file, which will always be the same size, an HDF5/FAST5 file may differ considerably depending on how it was generated. We have found that ONT’s MinKNOW software (through which almost all FAST5 files are created) creates files with large quantities of ‘unallocated’ space, which typically inflates the file sizes by 10-20%. We don’t know why this happens, because MinKNOW is closed software, but it is highly reproducible. It is one of MinKNOW’s many mysteries. When converting from FAST5 -> BLOW5 -> FAST5, this ‘unallocated’ space is removed by slow5tools because it serves no purpose. No data is lost; the final file is simply packed more efficiently than the original.
+The explanation lies in the complex structure of the HDF5 format underpinning FAST5 files. Unlike a BLOW5 file, which will always be the same size, an HDF5/FAST5 file may differ considerably depending on how it was generated. We have found that ONT’s MinKNOW software (through which almost all FAST5 files are created) creates files with large quantities of ‘unaccounted’ space, which typically inflates the file sizes by 10-20%. We don’t know why this happens, because MinKNOW is closed software, but it is highly reproducible. It is one of MinKNOW’s many mysteries. When converting from FAST5 -> BLOW5 -> FAST5, this ‘unaccounted’  space is removed by slow5tools because it serves no purpose. No data is lost; the final file is simply packed more efficiently than the original. You may also refer to [#50](https://github.com/hasindu2008/slow5tools/issues/50), [#70](https://github.com/hasindu2008/slow5tools/issues/70) and [#76](https://github.com/hasindu2008/slow5tools/issues/76) for more information.
