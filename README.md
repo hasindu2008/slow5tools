@@ -52,7 +52,7 @@ On OS X : brew install hdf5 zlib
 
 ### Building from GitHub
 
-**WARNING: Building from GitHub is meant for advanced users to test latest features. For production purposes, use the latest release version that is throughly tested.**
+**WARNING: Building from GitHub is meant for advanced users to test latest features. For production purposes, use the latest release version that is thoroughly tested.**
 
 Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake` (`brew install autoconf automake` on macOS).
 
@@ -174,7 +174,7 @@ Following are some features and optimisations in our todo list which will be imp
 - binary releases for ARM64 processors on Linux and for MacOS
 - any other useful features
 
-To convert to and from ONT's upcoming POD5 format, you may use (project_blue_crab)[https://github.com/Psy-Fer/project_blue_crab]. Once POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is adhering to C++11 standard for wider compatibility.
+To convert to and from ONT's upcoming POD5 format, you may use [project_blue_crab](https://github.com/Psy-Fer/project_blue_crab). Once POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is adhering to C++11 standard for wider compatibility.
 
 ### Notes
 
