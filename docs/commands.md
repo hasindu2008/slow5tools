@@ -20,6 +20,8 @@
          Retrieve records for specified read IDs from a SLOW5/BLOW5 file.
 * `stats`:<br/>
          Prints summary statistics describing a SLOW5/BLOW5 file.
+* `skim`:<br/>
+         Skims through a SLOW5/BLOW5 file and prints signal metadata.
 * `quickcheck`:<br/>
          Quickly checks if a SLOW5/BLOW5 file is intact.
 
