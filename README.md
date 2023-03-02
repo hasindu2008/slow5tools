@@ -30,7 +30,7 @@ You can also use conda to install *slow5tools* as `conda install slow5tools -c b
 
 ### Building a release
 
-Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball.
+Users are recommended to build from the  [latest release](https://github.com/hasindu2008/slow5tools/releases) tar ball. A compiler that supports C++11 is needed to build slow5tools.
 
 Quick example for Ubuntu :
 
@@ -171,13 +171,15 @@ Following are some features and optimisations in our todo list which will be imp
 
 - pipelining input, processing and output in *merge, get, etc.* (improved runtime upto 2X, please find the implementation [here](https://github.com/hasindu2008/slow5tools/tree/interleave_merge))
 - reading from stdin for *view*
-- binary releases for ARM64 processors on Linux
-- binary releases for MacOS
-- any other features that are potentially useful to many
+- binary releases for ARM64 processors on Linux and for MacOS
+- any other useful features
+
+To convert to and from ONT's upcoming POD5 format, you may use (project_blue_crab)[https://github.com/Psy-Fer/project_blue_crab]. Once POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is adhering to C++11 standard for wider compatibility.
 
 ### Notes
 
 *slow5lib* from version 0.3.0 onwards has built in [StreamVByte](https://github.com/lemire/streamvbyte) compression support to enable even smaller file sizes, which is applied to the raw signal by default when producing BLOW5 files.  *zlib* compression is then applied by default to each record. If *zstd* is used instead of *zlib* on top of *StreamVByte*, it is similar to ONT's latest [vbz](https://github.com/nanoporetech/vbz_compression) compression. BLOW5 files compressed with *zstd+StreamVByte* are still significantly smaller than vbz compressed FAST5 files.
+
 
 ## Acknowledgement
 slow5tools uses [klib](https://github.com/attractivechaos/klib). Some code snippets have been taken from [Minimap2](https://github.com/lh3/minimap2) and [Samtools](http://samtools.sourceforge.net/).
