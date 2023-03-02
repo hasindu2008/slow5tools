@@ -26,6 +26,9 @@ Binaries should work on most Linux distributions as the only dependency is `zlib
 
 You can also use conda to install *slow5tools* as `conda install slow5tools -c bioconda -c conda-forge`.
 
+If you run into the error `The fast5 file is compressed with VBZ but the required plugin is not loaded when trying to convert fast5 to slow5` refer to the Q3 in [faq](https://hasindu2008.github.io/slow5tools/faq.html)
+
+
 ## Building
 
 ### Building a release
