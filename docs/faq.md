@@ -74,3 +74,10 @@ scripts/install-zstd.sh        # download and compiles zstd in the current folde
 ./configure --enable-localzstd LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/
 make
 ```
+
+**Q10** Why there is a size difference between the original FAST5 file and the file created using `s2f`
+
+The observation about FAST5 file sizes is a common one, and has been reported by us and others:
+https://github.com/hasindu2008/slow5tools/issues/76
+
+The explanation lies in the complex structure of the HDF5 format underpinning FAST5 files. Unlike a BLOW5 file, which will always be the same size, an HDF5/FAST5 file may differ considerably depending on how it was generated. We have found that ONT’s MinKNOW software (through which almost all FAST5 files are created) creates files with large quantities of ‘unallocated’ space, which typically inflates the file sizes by 10-20%. We don’t know why this happens, because MinKNOW is closed software, but it is highly reproducible. It is one of MinKNOW’s many mysteries. When converting from FAST5 -> BLOW5 -> FAST5, this ‘unallocated’ space is removed by slow5tools because it serves no purpose. No data is lost; the final file is simply packed more efficiently than the original.
