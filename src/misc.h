@@ -26,7 +26,7 @@ extern "C" {
 #endif
 //Parsing
 enum slow5_press_method name_to_slow5_press_method(const char *name);
-
+enum bad5_flag {error_out_on_bad5 = 0, skip_bad5 = 1};
 struct parse_fmt_meta {
     enum slow5_fmt format;
     const char *name;
@@ -53,6 +53,7 @@ typedef struct {
     int flag_allow_run_id_mismatch;
     int flag_retain_dir_structure;
     int flag_dump_all;
+    int flag_skip_bad5;
     int flag_continue_merge;
 
     // Input arguments
@@ -68,6 +69,7 @@ typedef struct {
     char *arg_dir_out;
     char *arg_lossless;
     char *arg_dump_all;
+    char *arg_bad5;
 
 } opt_t;
 
@@ -129,6 +131,7 @@ int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *me
 int parse_num_processes(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_arg_lossless(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_arg_dump_all(opt_t *opt, int argc, char **argv, struct program_meta *meta);
+int parse_arg_bad5(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int parse_batch_size(opt_t *opt, int argc, char **arg);
 int parse_format_args(opt_t *opt, int argc, char **argv, struct program_meta *meta);
 int auto_detect_formats(opt_t *opt, int set_default_output_format = 1);

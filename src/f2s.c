@@ -37,6 +37,7 @@
     HELP_MSG_LOSSLESS \
     HELP_MSG_CONTINUE_F2S \
     HELP_MSG_RETAIN_DIR_STRUCTURE \
+    HELP_MSG_SKIP_BAD_FAST5 \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
@@ -114,15 +115,22 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
                 ret = read_fast5(user_opts, &fast5_file, slow5File, 0, &warning_map);
                 if(ret < 0){
                     ERROR("Bad fast5: Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
-                    exit(EXIT_FAILURE);
-                }
-                if(user_opts->fmt_out == SLOW5_FORMAT_BINARY){
-                    if (slow5_eof_fwrite(slow5File->fp) < 0){
-                        ERROR("Could write the BLOW5 end of file marker in '%s'.", slow5_path.c_str());
+                    int ret_remove = remove(slow5_path.c_str());
+                    if(ret_remove != 0) {
+                        ERROR("Could not delete the malformed slow5 file '%s'.", slow5_path.c_str());
+                    }
+                    if(user_opts->flag_skip_bad5 == error_out_on_bad5){
                         exit(EXIT_FAILURE);
                     }
+                }else{
+                    if(user_opts->fmt_out == SLOW5_FORMAT_BINARY){
+                        if (slow5_eof_fwrite(slow5File->fp) < 0){
+                            ERROR("Could write the BLOW5 end of file marker in '%s'.", slow5_path.c_str());
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                    slow5_close(slow5File);
                 }
-                slow5_close(slow5File);
                 slow5_path = std::string(output_dir);
 
             }else{ // single-fast5
@@ -148,8 +156,25 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
                 }
                 ret = read_fast5(user_opts, &fast5_file, slow5File_outputdir_single_fast5, call_count++, &warning_map);
                 if(ret<0){
-                    ERROR("Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
-                    exit(EXIT_FAILURE);
+                    ERROR("Bad fast5: Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
+                    if(user_opts->flag_skip_bad5 == error_out_on_bad5){
+                        int ret_remove = remove(slow5_path_outputdir_single_fast5.c_str());
+                        if(ret_remove != 0) {
+                            ERROR("Could not delete the malformed slow5 file '%s'.", slow5_path_outputdir_single_fast5.c_str());
+                        }
+                        exit(EXIT_FAILURE);
+                    } else{
+                        if(call_count == 1){
+                            //because we don't want multiple slow5 headers written we delete the output file
+                            fclose(slow5_file_pointer_outputdir_single_fast5);
+                            slow5_file_pointer_outputdir_single_fast5 = NULL;
+                            call_count = 0;
+                            int ret_remove = remove(slow5_path_outputdir_single_fast5.c_str());
+                            if(ret_remove != 0) {
+                                ERROR("Could not delete the malformed slow5 file '%s'.", slow5_path_outputdir_single_fast5.c_str());
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -183,8 +208,23 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
             }
             ret = read_fast5(user_opts, &fast5_file, slow5File, call_count++, &warning_map);
             if(ret<0){
-                ERROR("Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
-                exit(EXIT_FAILURE);
+                ERROR("Bad fast5: Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
+                if(user_opts->flag_skip_bad5 == error_out_on_bad5){
+                    exit(EXIT_FAILURE);
+                } else if(user_opts->flag_skip_bad5 == skip_bad5 && user_opts->arg_fname_out == NULL && call_count == 1){
+                    exit(EXIT_FAILURE);
+                } else{
+                    if(call_count == 1){
+                        //because we don't want multiple slow5 headers written we delete the output file
+                        fclose(slow5_file_pointer);
+                        slow5_file_pointer = NULL;
+                        call_count = 0;
+                        int ret_remove = remove(slow5_path.c_str());
+                        if(ret_remove != 0) {
+                            ERROR("Could not delete the malformed slow5 file '%s'.", slow5_path.c_str());
+                        }
+                    }
+                }
             }
         }
         H5Fclose(fast5_file.hdf5_file);
@@ -336,6 +376,7 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
             {"allow",       no_argument,       NULL, 'a'},  //8
             {"retain",      no_argument,       NULL,  0 },  //9
             {"dump-all",    required_argument, NULL,  0 },  //10
+            {"bad5",        required_argument, NULL,  0 },  //11
             {NULL, 0, NULL, 0 }
     };
 
@@ -388,6 +429,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                     case 10:
                         user_opts.arg_dump_all = optarg;
                         break;
+                    case 11:
+                        user_opts.arg_bad5 = optarg;
+                        break;
                     default:
                         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                         EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -409,6 +453,10 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
         return EXIT_FAILURE;
     }
     if(parse_arg_dump_all(&user_opts, argc, argv, meta) < 0){
+        EXIT_MSG(EXIT_FAILURE, argv, meta);
+        return EXIT_FAILURE;
+    }
+    if(parse_arg_bad5(&user_opts, argc, argv, meta) < 0){
         EXIT_MSG(EXIT_FAILURE, argv, meta);
         return EXIT_FAILURE;
     }

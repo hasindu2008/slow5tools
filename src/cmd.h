@@ -10,6 +10,7 @@
 #define DEFAULT_ALLOW_RUN_ID_MISMATCH 0
 #define DEFAULT_RETAIN_DIR_STRUCTURE 0
 #define DEFAULT_DUMP_ALL 0
+#define DEFAULT_SKIP_BAD5 0
 #define DEFAULT_CONTINUE_MERGE 0
 
 #define TO_STR(x) TO_STR2(x)
@@ -54,6 +55,9 @@
 //for f2s
 #define HELP_MSG_CONTINUE_F2S    \
     "    -a, --allow                   allow run id mismatches in a multi-fast5 file or in a single-fast5 directory\n" \
+//for f2s
+#define HELP_MSG_SKIP_BAD_FAST5 \
+    "        --bad5                    exit with error(0) or skip bad fast5 files(1) [0] (experimental)\n"
 //for merge
 #define HELP_MSG_CONTINUE_MERGE \
     "    -a, --allow                   allow merging despite attribute differences in the same run_id\n"

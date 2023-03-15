@@ -650,6 +650,37 @@ echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 TESTCASE_NO=8.15 TEST_FAST5_VERSION single_fast5_v1.0_starttime0
 
+mkdir -p $OUTPUT_DIR/bad5_skip || die "creating $OUTPUT_DIR/bad5_skip failed"
+
+
+TESTCASE_NO=9.1
+FILE=${TESTCASE_NO}
+echo "------------------- f2s testcase $TESTCASE_NO >>>  $FILE -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/bad5_skip/single_v1.0_to_multi_v2.0_fast5_diff_run_id.fast5 $FAST5_DIR/bad5_skip/ssm1.fast5 -o $OUTPUT_DIR/bad5_skip/$FILE.slow5 --bad5 1 -p1 || die "testcase $TESTCASE_NO failed"
+diff $EXP_SLOW5_DIR/bad5_skip/ssm1.slow5 $OUTPUT_DIR/bad5_skip/$FILE.slow5  > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=9.2
+FILE=${TESTCASE_NO}
+echo "------------------- f2s testcase $TESTCASE_NO >>>  $FILE -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/bad5_skip/ssm1.fast5 $FAST5_DIR/bad5_skip/single_v1.0_to_multi_v2.0_fast5_diff_run_id.fast5 -o $OUTPUT_DIR/bad5_skip/$FILE.slow5 --bad5 1 -p1 || die "testcase $TESTCASE_NO failed"
+diff $EXP_SLOW5_DIR/bad5_skip/ssm1.slow5 $OUTPUT_DIR/bad5_skip/$FILE.slow5  > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=9.3
+FILE=${TESTCASE_NO}
+echo "------------------- f2s testcase $TESTCASE_NO >>>  $FILE -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/bad5_skip/ssm1.fast5 $FAST5_DIR/bad5_skip/single_v1.0_to_multi_v2.0_fast5_diff_run_id.fast5 --bad5 1 -p1 --to slow5 > $OUTPUT_DIR/bad5_skip/$FILE.slow5 || die "testcase $TESTCASE_NO failed"
+diff $EXP_SLOW5_DIR/bad5_skip/ssm1.slow5 $OUTPUT_DIR/bad5_skip/$FILE.slow5  > /dev/null || die "ERROR: diff failed f2s_test testcase $TESTCASE_NO"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=9.4
+FILE=${TESTCASE_NO}
+echo "------------------- f2s testcase $TESTCASE_NO >>>  $FILE -------------------"
+$SLOW5_EXEC f2s $FAST5_DIR/bad5_skip/single_v1.0_to_multi_v2.0_fast5_diff_run_id.fast5 $FAST5_DIR/bad5_skip/ssm1.fast5 --bad5 1 -p1 --to slow5 > $OUTPUT_DIR/bad5_skip/$FILE.slow5 && die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0

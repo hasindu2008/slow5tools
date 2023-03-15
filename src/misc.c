@@ -45,6 +45,7 @@ void init_opt(opt_t *opt){
     opt->arg_dir_out = NULL;
     opt->arg_lossless = NULL;
     opt->arg_dump_all = NULL;
+    opt->arg_bad5 = NULL;
     opt->arg_num_processes = NULL;
 
     // Default options
@@ -60,6 +61,7 @@ void init_opt(opt_t *opt){
     opt->flag_allow_run_id_mismatch = DEFAULT_ALLOW_RUN_ID_MISMATCH;
     opt->flag_retain_dir_structure = DEFAULT_RETAIN_DIR_STRUCTURE;
     opt->flag_dump_all = DEFAULT_DUMP_ALL;
+    opt->flag_skip_bad5 = DEFAULT_SKIP_BAD5;
     opt->flag_continue_merge = DEFAULT_CONTINUE_MERGE;
 }
 
@@ -120,6 +122,21 @@ int parse_arg_dump_all(opt_t *opt, int argc, char **argv, struct program_meta *m
             opt->flag_dump_all = 1;
         } else if (strcmp(opt->arg_dump_all, "false") == 0) {
             opt->flag_dump_all = 0;
+        } else {
+            ERROR("Incorrect argument%s", "");
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int parse_arg_bad5(opt_t *opt, int argc, char **argv, struct program_meta *meta){
+    // Parse lossless argument
+    if (opt->arg_bad5 != NULL) {
+        if (strcmp(opt->arg_bad5, "0") == 0) {
+            opt->flag_skip_bad5 = 0;
+        } else if (strcmp(opt->arg_bad5, "1") == 0) {
+            opt->flag_skip_bad5 = 1;
         } else {
             ERROR("Incorrect argument%s", "");
             return -1;

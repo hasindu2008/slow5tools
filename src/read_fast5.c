@@ -12,6 +12,25 @@
 #include "error.h"
 #include "slow5_extra.h"
 
+#ifndef DISABLE_HDF5
+
+#include <set>
+#include "cmd.h"
+#include "slow5_misc.h"
+#include "misc.h"
+#include "read_fast5.h"
+
+#define WARNING_LIMIT 1
+#define PRIMARY_FIELD_COUNT 7 //without read_group number
+#define H5Z_FILTER_VBZ 32020 //We need to find out what the numerical value for this is
+
+#define BUFFER_CAP (20*1024*1024)
+
+#define REPORT_MESG " Please report this with an example FAST5 file at 'https://github.com/hasindu2008/slow5tools/issues' for us to investigate."
+
+extern int slow5tools_verbosity_level;
+
+
 int slow5_hdr_initialize(slow5_hdr *header, int lossy){
     if (slow5_hdr_add_rg(header) < 0){
         return -1;
@@ -122,23 +141,6 @@ void list_all_items(const std::string& path, std::vector<std::string>& files, in
     }
 }
 
-#ifndef DISABLE_HDF5
-
-#include <set>
-#include "cmd.h"
-#include "slow5_misc.h"
-#include "misc.h"
-#include "read_fast5.h"
-
-#define WARNING_LIMIT 1
-#define PRIMARY_FIELD_COUNT 7 //without read_group number
-#define H5Z_FILTER_VBZ 32020 //We need to find out what the numerical value for this is
-
-#define BUFFER_CAP (20*1024*1024)
-
-#define REPORT_MESG " Please report this with an example FAST5 file at 'https://github.com/hasindu2008/slow5tools/issues' for us to investigate."
-
-extern int slow5tools_verbosity_level;
 
 // Operator function to be called by H5Aiterate.
 herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *info, void *op_data);
@@ -247,7 +249,6 @@ int read_fast5(opt_t *user_opts,
     int flag_allow_run_id_mismatch = user_opts->flag_allow_run_id_mismatch;
     int flag_dump_all = user_opts->flag_dump_all;
 
-
     size_t zero0 = 0;
 
     tracker.flag_context_tags = &flag_context_tags;
@@ -311,22 +312,21 @@ int read_fast5(opt_t *user_opts,
             ERROR("Bad fast5: The run_id attribute is missing in fast5 file '%s' for read id '%s'.", tracker.fast5_path, tracker.slow5_record->read_id);
             return -1;
         }
+        if(*(tracker.primary_fields_count) != PRIMARY_FIELD_COUNT){
+            ERROR("Bad fast5: A primary data field (read_id=%s) is missing in the %s.", tracker.slow5_record->read_id, tracker.fast5_path);
+            return -1;
+        }
         if(write_header_flag == 0){
             int ret = print_slow5_header(&tracker);
             if(ret < 0){
                 return ret;
             }
         }
-        if(*(tracker.primary_fields_count) == PRIMARY_FIELD_COUNT){
-            int ret = print_record(&tracker);
-            if(ret < 0){
-                return ret;
-            }
-            *(tracker.primary_fields_count) = 0;
-        }else{
-            ERROR("Bad fast5: A primary data field (read_id=%s) is missing in the %s.", tracker.slow5_record->read_id, tracker.fast5_path);
-            return -1;
+        int ret = print_record(&tracker);
+        if(ret < 0){
+            return ret;
         }
+        *(tracker.primary_fields_count) = 0;
         slow5_rec_free(tracker.slow5_record);
     }
     slow5_press_free(tracker.press_ptr);
