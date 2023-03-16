@@ -114,6 +114,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
                 }
                 ret = read_fast5(user_opts, &fast5_file, slow5File, 0, &warning_map);
                 if(ret < 0){
+                    readsCount->bad_5_file++;
                     ERROR("@Bad fast5: Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
                     int ret_remove = remove(slow5_path.c_str());
                     if(ret_remove != 0) {
@@ -156,6 +157,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
                 }
                 ret = read_fast5(user_opts, &fast5_file, slow5File_outputdir_single_fast5, call_count++, &warning_map);
                 if(ret<0){
+                    readsCount->bad_5_file++;
                     ERROR("@Bad fast5: Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
                     if(user_opts->flag_skip_bad5 == error_out_on_bad5){
                         int ret_remove = remove(slow5_path_outputdir_single_fast5.c_str());
@@ -208,6 +210,7 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
             }
             ret = read_fast5(user_opts, &fast5_file, slow5File, call_count++, &warning_map);
             if(ret<0){
+                readsCount->bad_5_file++;
                 ERROR("@Bad fast5: Could not read contents of the fast5 file '%s'.", fast5_files[i].c_str());
                 if(user_opts->flag_skip_bad5 == error_out_on_bad5){
                     exit(EXIT_FAILURE);
