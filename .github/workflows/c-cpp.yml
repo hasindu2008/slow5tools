@@ -56,7 +56,7 @@ jobs:
       with:
         submodules: recursive
     - name: install packages
-      run: apt-get update && apt-get install -y zlib1g-dev valgrind libzstd-dev gcc g++ autoconf automake make
+      run: apt-get update && apt-get install -y zlib1g-dev valgrind libzstd-dev gcc g++ autoconf automake make wget
     - name: build
       run: autoreconf && ./scripts/install-hdf5.sh && ./configure --enable-localhdf5 && make -j8
     - name: test
