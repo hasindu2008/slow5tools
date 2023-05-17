@@ -6,11 +6,10 @@ The NA12878 R9.4.1 PromethION dataset sequenced for the [SLOW5 paper](https://ww
 
 | <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
-| <sub>~20K reads subsubset (BLOW5, FAST5, FASTQ, BAM)</sub>                  |                                                -                                                                      | <sub>[NA12878_prom_subsubsample.tar.gz](https://slow5.page.link/na12878_prom_subsub)</sub> <sub>(`f64074151d25d6e35c73f668d4146032`)</sub> |
-| <sub>~500K reads subset (BLOW5 format)</sub>                    | <sub>[SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access)</sub> | <sub>[subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)</sub> <sub>(`6cdbe02c3844960bb13cf94b9c3173bb`)</sub> |
-| <sub>~9M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)</sub> | <sub>[na12878_prom_merged.blow5](https://slow5.page.link/na12878_prom_slow5) (`7e1a5900aff10e2cf1b97b8d3c6ecd1e`), [na12878_prom_merged.blow5.idx](https://slow5.page.link/na12878_prom_slow5_idx) (`a78919e8ac8639788942dbc3f1a2451a`) </sub>                          |
-| <sub>~500K reads subset (FAST5 format)</sub>                    | <sub>[SRR15058164](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058164&display=data-access)</sub> | <sub>[subsample.tar.gz](https://slow5.page.link/na12878_prom_sub)</sub> <sub>(`591ec7d1a2c6d13f7183171be8d31fba`)</sub> |
-| <sub>~9M reads complete PromethION dataset (FAST5 format)</sub> | <sub>[SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access)</sub> | <sub>[fast5.tar.gz](https://slow5.page.link/na12878_prom)</sub>   <sub>(`0adbd2956a54528e92dd8fe6d42d2fce`)</sub> |
+| <sub>~20K reads subsubset</sub>                  |                                                -                                                                      | <sub>[NA12878_prom_subsubsample.tar.gz](https://slow5.page.link/na12878_prom_subsub)</sub> <sub>(`f64074151d25d6e35c73f668d4146032`)</sub> |
+| <sub>~500K reads subset</sub>                    | <sub>[SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access)</sub> | <sub>[subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)</sub> <sub>(`6cdbe02c3844960bb13cf94b9c3173bb`)</sub> |
+| <sub>~9M reads complete PromethION dataset</sub> | <sub>[SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)</sub> | <sub>[na12878_prom_merged.blow5](https://slow5.page.link/na12878_prom_slow5) (`7e1a5900aff10e2cf1b97b8d3c6ecd1e`), [na12878_prom_merged.blow5.idx](https://slow5.page.link/na12878_prom_slow5_idx) (`a78919e8ac8639788942dbc3f1a2451a`) </sub>                          |
+
 
 ## NA24385 R10.4.1 LSK114 PromethION
 
@@ -18,9 +17,9 @@ An NA24385 R10.4.1 LSK114 dataset sequenced on a PromethION is available on [SRA
 
 | <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
-| <sub>~20K reads subsubset (BLOW5 format)</sub>                  |  |     <sub>[hg2_prom_lsk114_subsubsample.tar](https://slow5.page.link/hg2_prom_subsub)</sub> <sub>(`4d338e1cffd6dbf562cc55d9fcca040c`)</sub> |
-| <sub>~500K reads subset (BLOW5 format)</sub>                    | <sub>[SRR23215365](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR23215365&display=data-access)</sub> |     <sub>[hg2_subsample_slow5.tar](https://slow5.page.link/hg2_prom_sub_slow5)</sub> <sub>(`65386e1da1d82b892677ad5614e8d84d`)</sub> |
-| <sub>~15M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[SRR23215366](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR23215366&display=data-access)</sub> | <sub> [PGXX22394_reads.blow5](https://slow5.page.link/hg2_prom_slow5) (`3498b595ac7c79a3d2dce47454095610`), [PGXX22394_reads.blow5.idx](https://slow5.page.link/hg2_prom_slow5_idx) (`1e11735c10cf63edc4a7114f010cc472`)</sub>                         |
+| <sub>~20K reads subsubset </sub>                  |  |     <sub>[hg2_prom_lsk114_subsubsample.tar](https://slow5.page.link/hg2_prom_subsub)</sub> <sub>(`4d338e1cffd6dbf562cc55d9fcca040c`)</sub> |
+| <sub>~500K reads subset </sub>                    | <sub>[SRR23215365](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR23215365&display=data-access)</sub> |     <sub>[hg2_subsample_slow5.tar](https://slow5.page.link/hg2_prom_sub_slow5)</sub> <sub>(`65386e1da1d82b892677ad5614e8d84d`)</sub> |
+| <sub>~15M reads complete PromethION dataset </sub> | <sub>[SRR23215366](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR23215366&display=data-access)</sub> | <sub> [PGXX22394_reads.blow5](https://slow5.page.link/hg2_prom_slow5) (`3498b595ac7c79a3d2dce47454095610`), [PGXX22394_reads.blow5.idx](https://slow5.page.link/hg2_prom_slow5_idx) (`1e11735c10cf63edc4a7114f010cc472`)</sub>                         |
 
 ## NA12878 R10.4.1 LSK114 PromethION
 
@@ -28,7 +27,7 @@ An NA12878 R10.4.1 LSK114 dataset sequenced on a PromethION is available at the 
 
 | <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
-| <sub>~11M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>-</sub> | <sub> [PGXXHX230142_reads.blow5](https://slow5.page.link/na12878_prom2_slow5) (`24266f6dabb8d679f7f520be6aa22694`), [PGXXHX230142_reads.blow5.idx](https://slow5.page.link/na12878_prom2_slow5_idx) (`a5659f829b9410616391427b2526b853`) </sub>                         |
+| <sub>~11M reads complete PromethION dataset </sub> | <sub>-</sub> | <sub> [PGXXHX230142_reads.blow5](https://slow5.page.link/na12878_prom2_slow5) (`24266f6dabb8d679f7f520be6aa22694`), [PGXXHX230142_reads.blow5.idx](https://slow5.page.link/na12878_prom2_slow5_idx) (`a5659f829b9410616391427b2526b853`) </sub>                         |
 
 
 ## MinION selective sequencing datasets
