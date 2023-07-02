@@ -23,6 +23,7 @@
 - [sigfish](https://github.com/beebdev/sigfish) and [HARU](https://github.com/beebdev/HARU)
 - [DeepSelectNet](https://github.com/AnjanaSenanayake/DeepSelectNet)
 - [SquiggleNet](https://github.com/welch-lab/SquiggleNet/pull/6)
+- [RawHash](https://github.com/CMU-SAFARI/RawHash/)
 
 ## raw signal manipulation
 
