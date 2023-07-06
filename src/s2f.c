@@ -99,7 +99,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
                     fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", fields[3], err);
                     exit(EXIT_FAILURE);
                 }
-                if(!isnan(start_time)){
+                if(!isnan(median_before)){
                     ret_atr = add_attribute(group_id,fields[3],median_before,H5T_IEEE_F64LE);
                 }
 
