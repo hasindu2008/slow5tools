@@ -66,34 +66,70 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
         case RAW:
             // add Raw attributes
             if(header->aux_meta){
-                uint64_t start_time = slow5_aux_get_uint64(slow5_record, "start_time", &err);
-                if(err == 0){
-                    ret_atr = add_attribute(group_id,"start_time",start_time,H5T_STD_U64LE);
+                const char* aux_fields[]  = {"start_time", "read_number", "start_mux", "median_before", "end_reason"};
+                enum aux_field_label {
+                    AUX_FIELD_LABEL_START_TIME,
+                    AUX_FIELD_LABEL_READ_NUMBER,
+                    AUX_FIELD_LABEL_START_MUX,
+                    AUX_FIELD_LABEL_MEDIAN_BEFORE,
+                    AUX_FIELD_LABEL_END_REASON
+                };
+                uint64_t start_time = slow5_aux_get_uint64(slow5_record, aux_fields[AUX_FIELD_LABEL_START_TIME], &err);
+                if(err!=0){
+                    fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", aux_fields[AUX_FIELD_LABEL_START_TIME], err);
+                    exit(EXIT_FAILURE);
                 }
-                int32_t read_number = slow5_aux_get_int32(slow5_record, "read_number", &err);
-                if(err == 0){
-                    ret_atr = add_attribute(group_id,"read_number", read_number,H5T_STD_I32LE);
+                if(start_time != SLOW5_UINT64_T_NULL){
+                    ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_START_TIME],start_time,H5T_STD_U64LE);
                 }
-                uint8_t start_mux = slow5_aux_get_uint8(slow5_record, "start_mux", &err);
-                if(err == 0){
-                    ret_atr = add_attribute(group_id,"start_mux",start_mux,H5T_STD_U8LE);
+
+                int32_t read_number = slow5_aux_get_int32(slow5_record, aux_fields[AUX_FIELD_LABEL_READ_NUMBER], &err);
+                if(err!=0){
+                    fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", aux_fields[AUX_FIELD_LABEL_READ_NUMBER], err);
+                    exit(EXIT_FAILURE);
                 }
-                double median_before = slow5_aux_get_double(slow5_record, "median_before", &err);
-                if(err == 0){
-                    ret_atr = add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
+                if(read_number != SLOW5_INT32_T_NULL){
+                    ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_READ_NUMBER], read_number,H5T_STD_I32LE);
                 }
+
+                uint8_t start_mux = slow5_aux_get_uint8(slow5_record, aux_fields[AUX_FIELD_LABEL_START_MUX], &err);
+                if(err!=0){
+                    fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", aux_fields[AUX_FIELD_LABEL_START_MUX], err);
+                    exit(EXIT_FAILURE);
+                }
+                if(start_mux != SLOW5_UINT8_T_NULL){
+                    ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_START_MUX],start_mux,H5T_STD_U8LE);
+                }
+
+                double median_before = slow5_aux_get_double(slow5_record, aux_fields[AUX_FIELD_LABEL_MEDIAN_BEFORE], &err);
+                if(err!=0){
+                    fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", aux_fields[AUX_FIELD_LABEL_MEDIAN_BEFORE], err);
+                    exit(EXIT_FAILURE);
+                }
+                if(!isnan(median_before)){
+                    ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_MEDIAN_BEFORE],median_before,H5T_IEEE_F64LE);
+                }
+
                 uint32_t attribute_index;
-                if(check_aux_fields_in_header(header, "end_reason", 0, &attribute_index) == 0){
+                if(check_aux_fields_in_header(header, aux_fields[AUX_FIELD_LABEL_END_REASON], 0, &attribute_index) == 0){
                     uint8_t end_reason;
                     if((*end_reason_enum_id)>0) {
-                        end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
-                        if(err == 0){
-                            ret_atr = add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                        end_reason = slow5_aux_get_enum(slow5_record, aux_fields[AUX_FIELD_LABEL_END_REASON], &err);
+                        if(err!=0){
+                            fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", aux_fields[AUX_FIELD_LABEL_END_REASON], err);
+                            exit(EXIT_FAILURE);
+                        }
+                        if(end_reason != SLOW5_ENUM_NULL){
+                            ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_END_REASON],end_reason,*end_reason_enum_id);
                         }
                     } else {
-                        end_reason = slow5_aux_get_uint8(slow5_record, "end_reason", &err);
-                        if(err == 0){
-                            ret_atr = add_attribute(group_id,"end_reason",end_reason,H5T_STD_U8LE);
+                        end_reason = slow5_aux_get_uint8(slow5_record, aux_fields[AUX_FIELD_LABEL_END_REASON], &err);
+                        if(err!=0){
+                            fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", aux_fields[AUX_FIELD_LABEL_END_REASON], err);
+                            exit(EXIT_FAILURE);
+                        }
+                        if(end_reason != SLOW5_UINT8_T_NULL){
+                            ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_END_REASON],end_reason,H5T_STD_U8LE);
                         }
                     }
                 }
@@ -105,7 +141,11 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             // add channel_id attributes
             if(header->aux_meta){
                 attribute_value = slow5_aux_get_string(slow5_record, "channel_number", NULL, &err);
-                if(err == 0){
+                if(err!=0){
+                    fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", "channel_number", err);
+                    exit(EXIT_FAILURE);
+                }
+                if(attribute_value != NULL){
                     ret_atr = add_attribute(group_id,"channel_number",attribute_value,H5T_C_S1);
                 }
             }
@@ -276,6 +316,10 @@ int initialize_end_reason(slow5_hdr_t* header, hid_t* end_reason_enum_id) {
     }
     uint8_t n;
     char **enum_labels = slow5_get_aux_enum_labels(header, "end_reason", &n);
+    if(enum_labels==NULL){
+        fprintf(stderr,"Error in getting list of enum labels\n");
+        exit(EXIT_FAILURE);
+    }
     for(uint8_t i=0; i<n; i++){
         uint8_t val;
         herr_t ret = H5Tenum_insert(*end_reason_enum_id, enum_labels[i], (val=i,&val));
