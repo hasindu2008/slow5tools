@@ -91,6 +91,12 @@ echo "-------------------testcase:$TESTCASE_NO: $TESTNAME-------------------"
 $SLOW5_EXEC s2f $RAW_DIR/end_reason_empty.slow5 -o $OUTPUT_DIR/end_reason_empty.fast5 || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
+TESTCASE_NO=8
+TESTNAME="median_before is empty"
+echo "-------------------testcase:$TESTCASE_NO: $TESTNAME-------------------"
+$SLOW5_EXEC s2f $RAW_DIR/median_before_nan.blow5 -o $OUTPUT_DIR/median_before_nan.fast5 || die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
 #rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0

@@ -106,9 +106,10 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
                     fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", aux_fields[AUX_FIELD_LABEL_MEDIAN_BEFORE], err);
                     exit(EXIT_FAILURE);
                 }
-                if(!isnan(median_before)){
-                    ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_MEDIAN_BEFORE],median_before,H5T_IEEE_F64LE);
-                }
+//                if(!isnan(median_before)){
+//                    ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_MEDIAN_BEFORE],median_before,H5T_IEEE_F64LE);
+//                }
+                ret_atr = add_attribute(group_id,aux_fields[AUX_FIELD_LABEL_MEDIAN_BEFORE],median_before,H5T_IEEE_F64LE);
 
                 uint32_t attribute_index;
                 if(check_aux_fields_in_header(header, aux_fields[AUX_FIELD_LABEL_END_REASON], 0, &attribute_index) == 0){
