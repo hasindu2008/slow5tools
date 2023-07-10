@@ -96,7 +96,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
                 double median_before = slow5_aux_get_double(slow5_record, "median_before", &err);
                 if(err == 0){
                     if(isnan(median_before)){
-                        WARNING("%s","median_before is missing. Usually happens for very old datasets.");
+                        DEBUG("%s","median_before is missing. Usually happens for very old datasets.");
                     }
                     ret_atr = add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
                 }else{
