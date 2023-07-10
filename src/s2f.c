@@ -66,7 +66,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
         case RAW:
             // add Raw attributes
             if(header->aux_meta){
-                                uint64_t start_time = slow5_aux_get_uint64(slow5_record, "start_time", &err);
+                uint64_t start_time = slow5_aux_get_uint64(slow5_record, "start_time", &err);
                 if(err == 0){
                     ret_atr = add_attribute(group_id,"start_time",start_time,H5T_STD_U64LE);
                 }
@@ -107,11 +107,7 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             // add channel_id attributes
             if(header->aux_meta){
                 attribute_value = slow5_aux_get_string(slow5_record, "channel_number", NULL, &err);
-                if(err!=0){
-                    fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n", "channel_number", err);
-                    exit(EXIT_FAILURE);
-                }
-                if(attribute_value != NULL){
+                if(err == 0){
                     ret_atr = add_attribute(group_id,"channel_number",attribute_value,H5T_C_S1);
                 }
             }
