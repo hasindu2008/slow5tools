@@ -28,6 +28,12 @@
 ## raw signal manipulation
 
 - [sigtk](https://github.com/hasindu2008/sigtk)
+- [slow5tools](https://github.com/hasindu2008/slow5tools)
+
+## conversion
+
+- [slow5tools](https://github.com/hasindu2008/slow5tools)
+- [blue-crab](https://github.com/Psy-Fer/blue-crab)
 
 ## raw signal simulation
 
