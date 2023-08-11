@@ -276,3 +276,5 @@ slow5tools skim [OPTIONS] file.blow5
     Set the verbosity level (0-6) [default value: 4]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-debug, 6-trace.
 *  `-h, --help`:<br/>
     Prints the help menu.
+*  `--cite`:<br/>
+    Prints the citation information.
