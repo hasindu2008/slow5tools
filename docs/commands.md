@@ -245,8 +245,8 @@ If no argument is given, details about slow5tools is printed.
 
 ### quickcheck
 
-Performs a quick check if a SLOW5/BLOW5 file is intact: checks if the file begins with a valid header (SLOW5 or BLOW5) and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only). If the file is intact, the commands exits with 0. Otherwise it exits with a non-zero error code.
-
+Performs a quick check if a SLOW5/BLOW5 file is intact: checks if the file begins with a valid header (SLOW5 or BLOW5), attempt to decode the first SLOW5 record and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only).
+If the file is intact, the commands exits with 0. Otherwise it exits with a non-zero error code.
 
 ### skim
 

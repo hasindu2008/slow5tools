@@ -5,9 +5,14 @@ Slow5tools is a simple toolkit for converting (FAST5 <-> SLOW5), compressing, vi
 **About SLOW5 format:**<br/>
 SLOW5 is a new file format for storing signal data from Oxford Nanopore Technologies (ONT) devices. SLOW5 was developed to overcome inherent limitations in the standard FAST5 signal data format that prevent efficient, scalable analysis and cause many headaches for developers (and upcoming headaches with ONT's latest POD5 format). SLOW5 can be encoded in human-readable ASCII format, or a more compact and efficient binary format (BLOW5) - this is analogous to the seminal SAM/BAM format for storing DNA sequence alignments. The BLOW5 binary format supports  *zlib* (DEFLATE) compression, or other compression methods (see notes at the end), thereby minimising the data storage footprint while still permitting efficient parallel access. Detailed benchmarking experiments have shown that SLOW5 format is an order of magnitude faster and significantly smaller than FAST5.
 
-Pre-print: https://www.biorxiv.org/content/10.1101/2021.06.29.450255v1<br/>
-Publication: https://www.nature.com/articles/s41587-021-01147-4<br/>
+<!-- Pre-print: https://www.biorxiv.org/content/10.1101/2021.06.29.450255v1<br/> -->
+
+Publication (SLOW5 format): https://www.nature.com/articles/s41587-021-01147-4<br/>
+Publication (slow5tools): https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02910-3<br/>
 SLOW5 specification: https://hasindu2008.github.io/slow5specs<br/>
+slow5lib: https://github.com/hasindu2008/slow5lib<br/>
+
+To convert to and from ONT's new POD5 format, you use [blue_crab](https://github.com/Psy-Fer/blue-crab). If POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is strictly adhering to C++11 standard for wider compatibility.
 
 ## Quick start
 
@@ -20,6 +25,21 @@ wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5
 Binaries should work on most Linux distributions as the only dependency is `zlib` which is available by default on most distributions. For compiled binaries to work, your processor must support SSSE3 instructions or higher (processors after 2007 have these) and your operating system must have GLIBC 2.17 or higher (Linux distributions from 2014 onwards typically have this).
 
 You can also use conda to install *slow5tools* as `conda install slow5tools -c bioconda -c conda-forge`. For converting latest vbz compressed FAST5, you will need to setup the ONT vbz plugin as explained in [faq:Q3](https://hasindu2008.github.io/slow5tools/faq.html).
+
+## Table of Contents
+
+- [Quick start](#quick-start)
+- [Building](#building)
+    - [Building a release](#building-a-release)
+    - [Building from GitHub](#building-from-github)
+    - [Other building options](#other-building-options)
+- [Usage](#usage)
+    - [Examples](#examples)
+    - [Troubleshooting/Questions](#troubleshootingquestions)
+- [Upcoming features and optimisations](#upcoming-features-and-optimisations)
+- [Notes](#notes)
+- [Acknowledgement](#acknowledgement)
+- [Citation](#citation)
 
 ## Building
 
@@ -158,7 +178,7 @@ Visit [here](https://hasindu2008.github.io/slow5tools/workflows.html) for exampl
 
 Visit the [frequently asked questions](https://hasindu2008.github.io/slow5tools/faq.html) or open an [issue](https://github.com/hasindu2008/slow5tools/issues).
 
-### Upcoming features and optimisations
+## Upcoming features and optimisations
 
 Following are some features and optimisations in our todo list which will be implemented based on the need. If anyone is interested please request [here](https://github.com/hasindu2008/slow5tools/issues). Contributions are welcome.
 
@@ -167,11 +187,44 @@ Following are some features and optimisations in our todo list which will be imp
 - binary releases for ARM64 processors on Linux and for MacOS
 - any other useful features
 
-To convert to and from ONT's upcoming POD5 format, you may use [project_blue_crab](https://github.com/Psy-Fer/project_blue_crab). Once POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is adhering to C++11 standard for wider compatibility.
-
-### Notes
+## Notes
 
 *slow5lib* from version 0.3.0 onwards has built in [StreamVByte](https://github.com/lemire/streamvbyte) compression support to enable even smaller file sizes, which is applied to the raw signal by default when producing BLOW5 files.  *zlib* compression is then applied by default to each record. If *zstd* is used instead of *zlib* on top of *StreamVByte*, it is similar to ONT's latest [vbz](https://github.com/nanoporetech/vbz_compression) compression. BLOW5 files compressed with *zstd+StreamVByte* are still significantly smaller than vbz compressed FAST5 files.
 
 ## Acknowledgement
 slow5tools uses [klib](https://github.com/attractivechaos/klib). Some code snippets have been taken from [Minimap2](https://github.com/lh3/minimap2) and [Samtools](http://samtools.sourceforge.net/).
+
+
+## Citation
+
+Please cite the following in your publications when using *SLOW5* file format:
+
+> Gamaarachchi, H., Samarakoon, H., Jenner, S.P. et al. Fast nanopore sequencing data analysis with SLOW5. Nat Biotechnol 40, 1026-1029 (2022). https://doi.org/10.1038/s41587-021-01147-4
+
+```
+@article{gamaarachchi2022fast,
+  title={Fast nanopore sequencing data analysis with SLOW5},
+  author={Gamaarachchi, Hasindu and Samarakoon, Hiruna and Jenner, Sasha P and Ferguson, James M and Amos, Timothy G and Hammond, Jillian M and Saadat, Hassaan and Smith, Martin A and Parameswaran, Sri and Deveson, Ira W},
+  journal={Nature biotechnology},
+  pages={1--4},
+  year={2022},
+  publisher={Nature Publishing Group}
+}
+```
+
+Please cite the following in your publications when using slow5tools:
+
+> Samarakoon, H., Ferguson, J.M., Jenner, S.P. et al. Flexible and efficient handling of nanopore sequencing signal data with slow5tools. Genome Biol 24, 69 (2023). https://doi.org/10.1186/s13059-023-02910-3
+
+```
+@article{samarakoon2023flexible,
+  title={Flexible and efficient handling of nanopore sequencing signal data with slow5tools},
+  author={Samarakoon, Hiruna and Ferguson, James M and Jenner, Sasha P and Amos, Timothy G and Parameswaran, Sri and Gamaarachchi, Hasindu and Deveson, Ira W},
+  journal={Genome Biology},
+  volume={24},
+  number={1},
+  pages={69},
+  year={2023},
+  publisher={Springer}
+}
+```
