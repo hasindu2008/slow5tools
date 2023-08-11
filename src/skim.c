@@ -146,7 +146,7 @@ static void start_mux_print(struct aux_print_param *p){ //uint8_t
     }
 
 }
-static void start_time_print(struct aux_print_param *p){ //uint64_t
+static void start_time_num_minknow_events_print(struct aux_print_param *p){ //uint64_t
     int ret=0;
     uint64_t t = slow5_aux_get_uint64(p->rec, p->field, &ret);
     if(ret!=0){
@@ -184,6 +184,42 @@ static void end_reason_print(struct aux_print_param *p){ //uint8_t
     }
 }
 
+static void float_print(struct aux_print_param *p){ //float
+    int ret=0;
+    float t = slow5_aux_get_float(p->rec, p->field, &ret);
+    if(ret!=0){
+        fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n",p->field,ret);
+        exit(EXIT_FAILURE);
+    }
+    if(!isnan(t)){  //SLOW5_FLOAT_NULL is the generic NaN value returned by nan("""") and thus t != SLOW5_FLOAT_NULL is not correct
+        size_t len;
+        char *str = slow5_float_to_str(t, &len);
+        cpy_str(p,len,str);
+        free(str);
+    } else {
+        cpy_str(p,1,".");
+    }
+
+}
+
+static void num_reads_since_mux_change_print(struct aux_print_param *p){ //uint32_t
+    int ret=0;
+    uint32_t t = slow5_aux_get_uint32(p->rec, p->field, &ret);
+    if(ret!=0){
+        fprintf(stderr,"Error in getting auxiliary field %s from the file. Error code %d\n",p->field,ret);
+        exit(EXIT_FAILURE);
+    }
+    if(t != SLOW5_UINT32_T_NULL){
+        char *str = NULL;
+        int len = slow5_asprintf(&str,"%" PRIu32 ,t);
+        cpy_str(p,len,str);
+        free(str);
+    } else {
+        cpy_str(p,1,".");
+    }
+
+}
+
 
 static void just_the_dot(struct aux_print_param *p){
     cpy_str(p,1,".");
@@ -199,9 +235,23 @@ static void (*aux_print_func(char *field))(struct aux_print_param *p){
     } else if(strcmp(field,"start_mux")==0){ // uint8_t
         aux_func = start_mux_print;
     } else if(strcmp(field,"start_time")==0){ //uint64_t
-        aux_func = start_time_print;
+        aux_func = start_time_num_minknow_events_print;
     } else if(strcmp(field,"end_reason")==0){ //int8_t
         aux_func = end_reason_print;
+    } else if (strcmp(field,"tracked_scaling_shift")==0){ //float
+        aux_func = float_print;
+    } else if (strcmp(field,"tracked_scaling_scale")==0){ //float
+        aux_func = float_print;
+    } else if (strcmp(field,"predicted_scaling_shift")==0){ //float
+        aux_func = float_print;
+    } else if (strcmp(field,"predicted_scaling_scale")==0){ //float
+        aux_func = float_print;
+    } else if (strcmp(field,"num_reads_since_mux_change")==0){ //uint32_t
+        aux_func = num_reads_since_mux_change_print;
+    } else if (strcmp(field,"time_since_mux_change")==0){ //float
+        aux_func = float_print;
+    } else if (strcmp(field,"num_minknow_events")==0){ //uint64_t
+        aux_func = start_time_num_minknow_events_print;
     } else{
         aux_func = just_the_dot;
         WARNING("Field '%s' is not yet handled or not present in the input file. A '.' will be printed\n",field);
