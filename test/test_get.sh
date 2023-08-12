@@ -1,4 +1,31 @@
 #!/bin/bash
+
+# MIT License
+
+# Copyright (c) 2020 Hiruna Samarakoon
+# Copyright (c) 2020 Sasha Jenner
+# Copyright (c) 2020,2023 Hasindu Gamaarachchi
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+###############################################################################
+
 # Run f2s with different file, input and output formats.
 Usage="get_test.sh"
 
@@ -130,6 +157,18 @@ info "------------------- slow5tools get testcase $TESTCASE -------------------"
 $SLOW5_EXEC get "$RAW_DIR/example2.slow5" --skip --list "$RAW_DIR/list_with_invalid_reads.txt" --to slow5 > "$OUTPUT_DIR/extracted_reads8.slow5" || die "testcase $TESTCASE failed"
 slow5tools_quickcheck $OUTPUT_DIR
 info "testcase $TESTCASE passed"
+
+TESTCASE=9
+info "------------------- slow5tools get testcase $TESTCASE -------------------"
+$SLOW5_EXEC get "$RAW_DIR/example2.slow5" --index $RAW_DIR/example2.slow5.idx r1 r5 r3 --to blow5 -c zlib -s none > "$OUTPUT_DIR/extracted_reads2.blow5" || die "testcase $TESTCASE failed"
+slow5tools_quickcheck $OUTPUT_DIR
+diff -q "$EXP_DIR/expected_extracted_reads.blow5" "$OUTPUT_DIR/extracted_reads2.blow5" &>/dev/null
+if [ $? -ne 0 ]; then
+    info "${RED}ERROR: diff failed for 'slow5tools get testcase $TESTCASE'${NC}"
+    exit 1
+fi
+info "testcase $TESTCASE passed"
+
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed" 1>&3 2>&4
 exit 0

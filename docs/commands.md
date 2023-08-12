@@ -170,6 +170,8 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
     The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 * `-l, --list FILE`:<br/>
     List of read ids provided as a single-column text file with one read id per line.
+* `--index FILE`:<br/>
+    Path to a custom slow5 index (experimental). Useful if your index file is located somewhere other than in the same directory as the input S/BLOW5 file.
 *  `-h`, `--help`:<br/>
     Prints the help menu.
 

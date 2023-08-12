@@ -10,7 +10,7 @@ SLOW5 is a new file format for storing signal data from Oxford Nanopore Technolo
 Publication (SLOW5 format): https://www.nature.com/articles/s41587-021-01147-4<br/>
 Publication (slow5tools): https://genomebiology.biomedcentral.com/articles/10.1186/s13059-023-02910-3<br/>
 SLOW5 specification: https://hasindu2008.github.io/slow5specs<br/>
-slow5lib: https://github.com/hasindu2008/slow5lib<br/>
+slow5 ecosystem: https://hasindu2008.github.io/slow5<br/>
 
 To convert to and from ONT's new POD5 format, you use [blue_crab](https://github.com/Psy-Fer/blue-crab). If POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is strictly adhering to C++11 standard for wider compatibility.
 

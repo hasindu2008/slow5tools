@@ -28,6 +28,7 @@
     HELP_MSG_BATCH \
     "    -l --list [FILE]              list of read ids provided as a single-column text file with one read id per line.\n" \
     "    --skip                        warn and continue if a read_id was not found.\n" \
+    "    --index [FILE]                path to a custom slow5 index (experimental).\n" \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
@@ -117,6 +118,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         {"threads",     required_argument, NULL, 't' }, //7
         {"help",        no_argument, NULL, 'h' }, //8
         {"benchmark",   no_argument, NULL, 'e' }, //9
+        {"index",       required_argument, NULL, 0 }, //10
         {NULL, 0, NULL, 0 }
     };
 
@@ -128,6 +130,7 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     // Input arguments
     char* read_list_file_in = NULL;
+    const char *slow5_index = NULL;
 
     int opt;
     int longindex = 0;
@@ -173,8 +176,12 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     case 6:
                         skip_flag = 1;
                         break;
+                    case 10:
+                        slow5_index = optarg;
+                        break;
                 }
                 break;
+
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -274,11 +281,21 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
-    int ret_idx = slow5_idx_load(slow5file);
-    if (ret_idx < 0) {
-        ERROR("Error loading index file for %s\n", f_in_name);
-        EXIT_MSG(EXIT_FAILURE, argv, meta);
-        return EXIT_FAILURE;
+    if(slow5_index == NULL){
+        int ret_idx = slow5_idx_load(slow5file);
+        if (ret_idx < 0) {
+            ERROR("Error loading index file for %s\n", f_in_name);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
+    } else {
+        WARNING("%s","Loading index from custom path is an experimental feature. keep an eye.");
+        int ret_idx = slow5_idx_load_with(slow5file, slow5_index);
+        if (ret_idx < 0) {
+            ERROR("Error loading index file for %s from file path %s\n", f_in_name, slow5_index);
+            EXIT_MSG(EXIT_FAILURE, argv, meta);
+            return EXIT_FAILURE;
+        }
     }
 
     if (read_stdin) {
