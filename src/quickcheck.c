@@ -14,7 +14,7 @@
 
 #define USAGE_MSG "Usage: %s  [SLOW5_FILE]\n"
 #define HELP_LARGE_MSG \
-    "Performs a quick check if a SLOW5/BLOW5 file is intact. That is, quickcheck checks if the file begins with a valid header (SLOW5 or BLOW5) and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only)." \
+    "Performs a quick check if a SLOW5/BLOW5 file is intact. That is, quickcheck checks if the file begins with a valid header (SLOW5 or BLOW5), attempt to decode the first SLOW5 record and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only)." \
     "If the file is intact, the commands exists with 0. Otherwise exists with a non-zero error code.\n" \
     USAGE_MSG \
     "\n" \

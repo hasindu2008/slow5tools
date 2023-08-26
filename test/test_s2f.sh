@@ -1,4 +1,31 @@
 #!/bin/bash
+
+# MIT License
+
+# Copyright (c) 2020 Hiruna Samarakoon
+# Copyright (c) 2020 Sasha Jenner
+# Copyright (c) 2020,2023 Hasindu Gamaarachchi
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+###############################################################################
+
 # Run s2f with different file, input and output formats.
 Usage="test_s2f.sh"
 
@@ -83,6 +110,18 @@ TESTCASE_NO=6
 TESTNAME="end_reason is an unint8_t"
 echo "-------------------testcase:$TESTCASE_NO: $TESTNAME-------------------"
 $SLOW5_EXEC s2f $RAW_DIR/end_reason_is_unint8_t.slow5 -o $OUTPUT_DIR/end_reason_is_unint8_t.fast5 || die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=7
+TESTNAME="end_reason is empty"
+echo "-------------------testcase:$TESTCASE_NO: $TESTNAME-------------------"
+$SLOW5_EXEC s2f $RAW_DIR/end_reason_empty.slow5 -o $OUTPUT_DIR/end_reason_empty.fast5 || die "testcase $TESTCASE_NO failed"
+echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
+
+TESTCASE_NO=8
+TESTNAME="median_before is empty"
+echo "-------------------testcase:$TESTCASE_NO: $TESTNAME-------------------"
+$SLOW5_EXEC s2f $RAW_DIR/median_before_nan.blow5 -o $OUTPUT_DIR/median_before_nan.fast5 || die "testcase $TESTCASE_NO failed"
 echo -e "${GREEN}testcase $TESTCASE_NO passed${NC}" 1>&3 2>&4
 
 #rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"

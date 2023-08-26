@@ -1,5 +1,31 @@
 #!/bin/bash
 
+# MIT License
+
+# Copyright (c) 2020 Hiruna Samarakoon
+# Copyright (c) 2020 Sasha Jenner
+# Copyright (c) 2020,2023 Hasindu Gamaarachchi
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+###############################################################################
+
 # steps
 # run merge for different testcases
 # diff
@@ -49,7 +75,7 @@ fi
 # quick check if redundant here as we any way do a diff
 slow5tools_quickcheck() {
     if $REL_PATH/../slow5tools quickcheck $1; then
-        echo -e "${GREEN}SUCCESS: slow5tools_quickcheck passed!${NC}" 
+        echo -e "${GREEN}SUCCESS: slow5tools_quickcheck passed!${NC}"
     else
         echo -e "${RED}ERROR: slow5tools_quickcheck failed${NC}" 1>&3 2>&4
         exit 1
@@ -182,7 +208,7 @@ $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_enum2.slow5 || die "
 diff -q $REL_PATH/data/exp/merge/merged_output_enum2.slow5  $OUTPUT_DIR/merged_output_enum2.slow5 || die "testcase $TESTCASE: diff for $TESTNAME failed"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-# enum different labels 
+# enum different labels
 TESTCASE=2.3
 TESTNAME="different enum labels"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"

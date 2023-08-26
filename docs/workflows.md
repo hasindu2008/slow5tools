@@ -61,7 +61,7 @@ slow5tools f2s fast5_dir -d blow5_dir -p 8
 ## Basecalling
 
 - SLOW5 support for ONT's Guppy basecaller is available as a [wrapper called buttery-eel here](https://github.com/Psy-Fer/buttery-eel) along with instructions.
-- SLOW5 support for ONT's Dorado basecaller is available in our own [Dorado fork here](https://github.com/hiruna72/dorado/releases) along with instructions.
+- SLOW5 support for ONT's Dorado basecaller (including support for duplex calling) is available in our own [Dorado fork here](https://github.com/hiruna72/slow5-dorado/releases) along with instructions.
 - SLOW5 support for ONT's Bonito basecaller is now available as a [pull request](https://github.com/nanoporetech/bonito/pull/252) along with usage instructions and benchmarks.
 
 ## Extracting a subset from S3 storage
@@ -107,5 +107,20 @@ sort -u tmp.txt > parent_rid_list.txt
 
 ```
 slow5tools skim --rid reads.blow5 | sort -R | head -20000 > rand_20000_rid.txt # for slow5tools v0.7.0 onwards
-slow5tools get reads.blow5 --list rand_20000_rid.txt -o reads_subsubsample.blow5 
+slow5tools get reads.blow5 --list rand_20000_rid.txt -o reads_subsubsample.blow5
 ```
+
+## Demultiplexing
+
+BASH with slow5tools is an easy way to demultiplex a BLOW5 file. Say you have demultiplexed your run and have one FASTQ file per each barcode, namely barcode_0.fastq, barcode_1.fastq, barcode_2.fastq and barcode_3.fastq. If your merged BLOW5 file for the whole run is reads.blow5, you can create separate BLOW5 files for each barcode by using a bash loop as below:
+
+```bash
+for barcode in $(seq 0 4)
+do
+    awk '{if(NR%4==1) {print $1}}' barcode_${barcode}.fastq | tr -d '@' > read_id_${barcode}.txt
+    cat read_id_${barcode}.txt | slow5tools get reads.blow5 -o ${barcode}_0.blow5
+done
+```
+
+If Guppy has automatically done read splitting, you would see errors from slow5tools that some reads are not found.
+In that case we need to locate these “parent read ids”, as explained under [this workflow](#extract-and-re-basecall-reads-mapping-to-a-particular-genomic-region). If anything is unclear, open an issue under slow5tools.

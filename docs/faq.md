@@ -31,16 +31,7 @@ See [this post](https://github.com/nanoporetech/vbz_compression/issues/5) for tr
 
 **Q4:** Are there any small example datasets that can be used for testing slow5tools?
 
-A tiny subset (~20K reads) of the original NA12878 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub).
-
-The original NA12878 dataset is available on [SRA](https://www.ncbi.nlm.nih.gov/sra?linkname=bioproject_sra_all&from_uid=744329) and the table below summarises the links:
-
-| <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link</sub>  | <sub>MD5sum</sub>  |
-|------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|---|
-| <sub>~500K reads subset (FAST5 format)</sub>                    | <sub>[SRR15058164](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058164&display=data-access)</sub> | <sub>[subsample.tar.gz](https://slow5.page.link/na12878_prom_sub)</sub>                     | <sub>591ec7d1a2c6d13f7183171be8d31fba</sub> |
-| <sub>~500K reads subset (BLOW5 format)</sub>                    | <sub>[SRR22186403](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186403&display=data-access)</sub> |     <sub>[subsample_slow5.tar](https://slow5.page.link/na12878_prom_sub_slow5)</sub>                 | <sub>6cdbe02c3844960bb13cf94b9c3173bb</sub> |
-| <sub>~9M reads complete PromethION dataset (FAST5 format)</sub> | <sub>[SRR15058166](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058166&display=data-access)</sub> | <sub>[fast5.tar.gz](https://slow5.page.link/na12878_prom)</sub>                     | <sub>0adbd2956a54528e92dd8fe6d42d2fce</sub> |
-| <sub>~9M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)</sub> | <sub>[slow5.tar](https://slow5.page.link/na12878_prom_slow5)</sub>                         | <sub>3b23f706add38612445cd4f5204ae8b5</sub> |
+A tiny subset (~20K reads) of the original NA12878 R9.4.1 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub). A tiny subset (~20K reads) of a NA24385 R10.4.1 PromethION dataset is available [here](https://slow5.page.link/hg2_prom_subsub). Links and information on complete datasets of those samples as well as additional datasets can be found [here](https://hasindu2008.github.io/slow5tools/datasets.html).
 
 **Q5:** How can I make SLOW5 to FAST5 conversion fast?
 
@@ -50,9 +41,14 @@ If your SLOW5 to FAST5 conversion takes ages, it is likely that you called `slow
 
 This is normal behaviour and be assured that difference in sizes does not mean that data has been lost. Please see the issues [#70](https://github.com/hasindu2008/slow5tools/issues/70), [#76](https://github.com/hasindu2008/slow5tools/issues/76) and [#58](https://github.com/hasindu2008/slow5tools/issues/58).
 
-**Q7** Can I upload my BLOW5 files to public archives like SRA?
+**Q7** Can I upload my BLOW5 files to public archives like SRA or ENA?
 
-Yes you can. Follow the same method you use to upload unbasecalled FAST5 files. Simply create a tar ball containing your BLOW5 file/files (optionally .blow5.idx files as well), select ONT_NATIVE under the SRA submission format and upload as you would usually do. When the loading fails or the submission seem to take forever to process (also happens for latest FAST5 as ONT does not store basecalls in FAST5 now), email the SRA helpdesk and they will complete your submission (they call it provisional loading). I submit fastq data and raw signal data as two separate SRA runs associated to the same BioSample (e.g. [SRR15058167](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058167&display=data-access) and [SRR2218640](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)) as suggested by SRA helpdesk.
+Yes you can. Follow the same method you use to upload unbasecalled FAST5 files.
+
+For SRA: Simply create a tar ball containing your BLOW5 file/files (optionally .blow5.idx files as well; e.g.: `tar cvf data.tar sample/reads.blow5 sample/reads.blow5.idx`), select ONT_NATIVE under the SRA submission format and upload as you would usually do. When the loading fails or the submission seem to take forever to process (also happens for latest FAST5 as ONT does not store basecalls in FAST5 now), email the SRA helpdesk and they will complete your submission (they call it provisional loading). I submit fastq data and raw signal data as two separate SRA runs associated to the same BioSample (e.g. [SRR15058167](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR15058167&display=data-access) and [SRR2218640](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)) as suggested by SRA helpdesk.
+
+For ENA: Simply create a tar.gz containing your BLOW5 file/files (optionally .blow5.idx files as well), use `OxfordNanopore_native` under the ENA submission format and upload as you would usually do. A suggested command is `tar cvf - sample/reads.blow5 sample/reads.blow5.idx | pigz -0 - > data.tar.gz`, where pigz is a parallel version of gzip and allows creating .tar.gz files with 0 compression level (no compression) which is preferred as compressing already compressed BLOW5 files is a waste of compute time for both compression and decompression. If you want simply to rely on gzip, an example command is `GZIP=-1 tar zcvf data.tar.gz sample/reads.blow5 sample/reads.blow5.idx`, but the minimum compression level allowed in gzip is 1. I submit fastq data and raw signal data as two separate ENA runs associated to the same BioSample (e.g. [ERR11768771](https://www.ebi.ac.uk/ena/browser/view/ERR11768771) and [ERR11768584](https://www.ebi.ac.uk/ena/browser/view/ERR11768584)).
+
 
 **Q8** Does Oxford Nanopore Technologies officially support S/BLOW5 format?
 
@@ -74,3 +70,7 @@ scripts/install-zstd.sh        # download and compiles zstd in the current folde
 ./configure --enable-localzstd LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/
 make
 ```
+
+**Q10** Why is there a size difference between the original FAST5 file and the file created using `s2f`?
+
+The explanation lies in the complex structure of the HDF5 format underpinning FAST5 files. Unlike a BLOW5 file, which will always be the same size, an HDF5/FAST5 file may differ considerably depending on how it was generated. We have found that ONT’s MinKNOW software (through which almost all FAST5 files are created) creates files with large quantities of ‘unaccounted’ space, which typically inflates the file sizes by 10-20%. We don’t know why this happens, because MinKNOW is closed software, but it is highly reproducible. It is one of MinKNOW’s many mysteries. When converting from FAST5 -> BLOW5 -> FAST5, this ‘unaccounted’  space is removed by slow5tools because it serves no purpose. No data is lost; the final file is simply packed more efficiently than the original. You may also refer to [#50](https://github.com/hasindu2008/slow5tools/issues/50), [#70](https://github.com/hasindu2008/slow5tools/issues/70) and [#76](https://github.com/hasindu2008/slow5tools/issues/76) for more information.

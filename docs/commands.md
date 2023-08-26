@@ -20,6 +20,8 @@
          Retrieve records for specified read IDs from a SLOW5/BLOW5 file.
 * `stats`:<br/>
          Prints summary statistics describing a SLOW5/BLOW5 file.
+* `skim`:<br/>
+         Skims through a SLOW5/BLOW5 file and prints signal metadata.
 * `quickcheck`:<br/>
          Quickly checks if a SLOW5/BLOW5 file is intact.
 
@@ -168,6 +170,8 @@ slow5tools get [OPTIONS] file1.blow5 --list readids.txt
     The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 * `-l, --list FILE`:<br/>
     List of read ids provided as a single-column text file with one read id per line.
+* `--index FILE`:<br/>
+    Path to a custom slow5 index (experimental). Useful if your index file is located somewhere other than in the same directory as the input S/BLOW5 file.
 *  `-h`, `--help`:<br/>
     Prints the help menu.
 
@@ -243,12 +247,12 @@ If no argument is given, details about slow5tools is printed.
 
 ### quickcheck
 
-Performs a quick check if a SLOW5/BLOW5 file is intact: checks if the file begins with a valid header (SLOW5 or BLOW5) and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only). If the file is intact, the commands exits with 0. Otherwise it exits with a non-zero error code.
-
+Performs a quick check if a SLOW5/BLOW5 file is intact: checks if the file begins with a valid header (SLOW5 or BLOW5), attempt to decode the first SLOW5 record and then seeks to the end of the file and checks if proper EOF exists (BLOW5 only).
+If the file is intact, the commands exits with 0. Otherwise it exits with a non-zero error code.
 
 ### skim
 
-Skims through components in a SLOW5/BLOW5 file requested by user (using options) and prints to standard out. If no options are provided, all the SLOW5 records except the raw signal will be printed to standard out. enum data types are printed as strings. This subprogramme is available form slow5tools v0.7.0 onwards.
+Skims through components in a SLOW5/BLOW5 file requested by user (using options) and prints to standard out. If no options are provided, all the SLOW5 fields except the raw signal will be printed to standard out. enum data types are printed as strings. This subprogramme is available form slow5tools v0.7.0 onwards.
 
 ```
 slow5tools skim [OPTIONS] file.blow5
@@ -274,3 +278,5 @@ slow5tools skim [OPTIONS] file.blow5
     Set the verbosity level (0-6) [default value: 4]. 0-off, 1-errors, 2-warnings, 3-information, 4-verbose, 5-debug, 6-trace.
 *  `-h, --help`:<br/>
     Prints the help menu.
+*  `--cite`:<br/>
+    Prints the citation information.

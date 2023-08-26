@@ -27,6 +27,7 @@
     "    -h, --help       Display this message and exit.\n" \
     "    -v, --verbose    Verbosity level.\n" \
     "    -V, --version    Output version information and exit.\n" \
+    "    --cite           Prints the citation.\n" \
     "\n" \
     "COMMANDS:\n" \
     "    f2s or fast5toslow5   convert fast5 file(s) to SLOW5/BLOW5\n" \
@@ -42,6 +43,31 @@
     "    skim                  skims through requested components in a SLOW5/BLOW5 file\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
+
+#define CITATION_MSG \
+    "Please cite the following in your publications when using SLOW5 file format:\n\n" \
+    "Gamaarachchi, H., Samarakoon, H., Jenner, S.P. et al. Fast nanopore sequencing data analysis with SLOW5. Nat Biotechnol 40, 1026-1029 (2022). https://doi.org/10.1038/s41587-021-01147-4\n\n" \
+    "@article{gamaarachchi2022fast,\n" \
+    "    title={Fast nanopore sequencing data analysis with SLOW5},\n" \
+    "    author={Gamaarachchi, Hasindu and Samarakoon, Hiruna and Jenner, Sasha P and Ferguson, James M and Amos, Timothy G and Hammond, Jillian M and Saadat, Hassaan and Smith, Martin A and Parameswaran, Sri and Deveson, Ira W},\n" \
+    "    journal={Nature biotechnology},\n" \
+    "    pages={1--4},\n" \
+    "    year={2022},\n" \
+    "    publisher={Nature Publishing Group}\n" \
+    "}\n\n" \
+    "\n" \
+    "Please cite the following in your publications when using slow5tools:\n\n" \
+    "Samarakoon, H., Ferguson, J.M., Jenner, S.P. et al. Flexible and efficient handling of nanopore sequencing signal data with slow5tools. Genome Biol 24, 69 (2023). https://doi.org/10.1186/s13059-023-02910-3\n\n" \
+    "@article{samarakoon2023flexible,\n" \
+    "    title={Flexible and efficient handling of nanopore sequencing signal data with slow5tools},\n" \
+    "    author={Samarakoon, Hiruna and Ferguson, James M and Jenner, Sasha P and Amos, Timothy G and Parameswaran, Sri and Gamaarachchi, Hasindu and Deveson, Ira W},\n" \
+    "    journal={Genome Biology},\n" \
+    "    volume={24},\n" \
+    "    number={1},\n" \
+    "    pages={69},\n" \
+    "    year={2023},\n" \
+    "    publisher={Springer}\n" \
+    "}\n\n" \
 
 // Backtrace buffer threshold of functions
 #define BT_BUF_SIZE (100)
@@ -127,16 +153,18 @@ int main(const int argc, char **argv){
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
         static struct option long_opts[] = {
-            {"help", no_argument, NULL, 'h' },
-            {"verbose", required_argument, NULL, 'v'},
-            {"version", no_argument, NULL, 'V'},
+            {"help", no_argument, NULL, 'h' }, //0
+            {"verbose", required_argument, NULL, 'v'}, //1
+            {"version", no_argument, NULL, 'V'}, //2
+            {"cite", no_argument, NULL, 0}, //3
             {NULL, 0, NULL, 0 }
         };
 
         int opt;
         bool break_flag = false;
+        int longindex = 0;
         // Parse options up to first non-option argument (command)
-        while (!break_flag && (opt = getopt_long(argc, argv, "+hVv:", long_opts, NULL)) != -1) {
+        while (!break_flag && (opt = getopt_long(argc, argv, "+hVv:", long_opts, &longindex)) != -1) {
 
             DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                       opt, optarg, optind, opterr, optopt);
@@ -158,6 +186,15 @@ int main(const int argc, char **argv){
                     fprintf(stdout, "slow5tools %s\n", SLOW5TOOLS_VERSION);
                     ret = EXIT_SUCCESS;
                     break_flag = true;
+                    break;
+                case 0:
+                    switch (longindex) {
+                        case 3:
+                            fprintf(stdout, CITATION_MSG);
+                            ret = EXIT_SUCCESS;
+                            break_flag = true;
+                            break;
+                    }
                     break;
                 default: // case '?'
                     fprintf(stderr, HELP_SMALL_MSG, argv[0]);

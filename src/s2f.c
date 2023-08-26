@@ -68,19 +68,39 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             if(header->aux_meta){
                 uint64_t start_time = slow5_aux_get_uint64(slow5_record, "start_time", &err);
                 if(err == 0){
+                    if(start_time == SLOW5_UINT64_T_NULL){
+                        WARNING("%s","start_time is missing. Usually happens for very old datasets.");
+                    }
                     ret_atr = add_attribute(group_id,"start_time",start_time,H5T_STD_U64LE);
+                }else{
+                    WARNING("Error code %d when getting auxiliary field %s. Usually happens for very old datasets.", err, "start_time");
                 }
                 int32_t read_number = slow5_aux_get_int32(slow5_record, "read_number", &err);
                 if(err == 0){
+                    if(read_number == SLOW5_INT32_T_NULL){
+                        WARNING("%s","read_number is missing. Usually happens for very old datasets.");
+                    }
                     ret_atr = add_attribute(group_id,"read_number", read_number,H5T_STD_I32LE);
+                }else{
+                    WARNING("Error code %d when getting auxiliary field %s. Usually happens for very old datasets.", err, "read_number");
                 }
                 uint8_t start_mux = slow5_aux_get_uint8(slow5_record, "start_mux", &err);
                 if(err == 0){
+                    if(start_mux == SLOW5_UINT8_T_NULL){
+                        WARNING("%s","start_mux is missing. Usually happens for very old datasets.");
+                    }
                     ret_atr = add_attribute(group_id,"start_mux",start_mux,H5T_STD_U8LE);
+                }else{
+                    WARNING("Error code %d when getting auxiliary field %s. Usually happens for very old datasets.", err, "start_mux");
                 }
                 double median_before = slow5_aux_get_double(slow5_record, "median_before", &err);
                 if(err == 0){
+                    if(isnan(median_before)){
+                        DEBUG("%s","median_before is missing. Usually happens for very old datasets.");
+                    }
                     ret_atr = add_attribute(group_id,"median_before",median_before,H5T_IEEE_F64LE);
+                }else{
+                    WARNING("Error code %d when getting auxiliary field %s. Usually happens for very old datasets.", err, "median_before");
                 }
                 uint32_t attribute_index;
                 if(check_aux_fields_in_header(header, "end_reason", 0, &attribute_index) == 0){
@@ -88,9 +108,12 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
                     if((*end_reason_enum_id)>0) {
                         end_reason = slow5_aux_get_enum(slow5_record, "end_reason", &err);
                         if(err == 0){
-                            ret_atr = add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                            if(end_reason != SLOW5_ENUM_NULL){
+                                ret_atr = add_attribute(group_id,"end_reason",end_reason,*end_reason_enum_id);
+                            }
                         }
                     } else {
+                        WARNING("%s","end_reason does not seem to be an enum");
                         end_reason = slow5_aux_get_uint8(slow5_record, "end_reason", &err);
                         if(err == 0){
                             ret_atr = add_attribute(group_id,"end_reason",end_reason,H5T_STD_U8LE);
@@ -106,7 +129,12 @@ void set_hdf5_attributes(hid_t group_id, group_flags group_flag, slow5_hdr_t *he
             if(header->aux_meta){
                 attribute_value = slow5_aux_get_string(slow5_record, "channel_number", NULL, &err);
                 if(err == 0){
+                    if(attribute_value == NULL){
+                        WARNING("%s","channel_number is missing. Usually happens for very old datasets.");
+                    }
                     ret_atr = add_attribute(group_id,"channel_number",attribute_value,H5T_C_S1);
+                }else{
+                    WARNING("Error code %d when getting auxiliary field %s. Usually happens for very old datasets.", err, "channel_number");
                 }
             }
             ret_atr = add_attribute(group_id,"digitisation",slow5_record->digitisation,H5T_IEEE_F64LE);
@@ -276,6 +304,10 @@ int initialize_end_reason(slow5_hdr_t* header, hid_t* end_reason_enum_id) {
     }
     uint8_t n;
     char **enum_labels = slow5_get_aux_enum_labels(header, "end_reason", &n);
+    if(enum_labels==NULL){
+        fprintf(stderr,"Error in getting list of enum labels\n");
+        exit(EXIT_FAILURE);
+    }
     for(uint8_t i=0; i<n; i++){
         uint8_t val;
         herr_t ret = H5Tenum_insert(*end_reason_enum_id, enum_labels[i], (val=i,&val));
