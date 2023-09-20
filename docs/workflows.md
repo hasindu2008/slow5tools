@@ -86,7 +86,7 @@ For mounting private buckets, put your ACCESS:KEY in ~/.passwd-s3fs (make sure 6
 ```bash
 samtools view reads.bam chrX:147911919-147951125 | cut -f1  | sort -u > rid_list.txt
 slow5tools get reads.blow5 --list rid_list.txt -o extracted.blow5
-buttery-eel -i reads.blow5  -g /path/to/ont-guppy/bin/ --config dna_r9.4.1_450bps_sup.cfg --device 'cuda:all' -o extracted_sup.fastq #see https://github.com/Psy-Fer/buttery-eel/ for butter-eel options
+buttery-eel -i extracted.blow5  -g /path/to/ont-guppy/bin/ --config dna_r9.4.1_450bps_sup.cfg --device 'cuda:all' -o extracted_sup.fastq #see https://github.com/Psy-Fer/buttery-eel/ for butter-eel options
 ```
 
 Note: If the read IDs in the BAM file are not the parent IDs (happens when read splitting is enabled during initial basecalling step), you can grab the parent read IDs from the FASTQ file as below and use that as the input the to slow5tools get.
