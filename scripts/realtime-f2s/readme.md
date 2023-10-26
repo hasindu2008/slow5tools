@@ -22,7 +22,7 @@ This script will monitor the specified directory */data/my_sequencing_experiment
 
 Brief log messages (including any conversion failures) are written to the terminal as well as */data/my_sequencing_experiment/realtime_f2s.log*. The list of files that were detected by the monitor and which the conversion was attempted will be written to */data/my_sequencing_experiment/realtime_f2s_attempted_list.log*. If any conversion failed, the names of the *FAST5* files will be written to *realtime_f2s_failed_list.log*. In addition, there will be some other debug/trace logs (e.g.,*realtime_f2s_monitor_trace.log*).
 
-The monitoring script will terminate if it idles for 6 hours, i.e., no new FAST5 files were created under */data/my_sequencing_experiment/*, the script will terminate assuming that the sequencing run has completed. Just before termination, the script will check for any left over FAST5 and will convert them if present. Also, it will do a brief check on the file count and print some statistics any warnings if any.
+The monitoring script will terminate if it idles for 6 hours, i.e., no new FAST5 files were created under */data/my_sequencing_experiment/*, the script will terminate assuming that the sequencing run has completed. Just before termination, the script will check for any left over FAST5 and will convert them if present. Also, it will do a brief check on the file count and print some statistics any warnings if any.  If you want to make the script terminate as soon as the sequencing run in MinKNOW stops, please add `export REALF2S_AUTO=1` to your `~/.bashrc` (before running realf2s.sh and remember to source the .bashrc). Note that this auto terminate feature relies on the "final_summary*.txt" file created by MinKNOW and will not be effective if ONT changes that.
 
 If you want to resume a conversion that was abruptly terminated half-way, use the `-r` option for resuming as below:
 
@@ -32,15 +32,21 @@ If you want to resume a conversion that was abruptly terminated half-way, use th
 
 ### Options
 
-* `-m STR`:  
+* `-m STR`:
     The sequencing experiment directory to be monitored. This is usually where MinKNOW writes data for your experiment e.g., */data/my_sequencing_experiment/* or */var/lib/minknow/data/my_sequencing_experiment/*.
-* `-r`:  
+* `-r`:
     Resumes a previous live conversion. This option is useful if the real-time conversion abruptly stopped in the middle and you now want to resume the live conversion.
-* `-t INT`:  
+* `-t INT`:
     Timeout in seconds [default: 21600]. The script will end if no new FAST5 were written for this specified period of time.
 * `-p INT`:
-    Maximum number of parallel conversion processes [default: 1]. This value can be increased to keep up with the sequencing rate as necessary, depending on the numbe of CPU cores available.     
+    Maximum number of parallel conversion processes [default: 1]. This value can be increased to keep up with the sequencing rate as necessary, depending on the numbe of CPU cores available.
 
+### Environment variables
+
+The following optional environment variables will be honoured by the real-time conversion script if they are set.
+
+- REALF2S_AUTO: make the script terminate as soon as the sequencing run in MinKNOW stops as explained above.
+- SLOW5TOOLS: path to the slow5tools binary
 
 ## Simulation
 
