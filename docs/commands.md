@@ -260,11 +260,11 @@ slow5tools skim [OPTIONS] file.blow5
 
 * `-t, --threads INT`:<br/>
     Number of threads [default value: 8].
-* `-K, --batchsize`:<br/>
+* `-K, --batchsize INT`:<br/>
     The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 * `--hdr`:<br/>
     print the header only.
-* `--hdr`:<br/>
+* `--rid`:<br/>
     print the list of read ids only.
 *  `-h`, `--help`:
     Prints the help menu.
