@@ -123,4 +123,12 @@ done
 ```
 
 If Guppy has automatically done read splitting, you would see errors from slow5tools that some reads are not found.
-In that case we need to locate these “parent read ids”, as explained under [this workflow](#extract-and-re-basecall-reads-mapping-to-a-particular-genomic-region). If anything is unclear, open an issue under slow5tools.
+In that case we need to locate these “parent read ids”, as explained under [this workflow](#extract-and-re-basecall-reads-mapping-to-a-particular-genomic-region). If anything is unclear, open an issue under slow5tools. A quick code snippet for handling “parent read ids”:
+
+```bash
+for barcode in $(seq 0 4)
+do
+    awk '{if(NR%4==1) {print $0}}' barcode_${barcode}.fastq | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}'  | sort -u > read_id_${barcode}.txt
+    cat read_id_${barcode}.txt | slow5tools get reads.blow5 -o ${barcode}_0.blow5
+done
+```
