@@ -205,6 +205,10 @@ fast5_file_t fast5_open(const char* filename) {
             fh.is_multi_fast5 = major >= 1;
         }
     }
+    DEBUG("version_str=\"%s\"",version_str.c_str());
+    DEBUG("file_type=\"%s\"",file_type.c_str());
+    DEBUG("is_multi_fast5=%s",fh.is_multi_fast5?"true":"false");
+
     return fh;
 }
 
@@ -422,7 +426,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("Bad fast5: In fast5 file %s, failed to get the read the value of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
                     return -1;
                 }
-                DEBUG("H5T_IEEE_F32LE=%s\n",name);
+                DEBUG("H5T_IEEE_F32LE=%s",name);
                 slow5_class = SLOW5_FLOAT;
                 slow5_class_string = "SLOW5_FLOAT";
                 h5t_class_string = "H5T_IEEE_F32LE";
@@ -432,7 +436,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("Bad fast5: In fast5 file %s, failed to get the read the value of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
                     return -1;
                 }
-                DEBUG("H5T_IEEE_F64LE=%s\n",name);
+                DEBUG("H5T_IEEE_F64LE=%s",name);
                 slow5_class = SLOW5_DOUBLE;
                 slow5_class_string = "SLOW5_DOUBLE";
                 h5t_class_string = "H5T_IEEE_F64LE";
@@ -448,7 +452,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("Bad fast5: In fast5 file %s, failed to get the read the value of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
                     return -1;
                 }
-                DEBUG("H5T_STD_I32LE=%s\n",name);
+                DEBUG("H5T_STD_I32LE=%s",name);
                 slow5_class = SLOW5_INT32_T;
                 slow5_class_string = "SLOW5_INT32_T";
                 h5t_class_string = "H5T_STD_I32LE";
@@ -458,7 +462,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("Bad fast5: In fast5 file %s, failed to get the read the value of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
                     return -1;
                 }
-                DEBUG("H5T_STD_I64LE=%s\n",name);
+                DEBUG("H5T_STD_I64LE=%s",name);
                 slow5_class = SLOW5_INT64_T;
                 slow5_class_string = "SLOW5_INT64_T";
                 h5t_class_string = "H5T_STD_I64LE";
@@ -468,7 +472,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("Bad fast5: In fast5 file %s, failed to get the read the value of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
                     return -1;
                 }
-                DEBUG("H5T_STD_U8LE=%s\n",name);
+                DEBUG("H5T_STD_U8LE=%s",name);
                 slow5_class = SLOW5_UINT8_T;
                 slow5_class_string = "SLOW5_UINT8_T";
                 h5t_class_string = "H5T_STD_U8LE";
@@ -478,7 +482,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("Bad fast5: In fast5 file %s, failed to get the read the value of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
                     return -1;
                 }
-                DEBUG("H5T_STD_U32LE=%s\n",name);
+                DEBUG("H5T_STD_U32LE=%s",name);
                 slow5_class = SLOW5_UINT32_T;
                 slow5_class_string = "SLOW5_UINT32_T";
                 h5t_class_string = "H5T_STD_U32LE";
@@ -488,7 +492,7 @@ herr_t fast5_attribute_itr (hid_t loc_id, const char *name, const H5A_info_t  *i
                     ERROR("Bad fast5: In fast5 file %s, failed to get the read the value of the attribute '%s/%s'.", operator_data->fast5_path, operator_data->group_name, name);
                     return -1;
                 }
-                DEBUG("H5T_STD_U64LE=%s\n",name);
+                DEBUG("H5T_STD_U64LE=%s",name);
                 slow5_class = SLOW5_UINT64_T;
                 slow5_class_string = "SLOW5_UINT64_T";
                 h5t_class_string = "H5T_STD_U64LE";

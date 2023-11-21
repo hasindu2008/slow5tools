@@ -61,6 +61,7 @@ void init_opt(opt_t *opt){
     opt->flag_retain_dir_structure = DEFAULT_RETAIN_DIR_STRUCTURE;
     opt->flag_dump_all = DEFAULT_DUMP_ALL;
     opt->flag_continue_merge = DEFAULT_CONTINUE_MERGE;
+    opt->flag_enforce_multi_fast5 = DEFAULT_ENFORCE_MULTI_FAST5;
 }
 
 int parse_num_threads(opt_t *opt, int argc, char **argv, struct program_meta *meta){

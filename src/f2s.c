@@ -67,6 +67,9 @@ void f2s_child_worker(opt_t *user_opts, std::vector<std::string>& fast5_files, r
         readsCount->total_5++;
         fast5_file = fast5_open(fast5_files[i].c_str());
         fast5_file.fast5_path = fast5_files[i].c_str();
+        if(user_opts->flag_enforce_multi_fast5){
+            fast5_file.is_multi_fast5 = true;
+        }
 
         if (fast5_file.hdf5_file < 0){
             ERROR("Bad fast5: Fast5 file '%s' could not be opened or is corrupted.", fast5_files[i].c_str());
@@ -325,17 +328,18 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
 
     // Default options
     static struct option long_opts[] = {
-            {"to",          required_argument, NULL,  0 },  //0
-            {"compress",    required_argument, NULL, 'c'},  //1
-            {"sig-compress",required_argument, NULL, 's'},  //2
-            {"help",        no_argument,       NULL, 'h'},  //3
-            {"output",      required_argument, NULL, 'o'},  //4
-            {"iop",         required_argument, NULL, 'p'},  //5
-            {"lossless",    required_argument, NULL,  0 },  //6
-            {"out-dir",     required_argument, NULL, 'd'},  //7
-            {"allow",       no_argument,       NULL, 'a'},  //8
-            {"retain",      no_argument,       NULL,  0 },  //9
-            {"dump-all",    required_argument, NULL,  0 },  //10
+            {"to",                  required_argument, NULL,  0 },  //0
+            {"compress",            required_argument, NULL, 'c'},  //1
+            {"sig-compress",        required_argument, NULL, 's'},  //2
+            {"help",                no_argument,       NULL, 'h'},  //3
+            {"output",              required_argument, NULL, 'o'},  //4
+            {"iop",                 required_argument, NULL, 'p'},  //5
+            {"lossless",            required_argument, NULL,  0 },  //6
+            {"out-dir",             required_argument, NULL, 'd'},  //7
+            {"allow",               no_argument,       NULL, 'a'},  //8
+            {"retain",              no_argument,       NULL,  0 },  //9
+            {"dump-all",            required_argument, NULL,  0 },  //10
+            {"enforce-multi-fast5", no_argument, NULL,  0 },  //11
             {NULL, 0, NULL, 0 }
     };
 
@@ -387,6 +391,9 @@ int f2s_main(int argc, char **argv, struct program_meta *meta) {
                         break;
                     case 10:
                         user_opts.arg_dump_all = optarg;
+                        break;
+                    case 11:
+                        user_opts.flag_enforce_multi_fast5 = 1;
                         break;
                     default:
                         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
