@@ -11,25 +11,25 @@ The NA12878 R9.4.1 PromethION dataset sequenced for the [SLOW5 paper](https://ww
 | <sub>~9M reads complete PromethION dataset</sub> | <sub>[SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)</sub> | <sub>[na12878_prom_merged.blow5](https://slow5.page.link/na12878_prom_slow5) (`7e1a5900aff10e2cf1b97b8d3c6ecd1e`), [na12878_prom_merged.blow5.idx](https://slow5.page.link/na12878_prom_slow5_idx) (`a78919e8ac8639788942dbc3f1a2451a`) </sub>                          |
 
 
-## NA24385 R10.4.1 LSK114 PromethION
+## NA24385 R10.4.1 LSK114 PromethION (4 KHz)
 
 An NA24385 R10.4.1 LSK114 dataset sequenced on a PromethION is available on [SRA](https://www.ncbi.nlm.nih.gov/sra/?term=SRS16575602)  and given below are the links:
 
-| <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
+| <sub>Description</sub>                                          | <sub>SRA/ENA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
 | <sub>~20K reads subsubset (BLOW5 format)</sub>                  |  |     <sub>[hg2_prom_lsk114_subsubsample.tar](https://slow5.page.link/hg2_prom_subsub)</sub> <sub>(`4d338e1cffd6dbf562cc55d9fcca040c`)</sub> |
 | <sub>~500K reads subset (BLOW5 format)</sub>                    | <sub>[SRR23215365](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR23215365&display=data-access)</sub> |     <sub>[hg2_subsample_slow5.tar](https://slow5.page.link/hg2_prom_sub_slow5)</sub> <sub>(`65386e1da1d82b892677ad5614e8d84d`)</sub> |
-| <sub>~15M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[SRR23215366](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR23215366&display=data-access)</sub> | <sub> [PGXX22394_reads.blow5](https://slow5.page.link/hg2_prom_slow5) (`3498b595ac7c79a3d2dce47454095610`), [PGXX22394_reads.blow5.idx](https://slow5.page.link/hg2_prom_slow5_idx) (`1e11735c10cf63edc4a7114f010cc472`)</sub>*                         |
+| <sub>~15M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[SRR23215366](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR23215366&display=data-access)/[ERR11777845](https://www.ebi.ac.uk/ena/browser/view/ERR11777845)</sub> | <sub> [PGXX22394_reads.blow5](https://slow5.page.link/hg2_prom_slow5) (`3498b595ac7c79a3d2dce47454095610`), [PGXX22394_reads.blow5.idx](https://slow5.page.link/hg2_prom_slow5_idx) (`1e11735c10cf63edc4a7114f010cc472`)</sub>*                         |
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-## NA12878 R10.4.1 LSK114 PromethION
+## NA12878 R10.4.1 LSK114 PromethION (4KHz)
 
 An NA12878 R10.4.1 LSK114 dataset sequenced on a PromethION is available at the links below:
 
-| <sub>Description</sub>                                          | <sub>SRA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
+| <sub>Description</sub>                                          | <sub>ENA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
-| <sub>~11M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>-</sub> | <sub> [PGXXHX230142_reads.blow5](https://slow5.page.link/na12878_prom2_slow5) (`24266f6dabb8d679f7f520be6aa22694`), [PGXXHX230142_reads.blow5.idx](https://slow5.page.link/na12878_prom2_slow5_idx) (`a5659f829b9410616391427b2526b853`) </sub>*                         |
+| <sub>~11M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[ERR11777844](https://www.ebi.ac.uk/ena/browser/view/ERR11777844)</sub> | <sub> [PGXXHX230142_reads.blow5](https://slow5.page.link/na12878_prom2_slow5) (`24266f6dabb8d679f7f520be6aa22694`), [PGXXHX230142_reads.blow5.idx](https://slow5.page.link/na12878_prom2_slow5_idx) (`a5659f829b9410616391427b2526b853`) </sub>*                         |
 
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
