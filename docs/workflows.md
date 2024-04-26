@@ -86,7 +86,7 @@ For mounting private buckets, put your ACCESS:KEY in ~/.passwd-s3fs (make sure 6
 ```bash
 samtools view reads.bam chrX:147911919-147951125 | cut -f1  | sort -u > rid_list.txt
 slow5tools get reads.blow5 --list rid_list.txt -o extracted.blow5
-buttery-eel -i reads.blow5  -g /path/to/ont-guppy/bin/ --config dna_r9.4.1_450bps_sup.cfg --device 'cuda:all' -o extracted_sup.fastq #see https://github.com/Psy-Fer/buttery-eel/ for butter-eel options
+buttery-eel -i extracted.blow5  -g /path/to/ont-guppy/bin/ --config dna_r9.4.1_450bps_sup.cfg --device 'cuda:all' -o extracted_sup.fastq #see https://github.com/Psy-Fer/buttery-eel/ for butter-eel options
 ```
 
 Note: If the read IDs in the BAM file are not the parent IDs (happens when read splitting is enabled during initial basecalling step), you can grab the parent read IDs from the FASTQ file as below and use that as the input the to slow5tools get.
@@ -123,4 +123,12 @@ done
 ```
 
 If Guppy has automatically done read splitting, you would see errors from slow5tools that some reads are not found.
-In that case we need to locate these “parent read ids”, as explained under [this workflow](#extract-and-re-basecall-reads-mapping-to-a-particular-genomic-region). If anything is unclear, open an issue under slow5tools.
+In that case we need to locate these “parent read ids”, as explained under [this workflow](#extract-and-re-basecall-reads-mapping-to-a-particular-genomic-region). If anything is unclear, open an issue under slow5tools. A quick code snippet for handling “parent read ids”:
+
+```bash
+for barcode in $(seq 0 4)
+do
+    awk '{if(NR%4==1) {print $0}}' barcode_${barcode}.fastq | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}'  | sort -u > read_id_${barcode}.txt
+    cat read_id_${barcode}.txt | slow5tools get reads.blow5 -o ${barcode}_0.blow5
+done
+```

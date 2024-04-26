@@ -29,6 +29,7 @@
 
 - [sigtk](https://github.com/hasindu2008/sigtk)
 - [slow5tools](https://github.com/hasindu2008/slow5tools)
+- [slow5curl](https://github.com/BonsonW/slow5curl)
 
 ## conversion
 
