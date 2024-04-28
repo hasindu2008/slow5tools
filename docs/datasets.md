@@ -4,14 +4,14 @@
 - R10.4.1 5kHz - DNA
     - [NA24385 R10.4.1 LSK114 PromethION (5KHz) 40X coverage](#na24385-r1041-lsk114-promethion-5khz-40x-coverage)
     - [NA24385 R10.4.1 LSK114 PromethION (5KHz) 20X coverage](#na24385-r1041-lsk114-promethion-5khz-20x-coverage)
-    - [A few more R10.4.1 5kHz](#a-few-more-r1041-5khz)
+    <!-- - [A few more R10.4.1 5kHz](#a-few-more-r1041-5khz) -->
 - RNA004 - RNA
     - [UHR RNA004 PromethION direct-RNA data](#uhr-rna004-promethion-direct-rna-data)
-    - [A few more RNA004 direct-RNA](#a-few-more-rna004-direct-rna)
+    <!-- - [A few more RNA004 direct-RNA](#a-few-more-rna004-direct-rna) -->
 - R10.4.1 4kHz - DNA
     - [NA24385 R10.4.1 LSK114 PromethION (4KHz)](#na24385-r1041-lsk114-promethion-4khz)
     - [NA12878 R10.4.1 LSK114 PromethION (4KHz)](#na12878-r1041-lsk114-promethion-4khz)
-    - [A few more R10.4.1 4kHz](#a-few-more-r1041-4khz)
+    - [More R10.4.1 4kHz datasets](#more-r1041-4khz-datasets)
 - R9.4.1
     - [NA12878 R9.4.1 PromethION](#na12878-r941-promethion)
     - [MinION R9.4.1 selective sequencing datasets](#minion-r941-selective-sequencing-datasets)
@@ -40,9 +40,9 @@ An NA24385 R10.4.1 LSK114 dataset with ~20X coverage sequenced on a PromethION a
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-### A few more R10.4.1 5kHz
+<!-- ### A few more R10.4.1 5kHz
 
-- Will be added incrementally
+- Will be added incrementally -->
 
 ## RNA004 - RNA
 
@@ -56,14 +56,14 @@ Universal human reference RNA (48 ng polyA enriched RNA) sequenced on a PromethI
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-### A few more RNA004 direct-RNA
+<!-- ### A few more RNA004 direct-RNA
 
 - Another PromethION UHR RNA sample (done without polyA enrichment) is available at []()
-- A MinION UHR RNA sample is available at []()
+- A MinION UHR RNA sample is available at []() -->
 
 ## R10.4.1 4kHz - DNA
 
-### NA24385 R10.4.1 LSK114 PromethION (4 KHz)
+### NA24385 R10.4.1 LSK114 PromethION (4KHz)
 
 An NA24385 R10.4.1 LSK114 dataset sequenced on a PromethION is available on [SRA](https://www.ncbi.nlm.nih.gov/sra/?term=SRS16575602)  and given below are the links:
 
@@ -75,7 +75,7 @@ An NA24385 R10.4.1 LSK114 dataset sequenced on a PromethION is available on [SRA
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-## NA12878 R10.4.1 LSK114 PromethION (4 KHz)
+### NA12878 R10.4.1 LSK114 PromethION (4KHz)
 
 An NA12878 R10.4.1 LSK114 dataset sequenced on a PromethION at 4KHz sampling rate is available at the links below:
 
@@ -85,7 +85,7 @@ An NA12878 R10.4.1 LSK114 dataset sequenced on a PromethION at 4KHz sampling rat
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-### A few more R10.4.1 4kHz
+### More R10.4.1 4kHz datasets
 
 -  human methylated and non-methylated (WGA) DNA datasets from zymo dna methylation standards (D5013) are available on ENA under [PRJEB64592](https://www.ebi.ac.uk/ena/browser/view/PRJEB64592). The BLOW5 files are in PGXX22562_methylated.tar.gz and PGXX22563_nonmethylated.tar.gz.
 
