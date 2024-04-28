@@ -1,16 +1,25 @@
 # Datasets directly in S/BLOW5 format
 
 ## Table of Contents
-- [NA24385 R10.4.1 LSK114 PromethION (5KHz) 40X coverage](#na24385-r1041-lsk114-promethion-5khz-40x-coverage)
-- [NA24385 R10.4.1 LSK114 PromethION (5KHz) 20X coverage](#na24385-r1041-lsk114-promethion-5khz-20x-coverage)
-- [UHR RNA004 PromethION direct-RNA data](#uhr-rna004-promethion-direct-rna-data)
-- [NA24385 R10.4.1 LSK114 PromethION (4KHz)](#na24385-r1041-lsk114-promethion-4khz)
-- [NA12878 R10.4.1 LSK114 PromethION (4KHz)](#na12878-r1041-lsk114-promethion-4khz)
-- [NA12878 R9.4.1 PromethION](#na12878-r941-promethion)
-- [MinION selective sequencing datasets](#minion-selective-sequencing-datasets)
-- [Converted R9 public datasets](#converted-r9-public-datasets)
+- R10.4.1 5kHz - DNA
+    - [NA24385 R10.4.1 LSK114 PromethION (5KHz) 40X coverage](#na24385-r1041-lsk114-promethion-5khz-40x-coverage)
+    - [NA24385 R10.4.1 LSK114 PromethION (5KHz) 20X coverage](#na24385-r1041-lsk114-promethion-5khz-20x-coverage)
+    - [A few more R10.4.1 5kHz](#a-few-more-r1041-5khz)
+- RNA004 - RNA
+    - [UHR RNA004 PromethION direct-RNA data](#uhr-rna004-promethion-direct-rna-data)
+    - [A few more RNA004 direct-RNA](#a-few-more-rna004-direct-rna)
+- R10.4.1 4kHz - DNA
+    - [NA24385 R10.4.1 LSK114 PromethION (4KHz)](#na24385-r1041-lsk114-promethion-4khz)
+    - [NA12878 R10.4.1 LSK114 PromethION (4KHz)](#na12878-r1041-lsk114-promethion-4khz)
+    - [A few more R10.4.1 4kHz](#a-few-more-r1041-4khz)
+- R9.4.1
+    - [NA12878 R9.4.1 PromethION](#na12878-r941-promethion)
+    - [MinION R9.4.1 selective sequencing datasets](#minion-r941-selective-sequencing-datasets)
+    - [Converted R9.4.1 public datasets](#converted-r941-public-datasets)
 
-## NA24385 R10.4.1 LSK114 PromethION (5KHz) 40X coverage
+## R10.4.1 5kHz - DNA
+
+### NA24385 R10.4.1 LSK114 PromethION (5KHz) 40X coverage
 
 An NA24385 R10.4.1 LSK114 dataset with ~40X coverage  sequenced on a PromethION at 5KHz sampling rate is available at the links below:
 
@@ -20,7 +29,7 @@ An NA24385 R10.4.1 LSK114 dataset with ~40X coverage  sequenced on a PromethION 
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-## NA24385 R10.4.1 LSK114 PromethION (5KHz) 20X coverage
+### NA24385 R10.4.1 LSK114 PromethION (5KHz) 20X coverage
 
 An NA24385 R10.4.1 LSK114 dataset with ~20X coverage sequenced on a PromethION at 5KHz sampling rate is available at the links below:
 
@@ -31,7 +40,15 @@ An NA24385 R10.4.1 LSK114 dataset with ~20X coverage sequenced on a PromethION a
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-## UHR RNA004 PromethION direct-RNA data
+### A few more R10.4.1 5kHz
+
+- Will be added incrementally
+
+## RNA004 - RNA
+
+### UHR RNA004 PromethION direct-RNA data
+
+Universal human reference RNA (48 ng polyA enriched RNA) sequenced on a PromethION is available from the following links:
 
 | <sub>Description</sub>                                          | <sub>ENA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
@@ -39,7 +56,14 @@ An NA24385 R10.4.1 LSK114 dataset with ~20X coverage sequenced on a PromethION a
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-## NA24385 R10.4.1 LSK114 PromethION (4 KHz)
+### A few more RNA004 direct-RNA
+
+- Another PromethION UHR RNA sample (done without polyA enrichment) is available at []()
+- A MinION UHR RNA sample is available at []()
+
+## R10.4.1 4kHz - DNA
+
+### NA24385 R10.4.1 LSK114 PromethION (4 KHz)
 
 An NA24385 R10.4.1 LSK114 dataset sequenced on a PromethION is available on [SRA](https://www.ncbi.nlm.nih.gov/sra/?term=SRS16575602)  and given below are the links:
 
@@ -61,8 +85,13 @@ An NA12878 R10.4.1 LSK114 dataset sequenced on a PromethION at 4KHz sampling rat
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
+### A few more R10.4.1 4kHz
 
-## NA12878 R9.4.1 PromethION
+-  human methylated and non-methylated (WGA) DNA datasets from zymo dna methylation standards (D5013) are available on ENA under [PRJEB64592](https://www.ebi.ac.uk/ena/browser/view/PRJEB64592). The BLOW5 files are in PGXX22562_methylated.tar.gz and PGXX22563_nonmethylated.tar.gz.
+
+## R9.4.1
+
+### NA12878 R9.4.1 PromethION
 
 The NA12878 R9.4.1 PromethION dataset sequenced for the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available on [SRA](https://www.ncbi.nlm.nih.gov/sra/?term=SRS9414678) and links are given below:
 
@@ -73,13 +102,13 @@ The NA12878 R9.4.1 PromethION dataset sequenced for the [SLOW5 paper](https://ww
 | <sub>~9M reads complete PromethION dataset</sub> | <sub>[SRR22186402](https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=SRR22186402&display=data-access)</sub> | <sub>[na12878_prom_merged.blow5](https://slow5.page.link/na12878_prom_slow5) (`7e1a5900aff10e2cf1b97b8d3c6ecd1e`), [na12878_prom_merged.blow5.idx](https://slow5.page.link/na12878_prom_slow5_idx) (`a78919e8ac8639788942dbc3f1a2451a`) </sub>                          |
 
 
-## MinION selective sequencing datasets
+### MinION R9.4.1 selective sequencing datasets
 
 MinION datsets sequenced with readfish selective sequencing for [Comprehensive genetic diagnosis of tandem repeat expansion disorders with programmable targeted nanopore sequencing](https://www.science.org/doi/10.1126/sciadv.abm5386) are available on [SRA](https://trace.ncbi.nlm.nih.gov/Traces/?view=study&acc=SRP349335).
 - tar files without "_reads" at the end (e.g., GBXM047265.tar) are BLOW5 data
 - tar files with _reads at the end (e.g., GBXM047265_reads.tar) are FAST5 data
 
-## Converted R9 public datasets
+### Converted R9.4.1 public datasets
 
 Following public datasets from others have been converted to BLOW5 format. Relatively smaller datasets (hundreds of GBs) are directly available for download. Larger datasets (terabytes) have been uploaded to [SRA](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA932454) and are available for cloud delivery. Alternatively, these converted BLOW5 files are currently stored locally in a archive storage at Garvan Institute, if anyone is interested contact.
 

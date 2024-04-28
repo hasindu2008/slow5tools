@@ -24,6 +24,7 @@
 - [DeepSelectNet](https://github.com/AnjanaSenanayake/DeepSelectNet)
 - [SquiggleNet](https://github.com/welch-lab/SquiggleNet/pull/6)
 - [RawHash](https://github.com/CMU-SAFARI/RawHash/)
+- [UNCALLED4](https://github.com/skovaka/uncalled4)
 
 ## raw signal manipulation
 
@@ -43,3 +44,4 @@
 ## raw signal visualisation
 
 - [squigualiser](https://github.com/hiruna72/squigualiser)
+- [nanoCEM](https://github.com/lrslab/nanoCEM)
