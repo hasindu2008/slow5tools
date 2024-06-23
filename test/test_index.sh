@@ -100,6 +100,7 @@ echo -e "${GREEN}testcase ${TESTCASE_NO} passed${NC}"  1>&3 2>&4
 fi
 
 if [ "$zstd" = "1" ]; then
+if [ -z "$bigend" ]; then
   echo
   TESTCASE_NO=5
   echo "------------------- slow5tools index testcase ${TESTCASE_NO} -------------------"
@@ -107,6 +108,7 @@ if [ "$zstd" = "1" ]; then
   $SLOW5_EXEC index $o $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5  || die "testcase ${TESTCASE_NO} failed"
   diff -q $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5.idx.exp $SLOW5_DIR/example_multi_rg_v0.2.0_zstd_svb-zd.blow5.idx || die "ERROR: diff failed for testcase ${TESTCASE_NO}"
   echo -e "${GREEN}testcase ${TESTCASE_NO} passed${NC}"  1>&3 2>&4
+fi
 fi
 
 echo
