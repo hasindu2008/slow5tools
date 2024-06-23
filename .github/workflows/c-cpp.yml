@@ -199,7 +199,7 @@ jobs:
     - name: install packages
       run: brew install hdf5 autoconf automake
     - name: build
-      run: autoreconf --install  && ./configure && make -j8
+      run: autoreconf --install  && ./configure LDFLAGS=-L/opt/homebrew/lib/ CPPFLAGS=-I/opt/homebrew/include/ && make -j8
     - name: test
       run: make test
   # arm64:
