@@ -83,7 +83,7 @@ jobs:
           packages:
             - zlib1g-dev
             - libhdf5-dev
-      script: autoreconf && ./configure && make
+      script: autoreconf && ./configure && make && export bigend=1 && make test
     - name: "IBM Z CPUs"
       arch: s390x
       os: linux
@@ -93,7 +93,7 @@ jobs:
             - zlib1g-dev
             - libhdf5-dev
             - libzstd1-dev
-      script: autoreconf && ./configure && make zstd=1
+      script: autoreconf && ./configure && make zstd=1 && export zstd=1 && export bigend=1 && make test
     # - stage: deploy
     #   name: "GitHub Release"
     #   dist: trusty
