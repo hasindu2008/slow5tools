@@ -75,15 +75,25 @@ jobs:
             - zlib1g-dev
             - libhdf5-dev
       script: autoreconf && ./configure && make && make test
-    # - name: "IBM Z CPUs"
-    #   arch: s390x
-    #   os: linux
-    #   addons:
-    #     apt:
-    #       packages:
-    #         - zlib1g-dev
-    #         - libhdf5-dev
-    #   script: autoreconf && ./configure && make && make test
+    - name: "IBM Z CPUs"
+      arch: s390x
+      os: linux
+      addons:
+        apt:
+          packages:
+            - zlib1g-dev
+            - libhdf5-dev
+      script: autoreconf && ./configure && make
+    - name: "IBM Z CPUs"
+      arch: s390x
+      os: linux
+      addons:
+        apt:
+          packages:
+            - zlib1g-dev
+            - libhdf5-dev
+            - libzstd1-dev
+      script: autoreconf && ./configure && make zstd=1
     # - stage: deploy
     #   name: "GitHub Release"
     #   dist: trusty

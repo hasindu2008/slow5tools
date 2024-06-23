@@ -97,6 +97,17 @@ jobs:
       run: sudo apt-get update && sudo apt-get install -y zlib1g-dev
     - name: build
       run: make -j8 disable_hdf5=1
+  ubuntu_24:
+    name: Ubuntu 24
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: install packages
+      run: sudo apt-get update && sudo apt-get install -y zlib1g-dev
+    - name: build
+      run: make -j8 disable_hdf5=1
   ubuntu_20_icc:
     name: Ubuntu 20 icc
     runs-on: ubuntu-20.04
@@ -126,8 +137,8 @@ jobs:
       run: make clean && make CC=icc CXX=icpc -j8 zstd=1
     - name: test zstd
       run: export zstd=1 && make test
-  os_x:
-    name: OSX
+  os_x_11:
+    name: OSX 11
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
@@ -139,8 +150,8 @@ jobs:
       run: autoreconf --install  && ./configure && make -j8
     - name: test
       run: make test
-  os_x_zstd:
-    name: OSX zstd
+  os_x_11_zstd:
+    name: OSX 11 zstd
     runs-on: macos-11
     steps:
     - uses: actions/checkout@v2
@@ -152,6 +163,45 @@ jobs:
       run: autoreconf --install  && ./configure && make -j8 zstd=1
     - name: test
       run: export zstd=1 && make test
+  os_x_12:
+    name: OSX 12
+    runs-on: macos-12
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: install packages
+      run: brew install hdf5 autoconf automake
+    - name: build
+      run: autoreconf --install  && ./configure && make -j8
+    - name: test
+      run: make test
+  os_x_13:
+    name: OSX 13
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: install packages
+      run: brew install hdf5 autoconf automake
+    - name: build
+      run: autoreconf --install  && ./configure && make -j8
+    - name: test
+      run: make test
+  os_x_14:
+    name: OSX 14
+    runs-on: macos-14
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: install packages
+      run: brew install hdf5 autoconf automake
+    - name: build
+      run: autoreconf --install  && ./configure && make -j8
+    - name: test
+      run: make test
   # arm64:
   #   name: ubuntu arm
   #   runs-on: ubuntu-latest
