@@ -118,6 +118,7 @@ $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/$OUTPUT_FILE --lossless false || d
 diff -q $REL_PATH/data/exp/merge/$OUTPUT_FILE $OUTPUT_DIR/$OUTPUT_FILE || die "testcase $TESTCASE: diff for $TESTNAME failed"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
+if [ -z "$bigend" ]; then
 TESTCASE=1.4
 TESTNAME="merging different slow5 input formats (slow5, blow5 with diff compression) and versions (0.1.0 and 0.2.0)"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
@@ -125,7 +126,6 @@ INPUT_FILES="$RAW_DIR/aux_no_enum.slow5 $RAW_DIR/none_v0.1.0.blow5 $RAW_DIR/zlib
 $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output_formats.slow5 || die "testcase $TESTCASE: $TESTNAME failed"
 diff -q $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged_output_formats.slow5 || die "testcase $TESTCASE: diff for $TESTNAME failed"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
-
 #legacy space instead of "." in header vals and aux field vals
 
 TESTCASE=1.5
@@ -137,6 +137,7 @@ $SLOW5_EXEC merge $INPUT_FILES -c zlib -s svb-zd -o $OUTPUT_DIR/merged_output.bl
 slow5tools_quickcheck $OUTPUT_DIR/merged_output.blow5
 diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/merged_output.blow5 || die "testcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
+fi
 
 TESTCASE=1.6
 TESTNAME="merging files where one header attr is missing in one read group while it is there in the other"

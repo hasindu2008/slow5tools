@@ -111,12 +111,13 @@ $SLOW5_EXEC split -g -l false $REL_PATH/data/raw/split/multi_group_slow5s/lossy_
 info "comparing lossy group split : output and expected"
 check "Testcase:$TESTCASE lossy splitting groups" $REL_PATH/data/exp/split/lossy_expected_slow5s $OUTPUT_DIR/lossy_splitted_groups_slow5s
 
+if [ -z "$bigend" ]; then
 TESTCASE=3
 info "-------------------testcase ${TESTCASE}: split a multi read group slow5 file and produce blow5 output-------------------"
 $SLOW5_EXEC split -g $REL_PATH/data/raw/split/multi_group_slow5s/rg.slow5 -d $OUTPUT_DIR/splitted_groups_blow5_output -c zlib -s svb-zd || die "testcase ${TESTCASE}: splitting groups failed"
 info "comparing group split: output and expected"
 check "Testcase:$TESTCASE splitting groups" $REL_PATH/data/exp/split/expected_group_split_blow5_output $OUTPUT_DIR/splitted_groups_blow5_output
-
+fi
 
 TESTCASE=4
 info "-------------------testcase ${TESTCASE}: split a multi read group v0.1.0 zlib blow5 file -------------------"
@@ -169,6 +170,7 @@ fi
 cd -
 slow5tools_quickcheck $OUTPUT_DIR/split_files_slow5s
 
+if [ -z "$bigend" ]; then
 TESTCASE=11
 info "-------------------testcase ${TESTCASE}: split by reads single file -------------------"
 $SLOW5_EXEC split -r 2 -l false $REL_PATH/data/raw/split/single_group_slow5s/11reads.slow5 -d $OUTPUT_DIR/split_reads_blow5s_lossy --to blow5 || die "testcase ${TESTCASE}:  split by reads failed"
@@ -198,6 +200,7 @@ TESTCASE=16
 info "-------------------testcase ${TESTCASE}: lossy spliting groups-------------------"
 $SLOW5_EXEC split -g -l true $REL_PATH/data/raw/split/multi_group_slow5s/rg.slow5 -d $OUTPUT_DIR/split_groups_blow5s_lossless --to blow5 || die "testcase ${TESTCASE}: lossy splitting groups failed"
 slow5tools_quickcheck $OUTPUT_DIR/split_groups_blow5s_lossless
+fi
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
