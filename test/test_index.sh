@@ -66,6 +66,7 @@ $SLOW5_EXEC --version || die "slow5tools version failed"
 
 
 if [ -z "$bigend" ]; then
+#todo this test case on bigend should pass. see why extra \0 in index strings.
 echo
 TESTCASE_NO=1
 echo "------------------- slow5tools index testcase ${TESTCASE_NO} -------------------"
