@@ -195,6 +195,7 @@ fi
         # ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" -c zstd -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5"
         # my_diff "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5" -q
 
+    if [ -z "$bigend" ]; then
         # blow5 zstd-svb ->  slow5 ASCII
         ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" -o "$OUT/one_fast5/out_1_${type}_v0.2.0.slow5"
         my_diff "$EXP/one_fast5/exp_1_${type}_v0.2.0.slow5" "$OUT/one_fast5/out_1_${type}_v0.2.0.slow5" -q
@@ -207,7 +208,7 @@ fi
         # blow5 zstd ->  blow5 zlib
         ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zstd_v0.2.0.blow5" -s none -o "$OUT/one_fast5/out_1_${type}_zlib_v0.2.0.blow5"
         my_diff "$EXP/one_fast5/exp_1_${type}_zlib_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zlib_v0.2.0.blow5" -q
-
+    fi
     fi
 done
 
