@@ -112,6 +112,8 @@ make
 	docker run -v /path/to/local/data/data/:/data/ -it :image_id  ./slow5tools
 	```
 
+- To support large files on 32-bit systems use: `CFLAGS="-D_FILE_OFFSET_BITS=64"  make`.
+
 ## Usage
 
 * Visit the [man page](https://hasindu2008.github.io/slow5tools/commands.html) for all the commands and options.

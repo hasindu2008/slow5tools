@@ -45,7 +45,8 @@ else
 fi
 
 TESTCASE=1
-$SLOW5TOOLS --version || die "testcase$TESTCASE:slow5tools --version failed"
+info "testcase$TESTCASE"
+$SLOW5TOOLS --version > /dev/null 2> /dev/null || die "testcase$TESTCASE:slow5tools --version failed"
 
 if [ -z "$bigend" ]; then
     GOOD_LIST="exp_1_lossless_good.slow5 exp_1_lossy_good.blow5 zlib_svb-zd_multi_rg_v0.2.0_good.blow5"

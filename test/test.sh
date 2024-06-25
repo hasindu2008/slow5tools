@@ -263,6 +263,18 @@ else
     fi
 fi
 
+TESTCASE_NAME="skim test"
+echo_test $TESTCASE_NAME
+if [ $mem -eq 1 ]; then
+    if ! ./test/test_skim.sh mem ; then
+        fail "$TESTCASE_NAME"
+    fi
+else
+    if ! ./test/test_skim.sh ; then
+        fail "$TESTCASE_NAME"
+    fi
+fi
+
 if [ $ret -eq 1 ]; then
   echo ">>>>>One or more test cases have failed. The first failed set of testcases is $FIRST_FAILED_SET_OF_TESTCASES<<<<<"
 fi

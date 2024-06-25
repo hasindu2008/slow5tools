@@ -4,7 +4,7 @@
 - R10.4.1 5kHz - DNA
     - [NA24385 R10.4.1 LSK114 PromethION (5KHz) 40X coverage](#na24385-r1041-lsk114-promethion-5khz-40x-coverage)
     - [NA24385 R10.4.1 LSK114 PromethION (5KHz) 20X coverage](#na24385-r1041-lsk114-promethion-5khz-20x-coverage)
-    <!-- - [A few more R10.4.1 5kHz](#a-few-more-r1041-5khz) -->
+    - [A few more R10.4.1 5kHz](#a-few-more-r1041-5khz)
 - RNA004 - RNA
     - [UHR RNA004 PromethION direct-RNA data](#uhr-rna004-promethion-direct-rna-data)
     <!-- - [A few more RNA004 direct-RNA](#a-few-more-rna004-direct-rna) -->

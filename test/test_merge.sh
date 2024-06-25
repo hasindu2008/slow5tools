@@ -119,7 +119,7 @@ diff -q $REL_PATH/data/exp/merge/$OUTPUT_FILE $OUTPUT_DIR/$OUTPUT_FILE || die "t
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
 if [ -z "$bigend" ]; then
-TESTCASE=1.4
+TESTCASE=1.5
 TESTNAME="merging different slow5 input formats (slow5, blow5 with diff compression) and versions (0.1.0 and 0.2.0)"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/aux_no_enum.slow5 $RAW_DIR/none_v0.1.0.blow5 $RAW_DIR/zlib_svb-zd_v0.2.0.blow5 $RAW_DIR/zlib_v0.2.0.blow5"
@@ -128,7 +128,7 @@ diff -q $REL_PATH/data/exp/merge/merged_output_formats.slow5  $OUTPUT_DIR/merged
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 #legacy space instead of "." in header vals and aux field vals
 
-TESTCASE=1.5
+TESTCASE=1.6
 # coverts BLOW5 output including EOF
 TESTNAME="blow5 output"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
@@ -139,7 +139,7 @@ diff -q $REL_PATH/data/exp/merge/merged_expected_zlib_svb.blow5  $OUTPUT_DIR/mer
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 fi
 
-TESTCASE=1.6
+TESTCASE=1.7
 TESTNAME="merging files where one header attr is missing in one read group while it is there in the other"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0_asic_id_missing.slow5 $RAW_DIR/rg1.slow5"
@@ -148,7 +148,7 @@ slow5tools_quickcheck $OUTPUT_DIR/merged_output.slow5
 diff -q $REL_PATH/data/exp/merge/rg0_asic_id_missing_with_rg1.slow5  $OUTPUT_DIR/merged_output.slow5 || die "testcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-TESTCASE=1.7
+TESTCASE=1.8
 TESTNAME="merging files where one header attr is missing in one read group while it is there in the other (reversed input order)"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg1.slow5 $RAW_DIR/rg0_asic_id_missing.slow5 "
@@ -156,7 +156,7 @@ $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/merged_output.slow5 || die "testca
 diff -q $REL_PATH/data/exp/merge/rg1_with_rg0_asic_id_missing.slow5  $OUTPUT_DIR/merged_output.slow5 || die "testcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-TESTCASE=1.7
+TESTCASE=1.9
 TESTNAME="merge same read group"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg0_1.slow5 "
@@ -164,7 +164,7 @@ $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/same_rg.slow5 || die "testcase $TE
 diff -q $REL_PATH/data/exp/merge/same_rg.slow5  $OUTPUT_DIR/same_rg.slow5 || die "testcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-TESTCASE=1.7
+TESTCASE=1.10
 TESTNAME="merge same read group + diff readgroup"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
 INPUT_FILES="$RAW_DIR/rg0.slow5 $RAW_DIR/rg1.slow5 $RAW_DIR/rg0_1.slow5 "
@@ -172,7 +172,7 @@ $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/same_rg_and_diff_rg.slow5 || die "
 diff -q $REL_PATH/data/exp/merge/same_rg_and_diff_rg.slow5  $OUTPUT_DIR/same_rg_and_diff_rg.slow5 || die "testcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-TESTCASE=1.8
+TESTCASE=1.11
 #this test also check what happens when header attributes in an input are not in sort order (heatsink_temp and version are moved not to be in alpha order)
 TESTNAME="merge same read group with different aux field order"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
@@ -181,7 +181,7 @@ $SLOW5_EXEC merge $INPUT_FILES -o $OUTPUT_DIR/same_rg_aux_order.slow5 || die "te
 diff -q $REL_PATH/data/exp/merge/same_rg_aux_order.slow5  $OUTPUT_DIR/same_rg_aux_order.slow5 || die "testcase $TESTCASE: diff for $TESTNAME"
 echo -e "${GREEN}testcase $TESTCASE passed${NC}" 1>&3 2>&4
 
-TESTCASE=1.9
+TESTCASE=1.12
 #this test also check what happens when header attributes in an input are not in sort order (heatsink_temp and version are moved not to be in alpha order)
 TESTNAME="merge different read group with different aux field order"
 info "-------------------testcase $TESTCASE: $TESTNAME-------------------"
