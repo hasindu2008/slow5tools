@@ -22,7 +22,7 @@ To convert to and from ONT's new POD5 format, you use [blue_crab](https://github
 
 If you are a Linux user on x86_64 architecture and want to quickly try slow5tools out, download the compiled binaries from the [latest release](https://github.com/hasindu2008/slow5tools/releases). For example:
 ```sh
-VERSION=v1.1.0
+VERSION=v1.2.0
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-x86_64-linux-binaries.tar.gz" && tar xvf slow5tools-$VERSION-x86_64-linux-binaries.tar.gz && cd slow5tools-$VERSION/
 ./slow5tools
 ```
@@ -55,7 +55,7 @@ Quick example for Ubuntu :
 
 ```sh
 sudo apt-get install libhdf5-dev zlib1g-dev   #install HDF5 and zlib development libraries
-VERSION=v1.1.0
+VERSION=v1.2.0
 wget "https://github.com/hasindu2008/slow5tools/releases/download/$VERSION/slow5tools-$VERSION-release.tar.gz" && tar xvf slow5tools-$VERSION-release.tar.gz && cd slow5tools-$VERSION/
 ./configure
 make
