@@ -7,7 +7,7 @@
     - [A few more R10.4.1 5kHz](#a-few-more-r1041-5khz)
 - RNA004 - RNA
     - [UHR RNA004 PromethION direct-RNA data](#uhr-rna004-promethion-direct-rna-data)
-    <!-- - [A few more RNA004 direct-RNA](#a-few-more-rna004-direct-rna) -->
+    - [A few more RNA004 direct-RNA](#a-few-more-rna004-direct-rna)
 - R10.4.1 4kHz - DNA
     - [NA24385 R10.4.1 LSK114 PromethION (4KHz)](#na24385-r1041-lsk114-promethion-4khz)
     - [NA12878 R10.4.1 LSK114 PromethION (4KHz)](#na12878-r1041-lsk114-promethion-4khz)
@@ -25,7 +25,7 @@ An NA24385 R10.4.1 LSK114 dataset with ~40X coverage  sequenced on a PromethION 
 
 | <sub>Description</sub>                                          | <sub>ENA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
-| <sub>~19M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[]()</sub> | <sub> [PGXXSX240041_reads.blow5](https://slow5.bioinf.science/hg2_prom2_5khz) (`b9e0f4fc49ffe4d1e39dc9c09eccdeac`), [PGXXSX240041_reads.blow5.idx](https://slow5.bioinf.science/hg2_prom2_5khz_idx) (`18ac205e53552bcb561ea5b3a55cd9b7`) </sub>*                         |
+| <sub>~19M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[ERR12997168](https://www.ebi.ac.uk/ena/browser/view/ERR12997168)</sub> | <sub> [PGXXSX240041_reads.blow5](https://slow5.bioinf.science/hg2_prom2_5khz) (`b9e0f4fc49ffe4d1e39dc9c09eccdeac`), [PGXXSX240041_reads.blow5.idx](https://slow5.bioinf.science/hg2_prom2_5khz_idx) (`18ac205e53552bcb561ea5b3a55cd9b7`) </sub>*                         |
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
@@ -36,30 +36,30 @@ An NA24385 R10.4.1 LSK114 dataset with ~20X coverage sequenced on a PromethION a
 | <sub>Description</sub>                                          | <sub>ENA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
 | <sub>~20K reads subsubset (BLOW5 format)</sub>                  |  |     <sub>[PGXXXX230339_reads_20k.blow5](https://slow5.bioinf.science/hg2_prom_5khz_subsubsample)</sub> <sub>(`d4bb9a40eb89647c2bb74b724d63cef4`)</sub> |
-| <sub>~12M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[]()</sub> | <sub> [PGXXXX230339_reads.blow5](https://slow5.bioinf.science/hg2_prom_5khz) (`2dab2e0c042b0fb5f9f3794c7c916420`), [PGXXXX230339_reads.blow5.idx](https://slow5.bioinf.science/hg2_prom_5khz_idx) (`84a1b5317f0e92f73143070481df8fe3`) </sub>*                         |
+| <sub>~12M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[ERR12997167](https://www.ebi.ac.uk/ena/browser/view/ERR12997167)</sub> | <sub> [PGXXXX230339_reads.blow5](https://slow5.bioinf.science/hg2_prom_5khz) (`2dab2e0c042b0fb5f9f3794c7c916420`), [PGXXXX230339_reads.blow5.idx](https://slow5.bioinf.science/hg2_prom_5khz_idx) (`84a1b5317f0e92f73143070481df8fe3`) </sub>*                         |
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-<!-- ### A few more R10.4.1 5kHz
+### A few more R10.4.1 5kHz
 
-- Will be added incrementally -->
+- An NA24385 R10.4.1 LSK114 dataset sequenced on a MinION at 5KHz is available through ENA at [RR12997169](https://www.ebi.ac.uk/ena/browser/view/ERR12997169)
 
 ## RNA004 - RNA
 
 ### UHR RNA004 PromethION direct-RNA data
 
-Universal human reference RNA (48 ng polyA enriched RNA) sequenced on a PromethION is available from the following links:
+Universal human reference RNA (300 ng polyA enriched RNA) sequenced on a PromethION is available from the following links:
 
 | <sub>Description</sub>                                          | <sub>ENA run Data access</sub>                                                                                         | <sub>Direct download link (md5sum)</sub>  |
 |------------------------------------------------------|------------------------------------------------------------------------------------------------------------|----------------------|
-| <sub>~15M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[]()</sub> | <sub> [PNXRXX240011_reads.blow5](https://slow5.bioinf.science/uhr_prom) (`671be5b88f2b54a9e22ced351493b7a9`), [PNXRXX240011_reads.blow5.idx](https://slow5.bioinf.science/uhr_prom_idx) (`e3ea326d300a22008e2821ce10d17649`) </sub>*
+| <sub>~15M reads complete PromethION dataset (BLOW5 format)</sub> | <sub>[ERR12997170](https://www.ebi.ac.uk/ena/browser/view/ERR12997170)</sub> | <sub> [PNXRXX240011_reads.blow5](https://slow5.bioinf.science/uhr_prom) (`671be5b88f2b54a9e22ced351493b7a9`), [PNXRXX240011_reads.blow5.idx](https://slow5.bioinf.science/uhr_prom_idx) (`e3ea326d300a22008e2821ce10d17649`) </sub>*
 
 *This dataset is hosted in the [gtgseq AWS bucket](https://aws.amazon.com/marketplace/pp/prodview-rve772jpfevtw) granted by the AWS open data sponsorship programme, for which the documentation available under the [gtgseq GitHub repository](https://github.com/GenTechGp/gtgseq).
 
-<!-- ### A few more RNA004 direct-RNA
+### A few more RNA004 direct-RNA
 
-- Another PromethION UHR RNA sample (done without polyA enrichment) is available at []()
-- A MinION UHR RNA sample is available at []() -->
+- Another PromethION universal human reference RNA sample (1.5 ug of total RNA, done without polyA enrichment) is available through ENA at [ERR12997171](https://www.ebi.ac.uk/ena/browser/view/ERR12997171)
+- Universal human reference RNA (294 ng polyA enriched RNA) with 2% SIRV spiked in (6 ng) sample sequenced on a MinION is available through ENA at [ERR12997172](https://www.ebi.ac.uk/ena/browser/view/ERR12997172)
 
 ## R10.4.1 4kHz - DNA
 
