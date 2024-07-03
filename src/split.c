@@ -2,7 +2,8 @@
  * @file split.c
  * @brief split a SLOW5 in different ways
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
- * @date 27/02/2021
+ * @author Sasha Jenner (me AT sjenner DOT com)
+ * @date 03/07/2024
  */
 
 #include <getopt.h>
@@ -15,6 +16,7 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 #include "thread.h"
+#include "demux.h"
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [SLOW5_FILE/DIR] ...\n"
 #define HELP_LARGE_MSG \
@@ -28,6 +30,7 @@
     "    -g, --groups                  split multi read group file into single read group files\n" \
     "    -r, --reads [INT]             split into n reads, i.e., each file will have n reads\n"    \
     "    -f, --files [INT]             split reads into n files evenly \n"              \
+    "    -x, --demux [BARCODE_PATH]    demultiplex reads given barcode summary path\n" \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     HELP_MSG_LOSSLESS \
@@ -41,10 +44,12 @@ enum SplitMethod {
     READS_SPLIT,
     FILE_SPLIT,
     GROUP_SPLIT,
+    DEMUX_SPLIT,
 };
 typedef struct {
     SplitMethod splitMethod = READS_SPLIT;
     size_t n;
+    char *bsum_path; // Barcode summary path
 }meta_split_method;
 
 int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta_split_method  meta_split_method_object);
@@ -127,12 +132,14 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {"files",       required_argument, NULL, 'f'}, //9
             {"reads",       required_argument, NULL, 'r'}, //10
             {"batchsize",   required_argument, NULL, 'K'}, //11
+            {"demux",       required_argument, NULL, 'x'}, //12
             {NULL, 0, NULL, 0 }
     };
 
     meta_split_method meta_split_method_object;
     meta_split_method_object.n = 0;
     meta_split_method_object.splitMethod = READS_SPLIT;
+    meta_split_method_object.bsum_path = NULL;
 
     opt_t user_opts;
     init_opt(&user_opts);
@@ -140,7 +147,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:x:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -171,6 +178,14 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 'g':
                 meta_split_method_object.splitMethod = GROUP_SPLIT;
+                break;
+            case 'x':
+                meta_split_method_object.splitMethod = DEMUX_SPLIT;
+                meta_split_method_object.bsum_path = strdup(optarg);
+                if (!meta_split_method_object.bsum_path) {
+                    perror("strdup");
+                    return EXIT_FAILURE;
+                }
                 break;
             case 'l':
                 user_opts.arg_lossless = optarg;
@@ -246,6 +261,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         VERBOSE("An input slow5 file will be split such that each output file has %lu reads", meta_split_method_object.n);
     }else if(meta_split_method_object.splitMethod == FILE_SPLIT){
         VERBOSE("An input slow5 file will be split into %lu output files", meta_split_method_object.n);
+    } else if (meta_split_method_object.splitMethod == DEMUX_SPLIT) {
+        VERBOSE("An input slow5 file will be demultiplexed%s", "");
     } else{
         VERBOSE("An input multi read group slow5 files will be split into single read group slow5 files %s","");
     }
@@ -267,6 +284,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     }
 
     VERBOSE("Splitting %ld s/blow5 files took %.3fs", slow5_files_input.size(), slow5_realtime() - init_realtime);
+
+    free(meta_split_method_object.bsum_path);
 
     return EXIT_SUCCESS;
 }
@@ -321,6 +340,11 @@ int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta
             if(ret_group_split_func){
                 return -1;
             }
+        } else if (meta_split_method_object.splitMethod == DEMUX_SPLIT) {
+            int ret = demux(input_slow5_file_i,
+                            meta_split_method_object.bsum_path, &user_opts);
+            if (ret)
+                return -1;
         }
         slow5_close(input_slow5_file_i); //todo-implement a method to fseek() to the first record of the slow5File_i
     }

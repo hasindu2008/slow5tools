@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include "misc.h"
 #include <vector>
+#include <string>
 
 //void free_attributes(group_flags group_flag, operator_obj* operator_data);
 std::vector< std::string > list_directory(const std::string& file_name);
