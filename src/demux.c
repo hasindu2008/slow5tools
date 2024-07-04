@@ -911,22 +911,25 @@ static void demux_setup(core_t *core, db_t *db, int i)
 
     k = kh_get(svu16, prid_map, rec->read_id);
     if (k == kh_end(prid_map)) {
-        ERROR("Read ID '%s' is missing from barcode summary file",
-              rec->read_id);
-        exit(EXIT_FAILURE);
+        WARNING("Read ID '%s' is missing from barcode summary file",
+                rec->read_id);
+        (void) memset(rec_codes + i, 0, sizeof (*rec_codes));
+        (void) memset(db->read_record + i, 0, sizeof (*db->read_record));
+        //exit(EXIT_FAILURE); TODO error out or give a warning?
+    } else {
+        rec_codes[i] = kh_val(prid_map, k);
+
+        press = slow5_press_init(core->press_method);
+        if (!press)
+            exit(EXIT_FAILURE);
+        db->read_record[i].buffer = slow5_rec_to_mem(rec, core->aux_meta,
+                                                     core->format_out, press,
+                                                     &len);
+        if (!db->read_record[i].buffer)
+            exit(EXIT_FAILURE);
+        db->read_record[i].len = (int) len; // TODO should be size_t or uint32_t
+        slow5_press_free(press);
     }
-    rec_codes[i] = kh_val(prid_map, k);
-
-    press = slow5_press_init(core->press_method);
-    if (!press)
-        exit(EXIT_FAILURE);
-    db->read_record[i].buffer = slow5_rec_to_mem(rec, core->aux_meta,
-                                                 core->format_out, press, &len);
-    if (!db->read_record[i].buffer)
-        exit(EXIT_FAILURE);
-    db->read_record[i].len = (int) len; // TODO should be size_t or uint32_t
-
-    slow5_press_free(press);
     slow5_rec_free(rec);
 }
 

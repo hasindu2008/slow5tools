@@ -202,6 +202,30 @@ $SLOW5_EXEC split -g -l true $REL_PATH/data/raw/split/multi_group_slow5s/rg.slow
 slow5tools_quickcheck $OUTPUT_DIR/split_groups_blow5s_lossless || die "testcase ${TESTCASE}: lossy splitting groups failed"
 fi
 
+TESTCASE=17
+name="testcase ${TESTCASE}: demultiplex one read, one barcode"
+info "-------------------$name-------"
+$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux1/barcode_summary.txt $REL_PATH/data/raw/split/demux1/example2_0.slow5 -d $OUTPUT_DIR/demux1 --to slow5 || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux1 $OUTPUT_DIR/demux1
+
+TESTCASE=18
+name="testcase ${TESTCASE}: demultiplex two reads, one barcode"
+info "-------------------$name-------"
+$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux2/barcode_summary.txt $REL_PATH/data/raw/split/demux2/example2_0.slow5 -d $OUTPUT_DIR/demux2 --to blow5 || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux2 $OUTPUT_DIR/demux2
+
+TESTCASE=19
+name="testcase ${TESTCASE}: demultiplex one missing"
+info "-------------------$name-------"
+$SLOW5_EXEC split --to blow5 $REL_PATH/data/raw/split/demux3/example2_0.slow5 -d $OUTPUT_DIR/demux3 -x $REL_PATH/data/raw/split/demux3/bs.txt || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux3 $OUTPUT_DIR/demux3
+
+TESTCASE=20
+name="testcase ${TESTCASE}: demultiplex two reads, two barcodes"
+info "-------------------$name-------"
+$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux4/example2_0.blow5 -d $OUTPUT_DIR/demux4 -x $REL_PATH/data/raw/split/demux4/summary || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux4 $OUTPUT_DIR/demux4
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
