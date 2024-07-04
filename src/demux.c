@@ -2,24 +2,25 @@
  * @file demux.c
  * @brief demultiplex a slow5 file
  * @author Sasha Jenner (me AT sjenner DOT com)
- * @date TODO
- * TODO: check each malloc has a free, code review, minimal testing, compile,
- * spell check
+ * @date 04/07/2024
  */
 #include <stdint.h>
 #include "demux.h"
 #include "error.h"
 #include "khash.h"
 #include "kvec.h"
-#include "read_fast5.h"
 #include "slow5_extra.h"
 #include "thread.h"
 
 extern int slow5tools_verbosity_level;
 
-typedef kvec_t(uint16_t) kvec_uint16_t;
+struct kvec_u16 {
+    uint16_t n;
+    uint16_t m;
+    uint16_t *a;
+};
 KHASH_MAP_INIT_STR(su16, uint16_t);
-KHASH_MAP_INIT_STR(svu16, kvec_uint16_t); // TODO change internal vector buffer size
+KHASH_MAP_INIT_STR(svu16, struct kvec_u16);
 
 struct bsum {
     FILE *fp;
@@ -39,6 +40,8 @@ static char *path_append(const char *path, const char *suf);
 static char *path_move(const char *path, const char *dir);
 static char *path_move_append(const char *path, const char *dir,
                               const char *suf);
+static char **paths_spawn(const char *in_path, const char **names,
+                          uint16_t count, const opt_t *opt);
 static core_t *demux_core_init(struct slow5_file *in,
                                struct slow5_aux_meta *aux_meta,
                                khash_t(svu16) *prid_map, const opt_t *opt);
@@ -52,27 +55,32 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
                   const struct demux_info *d, const opt_t *opt);
 static int demux_db_setup(db_t *db, const struct slow5_file *in, int max);
 static int demux_write(struct slow5_file **out, const db_t *db,
-                       const kvec_uint16_t *rec_codes);
-static int ext_fix(char *path, enum slow5_fmt fmt);
-static int map_su16_get(khash_t(su16) *m, char *s, uint16_t *v);
-static int slow5_aux_meta_copy(const struct slow5_file *in,
-                               struct slow5_file *out);
-static kvec_uint16_t *map_svu16_get(khash_t(svu16) *m, char *s);
+                       const struct kvec_u16 *rec_codes);
+static int extmod(char *path, enum slow5_fmt fmt);
+static int map_su16_getpush(khash_t(su16) *m, char *s, uint16_t *v);
+static int slow5_aux_meta_copy(const struct slow5_hdr *in_hdr,
+                               struct slow5_hdr *out_hdr);
+static int slow5_aux_meta_copy_enum(const struct slow5_hdr *in_hdr,
+                                    struct slow5_hdr *out_hdr, const char *attr,
+                                    enum slow5_aux_type type);
+static int slow5_hdr_copy(const struct slow5_hdr *in_hdr,
+                          struct slow5_hdr *out_hdr, int lossy);
 static struct bsum *bsum_open(const char *bsum_path);
 static struct demux_info *demux_info_init(void);
 static struct demux_info *demux_info_get(const char *bsum_path);
 static struct demux_info *demux_info_get2(struct bsum *bs);
+static struct kvec_u16 *map_svu16_getpush(khash_t(svu16) *m, char *s);
 static struct slow5_file *slow5_birth(const struct slow5_file *in,
                                       const char *path, const opt_t *opt);
 static struct slow5_file **slow5_spawn(const struct slow5_file *in,
-                                       char **names, uint16_t count,
+                                       const char **names, uint16_t count,
                                        const opt_t *opt);
 static void demux_db_destroy(db_t *db);
 static void demux_info_destroy(struct demux_info *d);
 static void demux_setup(core_t *core, db_t *db, int i);
 static void map_svu16_destroy(khash_t(svu16) *m);
 static void underscore_prepend(const char *s, char **out, size_t *n);
-static void vec_chkpush(kvec_uint16_t *v, uint16_t x);
+static void vec_chkpush(struct kvec_u16 *v, uint16_t x);
 
 /*
  * Demultiplex a slow5 file given the barcode summary file path and user
@@ -112,7 +120,7 @@ static char *path_append(const char *path, const char *suf)
     pathlen = strlen(path);
     suflen = strlen(suf);
 
-    ext = strrchr(path, '.');
+    ext = strrchr(path, PATH_EXT_DELIM);
     if (ext)
         namelen = ext - path;
     else
@@ -145,7 +153,7 @@ static char *path_move(const char *path, const char *dir)
     if (dirlen)
         dirlen++;
 
-    base = strrchr(path, '/');
+    base = strrchr(path, PATH_DIR_DELIM);
     if (!base)
         base = path;
     else
@@ -158,7 +166,7 @@ static char *path_move(const char *path, const char *dir)
 
     if (dirlen) {
         (void) memcpy(ret, dir, dirlen - 1);
-        ret[dirlen - 1] = '/';
+        ret[dirlen - 1] = PATH_DIR_DELIM;
     }
     (void) memcpy(ret + dirlen, base, baselen);
     ret[len - 1] = '\0';
@@ -188,7 +196,36 @@ static char *path_move_append(const char *path, const char *dir,
 }
 
 /*
- * Initialise the demultiplexing multithreading core.
+ * Get count new paths appended with an underscore and name before its
+ * extension. Return NULL on error.
+ */
+static char **paths_spawn(const char *in_path, const char **names,
+                          uint16_t count, const opt_t *opt)
+{
+    char **paths;
+    char *suf;
+    int ret;
+    size_t len;
+    uint16_t i;
+
+    paths = (char **) malloc(count * sizeof (*paths));
+    MALLOC_CHK(paths);
+
+    suf = NULL;
+    for (i = 0; i < count; i++) {
+        underscore_prepend(names[i], &suf, &len);
+        paths[i] = path_move_append(in_path, opt->arg_dir_out, suf);
+        ret = extmod(paths[i], opt->fmt_out);
+        if (ret)
+            return NULL;
+    }
+    free(suf);
+
+    return paths;
+}
+
+/*
+ * Initialise the demultiplexing multi-threading core.
  */
 static core_t *demux_core_init(struct slow5_file *in,
                                struct slow5_aux_meta *aux_meta,
@@ -199,7 +236,8 @@ static core_t *demux_core_init(struct slow5_file *in,
     c = (core_t *) calloc(1, sizeof (*c));
     MALLOC_CHK(c);
 
-    c->aux_meta = aux_meta;
+    if (!opt->flag_lossy)
+        c->aux_meta = aux_meta;
     c->format_out = opt->fmt_out;
     c->fp = in;
     c->lossy = opt->flag_lossy;
@@ -212,7 +250,7 @@ static core_t *demux_core_init(struct slow5_file *in,
 }
 
 /*
- * Initialise the demultiplexing multithreading database.
+ * Initialise the demultiplexing multi-threading database for n records.
  */
 static db_t *demux_db_init(int n)
 {
@@ -224,7 +262,7 @@ static db_t *demux_db_init(int n)
     db->mem_bytes = (size_t *) malloc(n * sizeof (*db->mem_bytes));
     db->mem_records = (char **) malloc(n * sizeof (*db->mem_records));
     db->read_record = (raw_record_t *) malloc(n * sizeof (*db->read_record));
-    db->read_group_vector = (uint32_t *) malloc(n * sizeof (kvec_uint16_t));
+    db->read_group_vector = (uint32_t *) malloc(n * sizeof (struct kvec_u16));
 
     MALLOC_CHK(db->mem_bytes);
     MALLOC_CHK(db->mem_records);
@@ -244,8 +282,7 @@ static int bsum_close(struct bsum *bs)
 
     ret = fclose(bs->fp);
     if (ret == EOF) {
-        ERROR("Failed to close barcode summary file: %s",
-              strerror(errno));
+        ERROR("Failed to close barcode summary file: %s", strerror(errno));
         return -1;
     }
     free(bs->line);
@@ -262,14 +299,12 @@ static int bsum_close(struct bsum *bs)
 static int bsum_getnext(struct bsum *bs, char **prid, char **code)
 {
     char *tok;
-    int ret;
     ssize_t nread;
     uint16_t i;
 
     nread = getline(&bs->line, &bs->n, bs->fp);
     if (nread == -1) {
-        ret = feof(bs->fp);
-        if (ret)
+        if (feof(bs->fp))
             return 1;
         ERROR("Failed to read barcode summary line: %s", strerror(errno));
         return -1;
@@ -333,7 +368,7 @@ static int bsum_parsehdr(struct bsum *bs)
         i++;
     }
     if (BSUM_HEADER_MISSING(bs)) {
-        ERROR("Invalid barcode summary header%s", "")
+        ERROR("Invalid barcode summary header%s", "");
         return -1;
     }
 
@@ -352,7 +387,7 @@ static int demux2(struct slow5_file *in, const struct demux_info *d,
     struct slow5_file **out;
     uint16_t i;
 
-    out = slow5_spawn(in, d->codes, d->count, opt);
+    out = slow5_spawn(in, (const char **) d->codes, d->count, opt);
     if (!out)
         return -1;
 
@@ -386,11 +421,11 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
     db_t *db;
     int iseof;
     int ret;
-    kvec_uint16_t *rec_codes;
+    struct kvec_u16 *rec_codes;
 
     core = demux_core_init(in, out[0]->header->aux_meta, d->prid_map, opt);
     db = demux_db_init(opt->read_id_batch_capacity);
-    rec_codes = (kvec_uint16_t *) db->read_group_vector;
+    rec_codes = (struct kvec_u16 *) db->read_group_vector;
 
     iseof = 0;
     while (!iseof) {
@@ -414,7 +449,7 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
 }
 
 /*
- * Store the next max records in the demultiplexing multithreading database.
+ * Store the next max records in the demultiplexing multi-threading database.
  * Return -1 on error, 0 on success, 1 on end of file.
  */
 static int demux_db_setup(db_t *db, const struct slow5_file *in, int max)
@@ -445,11 +480,11 @@ static int demux_db_setup(db_t *db, const struct slow5_file *in, int max)
 }
 
 /*
- * Write the demultiplexing multithreading database records to their
+ * Write the demultiplexing multi-threading database records to their
  * corresponding barcode files. Return -1 on error, 0 on success.
  */
 static int demux_write(struct slow5_file **out, const db_t *db,
-                       const kvec_uint16_t *rec_codes)
+                       const struct kvec_u16 *rec_codes)
 {
     int i;
     size_t len;
@@ -470,15 +505,16 @@ static int demux_write(struct slow5_file **out, const db_t *db,
 }
 
 /*
- * Write the format's slow5 extension to the path. The path should have enough
- * memory allocated to write the extension. Return -1 on error, 0 on success.
+ * Write the format's slow5 extension to the path with capacity cap.
+ * Return -1 on error, 0 on success.
  */
-static int ext_fix(char *path, enum slow5_fmt fmt)
+static int extmod(char *path, enum slow5_fmt fmt)
 {
     char *ext;
     const char *name;
+    size_t namelen;
 
-    ext = strrchr(path, '.');
+    ext = strrchr(path, PATH_EXT_DELIM);
     if (!ext) {
         ERROR("Path '%s' has no extension", path);
         return -1;
@@ -487,12 +523,17 @@ static int ext_fix(char *path, enum slow5_fmt fmt)
 
     name = slow5_fmt_get_name(fmt);
     if (!name) {
-        ERROR("Unknown slow5 format '%d'", fmt);
+        ERROR("Unknown slow5 format %d", fmt);
         return -1;
     }
 
-    (void) strcpy(ext, name);
+    namelen = strlen(name);
+    if (ext - path + namelen > strlen(path)) {
+        ERROR("Buffer too small to modify extension to '%s'", name);
+        return -1;
+    }
 
+    (void) memcpy(ext, name, namelen + 1);
     return 0;
 }
 
@@ -501,7 +542,7 @@ static int ext_fix(char *path, enum slow5_fmt fmt)
  * add it to m with the number of elements - 1 as its value.
  * Return -1 on error, 0 on key already exists, 1 on key was added.
  */
-static int map_su16_get(khash_t(su16) *m, char *s, uint16_t *v)
+static int map_su16_getpush(khash_t(su16) *m, char *s, uint16_t *v)
 {
     int err;
     int ret;
@@ -525,66 +566,84 @@ static int map_su16_get(khash_t(su16) *m, char *s, uint16_t *v)
 }
 
 /*
- * Copy the auxilliary metadata from in to out.
+ * Copy the auxiliary metadata from one slow5 header to another.
  * Return -1 on error, 0 on success.
  */
-static int slow5_aux_meta_copy(const struct slow5_file *in,
-                               struct slow5_file *out)
+static int slow5_aux_meta_copy(const struct slow5_hdr *in_hdr,
+                               struct slow5_hdr *out_hdr)
 {
-    const char **p;
-    char *attr;
+    const char *attr;
     enum slow5_aux_type type;
     int ret;
     uint32_t i;
-    uint8_t n;
 
     i = 0;
-    ret = 0;
-    while (!ret && i < in->header->aux_meta->num) {
-        attr = in->header->aux_meta->attrs[i];
-        type = in->header->aux_meta->types[i];
+    while (i < in_hdr->aux_meta->num) {
+        attr = in_hdr->aux_meta->attrs[i];
+        type = in_hdr->aux_meta->types[i];
 
-        if (type == SLOW5_ENUM || type == SLOW5_ENUM_ARRAY) {
-            p = (const char **) slow5_get_aux_enum_labels(in->header, attr, &n);
-            if (!p)
-                ret = -1;
-            else
-                ret = slow5_aux_meta_add_enum(out->header->aux_meta, attr, type,
-                                              p, n);
-        } else {
-            ret = slow5_aux_meta_add(out->header->aux_meta, attr, type);
-        }
+        if (type == SLOW5_ENUM || type == SLOW5_ENUM_ARRAY)
+            ret = slow5_aux_meta_copy_enum(in_hdr, out_hdr, attr, type);
+        else
+            ret = slow5_aux_meta_add(out_hdr->aux_meta, attr, type);
 
         if (ret) {
-            ERROR("Failed to copy auxilliary attribute '%s'", attr);
-            ret = -1;
+            ERROR("Failed to copy auxiliary attribute '%s'", attr);
+            return -1;
         }
         i++;
     }
-    return ret;
+
+    return 0;
 }
 
 /*
- * Get the value of map m at key s. If s does not exist, add it to m and
- * initialise its value to a new vector. Return NULL on error.
+ * Copy an auxiliary enum attribute from one slow5 header to another.
+ * Return -1 on error, 0 on success.
  */
-static kvec_uint16_t *map_svu16_get(khash_t(svu16) *m, char *s)
+static int slow5_aux_meta_copy_enum(const struct slow5_hdr *in_hdr,
+                                    struct slow5_hdr *out_hdr, const char *attr,
+                                    enum slow5_aux_type type)
+{
+    const char **p;
+    int ret;
+    uint8_t n;
+
+    p = (const char **) slow5_get_aux_enum_labels(in_hdr, attr, &n);
+    if (!p)
+        return -1;
+    ret = slow5_aux_meta_add_enum(out_hdr->aux_meta, attr, type, p, n);
+    if (ret)
+        return -1;
+
+    return 0;
+}
+
+/*
+ * Copy the first read group data from one slow5 header to another. If not
+ * lossy, copy the auxiliary metadata as well. Return -1 on error, 0 on success.
+ */
+static int slow5_hdr_copy(const struct slow5_hdr *in_hdr,
+                          struct slow5_hdr *out_hdr, int lossy)
 {
     int ret;
-    khint_t k;
+    khash_t(slow5_s2s) *rg;
 
-    k = kh_get(svu16, m, s);
-
-    if (k == kh_end(m)) {
-        k = kh_put(svu16, m, s, &ret);
-        if (ret == -1) {
-            ERROR("Failed to put '%s' into hash map", s);
-            return NULL;
-        }
-        kv_init(kh_val(m, k));
+    if (!lossy) {
+        out_hdr->aux_meta = slow5_aux_meta_init_empty();
+        ret = slow5_aux_meta_copy(in_hdr, out_hdr);
+        if (ret)
+            return -1;
     }
 
-    return &kh_val(m, k);
+    rg = slow5_hdr_get_data(0, in_hdr);
+    ret = slow5_hdr_add_rg_data(out_hdr, rg);
+    if (ret < 0) {
+        ERROR("Failed to copy read group data%s", "");
+        return -1;
+    }
+
+    return 0;
 }
 
 /*
@@ -655,7 +714,7 @@ static struct demux_info *demux_info_get(const char *bsum_path)
 }
 
 /*
- * Get the demultiplexing information given the barcode summary file structure.
+ * Get the demultiplexing information given the barcode summary file.
  * Create a temporary hash map from barcode arrangement to index for querying.
  * Return NULL on error.
  */
@@ -666,8 +725,8 @@ static struct demux_info *demux_info_get2(struct bsum *bs)
     int ret;
     khash_t(su16) *code_map;
     khint_t k;
-    kvec_uint16_t *prid_codes;
     struct demux_info *d;
+    struct kvec_u16 *prid_codes;
     uint16_t i;
 
     d = demux_info_init();
@@ -677,18 +736,18 @@ static struct demux_info *demux_info_get2(struct bsum *bs)
 
     ret = bsum_getnext(bs, &prid, &code);
     while (!ret) {
-        prid_codes = map_svu16_get(d->prid_map, prid);
+        prid_codes = map_svu16_getpush(d->prid_map, prid);
         if (!prid_codes)
             return NULL;
         if (kv_size(*prid_codes))
             free(prid);
 
-        ret = map_su16_get(code_map, code, &i);
+        ret = map_su16_getpush(code_map, code, &i);
         if (!ret)
             free(code);
         else if (ret == -1)
             return NULL;
-        
+
         vec_chkpush(prid_codes, i);
         ret = bsum_getnext(bs, &prid, &code);
     }
@@ -709,6 +768,29 @@ static struct demux_info *demux_info_get2(struct bsum *bs)
 }
 
 /*
+ * Get the value of map m at key s. If s does not exist, add it to m and
+ * initialise its value to a new vector. Return NULL on error.
+ */
+static struct kvec_u16 *map_svu16_getpush(khash_t(svu16) *m, char *s)
+{
+    int ret;
+    khint_t k;
+
+    k = kh_get(svu16, m, s);
+
+    if (k == kh_end(m)) {
+        k = kh_put(svu16, m, s, &ret);
+        if (ret == -1) {
+            ERROR("Failed to put '%s' into hash map", s);
+            return NULL;
+        }
+        kv_init(kh_val(m, k));
+    }
+
+    return &kh_val(m, k);
+}
+
+/*
  * Copy the skeleton of a slow5 file to a given path. The header is duplicated,
  * but otherwise no records are copied over. Output options are used to specify
  * the output format, lossy-ness and compression used. Return NULL on error.
@@ -718,9 +800,8 @@ static struct slow5_file *slow5_birth(const struct slow5_file *in,
 {
     FILE *fp;
     int ret;
-    khash_t(slow5_s2s) *rg;
-    struct slow5_file *out;
     slow5_press_method_t press_out;
+    struct slow5_file *out;
 
     fp = fopen(path, "w");
     if (!fp) {
@@ -732,26 +813,9 @@ static struct slow5_file *slow5_birth(const struct slow5_file *in,
     if (!out)
         return NULL;
 
-    ret = slow5_hdr_initialize(out->header, opt->flag_lossy);
-    if (ret) {
-        ERROR("Failed to initialise the header for '%s'", path);
+    ret = slow5_hdr_copy(in->header, out->header, opt->flag_lossy);
+    if (ret)
         return NULL;
-    }
-
-    out->header->num_read_groups = 0; // TODO why?
-
-    if (!opt->flag_lossy) {
-        ret = slow5_aux_meta_copy(in, out);
-        if (ret)
-            return NULL;
-    }
-
-    rg = slow5_hdr_get_data(0, in->header);
-    ret = slow5_hdr_add_rg_data(out->header, rg);
-    if (ret < 0) {
-        ERROR("Failed to add read group data to '%s'", path);
-        return NULL;
-    }
 
     press_out.record_method = opt->record_press_out;
     press_out.signal_method = opt->signal_press_out;
@@ -769,38 +833,33 @@ static struct slow5_file *slow5_birth(const struct slow5_file *in,
  * underscore and name before its extension. Return NULL on error.
  */
 static struct slow5_file **slow5_spawn(const struct slow5_file *in,
-                                       char **names, uint16_t count,
+                                       const char **names, uint16_t count,
                                        const opt_t *opt)
 {
-    char *suf;
-    char *out_path;
-    int ret;
-    size_t len;
+    char **paths;
     struct slow5_file **out;
     uint16_t i;
+
+    paths = paths_spawn(in->meta.pathname, names, count, opt);
+    if (!paths)
+        return NULL;
 
     out = (struct slow5_file **) malloc(count * sizeof (*out));
     MALLOC_CHK(out);
 
-    suf = NULL;
     for (i = 0; i < count; i++) {
-        underscore_prepend(names[i], &suf, &len);
-        out_path = path_move_append(in->meta.pathname, opt->arg_dir_out, suf);
-        ret = ext_fix(out_path, opt->fmt_out);
-        if (ret)
-            return NULL;
-        out[i] = slow5_birth(in, out_path, opt);
-        free(out_path);
+        out[i] = slow5_birth(in, paths[i], opt);
+        free(paths[i]);
         if (!out[i])
             return NULL;
     }
-    free(suf);
 
+    free(paths);
     return out;
 }
 
 /*
- * Free the demultiplexing multithreading database.
+ * Free the demultiplexing multi-threading database.
  */
 static void demux_db_destroy(db_t *db)
 {
@@ -835,8 +894,8 @@ static void demux_setup(core_t *core, db_t *db, int i)
     const khash_t(svu16) *prid_map;
     int ret;
     khint_t k;
-    kvec_uint16_t *rec_codes;
     size_t len;
+    struct kvec_u16 *rec_codes;
     struct slow5_press *press;
     struct slow5_rec *rec;
 
@@ -848,7 +907,7 @@ static void demux_setup(core_t *core, db_t *db, int i)
         exit(EXIT_FAILURE);
 
     prid_map = (const khash_t(svu16) *) core->param;
-    rec_codes = (kvec_uint16_t *) db->read_group_vector;
+    rec_codes = (struct kvec_u16 *) db->read_group_vector;
 
     k = kh_get(svu16, prid_map, rec->read_id);
     if (k == kh_end(prid_map)) {
@@ -861,15 +920,14 @@ static void demux_setup(core_t *core, db_t *db, int i)
     press = slow5_press_init(core->press_method);
     if (!press)
         exit(EXIT_FAILURE);
-    if (core->lossy)
-        core->aux_meta = NULL;
     db->read_record[i].buffer = slow5_rec_to_mem(rec, core->aux_meta,
                                                  core->format_out, press, &len);
-    db->read_record[i].len = (int) len; // TODO maybe this should be size_t
-    slow5_press_free(press);
-    slow5_rec_free(rec);
     if (!db->read_record[i].buffer)
         exit(EXIT_FAILURE);
+    db->read_record[i].len = (int) len; // TODO should be size_t or uint32_t
+
+    slow5_press_free(press);
+    slow5_rec_free(rec);
 }
 
 /*
@@ -911,10 +969,10 @@ static void underscore_prepend(const char *s, char **out, size_t *n)
 /*
  * If x is not in vector v, append it.
  */
-static void vec_chkpush(kvec_uint16_t *v, uint16_t x)
+static void vec_chkpush(struct kvec_u16 *v, uint16_t x)
 {
     int found;
-    size_t i;
+    uint16_t i;
 
     i = 0;
     found = 0;

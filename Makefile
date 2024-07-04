@@ -90,7 +90,7 @@ $(BUILD_DIR)/skim.o: src/skim.c src/error.h
 $(BUILD_DIR)/misc.o: src/misc.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/demux.o: src/demux.c $(BUILD_DIR)/read_fast5.o $(BUILD_DIR)/thread.o src/misc.h src/error.h src/khash.h src/kvec.h
+$(BUILD_DIR)/demux.o: src/demux.c $(BUILD_DIR)/thread.o src/demux.h src/error.h src/khash.h src/kvec.h src/misc.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 slow5lib/lib/libslow5.a:

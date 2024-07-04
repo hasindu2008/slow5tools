@@ -8,6 +8,8 @@
 #define BSUM_HEADER_BARCODE ("barcode_arrangement")
 #define BSUM_HEADER_PARENT_READID ("parent_read_id")
 #define BSUM_HEADER_MISSING(bs) (!(bs)->code_pos || !(bs)->prid_pos)
+#define PATH_EXT_DELIM ('.')
+#define PATH_DIR_DELIM ('/')
 
 /*
  * Demultiplex a slow5 file given the barcode summary file path and user
