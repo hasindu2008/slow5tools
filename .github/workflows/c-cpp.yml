@@ -14,7 +14,7 @@ jobs:
     steps:
     - name: install git
       run: sudo apt-get install -y software-properties-common && sudo add-apt-repository ppa:git-core/ppa && sudo apt-get update -y && sudo apt-get install git -y
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
     - name: install packages
@@ -137,32 +137,19 @@ jobs:
       run: make clean && make CC=icc CXX=icpc -j8 zstd=1
     - name: test zstd
       run: export zstd=1 && make test
-  os_x_11:
-    name: OSX 11
-    runs-on: macos-11
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: install packages
-      run: brew install hdf5 autoconf automake
-    - name: build
-      run: autoreconf --install  && ./configure && make -j8
-    - name: test
-      run: make test
-  os_x_11_zstd:
-    name: OSX 11 zstd
-    runs-on: macos-11
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: install packages
-      run: brew install hdf5 autoconf automake zstd
-    - name: build
-      run: autoreconf --install  && ./configure && make -j8 zstd=1
-    - name: test
-      run: export zstd=1 && make test
+  # os_x_11:
+  #   name: OSX 11
+  #   runs-on: macos-11
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     with:
+  #       submodules: recursive
+  #   - name: install packages
+  #     run: brew install hdf5 autoconf automake
+  #   - name: build
+  #     run: autoreconf --install  && ./configure && make -j8
+  #   - name: test
+  #     run: make test
   os_x_12:
     name: OSX 12
     runs-on: macos-12
@@ -176,6 +163,19 @@ jobs:
       run: autoreconf --install  && ./configure && make -j8
     - name: test
       run: make test
+  os_x_12_zstd:
+    name: OSX 11 zstd
+    runs-on: macos-12
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: install packages
+      run: brew install hdf5 autoconf automake zstd
+    - name: build
+      run: autoreconf --install  && ./configure && make -j8 zstd=1
+    - name: test
+      run: export zstd=1 && make test
   os_x_13:
     name: OSX 13
     runs-on: macos-13
