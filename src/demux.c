@@ -24,16 +24,17 @@ KHASH_MAP_INIT_STR(svu16, struct kvec_u16);
 
 struct bsum {
     FILE *fp;
-    char *line;        // Buffer for file parsing
-    uint16_t code_pos; // Barcode arrangement column number
-    uint16_t prid_pos; // Parent read ID column number
-    size_t n;          // Buffer size
+    char *line;            // Buffer for file parsing
+    size_t n;              // Buffer size
+    struct bsum_meta meta; // Metadata
+    uint16_t code_pos;     // Barcode arrangement column number
+    uint16_t rid_pos;      // Read ID column number
 };
 
 struct demux_info {
-    char **codes;             // Barcode arrangements
-    khash_t(svu16) *prid_map; // Hash map of parent read ID to barcode indices
-    uint16_t count;           // Number of unique barcode arrangements
+    char **codes;            // Barcode arrangements
+    khash_t(svu16) *rid_map; // Hash map of read ID to barcode indices
+    uint16_t count;          // Number of unique barcode arrangements
 };
 
 static char *path_append(const char *path, const char *suf);
@@ -44,10 +45,10 @@ static char **paths_spawn(const char *in_path, const char **names,
                           uint16_t count, const opt_t *opt);
 static core_t *demux_core_init(struct slow5_file *in,
                                struct slow5_aux_meta *aux_meta,
-                               khash_t(svu16) *prid_map, const opt_t *opt);
+                               khash_t(svu16) *rid_map, const opt_t *opt);
 static db_t *demux_db_init(int n);
 static int bsum_close(struct bsum *bs);
-static int bsum_getnext(struct bsum *bs, char **prid, char **code);
+static int bsum_getnext(struct bsum *bs, char **rid, char **code);
 static int bsum_parsehdr(struct bsum *bs);
 static int demux2(struct slow5_file *in, const struct demux_info *d,
                   const opt_t *opt);
@@ -65,9 +66,9 @@ static int slow5_aux_meta_copy_enum(const struct slow5_hdr *in_hdr,
                                     enum slow5_aux_type type);
 static int slow5_hdr_copy(const struct slow5_hdr *in_hdr,
                           struct slow5_hdr *out_hdr, int lossy);
-static struct bsum *bsum_open(const char *bsum_path);
+static struct bsum *bsum_open(const struct bsum_meta *bs_meta);
 static struct demux_info *demux_info_init(void);
-static struct demux_info *demux_info_get(const char *bsum_path);
+static struct demux_info *demux_info_get(const struct bsum_meta *bs_meta);
 static struct demux_info *demux_info_get2(struct bsum *bs);
 static struct kvec_u16 *map_svu16_getpush(khash_t(svu16) *m, char *s);
 static struct slow5_file *slow5_birth(const struct slow5_file *in,
@@ -83,15 +84,16 @@ static void underscore_prepend(const char *s, char **out, size_t *n);
 static void vec_chkpush(struct kvec_u16 *v, uint16_t x);
 
 /*
- * Demultiplex a slow5 file given the barcode summary file path and user
+ * Demultiplex a slow5 file given the barcode summary file metadata and user
  * options. Return -1 on error, 0 on success.
  */
-int demux(struct slow5_file *in, const char *bsum_path, const opt_t *opt)
+int demux(struct slow5_file *in, const struct bsum_meta *bs_meta,
+          const opt_t *opt)
 {
     int ret;
     struct demux_info *d;
 
-    d = demux_info_get(bsum_path);
+    d = demux_info_get(bs_meta);
     if (!d)
         return -1;
 
@@ -229,7 +231,7 @@ static char **paths_spawn(const char *in_path, const char **names,
  */
 static core_t *demux_core_init(struct slow5_file *in,
                                struct slow5_aux_meta *aux_meta,
-                               khash_t(svu16) *prid_map, const opt_t *opt)
+                               khash_t(svu16) *rid_map, const opt_t *opt)
 {
     core_t *c;
 
@@ -242,7 +244,7 @@ static core_t *demux_core_init(struct slow5_file *in,
     c->fp = in;
     c->lossy = opt->flag_lossy;
     c->num_thread = opt->num_threads;
-    c->param = (void *) prid_map;
+    c->param = (void *) rid_map;
     c->press_method.record_method = opt->record_press_out;
     c->press_method.signal_method = opt->signal_press_out;
 
@@ -292,11 +294,11 @@ static int bsum_close(struct bsum *bs)
 }
 
 /*
- * Get the next parent read ID and barcode arrangement from the barcode summary
- * file. *prid and *code are malloced pointers to be freed by the caller.
+ * Get the next read ID and barcode arrangement from the barcode summary file.
+ * *rid and *code are malloced pointers to be freed by the caller.
  * Return -1 on error, 0 on success, 1 on end of file.
  */
-static int bsum_getnext(struct bsum *bs, char **prid, char **code)
+static int bsum_getnext(struct bsum *bs, char **rid, char **code)
 {
     char *tok;
     ssize_t nread;
@@ -310,12 +312,15 @@ static int bsum_getnext(struct bsum *bs, char **prid, char **code)
         return -1;
     }
 
+    if (bs->line[nread - 1] == '\n')
+        bs->line[nread - 1] = '\0';
+
     i = 1;
     tok = strtok(bs->line, BSUM_DELIM);
-    while (tok && (i <= bs->code_pos || i <= bs->prid_pos)) {
-        if (i == bs->prid_pos) {
-            *prid = strdup(tok);
-            if (!*prid) {
+    while (tok && (i <= bs->code_pos || i <= bs->rid_pos)) {
+        if (i == bs->rid_pos) {
+            *rid = strdup(tok);
+            if (!*rid) {
                 perror("strdup");
                 return -1;
             }
@@ -349,26 +354,31 @@ static int bsum_parsehdr(struct bsum *bs)
         return -1;
     }
 
+    if (bs->line[nread - 1] == '\n')
+        bs->line[nread - 1] = '\0';
     i = 1;
     bs->code_pos = 0;
-    bs->prid_pos = 0;
+    bs->rid_pos = 0;
 
     tok = strtok(bs->line, BSUM_DELIM);
     while (tok && BSUM_HEADER_MISSING(bs)) {
-        if (!bs->prid_pos) {
-            ret = strcmp(tok, BSUM_HEADER_PARENT_READID);
+        if (!bs->rid_pos) {
+            ret = strcmp(tok, bs->meta.rid_hdr);
             if (!ret)
-                bs->prid_pos = i;
+                bs->rid_pos = i;
         } else if (!bs->code_pos) {
-            ret = strcmp(tok, BSUM_HEADER_BARCODE);
+            ret = strcmp(tok, bs->meta.code_hdr);
             if (!ret)
                 bs->code_pos = i;
         }
         tok = strtok(NULL, BSUM_DELIM);
         i++;
     }
-    if (BSUM_HEADER_MISSING(bs)) {
-        ERROR("Invalid barcode summary header%s", "");
+    if (!bs->rid_pos) {
+        ERROR("Invalid barcode summary header: missing '%s'", bs->meta.rid_hdr);
+        return -1;
+    } else if (!bs->code_pos) {
+        ERROR("Invalid barcode summary header: missing '%s'", bs->meta.code_hdr);
         return -1;
     }
 
@@ -423,7 +433,7 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
     int ret;
     struct kvec_u16 *rec_codes;
 
-    core = demux_core_init(in, out[0]->header->aux_meta, d->prid_map, opt);
+    core = demux_core_init(in, out[0]->header->aux_meta, d->rid_map, opt);
     db = demux_db_init(opt->read_id_batch_capacity);
     rec_codes = (struct kvec_u16 *) db->read_group_vector;
 
@@ -649,7 +659,7 @@ static int slow5_hdr_copy(const struct slow5_hdr *in_hdr,
 /*
  * Open a barcode summary file and parse the header. Return NULL on error.
  */
-static struct bsum *bsum_open(const char *bsum_path)
+static struct bsum *bsum_open(const struct bsum_meta *bs_meta)
 {
     int ret;
     struct bsum *bs;
@@ -657,14 +667,15 @@ static struct bsum *bsum_open(const char *bsum_path)
     bs = (struct bsum *) malloc(sizeof (*bs));
     MALLOC_CHK(bs);
 
-    bs->fp = fopen(bsum_path, "r");
+    bs->fp = fopen(bs_meta->path, "r");
     if (!bs->fp) {
-        ERROR("Failed to open '%s': %s", bsum_path, strerror(errno));
+        ERROR("Failed to open '%s': %s", bs_meta->path, strerror(errno));
         return NULL;
     }
 
     bs->line = NULL;
     bs->n = 0;
+    bs->meta = *bs_meta;
 
     ret = bsum_parsehdr(bs);
     if (ret)
@@ -682,23 +693,23 @@ static struct demux_info *demux_info_init(void)
 
     d = (struct demux_info *) malloc(sizeof (*d));
     MALLOC_CHK(d);
-    d->prid_map = kh_init(svu16);
-    MALLOC_CHK(d->prid_map);
+    d->rid_map = kh_init(svu16);
+    MALLOC_CHK(d->rid_map);
 
     return d;
 }
 
 /*
- * Get the demultiplexing information given the barcode summary file path.
+ * Get the demultiplexing information given the barcode summary file metadata.
  * Return NULL on error.
  */
-static struct demux_info *demux_info_get(const char *bsum_path)
+static struct demux_info *demux_info_get(const struct bsum_meta *bs_meta)
 {
     int ret;
     struct bsum *bs;
     struct demux_info *d;
 
-    bs = bsum_open(bsum_path);
+    bs = bsum_open(bs_meta);
     if (!bs)
         return NULL;
 
@@ -721,12 +732,12 @@ static struct demux_info *demux_info_get(const char *bsum_path)
 static struct demux_info *demux_info_get2(struct bsum *bs)
 {
     char *code;
-    char *prid;
+    char *rid;
     int ret;
     khash_t(su16) *code_map;
     khint_t k;
     struct demux_info *d;
-    struct kvec_u16 *prid_codes;
+    struct kvec_u16 *rid_codes;
     uint16_t i;
 
     d = demux_info_init();
@@ -734,13 +745,13 @@ static struct demux_info *demux_info_get2(struct bsum *bs)
     code_map = kh_init(su16);
     MALLOC_CHK(code_map);
 
-    ret = bsum_getnext(bs, &prid, &code);
+    ret = bsum_getnext(bs, &rid, &code);
     while (!ret) {
-        prid_codes = map_svu16_getpush(d->prid_map, prid);
-        if (!prid_codes)
+        rid_codes = map_svu16_getpush(d->rid_map, rid);
+        if (!rid_codes)
             return NULL;
-        if (kv_size(*prid_codes))
-            free(prid);
+        if (kv_size(*rid_codes))
+            free(rid);
 
         ret = map_su16_getpush(code_map, code, &i);
         if (!ret)
@@ -748,8 +759,8 @@ static struct demux_info *demux_info_get2(struct bsum *bs)
         else if (ret == -1)
             return NULL;
 
-        vec_chkpush(prid_codes, i);
-        ret = bsum_getnext(bs, &prid, &code);
+        vec_chkpush(rid_codes, i);
+        ret = bsum_getnext(bs, &rid, &code);
     }
     if (ret == -1)
         return NULL;
@@ -881,7 +892,7 @@ static void demux_info_destroy(struct demux_info *d)
         free(d->codes[i]);
     free(d->codes);
 
-    map_svu16_destroy(d->prid_map);
+    map_svu16_destroy(d->rid_map);
     free(d);
 }
 
@@ -891,7 +902,7 @@ static void demux_info_destroy(struct demux_info *d)
  */
 static void demux_setup(core_t *core, db_t *db, int i)
 {
-    const khash_t(svu16) *prid_map;
+    const khash_t(svu16) *rid_map;
     int ret;
     khint_t k;
     size_t len;
@@ -906,18 +917,18 @@ static void demux_setup(core_t *core, db_t *db, int i)
     if (ret)
         exit(EXIT_FAILURE);
 
-    prid_map = (const khash_t(svu16) *) core->param;
+    rid_map = (const khash_t(svu16) *) core->param;
     rec_codes = (struct kvec_u16 *) db->read_group_vector;
 
-    k = kh_get(svu16, prid_map, rec->read_id);
-    if (k == kh_end(prid_map)) {
+    k = kh_get(svu16, rid_map, rec->read_id);
+    if (k == kh_end(rid_map)) {
         WARNING("Read ID '%s' is missing from barcode summary file",
                 rec->read_id);
         (void) memset(rec_codes + i, 0, sizeof (*rec_codes));
         (void) memset(db->read_record + i, 0, sizeof (*db->read_record));
         //exit(EXIT_FAILURE); TODO error out or give a warning?
     } else {
-        rec_codes[i] = kh_val(prid_map, k);
+        rec_codes[i] = kh_val(rid_map, k);
 
         press = slow5_press_init(core->press_method);
         if (!press)

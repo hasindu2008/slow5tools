@@ -226,6 +226,12 @@ info "-------------------$name-------"
 $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux4/example2_0.blow5 -d $OUTPUT_DIR/demux4 -x $REL_PATH/data/raw/split/demux4/summary || die "$name"
 check "$name" $REL_PATH/data/exp/split/demux4 $OUTPUT_DIR/demux4
 
+TESTCASE=21
+name="testcase ${TESTCASE}: demultiplex custom header"
+info "-------------------$name-------"
+$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux5/example2_0.blow5 -d $OUTPUT_DIR/demux5 --demux $REL_PATH/data/raw/split/demux5/custom --demux-rid-hdr=MyCustomId --demux-code-hdr 'BC0D35!' || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux5 $OUTPUT_DIR/demux5
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
