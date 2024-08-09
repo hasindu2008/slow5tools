@@ -200,6 +200,12 @@ This tool is useful for parallelising across array jobs / distributed systems.
     Split the data into files containing N reads (where N = INT). Cannot be used together with `-f` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-r`.
 *  `-f, --files INT`:<br/>
     Split the data into n files (where n = INT) in which all files have equal numbers of reads. Cannot be used together with `-r` or `-g`. Note: this option works only for SLOW5/BLOW5 files with a single read group but you can run with `-g` split read groups into separate files and subsequently split each file with `-n`.
+*  `-x, --demux BARCODE_PATH`:<br/>
+    Split the data into separate files for each barcode given the path to the barcode summary file. The barcode summary file is a TSV file with a header and at least two columns: the read IDs and the barcodes. The default read IDs column name is 'parent_read_id', but can be changed using the option `--demux-rid-hdr`. The default barcodes column name is 'barcode_arrangement', but can be changed using the option `--demux-code-hdr`. For demultiplexing, give the path to the buttery-eel `barcode_summary.txt` file and use the default column names.
+*  `--demux-code-hdr STR`:<br/>
+    The barcodes column header in the barcode summary file [default value: 'barcode_arrangement']. Use with option `--demux`.
+*  `--demux-rid-hdr STR`:<br/>
+    The read IDs column header in the barcode summary file [default value: 'parent_read_id']. Use with option `--demux`.
 *   `--lossless STR`:<br/>
     Retain information in auxilliary fields during file merging [default value: true]. This information is generally not required for downstream analysis can be optionally discarded to reduce filesize. *IMPORTANT: Generated files are only to be used for intermediate analysis and NOT for archiving. You will not be able to convert lossy files back to FAST5*.
 *  `-t, --threads INT`:<br/>
