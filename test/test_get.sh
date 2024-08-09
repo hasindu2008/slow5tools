@@ -169,6 +169,27 @@ if [ $? -ne 0 ]; then
 fi
 info "testcase $TESTCASE passed"
 
+TESTCASE=10
+info "------------------- slow5tools get testcase $TESTCASE -------------------"
+$SLOW5_EXEC get "$RAW_DIR/example2.slow5" --list "$RAW_DIR/list_weird_newline.txt" --to slow5 > "$OUTPUT_DIR/extracted_reads3.slow5" || die "testcase $TESTCASE failed"
+slow5tools_quickcheck $OUTPUT_DIR
+diff -q "$EXP_DIR/expected_extracted_reads3.slow5" "$OUTPUT_DIR/extracted_reads3.slow5" &>/dev/null
+if [ $? -ne 0 ]; then
+    info "${RED}ERROR: diff failed for 'slow5tools get testcase $TESTCASE'${NC}"
+    exit 1
+fi
+info "testcase $TESTCASE passed"
+
+TESTCASE=11
+info "------------------- slow5tools get testcase $TESTCASE -------------------"
+$SLOW5_EXEC get "$RAW_DIR/example2.slow5" --list "$RAW_DIR/list_windows.txt" --to slow5 > "$OUTPUT_DIR/extracted_reads3.slow5" || die "testcase $TESTCASE failed"
+slow5tools_quickcheck $OUTPUT_DIR
+diff -q "$EXP_DIR/expected_extracted_reads3.slow5" "$OUTPUT_DIR/extracted_reads3.slow5" &>/dev/null
+if [ $? -ne 0 ]; then
+    info "${RED}ERROR: diff failed for 'slow5tools get testcase $TESTCASE'${NC}"
+    exit 1
+fi
+info "testcase $TESTCASE passed"
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed" 1>&3 2>&4
 exit 0

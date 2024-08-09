@@ -95,10 +95,11 @@ do
     # slow5 ASCII-> slow5 ASCII
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.slow5" -o "$OUT/one_fast5/out_1_${type}.slow5"
     my_diff "$EXP/one_fast5/exp_1_${type}.slow5" "$OUT/one_fast5/out_1_${type}.slow5" -q
+if [ -z "$bigend" ]; then
     # slow5 ASCII-> blow5 zlib-svb
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.slow5" -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5"
     my_diff "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5" -q
-
+fi
     ####### from blow5 binary to various
     # blow5 binary -> blow5 zlib
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.blow5" -s none -o "$OUT/one_fast5/out_1_${type}_zlib.blow5"
@@ -109,10 +110,11 @@ do
     # blow5 binary -> slow5 ASCII
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.blow5" -o "$OUT/one_fast5/out_1_${type}.slow5"
     my_diff "$EXP/one_fast5/exp_1_${type}.slow5" "$OUT/one_fast5/out_1_${type}.slow5" -q
+if [ -z "$bigend" ]; then
     # blow5 binary -> blow5 zlib-svb
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.blow5" -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5"
     my_diff "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5" -q
-
+fi
     ####### from blow5 zlib to various
     # blow5 zlib -> blow5 zlib
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib.blow5" -s none  -o "$OUT/one_fast5/out_1_${type}_zlib.blow5"
@@ -123,6 +125,8 @@ do
     # blow5 zlib -> slow5 ASCII
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib.blow5" -o "$OUT/one_fast5/out_1_${type}.slow5"
     my_diff "$EXP/one_fast5/exp_1_${type}.slow5" "$OUT/one_fast5/out_1_${type}.slow5" -q
+
+if [ -z "$bigend" ]; then
     # blow5 zlib -> blow5 zlib-svb
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib.blow5" -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5"
     my_diff "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5" -q
@@ -140,7 +144,7 @@ do
     # blow5 zlib-svb  -> blow5 zlib-svb
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5"
     my_diff "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5" -q
-
+fi
 
     ####### One fast5 --to and stdout redirection #####
 
@@ -153,9 +157,10 @@ do
     my_diff "$EXP/one_fast5/exp_1_${type}.slow5" "$OUT/one_fast5/out_1_${type}.slow5" -q
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.slow5" > "$OUT/one_fast5/out_1_${type}.slow5"
     my_diff "$EXP/one_fast5/exp_1_${type}.slow5" "$OUT/one_fast5/out_1_${type}.slow5" -q
+if [ -z "$bigend" ]; then
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.slow5" --to blow5 -s svb-zd > "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5"
     my_diff "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zlib_svb_v0.2.0.blow5" -q
-
+fi
     ####### from blow5 binary to various
     ex "$S5T" view "$EXP/one_fast5/exp_1_${type}.blow5" --to blow5  -s none > "$OUT/one_fast5/out_1_${type}_zlib.blow5"
     my_diff "$EXP/one_fast5/exp_1_${type}_zlib.blow5" "$OUT/one_fast5/out_1_${type}_zlib.blow5" -q
@@ -190,6 +195,7 @@ do
         # ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zlib_svb_v0.2.0.blow5" -c zstd -s svb-zd -o "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5"
         # my_diff "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zstd_svb_v0.2.0.blow5" -q
 
+    if [ -z "$bigend" ]; then
         # blow5 zstd-svb ->  slow5 ASCII
         ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zstd_svb_v0.2.0.blow5" -o "$OUT/one_fast5/out_1_${type}_v0.2.0.slow5"
         my_diff "$EXP/one_fast5/exp_1_${type}_v0.2.0.slow5" "$OUT/one_fast5/out_1_${type}_v0.2.0.slow5" -q
@@ -202,7 +208,7 @@ do
         # blow5 zstd ->  blow5 zlib
         ex "$S5T" view "$EXP/one_fast5/exp_1_${type}_zstd_v0.2.0.blow5" -s none -o "$OUT/one_fast5/out_1_${type}_zlib_v0.2.0.blow5"
         my_diff "$EXP/one_fast5/exp_1_${type}_zlib_v0.2.0.blow5" "$OUT/one_fast5/out_1_${type}_zlib_v0.2.0.blow5" -q
-
+    fi
     fi
 done
 

@@ -24,11 +24,13 @@
 - [DeepSelectNet](https://github.com/AnjanaSenanayake/DeepSelectNet)
 - [SquiggleNet](https://github.com/welch-lab/SquiggleNet/pull/6)
 - [RawHash](https://github.com/CMU-SAFARI/RawHash/)
+- [UNCALLED4](https://github.com/skovaka/uncalled4)
 
 ## raw signal manipulation
 
 - [sigtk](https://github.com/hasindu2008/sigtk)
 - [slow5tools](https://github.com/hasindu2008/slow5tools)
+- [slow5curl](https://github.com/BonsonW/slow5curl)
 
 ## conversion
 
@@ -42,3 +44,4 @@
 ## raw signal visualisation
 
 - [squigualiser](https://github.com/hiruna72/squigualiser)
+- [nanoCEM](https://github.com/lrslab/nanoCEM)

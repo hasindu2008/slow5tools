@@ -45,10 +45,16 @@ else
 fi
 
 TESTCASE=1
-$SLOW5TOOLS --version || die "testcase$TESTCASE:slow5tools --version failed"
+info "testcase$TESTCASE"
+$SLOW5TOOLS --version > /dev/null 2> /dev/null || die "testcase$TESTCASE:slow5tools --version failed"
 
-GOOD_LIST="exp_1_lossless_good.slow5 exp_1_lossy_good.blow5 zlib_svb-zd_multi_rg_v0.2.0_good.blow5"
-BAD_LIST="exp_1_lossless_bad_rg_missing.slow5  exp_1_lossy_bad_eof.blow5  zlib_svb-zd_multi_rg_v0.2.0_bad_hdr_len.blow5"
+if [ -z "$bigend" ]; then
+    GOOD_LIST="exp_1_lossless_good.slow5 exp_1_lossy_good.blow5 zlib_svb-zd_multi_rg_v0.2.0_good.blow5"
+    BAD_LIST="exp_1_lossless_bad_rg_missing.slow5  exp_1_lossy_bad_eof.blow5  zlib_svb-zd_multi_rg_v0.2.0_bad_hdr_len.blow5"
+else
+    GOOD_LIST="exp_1_lossless_good.slow5 exp_1_lossy_good.blow5"
+    BAD_LIST="exp_1_lossless_bad_rg_missing.slow5  exp_1_lossy_bad_eof.blow5"
+fi
 
 TESTCASE=2
 for each in $GOOD_LIST

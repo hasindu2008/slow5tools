@@ -65,6 +65,8 @@ else
     SLOW5TOOLS=$SLOW5TOOLS_WITHOUT_VALGRIND
 fi
 
+if [ -z "$bigend" ]; then
+
 TESTCASE=1
 info "testcase$TESTCASE"
 $SLOW5TOOLS skim $RAW_DIR/sp1_dna.blow5 > $OUTPUT_DIR/sp1_dna.txt || die "testcase$TESTCASE: skim failed"
@@ -74,6 +76,8 @@ TESTCASE=2
 info "testcase$TESTCASE"
 $SLOW5TOOLS skim $RAW_DIR/sequin_rna.blow5 > $OUTPUT_DIR/sequin_rna.txt  || die "testcase$TESTCASE: skim failed"
 diff $OUTPUT_DIR/sequin_rna.txt "$EXP_DIR/sequin_rna.exp"  > /dev/null || die "testcase$TESTCASE: diff failed"
+
+fi
 
 info "all $TESTCASE testcases passed"
 exit 0

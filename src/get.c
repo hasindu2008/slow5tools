@@ -191,7 +191,8 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
 
     if(skip_flag){
         WARNING("Will skip records that are not found%s","");
-        slow5_set_exit_condition(SLOW5_EXIT_OFF);
+        slow5_set_skip_rid();
+        //slow5_set_exit_condition(SLOW5_EXIT_OFF);
     }
 
     if(parse_num_threads(&user_opts,argc,argv,meta) < 0){
@@ -328,7 +329,19 @@ int get_main(int argc, char **argv, struct program_meta *meta) {
                     free(buf);
                     break;
                 }
-                size_t len_buf = nread - 1; // Ignore '\n'
+
+                size_t len_buf = nread;
+                if (len_buf > 0 && (buf[len_buf - 1] == '\n' || buf[len_buf - 1] == '\r')){
+                    len_buf--; // Ignore '\n' or '\r' at the end of the line
+                }
+                if (len_buf > 0 && buf[len_buf - 1] == '\r'){
+                    len_buf--; // Ignore '\r' on windows
+                }
+
+                if(len_buf == 0){
+                    free(buf);
+                    continue;
+                }
                 char *curr_id = strndup(buf, len_buf);
                 curr_id[len_buf] = '\0'; // Add string terminator '\0'
                 free(buf); // Free buffer
