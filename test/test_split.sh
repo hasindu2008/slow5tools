@@ -240,7 +240,8 @@ $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux6/example2_0.blow5 -d
 TESTCASE=23
 name="testcase ${TESTCASE}: demultiplex duplicated read"
 info "-------------------$name-------"
-$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux7/example2_0.blow5 -d $OUTPUT_DIR/demux7 --demux $REL_PATH/data/raw/split/demux7/barcode_summary.txt && die "$name"
+$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux7/example2_0.blow5 -d $OUTPUT_DIR/demux7 --demux $REL_PATH/data/raw/split/demux7/barcode_summary.txt || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux7 $OUTPUT_DIR/demux7
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
