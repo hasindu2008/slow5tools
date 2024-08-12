@@ -66,6 +66,7 @@ static int slow5_aux_meta_copy_enum(const struct slow5_hdr *in_hdr,
                                     enum slow5_aux_type type);
 static int slow5_hdr_copy(const struct slow5_hdr *in_hdr,
                           struct slow5_hdr *out_hdr, int lossy);
+static int vec_chkpush(struct kvec_u16 *v, uint16_t x);
 static struct bsum *bsum_open(const struct bsum_meta *bs_meta);
 static struct demux_info *demux_info_init(void);
 static struct demux_info *demux_info_get(const struct bsum_meta *bs_meta);
@@ -81,7 +82,6 @@ static void demux_info_destroy(struct demux_info *d);
 static void demux_setup(core_t *core, db_t *db, int i);
 static void map_svu16_destroy(khash_t(svu16) *m);
 static void underscore_prepend(const char *s, char **out, size_t *n);
-static void vec_chkpush(struct kvec_u16 *v, uint16_t x);
 
 /*
  * Demultiplex a slow5 file given the barcode summary file metadata and user
@@ -431,6 +431,7 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
     db_t *db;
     int iseof;
     int ret;
+    khint_t n;
     struct kvec_u16 *rec_codes;
 
     core = demux_core_init(in, out[0]->header->aux_meta, d->rid_map, opt);
@@ -438,6 +439,7 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
     rec_codes = (struct kvec_u16 *) db->read_group_vector;
 
     iseof = 0;
+    n = 0;
     while (!iseof) {
         ret = demux_db_setup(db, in, opt->read_id_batch_capacity);
         if (ret == 1)
@@ -446,10 +448,16 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
             return -1;
 
         work_db(core, db, demux_setup);
+        n += db->n_batch;
 
         ret = demux_write(out, db, rec_codes);
         if (ret)
             return -1;
+    }
+
+    if (n < kh_size(d->rid_map)) {
+        ERROR("Extra read(s) in barcode summary file%s", "");
+        return -1;
     }
 
     free(core);
@@ -657,6 +665,28 @@ static int slow5_hdr_copy(const struct slow5_hdr *in_hdr,
 }
 
 /*
+ * If x is not in vector v, append it. Return -1 if exists, 0 otherwise.
+ */
+static int vec_chkpush(struct kvec_u16 *v, uint16_t x)
+{
+    int found;
+    uint16_t i;
+
+    i = 0;
+    found = 0;
+    while (!found && i < kv_size(*v)) {
+        if (kv_A(*v, i) == x)
+            found = 1;
+        i++;
+    }
+    if (found)
+        return -1;
+
+    kv_push(uint16_t, *v, x);
+    return 0;
+}
+
+/*
  * Open a barcode summary file and parse the header. Return NULL on error.
  */
 static struct bsum *bsum_open(const struct bsum_meta *bs_meta)
@@ -759,7 +789,13 @@ static struct demux_info *demux_info_get2(struct bsum *bs)
         else if (ret == -1)
             return NULL;
 
-        vec_chkpush(rid_codes, i);
+        ret = vec_chkpush(rid_codes, i);
+        if (ret) {
+            ERROR("Repeated read ID and barcode in barcode summary file%s",
+                  "");
+            return NULL;
+        }
+
         ret = bsum_getnext(bs, &rid, &code);
     }
     if (ret == -1)
@@ -926,7 +962,6 @@ static void demux_setup(core_t *core, db_t *db, int i)
                 rec->read_id);
         (void) memset(rec_codes + i, 0, sizeof (*rec_codes));
         (void) memset(db->read_record + i, 0, sizeof (*db->read_record));
-        //exit(EXIT_FAILURE); TODO error out or give a warning?
     } else {
         rec_codes[i] = kh_val(rid_map, k);
 
@@ -978,23 +1013,4 @@ static void underscore_prepend(const char *s, char **out, size_t *n)
 
     *out[0] = '_';
     (void) memcpy(*out + 1, s, len + 1);
-}
-
-/*
- * If x is not in vector v, append it.
- */
-static void vec_chkpush(struct kvec_u16 *v, uint16_t x)
-{
-    int found;
-    uint16_t i;
-
-    i = 0;
-    found = 0;
-    while (!found && i < kv_size(*v)) {
-        if (kv_A(*v, i) == x)
-            found = 1;
-        i++;
-    }
-    if (!found)
-        kv_push(uint16_t, *v, x);
 }

@@ -3,7 +3,7 @@
 # MIT License
 
 # Copyright (c) 2020 Hiruna Samarakoon
-# Copyright (c) 2020 Sasha Jenner
+# Copyright (c) 2020,2024 Sasha Jenner
 # Copyright (c) 2020,2023 Hasindu Gamaarachchi
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -231,6 +231,16 @@ name="testcase ${TESTCASE}: demultiplex custom header"
 info "-------------------$name-------"
 $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux5/example2_0.blow5 -d $OUTPUT_DIR/demux5 --demux $REL_PATH/data/raw/split/demux5/custom --demux-rid-hdr=MyCustomId --demux-code-hdr 'BC0D35!' || die "$name"
 check "$name" $REL_PATH/data/exp/split/demux5 $OUTPUT_DIR/demux5
+
+TESTCASE=22
+name="testcase ${TESTCASE}: demultiplex one extra"
+info "-------------------$name-------"
+$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux6/example2_0.blow5 -d $OUTPUT_DIR/demux6 --demux $REL_PATH/data/raw/split/demux6/barcode_summary.txt && die "$name"
+
+TESTCASE=23
+name="testcase ${TESTCASE}: demultiplex duplicated read"
+info "-------------------$name-------"
+$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux7/example2_0.blow5 -d $OUTPUT_DIR/demux7 --demux $REL_PATH/data/raw/split/demux7/barcode_summary.txt && die "$name"
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
