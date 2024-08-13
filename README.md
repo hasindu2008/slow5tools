@@ -161,6 +161,10 @@ slow5tools get file.blow5 -l readids_list.txt -o output.slow5
 slow5tools split file.blow5 -d blow5_dir -g
 # split a BLOW5 file (single read group) into separate BLOW5 files such that there are 4000 reads in one file
 slow5tools split file.blow5 -d blow5_dir -r 4000
+# split a BLOW5 file into separate BLOW5 files by barcode given the buttery-eel barcode summary file
+slow5tools split file.blow5 -d blow5_dir -x barcode_summary.txt
+# split a BLOW5 file into separate BLOW5 files based on a custom TSV file
+slow5tools split file.blow5 -d blow5_dir -x custom.tsv --demux-rid-hdr readid --demux-code-hdr category
 
 # convert a directory of blow5 files to fast5
 slow5tools s2f blow5_dir -d fast5

@@ -284,7 +284,7 @@ static int bsum_close(struct bsum *bs)
 
     ret = fclose(bs->fp);
     if (ret == EOF) {
-        ERROR("Failed to close barcode summary file: %s", strerror(errno));
+        ERROR("Failed to close custom TSV: %s", strerror(errno));
         return -1;
     }
     free(bs->line);
@@ -308,7 +308,7 @@ static int bsum_getnext(struct bsum *bs, char **rid, char **code)
     if (nread == -1) {
         if (feof(bs->fp))
             return 1;
-        ERROR("Failed to read barcode summary line: %s", strerror(errno));
+        ERROR("Failed to read custom TSV line: %s", strerror(errno));
         return -1;
     }
 
@@ -350,7 +350,7 @@ static int bsum_parsehdr(struct bsum *bs)
 
     nread = getline(&bs->line, &bs->n, bs->fp);
     if (nread == -1) {
-        ERROR("Failed to read barcode summary header: %s", strerror(errno));
+        ERROR("Failed to read custom TSV header: %s", strerror(errno));
         return -1;
     }
 
@@ -375,10 +375,10 @@ static int bsum_parsehdr(struct bsum *bs)
         i++;
     }
     if (!bs->rid_pos) {
-        ERROR("Invalid barcode summary header: missing '%s'", bs->meta.rid_hdr);
+        ERROR("Invalid custom TSV header: missing '%s'", bs->meta.rid_hdr);
         return -1;
     } else if (!bs->code_pos) {
-        ERROR("Invalid barcode summary header: missing '%s'", bs->meta.code_hdr);
+        ERROR("Invalid custom TSV header: missing '%s'", bs->meta.code_hdr);
         return -1;
     }
 
@@ -456,7 +456,7 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
     }
 
     if (n < kh_size(d->rid_map)) {
-        ERROR("Extra read(s) in barcode summary file%s", "");
+        ERROR("Extra read(s) in custom TSV%s", "");
         return -1;
     }
 
@@ -930,7 +930,7 @@ static void demux_setup(core_t *core, db_t *db, int i)
 
     k = kh_get(svu16, rid_map, rec->read_id);
     if (k == kh_end(rid_map)) {
-        WARNING("Read ID '%s' is missing from barcode summary file",
+        WARNING("Read ID '%s' is missing from custom TSV",
                 rec->read_id);
         (void) memset(rec_codes + i, 0, sizeof (*rec_codes));
         (void) memset(db->read_record + i, 0, sizeof (*db->read_record));

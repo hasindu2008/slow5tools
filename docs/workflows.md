@@ -97,7 +97,7 @@ The above assumes that `parent_read_id` tag is present in all reads including th
 ```
 # for split reads, get the parent_read_id tag
 grep -F -f rid_list.txt reads.fastq | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}' > tmp.txt
-# for non split reads, get the normla read ID
+# for non split reads, get the normal read ID
 grep -F -f rid_list.txt reads.fastq | grep -v "parent\_read\_id" | awk '{print $1}' | tr -d '@' >> tmp.txt
 # remove duplicates
 sort -u tmp.txt > parent_rid_list.txt
@@ -112,23 +112,49 @@ slow5tools get reads.blow5 --list rand_20000_rid.txt -o reads_subsubsample.blow5
 
 ## Demultiplexing
 
+From slow5tools v1.3.0 onwards, you can use the buttery-eel barcode summary file `barcode_summary.txt` to demultiplex a BLOW5 file.
+
+```
+slow5tools split -d blow5_dir -x barcode_summary.txt
+```
+
 BASH with slow5tools is an easy way to demultiplex a BLOW5 file. Say you have demultiplexed your run and have one FASTQ file per each barcode, namely barcode_0.fastq, barcode_1.fastq, barcode_2.fastq and barcode_3.fastq. If your merged BLOW5 file for the whole run is reads.blow5, you can create separate BLOW5 files for each barcode by using a bash loop as below:
 
 ```bash
-for barcode in $(seq 0 4)
+for barcode in $(seq 0 3)
 do
     awk '{if(NR%4==1) {print $1}}' barcode_${barcode}.fastq | tr -d '@' > read_id_${barcode}.txt
-    cat read_id_${barcode}.txt | slow5tools get reads.blow5 -o ${barcode}_0.blow5
+    cat read_id_${barcode}.txt | slow5tools get reads.blow5 -o barcode_${barcode}.blow5
 done
+```
+
+Equivalently, using slow5tools v1.3.0 onwards:
+
+```bash
+printf 'read_id\tbarcode\n' > barcodes.tsv
+for barcode in $(seq 0 3)
+do
+    awk '{if(NR%4==1) {printf "%s\t%s\n", $1, name}}' name=barcode_${barcode} barcode_${barcode}.fastq | tr -d '@' >> barcodes.tsv
+done
+slow5tools split reads.blow5 -d blow5_dir -x barcodes.tsv --demux-rid-hdr read_id --demux-code-hdr barcode
 ```
 
 If Guppy has automatically done read splitting, you would see errors from slow5tools that some reads are not found.
 In that case we need to locate these “parent read ids”, as explained under [this workflow](#extract-and-re-basecall-reads-mapping-to-a-particular-genomic-region). If anything is unclear, open an issue under slow5tools. A quick code snippet for handling “parent read ids”:
 
 ```bash
-for barcode in $(seq 0 4)
+for barcode in $(seq 0 3)
 do
     awk '{if(NR%4==1) {print $0}}' barcode_${barcode}.fastq | sed -n -e 's/.*parent\_read\_id=//p' | awk '{print $1}'  | sort -u > read_id_${barcode}.txt
-    cat read_id_${barcode}.txt | slow5tools get reads.blow5 -o ${barcode}_0.blow5
+    cat read_id_${barcode}.txt | slow5tools get reads.blow5 -o barcode_${barcode}.blow5
 done
+```
+
+## Custom splitting
+
+From slow5tools v1.3.0 onwards, you can split BLOW5 files using a custom TSV file. For example, to split by channel number:
+
+```
+slow5tools skim reads.blow5 | cut -f1,9 > split.tsv
+slow5tools split reads.blow5 -d blow5_dir -x split.tsv --demux-rid-hdr '#read_id' --demux-code-hdr channel_number
 ```
