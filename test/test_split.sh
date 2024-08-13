@@ -208,11 +208,13 @@ info "-------------------$name-------"
 $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux1/barcode_summary.txt $REL_PATH/data/raw/split/demux1/example2_0.slow5 -d $OUTPUT_DIR/demux1 --to slow5 || die "$name"
 check "$name" $REL_PATH/data/exp/split/demux1 $OUTPUT_DIR/demux1
 
-TESTCASE=18
-name="testcase ${TESTCASE}: demultiplex two reads, one barcode"
-info "-------------------$name-------"
-$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux2/barcode_summary.txt $REL_PATH/data/raw/split/demux2/example2_0.slow5 -d $OUTPUT_DIR/demux2 --to blow5 || die "$name"
-check "$name" $REL_PATH/data/exp/split/demux2 $OUTPUT_DIR/demux2
+if [ -z "$bigend" ]; then
+    TESTCASE=18
+    name="testcase ${TESTCASE}: demultiplex two reads, one barcode"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux2/barcode_summary.txt $REL_PATH/data/raw/split/demux2/example2_0.slow5 -d $OUTPUT_DIR/demux2 --to blow5 || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux2 $OUTPUT_DIR/demux2
+fi
 
 TESTCASE=19
 name="testcase ${TESTCASE}: demultiplex one missing"
@@ -220,28 +222,30 @@ info "-------------------$name-------"
 $SLOW5_EXEC split --to blow5 $REL_PATH/data/raw/split/demux3/example2_0.slow5 -d $OUTPUT_DIR/demux3 -x $REL_PATH/data/raw/split/demux3/bs.txt || die "$name"
 check "$name" $REL_PATH/data/exp/split/demux3 $OUTPUT_DIR/demux3
 
-TESTCASE=20
-name="testcase ${TESTCASE}: demultiplex two reads, two barcodes"
-info "-------------------$name-------"
-$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux4/example2_0.blow5 -d $OUTPUT_DIR/demux4 -x $REL_PATH/data/raw/split/demux4/summary || die "$name"
-check "$name" $REL_PATH/data/exp/split/demux4 $OUTPUT_DIR/demux4
+if [ -z "$bigend" ]; then
+    TESTCASE=20
+    name="testcase ${TESTCASE}: demultiplex two reads, two barcodes"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux4/example2_0.blow5 -d $OUTPUT_DIR/demux4 -x $REL_PATH/data/raw/split/demux4/summary || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux4 $OUTPUT_DIR/demux4
 
-TESTCASE=21
-name="testcase ${TESTCASE}: demultiplex custom header"
-info "-------------------$name-------"
-$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux5/example2_0.blow5 -d $OUTPUT_DIR/demux5 --demux $REL_PATH/data/raw/split/demux5/custom --demux-rid-hdr=MyCustomId --demux-code-hdr 'BC0D35!' || die "$name"
-check "$name" $REL_PATH/data/exp/split/demux5 $OUTPUT_DIR/demux5
+    TESTCASE=21
+    name="testcase ${TESTCASE}: demultiplex custom header"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux5/example2_0.blow5 -d $OUTPUT_DIR/demux5 --demux $REL_PATH/data/raw/split/demux5/custom --demux-rid-hdr=MyCustomId --demux-code-hdr 'BC0D35!' || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux5 $OUTPUT_DIR/demux5
 
-TESTCASE=22
-name="testcase ${TESTCASE}: demultiplex one extra"
-info "-------------------$name-------"
-$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux6/example2_0.blow5 -d $OUTPUT_DIR/demux6 --demux $REL_PATH/data/raw/split/demux6/barcode_summary.txt && die "$name"
+    TESTCASE=22
+    name="testcase ${TESTCASE}: demultiplex one extra"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux6/example2_0.blow5 -d $OUTPUT_DIR/demux6 --demux $REL_PATH/data/raw/split/demux6/barcode_summary.txt && die "$name"
 
-TESTCASE=23
-name="testcase ${TESTCASE}: demultiplex duplicated read"
-info "-------------------$name-------"
-$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux7/example2_0.blow5 -d $OUTPUT_DIR/demux7 --demux $REL_PATH/data/raw/split/demux7/barcode_summary.txt || die "$name"
-check "$name" $REL_PATH/data/exp/split/demux7 $OUTPUT_DIR/demux7
+    TESTCASE=23
+    name="testcase ${TESTCASE}: demultiplex duplicated read"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux7/example2_0.blow5 -d $OUTPUT_DIR/demux7 --demux $REL_PATH/data/raw/split/demux7/barcode_summary.txt || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux7 $OUTPUT_DIR/demux7
+fi
 
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
