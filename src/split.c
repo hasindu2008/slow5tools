@@ -2,7 +2,8 @@
  * @file split.c
  * @brief split a SLOW5 in different ways
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
- * @date 27/02/2021
+ * @author Sasha Jenner (me AT sjenner DOT com)
+ * @date 03/07/2024
  */
 
 #include <getopt.h>
@@ -15,6 +16,7 @@
 #include "slow5_extra.h"
 #include "read_fast5.h"
 #include "thread.h"
+#include "demux.h"
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [SLOW5_FILE/DIR] ...\n"
 #define HELP_LARGE_MSG \
@@ -28,6 +30,9 @@
     "    -g, --groups                  split multi read group file into single read group files\n" \
     "    -r, --reads [INT]             split into n reads, i.e., each file will have n reads\n"    \
     "    -f, --files [INT]             split reads into n files evenly \n"              \
+    "    -x, --demux [BARCODE_PATH]    demultiplex reads given barcode summary path\n" \
+    "        --demux-code-hdr [STR]    specify barcodes column name ['barcode_arrangement']\n" \
+    "        --demux-rid-hdr [STR]     specify read IDs column name ['parent_read_id']\n" \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     HELP_MSG_LOSSLESS \
@@ -41,10 +46,12 @@ enum SplitMethod {
     READS_SPLIT,
     FILE_SPLIT,
     GROUP_SPLIT,
+    DEMUX_SPLIT,
 };
 typedef struct {
     SplitMethod splitMethod = READS_SPLIT;
     size_t n;
+    struct bsum_meta bs_meta; // Barcode summary metadata
 }meta_split_method;
 
 int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta_split_method  meta_split_method_object);
@@ -127,20 +134,27 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {"files",       required_argument, NULL, 'f'}, //9
             {"reads",       required_argument, NULL, 'r'}, //10
             {"batchsize",   required_argument, NULL, 'K'}, //11
+            {"demux",       required_argument, NULL, 'x'}, //12
+            {"demux-code-hdr", required_argument, NULL, 0}, //14
+            {"demux-rid-hdr", required_argument, NULL, 0}, //13
             {NULL, 0, NULL, 0 }
     };
 
     meta_split_method meta_split_method_object;
     meta_split_method_object.n = 0;
     meta_split_method_object.splitMethod = READS_SPLIT;
+    meta_split_method_object.bs_meta.path = NULL;
+    meta_split_method_object.bs_meta.code_hdr = BSUM_HEADER_BARCODE;
+    meta_split_method_object.bs_meta.rid_hdr = BSUM_HEADER_READID;
 
     opt_t user_opts;
     init_opt(&user_opts);
 
+    const char *lopt;
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:x:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -172,6 +186,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'g':
                 meta_split_method_object.splitMethod = GROUP_SPLIT;
                 break;
+            case 'x':
+                meta_split_method_object.splitMethod = DEMUX_SPLIT;
+                meta_split_method_object.bs_meta.path = optarg;
+                break;
             case 'l':
                 user_opts.arg_lossless = optarg;
                 break;
@@ -185,6 +203,15 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'K':
                 user_opts.arg_batch = optarg;
                 break;
+            case 0:
+                lopt = long_opts[longindex].name;
+                if (!strcmp(lopt, "demux-code-hdr")) {
+                    meta_split_method_object.bs_meta.code_hdr = optarg;
+                    break;
+                } else if (!strcmp(lopt, "demux-rid-hdr")) {
+                    meta_split_method_object.bs_meta.rid_hdr = optarg;
+                    break;
+                }
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
                 EXIT_MSG(EXIT_FAILURE, argv, meta);
@@ -246,6 +273,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
         VERBOSE("An input slow5 file will be split such that each output file has %lu reads", meta_split_method_object.n);
     }else if(meta_split_method_object.splitMethod == FILE_SPLIT){
         VERBOSE("An input slow5 file will be split into %lu output files", meta_split_method_object.n);
+    } else if (meta_split_method_object.splitMethod == DEMUX_SPLIT) {
+        VERBOSE("An input slow5 file will be demultiplexed%s", "");
     } else{
         VERBOSE("An input multi read group slow5 files will be split into single read group slow5 files %s","");
     }
@@ -321,6 +350,11 @@ int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta
             if(ret_group_split_func){
                 return -1;
             }
+        } else if (meta_split_method_object.splitMethod == DEMUX_SPLIT) {
+            int ret = demux(input_slow5_file_i,
+                            &meta_split_method_object.bs_meta, &user_opts);
+            if (ret)
+                return -1;
         }
         slow5_close(input_slow5_file_i); //todo-implement a method to fseek() to the first record of the slow5File_i
     }
