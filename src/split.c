@@ -30,8 +30,8 @@
     "    -g, --groups                  split multi read group file into single read group files\n" \
     "    -r, --reads [INT]             split into n reads, i.e., each file will have n reads\n"    \
     "    -f, --files [INT]             split reads into n files evenly \n"              \
-    "    -x, --demux [BARCODE_PATH]    demultiplex reads given barcode summary path\n" \
-    "        --demux-code-hdr [STR]    specify barcodes column name ['barcode_arrangement']\n" \
+    "    -x, --demux [TSV_PATH]        split reads according to custom TSV\n" \
+    "        --demux-code-hdr [STR]    specify categories column name ['barcode_arrangement']\n" \
     "        --demux-rid-hdr [STR]     specify read IDs column name ['parent_read_id']\n" \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
