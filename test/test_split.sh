@@ -214,15 +214,13 @@ if [ -z "$bigend" ]; then
     info "-------------------$name-------"
     $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux2/barcode_summary.txt $REL_PATH/data/raw/split/demux2/example2_0.slow5 -d $OUTPUT_DIR/demux2 --to blow5 || die "$name"
     check "$name" $REL_PATH/data/exp/split/demux2 $OUTPUT_DIR/demux2
-fi
 
-TESTCASE=19
-name="testcase ${TESTCASE}: demultiplex one missing"
-info "-------------------$name-------"
-$SLOW5_EXEC split --to blow5 $REL_PATH/data/raw/split/demux3/example2_0.slow5 -d $OUTPUT_DIR/demux3 -x $REL_PATH/data/raw/split/demux3/bs.txt || die "$name"
-check "$name" $REL_PATH/data/exp/split/demux3 $OUTPUT_DIR/demux3
+    TESTCASE=19
+    name="testcase ${TESTCASE}: demultiplex one missing"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to blow5 $REL_PATH/data/raw/split/demux3/example2_0.slow5 -d $OUTPUT_DIR/demux3 -x $REL_PATH/data/raw/split/demux3/bs.txt || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux3 $OUTPUT_DIR/demux3
 
-if [ -z "$bigend" ]; then
     TESTCASE=20
     name="testcase ${TESTCASE}: demultiplex two reads, two barcodes"
     info "-------------------$name-------"
