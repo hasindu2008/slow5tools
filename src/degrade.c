@@ -1,6 +1,6 @@
 /**
- * @file view.c
- * @brief view SLOW5 as BLOW5 and vice versa
+ * @file degrade.c
+ * @brief degrade and convert S/BLOW5 files
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au), Sasha Jenner (me AT sjenner DOT com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
  * @date 15/08/2024
  */
@@ -12,10 +12,11 @@
 #include <slow5/slow5.h>
 #include "slow5_extra.h"
 #include <getopt.h>
+#include "slow5_deg.h"
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [FILE]\n"
 #define HELP_LARGE_MSG \
-    "View a slow5 as blow5 FILE and vice versa.\n" \
+    "Irreversibly degrade and convert slow5/blow5 FILEs.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
@@ -25,14 +26,47 @@
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     "        --from FORMAT             specify input file format [auto]\n" \
+    "    -b, --bits INT                specify the number of LSB to zero then round [auto]\n" \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
 
-int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta);
+static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b);
+static int8_t parse_bits(const char *s);
+static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i);
 
-void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
+/*
+ * Parse the number of bits argument and return its value. Return -2 on error,
+ * -1 if "auto", number of bits otherwise.
+ */
+static int8_t parse_bits(const char *s)
+{
+    char *p;
+    long b;
+
+    if (!s || *s == '\0') {
+        ERROR("Invalid bits argument '%s'", s);
+        return -2;
+    }
+
+    b = strtol(s, &p, 10);
+    if (!*p) {
+        if (b < 0 || b > 16) {
+            ERROR("Invalid bits argument '%ld': outside of range 0-16", b);
+            return -2;
+        }
+    } else if (!strcmp(s, "auto")) {
+        b = -1;
+    } else {
+        ERROR("Invalid bits argument '%s'", s);
+        return -2;
+    }
+
+    return (int8_t) b;
+}
+
+static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
     //
     struct slow5_rec *read = NULL;
     if (slow5_rec_depress_parse(&db->mem_records[i], &db->mem_bytes[i], NULL, &read, core->fp) != 0) {
@@ -40,6 +74,9 @@ void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
     } else {
         free(db->mem_records[i]);
     }
+
+    slow5_rec_qts_round(read, (uint8_t) core->lossy);
+
     struct slow5_press *press_ptr = slow5_press_init(core->press_method);
     if(!press_ptr){
         ERROR("Could not initialize the slow5 compression method%s","");
@@ -56,7 +93,7 @@ void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
     slow5_rec_free(read);
 }
 
-int view_main(int argc, char **argv, struct program_meta *meta) {
+int degrade_main(int argc, char **argv, struct program_meta *meta) {
     int view_ret = EXIT_SUCCESS;
 
     // Debug: print arguments
@@ -75,9 +112,10 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         {"from",            required_argument,  NULL, 'f'},
         {"help",            no_argument,        NULL, 'h'},
         {"output",          required_argument,  NULL, 'o'},
-        {"to",              required_argument,  NULL, 'b'},
+        {"to",              required_argument,  NULL, 'T'},
         {"threads",         required_argument,  NULL, 't' },
         {"batchsize",       required_argument, NULL, 'K'},
+        {"bits",            required_argument, NULL, 'b'},
         {NULL, 0, NULL, 0}
     };
 
@@ -86,9 +124,10 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
 
     int opt;
     int longindex = 0;
+    int8_t b = -1;
 
     // Parse options
-    while ((opt = getopt_long(argc, argv, "s:c:f:ho:b:t:K:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "s:c:f:ho:T:t:K:b:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
 
@@ -113,11 +152,20 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             case 'o':
                 user_opts.arg_fname_out = optarg;
                 break;
-            case 'b':
+            case 'T':
                 user_opts.arg_fmt_out = optarg;
                 break;
             case 't':
                 user_opts.arg_num_threads = optarg;
+                break;
+            case 'b':
+                b = parse_bits(optarg);
+                if (b == -2) {
+                    EXIT_MSG(EXIT_FAILURE, argv, meta);
+                    return EXIT_FAILURE;
+                } else if (b > 5) {
+                    WARNING("%s", "bits > 5: basecalling accuracy may be adversely affected!");
+                }
                 break;
             default: // case '?'
                 fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -197,9 +245,16 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
             view_ret = EXIT_FAILURE;
         }
 
+        if (b == -1)
+            b = slow5_suggest_qts(s5p);
+        if (b < 0) {
+            view_ret = EXIT_FAILURE;
+            goto end;
+        }
+
         // TODO if output is the same format just duplicate file
         slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
-        if (slow5_convert_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta) != 0) {
+        if (slow5_convert_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta, (uint8_t) b) != 0) {
             ERROR("File conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
         }
@@ -220,6 +275,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
         view_ret = EXIT_FAILURE;
     }
 
+end:
     // Close output file
     if (user_opts.arg_fname_out != NULL) {
         DEBUG("closing output file%s","");
@@ -238,7 +294,7 @@ int view_main(int argc, char **argv, struct program_meta *meta) {
     return view_ret;
 }
 
-int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta) {
+static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b) {
     if (from == NULL || to_fp == NULL || to_format == SLOW5_FORMAT_UNKNOWN) {
         return -1;
     }
@@ -285,6 +341,7 @@ int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt 
         core.fp = from;
         core.format_out = to_format;
         core.press_method = to_compress;
+        core.lossy = (int) b;
 
         db.n_batch = record_count;
         db.read_record = (raw_record_t*) malloc(record_count * sizeof *db.read_record);
