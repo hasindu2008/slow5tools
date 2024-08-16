@@ -12,7 +12,6 @@
 #include <slow5/slow5.h>
 #include "slow5_extra.h"
 #include <getopt.h>
-#include "slow5_deg.h"
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [FILE]\n"
 #define HELP_LARGE_MSG \
