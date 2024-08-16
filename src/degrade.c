@@ -244,9 +244,11 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
             view_ret = EXIT_FAILURE;
         }
 
-        if (b == -1)
+        if (b == -1) {
             b = slow5_suggest_qts(s5p);
-        if (b < 0) {
+            INFO("Using %" PRId8 " bits", b);
+        }
+        if (!b) {
             view_ret = EXIT_FAILURE;
             goto end;
         }
