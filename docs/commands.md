@@ -24,6 +24,8 @@
          Skims through a SLOW5/BLOW5 file and prints signal metadata.
 * `quickcheck`:<br/>
          Quickly checks if a SLOW5/BLOW5 file is intact.
+* `degrade`:<br/>
+         Irreversibly degrade and convert a SLOW5/BLOW5 file.
 
 
 
@@ -142,7 +144,7 @@ This tool is also used to convert between ASCII SLOW5 and binary BLOW5 formats, 
 * `-K, --batchsize`:<br/>
    The batch size. This is the number of records on the memory at once [default value: 4096]. An increased batch size improves multi-threaded performance at cost of higher RAM.
 *  `--from format_type`:<br/>
-   Specifies the format of input files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [Default: autodetected based on the file extension otherwise].
+   Specifies the format of input files. `format_type` can be `slow5` for SLOW5 ASCII or `blow5` for SLOW5 binary (BLOW5) [default value: autodetected based on the file extension otherwise].
 *  `-h`, `--help`:<br/>
    Prints the help menu.
 
@@ -274,6 +276,20 @@ slow5tools skim [OPTIONS] file.blow5
     print the list of read ids only.
 *  `-h`, `--help`:
     Prints the help menu.
+
+
+### degrade
+
+Irreversibly degrade and convert a SLOW5/BLOW5 file.
+This tool is equivalent to `view` except that it first degrades the data using the
+chosen lossy compression algorithm.
+
+`slow5tools degrade [OPTIONS] file.blow5`
+
+See below for documentation on `degrade`-specific options. For documentation on all other options see the `view` subtool.
+
+*  `-b, --bits INT`:<br/>
+   The number of least significant bits to zero then round for each raw signal data point [default value: "auto" (autodetected based on the file header and data)].
 
 
 ## GLOBAL OPTIONS

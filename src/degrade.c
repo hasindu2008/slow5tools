@@ -246,11 +246,7 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
 
         if (b == -1) {
             b = slow5_suggest_qts(s5p);
-            INFO("Using %" PRId8 " bits", b);
-        }
-        if (!b) {
-            view_ret = EXIT_FAILURE;
-            goto end;
+            INFO("Using %" PRId8 " bits.", b);
         }
 
         // TODO if output is the same format just duplicate file
@@ -276,7 +272,6 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
         view_ret = EXIT_FAILURE;
     }
 
-end:
     // Close output file
     if (user_opts.arg_fname_out != NULL) {
         DEBUG("closing output file%s","");
