@@ -2,9 +2,11 @@
  * @file demux.c
  * @brief demultiplex a slow5 file
  * @author Sasha Jenner (me AT sjenner DOT com)
- * @date 04/07/2024
+ * @date 27/08/2024
  */
 #include <stdint.h>
+#include <string.h>
+#include <sys/resource.h>
 #include "demux.h"
 #include "error.h"
 #include "khash.h"
@@ -59,6 +61,7 @@ static int demux_write(struct slow5_file **out, const db_t *db,
                        const struct kvec_u16 *rec_codes);
 static int extmod(char *path, enum slow5_fmt fmt);
 static int map_su16_getpush(khash_t(su16) *m, char *s, uint16_t *v);
+static int setnofile(rlim_t n);
 static int slow5_aux_meta_copy(const struct slow5_hdr *in_hdr,
                                struct slow5_hdr *out_hdr);
 static int slow5_aux_meta_copy_enum(const struct slow5_hdr *in_hdr,
@@ -584,6 +587,41 @@ static int map_su16_getpush(khash_t(su16) *m, char *s, uint16_t *v)
 }
 
 /*
+ * Set the maximum file descriptor number for the current process. If n is less
+ * than or equal to the current maxima, do not update it.
+ * Return -1 on error, 0 on success.
+ */
+static int setnofile(rlim_t n)
+{
+    int ret;
+    struct rlimit rlim;
+
+    (void) memset(&rlim, 0, sizeof rlim);
+    ret = getrlimit(RLIMIT_NOFILE, &rlim);
+    if (ret) {
+        ERROR("Failed to get maximum number of open files: %s",
+              strerror(errno));
+        return -1;
+    }
+
+    if (n <= rlim.rlim_cur)
+        return 0;
+
+    rlim.rlim_cur = n;
+    if (n > rlim.rlim_max)
+        rlim.rlim_max = n;
+
+    ret = setrlimit(RLIMIT_NOFILE, &rlim);
+    if (ret) {
+        ERROR("Failed to set maximum number of open files to %ld: %s", n,
+              strerror(errno));
+        return -1;
+    }
+
+    return 0;
+}
+
+/*
  * Copy the auxiliary metadata from one slow5 header to another.
  * Return -1 on error, 0 on success.
  */
@@ -856,8 +894,13 @@ static struct slow5_file **slow5_spawn(const struct slow5_file *in,
                                        const opt_t *opt)
 {
     char **paths;
+    int ret;
     struct slow5_file **out;
     uint16_t i;
+
+    ret = setnofile((rlim_t) count + SLOW5_SPAWN_NOFILE);
+    if (ret)
+        return NULL;
 
     paths = paths_spawn(in->meta.pathname, names, count, opt);
     if (!paths)
