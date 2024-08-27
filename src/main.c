@@ -1,8 +1,8 @@
 /**
  * @file main.c
  * @brief main programme
- * @author Sasha Jenner (jenner.sasha@gmail.com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
- * @date 27/02/2021
+ * @author Sasha Jenner (me AT sjenner DOT com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
+ * @date 15/08/2024
  */
 
 #include <getopt.h>
@@ -41,6 +41,7 @@
     "    cat                   quickly concatenate SLOW5/BLOW5 files of same type (same header, extension, compression)]\n" \
     "    quickcheck            quickly checks if a SLOW5/BLOW5 file is intact\n" \
     "    skim                  skims through requested components in a SLOW5/BLOW5 file\n" \
+    "    degrade               irreversibly degrade a SLOW5/BLOW5 file\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
 
@@ -89,6 +90,7 @@ int (stats_main)(int, char **, struct program_meta *);
 int (cat_main)(int argc, char **argv, struct program_meta *meta);
 int (quickcheck_main)(int, char **, struct program_meta *);
 int (skim_main)(int, char **, struct program_meta *);
+int (degrade_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
 void segv_handler(int sig) {
@@ -148,7 +150,8 @@ int main(const int argc, char **argv){
             {"skim",         skim_main},
             {"stats",        stats_main},
             {"cat",          cat_main},
-            {"quickcheck",   quickcheck_main}
+            {"quickcheck",   quickcheck_main},
+            {"degrade",      degrade_main},
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
