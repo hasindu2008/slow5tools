@@ -48,82 +48,42 @@
 
 extern int slow5tools_verbosity_level;
 
-static inline int slow5_is_prom_r10_dna(struct slow5_file *p);
-static inline int slow5_reccmp_digitisation(const struct slow5_rec *r,
-                                            const void *dig);
-static inline int slow5_reccmp_sampling_rate(const struct slow5_rec *r,
-                                             const void *sr);
-static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b);
-static int slow5_fseeko(const struct slow5_file *p, off_t offset);
+static inline int slow5_hdr_is_prom_r10_dna(const struct slow5_hdr *h);
+static inline int slow5_rec_is_prom_r10_dna(const struct slow5_rec *r);
+static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b, int (*chk)(const struct slow5_rec *));
 static int slow5_hdrcmp(const struct slow5_hdr *h, const char *a,
                         const char *x);
-static int slow5_reccmp(struct slow5_file *p,
-                        int (*cmp)(const struct slow5_rec *, const void *),
-                        const void *x, uint64_t n);
-static int slow5_rewind(const struct slow5_file *p, off_t *offset);
 static int8_t parse_bits(const char *s);
-static uint8_t slow5_suggest_qts(struct slow5_file *p);
+static uint8_t slow5_suggest_qts(struct slow5_file *p,
+                                 int (**chk)(const struct slow5_rec *));
 static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i);
 
 /*
- * Return whether or not a slow5 file represents a PromethION R10 DNA dataset.
- * p and p->header must not be NULL. Return 0 if false, 1 if true.
+ * Return whether or not a slow5 header represents a PromethION R10 DNA dataset.
+ * h must not be NULL. Return 0 if false, 1 if true.
  */
-static inline int slow5_is_prom_r10_dna(struct slow5_file *p)
+static inline int slow5_hdr_is_prom_r10_dna(const struct slow5_hdr *h)
 {
-    double promethion_r10_dna_digitisation = PROMETHION_R10_DNA_DIGITISATION;
-    double promethion_r10_dna_sampling_rate = PROMETHION_R10_DNA_SAMPLING_RATE;
-
-    return slow5_hdrcmp(p->header, SLOW5_HEADER_DEVICE_TYPE,
+    return slow5_hdrcmp(h, SLOW5_HEADER_DEVICE_TYPE,
                         PROMETHION_R10_DNA_DEVICE_TYPE) &&
-           slow5_hdrcmp(p->header, SLOW5_HEADER_EXPERIMENT_TYPE,
+           slow5_hdrcmp(h, SLOW5_HEADER_EXPERIMENT_TYPE,
                         PROMETHION_R10_DNA_EXPERIMENT_TYPE) &&
-           (slow5_hdrcmp(p->header, SLOW5_HEADER_SAMPLE_FREQUENCY,
+           (slow5_hdrcmp(h, SLOW5_HEADER_SAMPLE_FREQUENCY,
                          PROMETHION_R10_DNA_SAMPLE_FREQUENCY) ||
-            slow5_hdrcmp(p->header, SLOW5_HEADER_SAMPLE_RATE,
+            slow5_hdrcmp(h, SLOW5_HEADER_SAMPLE_RATE,
                          PROMETHION_R10_DNA_SAMPLE_RATE)) &&
-           slow5_hdrcmp(p->header, SLOW5_HEADER_SEQUENCING_KIT,
-                        PROMETHION_R10_DNA_SEQUENCING_KIT) &&
-           slow5_reccmp(p, slow5_reccmp_digitisation,
-                        (void *) &promethion_r10_dna_digitisation, 3) &&
-           slow5_reccmp(p, slow5_reccmp_sampling_rate,
-                        (void *) &promethion_r10_dna_sampling_rate, 3);
+           slow5_hdrcmp(h, SLOW5_HEADER_SEQUENCING_KIT,
+                        PROMETHION_R10_DNA_SEQUENCING_KIT);
 }
 
 /*
- * Compare the digitisation of slow5 record r with dig.
- * r must not be NULL. Return 0 if unequal, 1 if equal.
+ * Return whether or not a slow5 record represents PromethION R10 DNA data.
+ * r must not be NULL. Return 0 if false, 1 if true.
  */
-static inline int slow5_reccmp_digitisation(const struct slow5_rec *r,
-                                            const void *dig)
+static inline int slow5_rec_is_prom_r10_dna(const struct slow5_rec *r)
 {
-    return r->digitisation == *((const double *) dig);
-}
-
-/*
- * Compare the sampling rate of slow5 record r with sr.
- * r must not be NULL. Return 0 if unequal, 1 if equal.
- */
-static inline int slow5_reccmp_sampling_rate(const struct slow5_rec *r,
-                                             const void *sr)
-{
-    return r->sampling_rate == *((const double *) sr);
-}
-/*
- * Set the slow5 file position relative to the start of the file to offset.
- * p must not be NULL. Return -1 on error, 0 on success.
- */
-static int slow5_fseeko(const struct slow5_file *p, off_t offset)
-{
-    int ret;
-
-    ret = fseeko(p->fp, offset, SEEK_SET);
-    if (ret) {
-        ERROR("Could not fseeko SLOW5 file: %s", strerror(errno));
-        return -1;
-    }
-
-    return 0;
+    return r->digitisation == PROMETHION_R10_DNA_DIGITISATION &&
+           r->sampling_rate == PROMETHION_R10_DNA_SAMPLING_RATE;
 }
 
 /*
@@ -143,66 +103,6 @@ static int slow5_hdrcmp(const struct slow5_hdr *h, const char *a,
     }
 
     return 1;
-}
-
-/*
- * Compare the first n reads with function cmp and x as input.
- * p and cmp must not be NULL. Return 0 if unequal, 1 if equal.
- */
-static int slow5_reccmp(struct slow5_file *p,
-                        int (*cmp)(const struct slow5_rec *, const void *),
-                        const void *x, uint64_t n)
-{
-    int eq;
-    int ret;
-    off_t offset;
-    struct slow5_rec *r;
-    uint64_t i;
-
-    ret = slow5_rewind(p, &offset);
-    if (ret)
-        return 0;
-
-    eq = 1;
-    i = 0;
-    r = NULL;
-    while (eq && i < n) {
-        ret = slow5_get_next(&r, p);
-        if (ret < 0 || !r || !(*cmp)(r, x))
-            eq = 0;
-        i++;
-    }
-    slow5_rec_free(r);
-
-    ret = slow5_fseeko(p, offset);
-    if (ret)
-        return 0;
-
-    return eq;
-}
-
-/*
- * Rewind the slow5 file pointer to the first record and store the previous
- * position in offset.
- * p and offset must not be NULL. Return -1 on error, 0 on success.
- */
-static int slow5_rewind(const struct slow5_file *p, off_t *offset)
-{
-    off_t tmp;
-
-    if (!p->meta.start_rec_offset) {
-        ERROR("First record offset is uninitialised%s", "");
-        return -1;
-    }
-
-    tmp = ftello(p->fp);
-    if (tmp == -1) {
-        ERROR("Could not ftello SLOW5 file: %s", strerror(errno));
-        return -1;
-    }
-    *offset = tmp;
-
-    return slow5_fseeko(p, p->meta.start_rec_offset);
 }
 
 /*
@@ -237,9 +137,11 @@ static int8_t parse_bits(const char *s)
 
 /*
  * Return a suggestion for the number of bits to use with qts degradation given
- * a slow5 file. Return 0 on error.
+ * a slow5 file. Set chk to the corresponding record checking function.
+ * chk must not be NULL. Return 0 on error.
  */
-static uint8_t slow5_suggest_qts(struct slow5_file *p)
+static uint8_t slow5_suggest_qts(struct slow5_file *p,
+                                 int (**chk)(const struct slow5_rec *))
 {
     if (!p) {
         ERROR("Argument '%s' cannot be NULL", SLOW5_TO_STR(p));
@@ -251,8 +153,9 @@ static uint8_t slow5_suggest_qts(struct slow5_file *p)
         return 0;
     }
 
-    if (slow5_is_prom_r10_dna(p)) {
-        INFO("Detected PromethION R10 DNA data%s", "");
+    if (slow5_hdr_is_prom_r10_dna(p->header)) {
+        INFO("Detected PromethION R10 DNA dataset%s", "");
+        *chk = slow5_rec_is_prom_r10_dna;
         return SLOW5_SUGGEST_QTS_PROMETHION_R10_DNA;
     }
 
@@ -267,6 +170,17 @@ static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
         exit(EXIT_FAILURE);
     } else {
         free(db->mem_records[i]);
+    }
+
+    if (core->param) {
+        int (*chk)(const struct slow5_rec *) =
+            (int (*)(const struct slow5_rec *)) (core->param);
+        int ret = (*chk)(read);
+        if (!ret) {
+            ERROR("Read with ID '%s' does not match detected dataset type",
+                  read->read_id);
+            exit(EXIT_FAILURE);
+        }
     }
 
     slow5_rec_qts_round(read, (uint8_t) core->lossy);
@@ -319,6 +233,7 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
     int opt;
     int longindex = 0;
     int8_t b = -1;
+    int (*chk)(const struct slow5_rec *) = NULL;
 
     // Parse options
     while ((opt = getopt_long(argc, argv, "s:c:f:ho:T:t:K:b:", long_opts, &longindex)) != -1) {
@@ -440,13 +355,13 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
         }
 
         if (b == -1) {
-            b = slow5_suggest_qts(s5p);
+            b = slow5_suggest_qts(s5p, &chk);
             INFO("Using %" PRId8 " bits", b);
         }
 
         // TODO if output is the same format just duplicate file
         slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
-        if (slow5_convert_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta, (uint8_t) b) != 0) {
+        if (slow5_convert_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta, (uint8_t) b, chk) != 0) {
             ERROR("File conversion failed.%s", "");
             view_ret = EXIT_FAILURE;
         }
@@ -485,7 +400,7 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
     return view_ret;
 }
 
-static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b) {
+static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b, int (*chk)(const struct slow5_rec *)) {
     if (from == NULL || to_fp == NULL || to_format == SLOW5_FORMAT_UNKNOWN) {
         return -1;
     }
@@ -533,6 +448,7 @@ static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slo
         core.format_out = to_format;
         core.press_method = to_compress;
         core.lossy = (int) b;
+        core.param = (void *) chk;
 
         db.n_batch = record_count;
         db.read_record = (raw_record_t*) malloc(record_count * sizeof *db.read_record);
