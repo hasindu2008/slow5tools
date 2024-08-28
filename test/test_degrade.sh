@@ -72,26 +72,26 @@ diff "$OUT_DIR/example2_b1.slow5" "$EXP_DIR/example2_b1.slow5" > /dev/null || di
 info "$name"
 
 if [ -z "$bigend" ]; then
-    i=$(echo "$i + 1" | bc)
+    i=$((i + 1))
     name="testcase $i: 4 bits"
     $SLOW5TOOLS degrade -b 4 "$RAW_DIR/example2.slow5" -o "$OUT_DIR/example2_b4.blow5" || die "$name: slow5tools failed"
     diff "$OUT_DIR/example2_b4.blow5" "$EXP_DIR/example2_b4.blow5" > /dev/null || die "$name: diff failed"
     info "$name"
 
-    i=$(echo "$i + 1" | bc)
+    i=$((i + 1))
     name="testcase $i: promethion r10 dna"
     $SLOW5TOOLS degrade "$RAW_DIR/promr10dna.blow5" -o "$OUT_DIR/promr10dna_auto.blow5" || die "$name: slow5tools failed"
     diff "$OUT_DIR/promr10dna_auto.blow5" "$EXP_DIR/promr10dna_b3.blow5" > /dev/null || die "$name: diff failed"
     info "$name"
 fi
 
-i=$(echo "$i + 1" | bc)
+i=$((i + 1))
 name="testcase $i: promethion r10 dna: bad header"
 $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr.slow5" -o "$OUT_DIR/promr10dna_badhdr_auto.slow5" || die "$name: slow5tools failed"
 diff "$OUT_DIR/promr10dna_badhdr_auto.slow5" "$RAW_DIR/promr10dna_badhdr.slow5" > /dev/null || die "$name: diff failed"
 info "$name"
 
-i=$(echo "$i + 1" | bc)
+i=$((i + 1))
 name="testcase $i: promethion r10 dna: bad record"
 ! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badrec.slow5" > /dev/null || die "$name: slow5tools failed"
 info "$name"
