@@ -3,7 +3,7 @@
 # MIT License
 
 # Copyright (c) 2020 Hiruna Samarakoon
-# Copyright (c) 2020 Sasha Jenner
+# Copyright (c) 2020,2024 Sasha Jenner
 # Copyright (c) 2020,2023 Hasindu Gamaarachchi
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -271,6 +271,18 @@ if [ $mem -eq 1 ]; then
     fi
 else
     if ! ./test/test_skim.sh ; then
+        fail "$TESTCASE_NAME"
+    fi
+fi
+
+TESTCASE_NAME="degrade test"
+echo_test $TESTCASE_NAME
+if [ $mem -eq 1 ]; then
+    if ! ./test/test_degrade.sh mem ; then
+        fail "$TESTCASE_NAME"
+    fi
+else
+    if ! ./test/test_degrade.sh ; then
         fail "$TESTCASE_NAME"
     fi
 fi
