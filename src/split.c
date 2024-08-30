@@ -3,7 +3,7 @@
  * @brief split a SLOW5 in different ways
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
  * @author Sasha Jenner (me AT sjenner DOT com)
- * @date 03/07/2024
+ * @date 30/08/2024
  */
 
 #include <getopt.h>
@@ -33,6 +33,7 @@
     "    -x, --demux [TSV_PATH]        split reads according to custom TSV\n" \
     "        --demux-code-hdr [STR]    specify categories column name ['barcode_arrangement']\n" \
     "        --demux-rid-hdr [STR]     specify read IDs column name ['parent_read_id']\n" \
+    "    -u, --demux-uniq [STR]        multi-category reads to category named STR\n" \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     HELP_MSG_LOSSLESS \
@@ -135,8 +136,9 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {"reads",       required_argument, NULL, 'r'}, //10
             {"batchsize",   required_argument, NULL, 'K'}, //11
             {"demux",       required_argument, NULL, 'x'}, //12
-            {"demux-code-hdr", required_argument, NULL, 0}, //14
-            {"demux-rid-hdr", required_argument, NULL, 0}, //13
+            {"demux-code-hdr", required_argument, NULL, 0}, //13
+            {"demux-rid-hdr", required_argument, NULL, 0}, //14
+            {"demux-uniq",  required_argument, NULL, 'u'}, //15
             {NULL, 0, NULL, 0 }
     };
 
@@ -146,6 +148,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     meta_split_method_object.bs_meta.path = NULL;
     meta_split_method_object.bs_meta.code_hdr = BSUM_HEADER_BARCODE;
     meta_split_method_object.bs_meta.rid_hdr = BSUM_HEADER_READID;
+    meta_split_method_object.bs_meta.multi = NULL;
 
     opt_t user_opts;
     init_opt(&user_opts);
@@ -154,7 +157,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:x:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:x:u:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -189,6 +192,9 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             case 'x':
                 meta_split_method_object.splitMethod = DEMUX_SPLIT;
                 meta_split_method_object.bs_meta.path = optarg;
+                break;
+            case 'u':
+                meta_split_method_object.bs_meta.multi = optarg;
                 break;
             case 'l':
                 user_opts.arg_lossless = optarg;
@@ -292,6 +298,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     int ret_split_func = split_func(slow5_files_input, user_opts, meta_split_method_object);
     if(ret_split_func){
+        ERROR("Failed to split%s", "");
         return EXIT_FAILURE;
     }
 

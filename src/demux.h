@@ -20,6 +20,7 @@ struct bsum_meta {
     char *path;
     const char *code_hdr; // Barcodes column header
     const char *rid_hdr;  // Read IDs column header
+    const char *multi;    // Category name for multi-category reads
 };
 
 /*
