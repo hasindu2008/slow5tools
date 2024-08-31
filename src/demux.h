@@ -10,11 +10,17 @@
 #define BSUM_HEADER_MISSING(bs) (!(bs)->code_pos || !(bs)->rid_pos)
 #define PATH_EXT_DELIM ('.')
 #define PATH_DIR_DELIM ('/')
+/*
+ * Number of open files at entry to slow5_spawn
+ * (stdin, stdout, stderr, slow5 file)
+ */
+#define SLOW5_SPAWN_NOFILE (4)
 
 struct bsum_meta {
     char *path;
     const char *code_hdr; // Barcodes column header
     const char *rid_hdr;  // Read IDs column header
+    const char *multi;    // Category name for multi-category reads
 };
 
 /*

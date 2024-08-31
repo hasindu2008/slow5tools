@@ -245,6 +245,60 @@ if [ -z "$bigend" ]; then
     check "$name" $REL_PATH/data/exp/split/demux7 $OUTPUT_DIR/demux7
 fi
 
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex one read, one barcode (uniq)"
+info "-------------------$name-------"
+$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux1/barcode_summary.txt $REL_PATH/data/raw/split/demux1/example2_0.slow5 -d $OUTPUT_DIR/demux1-uniq --to slow5 -u mixed || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux1 $OUTPUT_DIR/demux1-uniq
+
+if [ -z "$bigend" ]; then
+    TESTCASE=$((TESTCASE + 1))
+    name="testcase ${TESTCASE}: demultiplex two reads, one barcode (uniq)"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux2/barcode_summary.txt $REL_PATH/data/raw/split/demux2/example2_0.slow5 -d $OUTPUT_DIR/demux2-uniq --to blow5 --demux-uniq mixed || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux2 $OUTPUT_DIR/demux2-uniq
+
+    TESTCASE=$((TESTCASE + 1))
+    name="testcase ${TESTCASE}: demultiplex one missing (uniq)"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split -u mixed --to blow5 $REL_PATH/data/raw/split/demux3/example2_0.slow5 -d $OUTPUT_DIR/demux3-uniq -x $REL_PATH/data/raw/split/demux3/bs.txt || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux3-uniq $OUTPUT_DIR/demux3-uniq
+
+    TESTCASE=$((TESTCASE + 1))
+    name="testcase ${TESTCASE}: demultiplex two reads, two barcodes (uniq)"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to slow5 --demux-uniq mixed $REL_PATH/data/raw/split/demux4/example2_0.blow5 -d $OUTPUT_DIR/demux4-uniq -x $REL_PATH/data/raw/split/demux4/summary || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux4-uniq $OUTPUT_DIR/demux4-uniq
+
+    TESTCASE=$((TESTCASE + 1))
+    name="testcase ${TESTCASE}: demultiplex custom header (uniq)"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux5/example2_0.blow5 -u abc -d $OUTPUT_DIR/demux5-uniq --demux $REL_PATH/data/raw/split/demux5/custom --demux-rid-hdr=MyCustomId --demux-code-hdr 'BC0D35!' || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux5-uniq $OUTPUT_DIR/demux5-uniq
+
+    TESTCASE=$((TESTCASE + 1))
+    name="testcase ${TESTCASE}: demultiplex one extra (uniq)"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux6/example2_0.blow5 -u what -d $OUTPUT_DIR/demux6-uniq --demux $REL_PATH/data/raw/split/demux6/barcode_summary.txt && die "$name"
+
+    TESTCASE=$((TESTCASE + 1))
+    name="testcase ${TESTCASE}: demultiplex duplicated read (uniq)"
+    info "-------------------$name-------"
+    $SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux7/example2_0.blow5 -d $OUTPUT_DIR/demux7-uniq --demux-uniq hodjbodj --demux $REL_PATH/data/raw/split/demux7/barcode_summary.txt || die "$name"
+    check "$name" $REL_PATH/data/exp/split/demux7-uniq $OUTPUT_DIR/demux7-uniq
+fi
+
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex multi category exists"
+info "-------------------$name-------"
+! $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux1/barcode_summary.txt $REL_PATH/data/raw/split/demux1/example2_0.slow5 -d $OUTPUT_DIR/demux8 --to slow5 -u unclassified || die "$name"
+
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex very mixed"
+info "-------------------$name-------"
+$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux9/barcode_summary.txt $REL_PATH/data/raw/split/demux2/example2_0.slow5 -d $OUTPUT_DIR/demux9 --to slow5 -u vmixed --demux-rid rid --demux-code code || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux9 $OUTPUT_DIR/demux9
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
