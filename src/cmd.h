@@ -71,7 +71,8 @@
     "    zstd - Z standard \n" \
     "SIG_MTD:\n" \
     "    none - no special signal compression\n" \
-    "    svb-zd - StreamVByte with zig-zag delta \n\n" \
+    "    svb-zd - StreamVByte with zig-zag delta \n" \
+    "    ex-zd - exception with zig-zag delta [experimental, do not use] \n\n" \
     "See https://slow5.page.link/man for detailed description of these command-line options.\n"
 
 

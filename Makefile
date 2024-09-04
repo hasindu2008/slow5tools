@@ -35,6 +35,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/skim.o \
 	  $(BUILD_DIR)/misc.o \
 	  $(BUILD_DIR)/demux.o \
+	  $(BUILD_DIR)/degrade.o \
 
 
 PREFIX = /usr/local
@@ -90,7 +91,10 @@ $(BUILD_DIR)/skim.o: src/skim.c src/error.h
 $(BUILD_DIR)/misc.o: src/misc.c src/error.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/demux.o: src/demux.c $(BUILD_DIR)/thread.o src/demux.h src/error.h src/khash.h src/kvec.h src/misc.h
+$(BUILD_DIR)/demux.o: src/demux.c src/demux.h src/error.h src/khash.h src/kvec.h src/misc.h src/thread.h
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/degrade.o: src/degrade.c src/cmd.h src/error.h src/misc.h src/thread.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 slow5lib/lib/libslow5.a:
