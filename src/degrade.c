@@ -356,6 +356,11 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
 
         if (b == -1) {
             b = slow5_suggest_qts(s5p, &chk);
+            if (!b) {
+                ERROR("%s", "Use option -b to manually specify");
+                view_ret = EXIT_FAILURE;
+                goto err;
+            }
             INFO("Using %" PRId8 " bits", b);
         }
 
@@ -394,6 +399,7 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+err:
     if (view_ret == EXIT_FAILURE) {
         EXIT_MSG(EXIT_FAILURE, argv, meta);
     }
