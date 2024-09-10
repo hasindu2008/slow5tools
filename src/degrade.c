@@ -23,7 +23,8 @@
     "OPTIONS:\n" \
     HELP_MSG_OUTPUT_FORMAT_VIEW\
     HELP_MSG_OUTPUT_FILE \
-    HELP_MSG_PRESS \
+    "    -c, --compress REC_MTD        record compression method [zlib] (only for blow5 format)\n" \
+    "    -s, --sig-compress SIG_MTD    signal compression method [ex-zd] (only for blow5 format)\n" \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     "        --from FORMAT             specify input file format [auto]\n" \
@@ -229,6 +230,8 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
 
     opt_t user_opts;
     init_opt(&user_opts);
+
+    user_opts.signal_press_out = SLOW5_COMPRESS_EX_ZD;
 
     int opt;
     int longindex = 0;
