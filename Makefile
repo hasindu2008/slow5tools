@@ -115,16 +115,16 @@ $(BUILD_DIR)/lib/libhdf5.a:
 	rm -f $(BUILD_DIR)/hdf5.tar.bz2
 	cd $(BUILD_DIR)/hdf5 && \
 	./configure --prefix=`pwd`/../ && \
-	make -j8 && \
-	make install
+	$(MAKE) -j8 && \
+	$(MAKE) install
 
 clean:
 	rm -rf $(BINARY) $(BUILD_DIR)/*.o
-	make -C slow5lib clean
+	$(MAKE) -C slow5lib clean
 
 # Delete all gitignored files (but not directories)
 distclean: clean
-	make clean
+	$(MAKE) clean
 	git clean -f -X
 	rm -rf $(BUILD_DIR)/* autom4te.cache
 
@@ -144,7 +144,7 @@ release: distclean
 	scripts/install-hdf5.sh
 	scripts/install-zstd.sh
 	./configure --enable-localhdf5 --enable-localzstd
-	make -j8
+	$(MAKE) -j8
 	mkdir -p slow5tools-$(VERSION)
 	mkdir slow5tools-$(VERSION)/docs slow5tools-$(VERSION)/scripts
 	mv slow5tools slow5tools-$(VERSION)/
@@ -171,7 +171,7 @@ test: $(BINARY)
 	./test/test.sh
 
 pyslow5:
-	make clean
+	$(MAKE) clean
 	rm -rf *.so python/pyslow5.cpp build/lib.* build/temp.*
 	python3 setup.py build
 	cp build/lib.*/*.so  ./
