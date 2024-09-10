@@ -87,8 +87,7 @@ fi
 
 i=$((i + 1))
 name="testcase $i: promethion r10 dna: bad header"
-$SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr.slow5" -o "$OUT_DIR/promr10dna_badhdr_auto.slow5" || die "$name: slow5tools failed"
-diff "$OUT_DIR/promr10dna_badhdr_auto.slow5" "$RAW_DIR/promr10dna_badhdr.slow5" > /dev/null || die "$name: diff failed"
+! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr.slow5" -o "$OUT_DIR/promr10dna_badhdr_auto.slow5" || die "$name: slow5tools failed"
 info "$name"
 
 i=$((i + 1))
