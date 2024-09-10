@@ -51,6 +51,8 @@ extern int slow5tools_verbosity_level;
 
 static inline int slow5_hdr_is_prom_r10_dna(const struct slow5_hdr *h);
 static inline int slow5_rec_is_prom_r10_dna(const struct slow5_rec *r);
+static inline void slow5_hdrcmp_log(const char *a, uint32_t i, const char *x,
+                                    const char *v);
 static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b, int (*chk)(const struct slow5_rec *));
 static int slow5_hdrcmp(const struct slow5_hdr *h, const char *a,
                         const char *x);
@@ -83,8 +85,35 @@ static inline int slow5_hdr_is_prom_r10_dna(const struct slow5_hdr *h)
  */
 static inline int slow5_rec_is_prom_r10_dna(const struct slow5_rec *r)
 {
-    return r->digitisation == PROMETHION_R10_DNA_DIGITISATION &&
-           r->sampling_rate == PROMETHION_R10_DNA_SAMPLING_RATE;
+    if (r->digitisation != PROMETHION_R10_DNA_DIGITISATION) {
+        ERROR("Digitisation differs: %f but expected %f", r->digitisation,
+              (float) PROMETHION_R10_DNA_DIGITISATION);
+    } else if (r->sampling_rate != PROMETHION_R10_DNA_SAMPLING_RATE) {
+        ERROR("Sampling rate differs: %f but expected %f", r->sampling_rate,
+              (float) PROMETHION_R10_DNA_SAMPLING_RATE);
+    } else {
+        return 1;
+    }
+
+    ERROR("Read with ID '%s' does not match PromethION R10 DNA", r->read_id);
+    return 0;
+}
+
+/*
+ * Log that header attribute a for read group i equals v instead of x.
+ */
+static inline void slow5_hdrcmp_log(const char *a, uint32_t i, const char *x,
+                                    const char *v)
+{
+    if (!v) {
+        INFO("Header at '%s' differs: missing but expected '%s'", a, x);
+    } else if (!strlen(v)) {
+        INFO("Header at '%s' differs (read group %" PRIu32 "): empty but expected '%s'",
+             a, i, x);
+    } else {
+        INFO("Header at '%s' differs (read group %" PRIu32 "): '%s' but expected '%s'",
+             a, i, v, x);
+    }
 }
 
 /*
@@ -99,8 +128,10 @@ static int slow5_hdrcmp(const struct slow5_hdr *h, const char *a,
 
     for (i = 0; i < h->num_read_groups; i++) {
         v = slow5_hdr_get(a, i, h);
-        if (!v || strcmp(v, x))
+        if (!v || strcmp(v, x)) {
+            slow5_hdrcmp_log(a, i, x, v);
             return 0;
+        }
     }
 
     return 1;
@@ -155,9 +186,11 @@ static uint8_t slow5_suggest_qts(struct slow5_file *p,
     }
 
     if (slow5_hdr_is_prom_r10_dna(p->header)) {
-        INFO("Detected PromethION R10 DNA dataset%s", "");
+        INFO("Detected: PromethION R10 DNA%s", "");
         *chk = slow5_rec_is_prom_r10_dna;
         return SLOW5_SUGGEST_QTS_PROMETHION_R10_DNA;
+    } else {
+        INFO("Not detected: PromethION R10 DNA%s", "");
     }
 
     ERROR("No suitable bits suggestion%s", "");
@@ -177,11 +210,8 @@ static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
         int (*chk)(const struct slow5_rec *) =
             (int (*)(const struct slow5_rec *)) (core->param);
         int ret = (*chk)(read);
-        if (!ret) {
-            ERROR("Read with ID '%s' does not match detected dataset type",
-                  read->read_id);
+        if (!ret)
             exit(EXIT_FAILURE);
-        }
     }
 
     slow5_rec_qts_round(read, (uint8_t) core->lossy);
