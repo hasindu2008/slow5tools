@@ -91,6 +91,21 @@ name="testcase $i: promethion r10 dna: bad header"
 info "$name"
 
 i=$((i + 1))
+name="testcase $i: promethion r10 dna: bad header sample frequency"
+! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr_sample_freq.slow5" > /dev/null || die "$name: slow5tools failed"
+info "$name"
+
+i=$((i + 1))
+name="testcase $i: promethion r10 dna: bad header sample rate"
+! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr_sample_rate.slow5" > /dev/null || die "$name: slow5tools failed"
+info "$name"
+
+i=$((i + 1))
+name="testcase $i: promethion r10 dna: bad header sample rate 2"
+! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr_sample_rate2.slow5" > /dev/null || die "$name: slow5tools failed"
+info "$name"
+
+i=$((i + 1))
 name="testcase $i: promethion r10 dna: bad record"
 ! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badrec.slow5" > /dev/null || die "$name: slow5tools failed"
 info "$name"
