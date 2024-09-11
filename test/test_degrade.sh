@@ -79,6 +79,12 @@ if [ -z "$bigend" ]; then
     info "$name"
 
     i=$((i + 1))
+    name="testcase $i: minion r10 dna"
+    $SLOW5TOOLS degrade "$RAW_DIR/minir10dna.blow5" -o "$OUT_DIR/minir10dna_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/minir10dna_auto.blow5" "$EXP_DIR/minir10dna_b3.blow5" > /dev/null || die "$name: diff failed"
+    info "$name"
+
+    i=$((i + 1))
     name="testcase $i: promethion r10 dna 4khz"
     $SLOW5TOOLS degrade "$RAW_DIR/promr10dna4khz.blow5" -s svb-zd -o "$OUT_DIR/promr10dna4khz_auto.blow5" || die "$name: slow5tools failed"
     diff "$OUT_DIR/promr10dna4khz_auto.blow5" "$EXP_DIR/promr10dna4khz_b3.blow5" > /dev/null || die "$name: diff failed"
