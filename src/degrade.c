@@ -2,7 +2,7 @@
  * @file degrade.c
  * @brief degrade and convert S/BLOW5 files
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au), Sasha Jenner (me AT sjenner DOT com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
- * @date 27/08/2024
+ * @date 11/09/2024
  */
 #include "slow5_misc.h"
 #include "error.h"
@@ -23,7 +23,8 @@
     "OPTIONS:\n" \
     HELP_MSG_OUTPUT_FORMAT_VIEW\
     HELP_MSG_OUTPUT_FILE \
-    HELP_MSG_PRESS \
+    "    -c, --compress REC_MTD        record compression method [zlib] (only for blow5 format)\n" \
+    "    -s, --sig-compress SIG_MTD    signal compression method [ex-zd] (only for blow5 format)\n" \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     "        --from FORMAT             specify input file format [auto]\n" \
@@ -31,32 +32,76 @@
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
-#define PROMETHION_R10_DNA_DIGITISATION (2048)
-#define PROMETHION_R10_DNA_DEVICE_TYPE ("promethion")
-#define PROMETHION_R10_DNA_EXPERIMENT_TYPE ("genomic_dna")
-#define PROMETHION_R10_DNA_SAMPLE_FREQUENCY ("5000")
-#define PROMETHION_R10_DNA_SAMPLE_RATE (PROMETHION_R10_DNA_SAMPLE_FREQUENCY)
-#define PROMETHION_R10_DNA_SAMPLING_RATE (5000)
-#define PROMETHION_R10_DNA_SEQUENCING_KIT ("sqk-lsk114")
+#define DNA_EXPERIMENT_TYPE ("genomic_dna")
+#define RNA_EXPERIMENT_TYPE ("rna")
+#define MINION_DIGITISATION (8192)
+#define MINION_DEVICE_TYPE ("minion")
+#define PROMETHION_DIGITISATION (2048)
+#define PROMETHION_DEVICE_TYPE ("promethion")
+#define R10_DNA_SEQUENCING_KIT ("sqk-lsk114")
+#define R10_RNA_SEQUENCING_KIT ("sqk-rna004")
+#define SAMPLE_FREQUENCY_4KHZ ("4000")
+#define SAMPLE_FREQUENCY_5KHZ ("5000")
+#define SAMPLING_RATE_4KHZ (4000)
+#define SAMPLING_RATE_5KHZ (5000)
+
+#define MINION_R10_DNA_NAME "MinION R10 DNA"
+#define MINION_R10_DNA_SAMPLE_FREQUENCY (SAMPLE_FREQUENCY_5KHZ)
+#define MINION_R10_DNA_SAMPLING_RATE (SAMPLING_RATE_5KHZ)
+#define PROMETHION_R10_DNA_4KHZ_NAME "PromethION R10 DNA 4kHz"
+#define PROMETHION_R10_DNA_5KHZ_NAME "PromethION R10 DNA 5kHz"
+#define PROMETHION_R10_RNA_NAME "PromethION R10 RNA"
+#define PROMETHION_R10_RNA_SAMPLE_FREQUENCY (SAMPLE_FREQUENCY_4KHZ)
+#define PROMETHION_R10_RNA_SAMPLING_RATE (SAMPLING_RATE_4KHZ)
+
 #define SLOW5_HEADER_DEVICE_TYPE ("device_type")
 #define SLOW5_HEADER_EXPERIMENT_TYPE ("experiment_type")
 #define SLOW5_HEADER_SAMPLE_FREQUENCY ("sample_frequency")
 #define SLOW5_HEADER_SAMPLE_RATE ("sample_rate")
-#define SLOW5_HEADER_SAMPLING_RATE ("sampling_rate")
 #define SLOW5_HEADER_SEQUENCING_KIT ("sequencing_kit")
-#define SLOW5_SUGGEST_QTS_PROMETHION_R10_DNA (3)
+#define SLOW5_SUGGEST_QTS_MINION_R10_DNA (3)
+#define SLOW5_SUGGEST_QTS_PROMETHION_R10_DNA_4KHZ (3)
+#define SLOW5_SUGGEST_QTS_PROMETHION_R10_DNA_5KHZ (3)
+#define SLOW5_SUGGEST_QTS_PROMETHION_R10_RNA (3)
+
+#define SLOW5_HEADER_IS_MISSING(h, a) (!slow5_hdr_get(a, 0, h))
 
 extern int slow5tools_verbosity_level;
 
+static inline int slow5_hdr_is_mini_r10_dna(const struct slow5_hdr *h);
 static inline int slow5_hdr_is_prom_r10_dna(const struct slow5_hdr *h);
-static inline int slow5_rec_is_prom_r10_dna(const struct slow5_rec *r);
+static inline int slow5_hdr_is_prom_r10_dna_4khz(const struct slow5_hdr *h);
+static inline int slow5_hdr_is_prom_r10_dna_5khz(const struct slow5_hdr *h);
+static inline int slow5_hdr_is_prom_r10_rna(const struct slow5_hdr *h);
+static inline int slow5_rec_is_mini_r10_dna(const struct slow5_rec *r);
+static inline int slow5_rec_is_prom_r10_dna_4khz(const struct slow5_rec *r);
+static inline int slow5_rec_is_prom_r10_dna_5khz(const struct slow5_rec *r);
+static inline int slow5_rec_is_prom_r10_rna(const struct slow5_rec *r);
+static inline void slow5_hdrcmp_log(const char *a, uint32_t i, const char *x,
+                                    const char *v);
 static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b, int (*chk)(const struct slow5_rec *));
 static int slow5_hdrcmp(const struct slow5_hdr *h, const char *a,
                         const char *x);
+static int slow5_hdrcmp_sample_freq(const struct slow5_hdr *h, const char *f);
+static int slow5_reccmp(const struct slow5_rec *r, float dig, float sr,
+                        const char *name);
 static int8_t parse_bits(const char *s);
 static uint8_t slow5_suggest_qts(struct slow5_file *p,
                                  int (**chk)(const struct slow5_rec *));
 static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i);
+
+/*
+ * Return whether or not a slow5 header represents a MinION R10 DNA dataset.
+ * h must not be NULL. Return 0 if false, 1 if true.
+ */
+static inline int slow5_hdr_is_mini_r10_dna(const struct slow5_hdr *h)
+{
+    return slow5_hdrcmp(h, SLOW5_HEADER_DEVICE_TYPE, MINION_DEVICE_TYPE) &&
+           slow5_hdrcmp(h, SLOW5_HEADER_EXPERIMENT_TYPE, DNA_EXPERIMENT_TYPE) &&
+           slow5_hdrcmp(h, SLOW5_HEADER_SEQUENCING_KIT,
+                        R10_DNA_SEQUENCING_KIT) &&
+           slow5_hdrcmp_sample_freq(h, MINION_R10_DNA_SAMPLE_FREQUENCY);
+}
 
 /*
  * Return whether or not a slow5 header represents a PromethION R10 DNA dataset.
@@ -64,26 +109,97 @@ static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i);
  */
 static inline int slow5_hdr_is_prom_r10_dna(const struct slow5_hdr *h)
 {
-    return slow5_hdrcmp(h, SLOW5_HEADER_DEVICE_TYPE,
-                        PROMETHION_R10_DNA_DEVICE_TYPE) &&
-           slow5_hdrcmp(h, SLOW5_HEADER_EXPERIMENT_TYPE,
-                        PROMETHION_R10_DNA_EXPERIMENT_TYPE) &&
-           (slow5_hdrcmp(h, SLOW5_HEADER_SAMPLE_FREQUENCY,
-                         PROMETHION_R10_DNA_SAMPLE_FREQUENCY) ||
-            slow5_hdrcmp(h, SLOW5_HEADER_SAMPLE_RATE,
-                         PROMETHION_R10_DNA_SAMPLE_RATE)) &&
-           slow5_hdrcmp(h, SLOW5_HEADER_SEQUENCING_KIT,
-                        PROMETHION_R10_DNA_SEQUENCING_KIT);
+    return slow5_hdrcmp(h, SLOW5_HEADER_DEVICE_TYPE, PROMETHION_DEVICE_TYPE) &&
+           slow5_hdrcmp(h, SLOW5_HEADER_EXPERIMENT_TYPE, DNA_EXPERIMENT_TYPE) &&
+           slow5_hdrcmp(h, SLOW5_HEADER_SEQUENCING_KIT, R10_DNA_SEQUENCING_KIT);
 }
 
 /*
- * Return whether or not a slow5 record represents PromethION R10 DNA data.
+ * Return whether or not a slow5 header represents a PromethION R10 DNA 4kHz
+ * dataset. h must not be NULL. Return 0 if false, 1 if true.
+ */
+static inline int slow5_hdr_is_prom_r10_dna_4khz(const struct slow5_hdr *h)
+{
+    return slow5_hdr_is_prom_r10_dna(h) &&
+           slow5_hdrcmp_sample_freq(h, SAMPLE_FREQUENCY_4KHZ);
+}
+
+/*
+ * Return whether or not a slow5 header represents a PromethION R10 DNA 5kHz
+ * dataset. h must not be NULL. Return 0 if false, 1 if true.
+ */
+static inline int slow5_hdr_is_prom_r10_dna_5khz(const struct slow5_hdr *h)
+{
+    return slow5_hdr_is_prom_r10_dna(h) &&
+           slow5_hdrcmp_sample_freq(h, SAMPLE_FREQUENCY_5KHZ);
+}
+
+/*
+ * Return whether or not a slow5 header represents a PromethION R10 RNA dataset.
+ * h must not be NULL. Return 0 if false, 1 if true.
+ */
+static inline int slow5_hdr_is_prom_r10_rna(const struct slow5_hdr *h)
+{
+    return slow5_hdrcmp(h, SLOW5_HEADER_DEVICE_TYPE, PROMETHION_DEVICE_TYPE) &&
+           slow5_hdrcmp(h, SLOW5_HEADER_EXPERIMENT_TYPE, RNA_EXPERIMENT_TYPE) &&
+           slow5_hdrcmp(h, SLOW5_HEADER_SEQUENCING_KIT,
+                        R10_RNA_SEQUENCING_KIT) &&
+           slow5_hdrcmp_sample_freq(h, PROMETHION_R10_RNA_SAMPLE_FREQUENCY);
+}
+
+/*
+ * Return whether or not a slow5 record represents MinION R10 DNA data.
  * r must not be NULL. Return 0 if false, 1 if true.
  */
-static inline int slow5_rec_is_prom_r10_dna(const struct slow5_rec *r)
+static inline int slow5_rec_is_mini_r10_dna(const struct slow5_rec *r)
 {
-    return r->digitisation == PROMETHION_R10_DNA_DIGITISATION &&
-           r->sampling_rate == PROMETHION_R10_DNA_SAMPLING_RATE;
+    return slow5_reccmp(r, MINION_DIGITISATION, MINION_R10_DNA_SAMPLING_RATE,
+                        MINION_R10_DNA_NAME);
+}
+
+/*
+ * Return whether or not a slow5 record represents PromethION R10 DNA 4kHz data.
+ * r must not be NULL. Return 0 if false, 1 if true.
+ */
+static inline int slow5_rec_is_prom_r10_dna_4khz(const struct slow5_rec *r)
+{
+    return slow5_reccmp(r, PROMETHION_DIGITISATION, SAMPLING_RATE_4KHZ,
+                        PROMETHION_R10_DNA_4KHZ_NAME);
+}
+
+/*
+ * Return whether or not a slow5 record represents PromethION R10 DNA 5kHz data.
+ * r must not be NULL. Return 0 if false, 1 if true.
+ */
+static inline int slow5_rec_is_prom_r10_dna_5khz(const struct slow5_rec *r)
+{
+    return slow5_reccmp(r, PROMETHION_DIGITISATION, SAMPLING_RATE_5KHZ,
+                        PROMETHION_R10_DNA_5KHZ_NAME);
+}
+
+/*
+ * Return whether or not a slow5 record represents PromethION R10 RNA data.
+ * r must not be NULL. Return 0 if false, 1 if true.
+ */
+static inline int slow5_rec_is_prom_r10_rna(const struct slow5_rec *r)
+{
+    return slow5_reccmp(r, PROMETHION_DIGITISATION,
+                        PROMETHION_R10_RNA_SAMPLING_RATE,
+                        PROMETHION_R10_RNA_NAME);
+}
+
+/*
+ * Log that header attribute a for read group i equals v instead of x.
+ */
+static inline void slow5_hdrcmp_log(const char *a, uint32_t i, const char *x,
+                                    const char *v)
+{
+    if (!v) {
+        INFO("Header at '%s' differs: missing but expected '%s'", a, x);
+    } else {
+        INFO("Header at '%s' differs (read group %" PRIu32 "): '%s' but expected '%s'",
+             a, i, v, x);
+    }
 }
 
 /*
@@ -98,11 +214,49 @@ static int slow5_hdrcmp(const struct slow5_hdr *h, const char *a,
 
     for (i = 0; i < h->num_read_groups; i++) {
         v = slow5_hdr_get(a, i, h);
-        if (!v || strcmp(v, x))
+        if (!v || strcmp(v, x)) {
+            slow5_hdrcmp_log(a, i, x, v);
             return 0;
+        }
     }
 
     return 1;
+}
+
+/*
+ * Return whether or not a slow5 header's sample frequency/rate equals f.
+ * Allow one to be missing from the header.
+ * All arguments must not be NULL. Return 0 if false, 1 if true.
+ */
+static int slow5_hdrcmp_sample_freq(const struct slow5_hdr *h, const char *f)
+{
+    if (SLOW5_HEADER_IS_MISSING(h, SLOW5_HEADER_SAMPLE_FREQUENCY))
+        return slow5_hdrcmp(h, SLOW5_HEADER_SAMPLE_RATE, f);
+
+    return slow5_hdrcmp(h, SLOW5_HEADER_SAMPLE_FREQUENCY, f) &&
+           (SLOW5_HEADER_IS_MISSING(h, SLOW5_HEADER_SAMPLE_RATE) ||
+            slow5_hdrcmp(h, SLOW5_HEADER_SAMPLE_RATE, f));
+}
+
+/*
+ * Return whether or not a slow5 record has the expected digitisation and
+ * sampling rate. r must not be NULL. Return 0 if false, 1 if true.
+ */
+static int slow5_reccmp(const struct slow5_rec *r, float dig, float sr,
+                        const char *name)
+{
+    if (r->digitisation != dig) {
+        ERROR("Digitisation differs: %f but expected %f", r->digitisation,
+              (float) dig);
+    } else if (r->sampling_rate != sr) {
+        ERROR("Sampling rate differs: %f but expected %f", r->sampling_rate,
+              (float) sr);
+    } else {
+        return 1;
+    }
+
+    ERROR("Read with ID '%s' does not match %s", r->read_id, name);
+    return 0;
 }
 
 /*
@@ -153,10 +307,36 @@ static uint8_t slow5_suggest_qts(struct slow5_file *p,
         return 0;
     }
 
-    if (slow5_hdr_is_prom_r10_dna(p->header)) {
-        INFO("Detected PromethION R10 DNA dataset%s", "");
-        *chk = slow5_rec_is_prom_r10_dna;
-        return SLOW5_SUGGEST_QTS_PROMETHION_R10_DNA;
+    if (slow5_hdr_is_prom_r10_dna_4khz(p->header)) {
+        INFO("%s", "Detected: " PROMETHION_R10_DNA_4KHZ_NAME);
+        *chk = slow5_rec_is_prom_r10_dna_4khz;
+        return SLOW5_SUGGEST_QTS_PROMETHION_R10_DNA_4KHZ;
+    } else {
+        INFO("%s", "Not detected: " PROMETHION_R10_DNA_4KHZ_NAME);
+    }
+
+    if (slow5_hdr_is_prom_r10_dna_5khz(p->header)) {
+        INFO("%s", "Detected: " PROMETHION_R10_DNA_5KHZ_NAME);
+        *chk = slow5_rec_is_prom_r10_dna_5khz;
+        return SLOW5_SUGGEST_QTS_PROMETHION_R10_DNA_5KHZ;
+    } else {
+        INFO("%s", "Not detected: " PROMETHION_R10_DNA_5KHZ_NAME);
+    }
+
+    if (slow5_hdr_is_prom_r10_rna(p->header)) {
+        INFO("%s", "Detected: " PROMETHION_R10_RNA_NAME);
+        *chk = slow5_rec_is_prom_r10_rna;
+        return SLOW5_SUGGEST_QTS_PROMETHION_R10_RNA;
+    } else {
+        INFO("%s", "Not detected: " PROMETHION_R10_RNA_NAME);
+    }
+
+    if (slow5_hdr_is_mini_r10_dna(p->header)) {
+        INFO("%s", "Detected: " MINION_R10_DNA_NAME);
+        *chk = slow5_rec_is_mini_r10_dna;
+        return SLOW5_SUGGEST_QTS_MINION_R10_DNA;
+    } else {
+        INFO("%s", "Not detected: " MINION_R10_DNA_NAME);
     }
 
     ERROR("No suitable bits suggestion%s", "");
@@ -176,11 +356,8 @@ static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
         int (*chk)(const struct slow5_rec *) =
             (int (*)(const struct slow5_rec *)) (core->param);
         int ret = (*chk)(read);
-        if (!ret) {
-            ERROR("Read with ID '%s' does not match detected dataset type",
-                  read->read_id);
+        if (!ret)
             exit(EXIT_FAILURE);
-        }
     }
 
     slow5_rec_qts_round(read, (uint8_t) core->lossy);
@@ -229,6 +406,8 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
 
     opt_t user_opts;
     init_opt(&user_opts);
+
+    user_opts.signal_press_out = SLOW5_COMPRESS_EX_ZD;
 
     int opt;
     int longindex = 0;
@@ -356,6 +535,11 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
 
         if (b == -1) {
             b = slow5_suggest_qts(s5p, &chk);
+            if (!b) {
+                ERROR("%s", "Use option -b to manually specify");
+                view_ret = EXIT_FAILURE;
+                goto err;
+            }
             INFO("Using %" PRId8 " bits", b);
         }
 
@@ -394,6 +578,7 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+err:
     if (view_ret == EXIT_FAILURE) {
         EXIT_MSG(EXIT_FAILURE, argv, meta);
     }
