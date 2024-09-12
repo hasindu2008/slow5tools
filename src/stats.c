@@ -129,6 +129,8 @@ int stats_main(int argc, char **argv, struct program_meta *meta){
         signal_compression_method = "none";
     }else if(slow5File->compress->signal_press->method==SLOW5_COMPRESS_SVB_ZD){
         signal_compression_method = "svb-zd";
+    }else if(slow5File->compress->signal_press->method==SLOW5_COMPRESS_EX_ZD){
+        signal_compression_method = "ex-zd";
     }
     fprintf(stdout, "signal compression method\t%s\n", signal_compression_method.c_str());
 

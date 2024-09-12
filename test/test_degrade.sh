@@ -79,16 +79,48 @@ if [ -z "$bigend" ]; then
     info "$name"
 
     i=$((i + 1))
-    name="testcase $i: promethion r10 dna"
-    $SLOW5TOOLS degrade "$RAW_DIR/promr10dna.blow5" -o "$OUT_DIR/promr10dna_auto.blow5" || die "$name: slow5tools failed"
-    diff "$OUT_DIR/promr10dna_auto.blow5" "$EXP_DIR/promr10dna_b3.blow5" > /dev/null || die "$name: diff failed"
+    name="testcase $i: minion r10 dna"
+    $SLOW5TOOLS degrade "$RAW_DIR/minir10dna.blow5" -o "$OUT_DIR/minir10dna_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/minir10dna_auto.blow5" "$EXP_DIR/minir10dna_b3.blow5" > /dev/null || die "$name: diff failed"
+    info "$name"
+
+    i=$((i + 1))
+    name="testcase $i: promethion r10 dna 4khz"
+    $SLOW5TOOLS degrade "$RAW_DIR/promr10dna4khz.blow5" -s svb-zd -o "$OUT_DIR/promr10dna4khz_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/promr10dna4khz_auto.blow5" "$EXP_DIR/promr10dna4khz_b3.blow5" > /dev/null || die "$name: diff failed"
+    info "$name"
+
+    i=$((i + 1))
+    name="testcase $i: promethion r10 dna 5khz"
+    $SLOW5TOOLS degrade "$RAW_DIR/promr10dna5khz.blow5" -o "$OUT_DIR/promr10dna5khz_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/promr10dna5khz_auto.blow5" "$EXP_DIR/promr10dna5khz_b3.blow5" > /dev/null || die "$name: diff failed"
+    info "$name"
+
+    i=$((i + 1))
+    name="testcase $i: promethion r10 rna"
+    $SLOW5TOOLS degrade "$RAW_DIR/promr10rna.blow5" -o "$OUT_DIR/promr10rna_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/promr10rna_auto.blow5" "$EXP_DIR/promr10rna_b3.blow5" > /dev/null || die "$name: diff failed"
     info "$name"
 fi
 
 i=$((i + 1))
 name="testcase $i: promethion r10 dna: bad header"
-$SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr.slow5" -o "$OUT_DIR/promr10dna_badhdr_auto.slow5" || die "$name: slow5tools failed"
-diff "$OUT_DIR/promr10dna_badhdr_auto.slow5" "$RAW_DIR/promr10dna_badhdr.slow5" > /dev/null || die "$name: diff failed"
+! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr.slow5" -o "$OUT_DIR/promr10dna_badhdr_auto.slow5" || die "$name: slow5tools failed"
+info "$name"
+
+i=$((i + 1))
+name="testcase $i: promethion r10 dna: bad header sample frequency"
+! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr_sample_freq.slow5" > /dev/null || die "$name: slow5tools failed"
+info "$name"
+
+i=$((i + 1))
+name="testcase $i: promethion r10 dna: bad header sample rate"
+! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr_sample_rate.slow5" > /dev/null || die "$name: slow5tools failed"
+info "$name"
+
+i=$((i + 1))
+name="testcase $i: promethion r10 dna: bad header sample rate 2"
+! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badhdr_sample_rate2.slow5" > /dev/null || die "$name: slow5tools failed"
 info "$name"
 
 i=$((i + 1))
