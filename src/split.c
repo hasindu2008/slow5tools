@@ -31,8 +31,8 @@
     "    -r, --reads [INT]             split into n reads, i.e., each file will have n reads\n"    \
     "    -f, --files [INT]             split reads into n files evenly \n"              \
     "    -x, --demux [TSV_PATH]        split reads according to custom TSV\n" \
-    "        --demux-code-hdr [STR]    specify categories column name ['barcode_arrangement']\n" \
-    "        --demux-rid-hdr [STR]     specify read IDs column name ['parent_read_id']\n" \
+    "        --demux-code [STR]        specify categories column name ['barcode_arrangement']\n" \
+    "        --demux-rid [STR]         specify read IDs column name ['parent_read_id']\n" \
     "    -u, --demux-uniq [STR]        multi-category reads to category named STR\n" \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
@@ -136,8 +136,8 @@ int split_main(int argc, char **argv, struct program_meta *meta){
             {"reads",       required_argument, NULL, 'r'}, //10
             {"batchsize",   required_argument, NULL, 'K'}, //11
             {"demux",       required_argument, NULL, 'x'}, //12
-            {"demux-code-hdr", required_argument, NULL, 0}, //13
-            {"demux-rid-hdr", required_argument, NULL, 0}, //14
+            {"demux-code",  required_argument, NULL, 0}, //13
+            {"demux-rid",   required_argument, NULL, 0}, //14
             {"demux-uniq",  required_argument, NULL, 'u'}, //15
             {NULL, 0, NULL, 0 }
     };
@@ -211,10 +211,10 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 0:
                 lopt = long_opts[longindex].name;
-                if (!strcmp(lopt, "demux-code-hdr")) {
+                if (!strcmp(lopt, "demux-code")) {
                     meta_split_method_object.bs_meta.code_hdr = optarg;
                     break;
-                } else if (!strcmp(lopt, "demux-rid-hdr")) {
+                } else if (!strcmp(lopt, "demux-rid")) {
                     meta_split_method_object.bs_meta.rid_hdr = optarg;
                     break;
                 }

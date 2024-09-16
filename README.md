@@ -164,7 +164,7 @@ slow5tools split file.blow5 -d blow5_dir -r 4000
 # split a BLOW5 file into separate BLOW5 files by barcode given the buttery-eel barcode summary file
 slow5tools split file.blow5 -d blow5_dir -x barcode_summary.txt
 # split a BLOW5 file into separate BLOW5 files based on a custom TSV file
-slow5tools split file.blow5 -d blow5_dir -x custom.tsv --demux-rid-hdr readid --demux-code-hdr category
+slow5tools split file.blow5 -d blow5_dir -x custom.tsv --demux-rid readid --demux-code category
 
 # convert a directory of blow5 files to fast5
 slow5tools s2f blow5_dir -d fast5
