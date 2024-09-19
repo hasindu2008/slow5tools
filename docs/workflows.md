@@ -136,7 +136,7 @@ for barcode in $(seq 0 3)
 do
     awk '{if(NR%4==1) {printf "%s\t%s\n", $1, name}}' name=barcode_${barcode} barcode_${barcode}.fastq | tr -d '@' >> barcodes.tsv
 done
-slow5tools split reads.blow5 -d blow5_dir -x barcodes.tsv --demux-rid-hdr read_id --demux-code-hdr barcode
+slow5tools split reads.blow5 -d blow5_dir -x barcodes.tsv --demux-rid read_id --demux-code barcode
 ```
 
 If Guppy has automatically done read splitting, you would see errors from slow5tools that some reads are not found.
@@ -156,5 +156,5 @@ From slow5tools v1.3.0 onwards, you can split BLOW5 files using a custom TSV fil
 
 ```
 slow5tools skim reads.blow5 | cut -f1,9 > split.tsv
-slow5tools split reads.blow5 -d blow5_dir -x split.tsv --demux-rid-hdr '#read_id' --demux-code-hdr channel_number
+slow5tools split reads.blow5 -d blow5_dir -x split.tsv --demux-rid '#read_id' --demux-code channel_number
 ```
