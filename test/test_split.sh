@@ -299,6 +299,24 @@ info "-------------------$name-------"
 $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux9/barcode_summary.txt $REL_PATH/data/raw/split/demux2/example2_0.slow5 -d $OUTPUT_DIR/demux9 --to slow5 -u vmixed --demux-rid rid --demux-code code || die "$name"
 check "$name" $REL_PATH/data/exp/split/demux9 $OUTPUT_DIR/demux9
 
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex multi group"
+info "-------------------$name-------"
+$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux9/barcode_summary.txt $REL_PATH/data/raw/split/demux10/example2_0_multi.slow5 -d $OUTPUT_DIR/demux10 --to slow5 --demux-rid rid --demux-code code || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux10 $OUTPUT_DIR/demux10
+
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex multi group (uniq)"
+info "-------------------$name-------"
+$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux9/barcode_summary.txt $REL_PATH/data/raw/split/demux10/example2_0_multi.slow5 -d $OUTPUT_DIR/demux10-uniq --to slow5 --demux-rid rid --demux-code code -u vmixed || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux10-uniq $OUTPUT_DIR/demux10-uniq
+
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex multi group (uniq) lossy"
+info "-------------------$name-------"
+$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux9/barcode_summary.txt $REL_PATH/data/raw/split/demux10/example2_0_multi.slow5 -d $OUTPUT_DIR/demux10-uniq-lossy --to slow5 --demux-rid rid --demux-code code -u vmixed --lossless false || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux10-uniq-lossy $OUTPUT_DIR/demux10-uniq-lossy
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
