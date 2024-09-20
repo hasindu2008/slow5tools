@@ -326,7 +326,9 @@ int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta
             ERROR("The file %s already has a single read group", slow5_files_input[i].c_str());
             return -1;
         }
-        if (read_group_count_i > 1 && meta_split_method_object.splitMethod != GROUP_SPLIT) {
+        if (read_group_count_i > 1 &&
+            meta_split_method_object.splitMethod != GROUP_SPLIT &&
+            meta_split_method_object.splitMethod != DEMUX_SPLIT) {
             ERROR("The file %s contains multiple read groups. You must first separate the read groups using -g. See https://slow5.page.link/faq for more info.", slow5_files_input[i].c_str());
             return -1;
         }

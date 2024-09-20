@@ -51,6 +51,9 @@ static core_t *demux_core_init(struct slow5_file *in,
                                struct slow5_aux_meta *aux_meta,
                                khash_t(svu16) *rid_map, const opt_t *opt);
 static db_t *demux_db_init(int n);
+static inline void slow5_hdr_link(const struct slow5_hdr *in_hdr,
+                                  struct slow5_hdr *out_hdr, int lossy);
+static inline void slow5_hdr_unlink(struct slow5_hdr *hdr);
 static int bsum_close(struct bsum *bs);
 static int bsum_getnext(struct bsum *bs, char **rid, char **code);
 static int bsum_parsehdr(struct bsum *bs);
@@ -68,13 +71,6 @@ static int map_su16_push(khash_t(su16) *m, char *s, khint_t *k);
 static int setmulti(struct kvec_u16 *rid_codes, khash_t(su16) *code_map,
                     const char *multi);
 static int setnofile(rlim_t n);
-static int slow5_aux_meta_copy(const struct slow5_hdr *in_hdr,
-                               struct slow5_hdr *out_hdr);
-static int slow5_aux_meta_copy_enum(const struct slow5_hdr *in_hdr,
-                                    struct slow5_hdr *out_hdr, const char *attr,
-                                    enum slow5_aux_type type);
-static int slow5_hdr_copy(const struct slow5_hdr *in_hdr,
-                          struct slow5_hdr *out_hdr, int lossy);
 static int update_maps(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
                        char *code, char *rid, const char *multi);
 static struct bsum *bsum_open(const struct bsum_meta *bs_meta);
@@ -471,6 +467,7 @@ static int demux2(struct slow5_file *in, const struct demux_info *d,
                 if (n == SLOW5_ERR_IO)
                     return -1;
             }
+            slow5_hdr_unlink(out[i]->header);
             ret = slow5_close(out[i]);
             if (ret)
                 return -1;
@@ -753,84 +750,25 @@ static int setnofile(rlim_t n)
 }
 
 /*
- * Copy the auxiliary metadata from one slow5 header to another.
- * Return -1 on error, 0 on success.
+ * Shallow copy a slow5 header. If lossy, do not copy the auxiliary metadata.
  */
-static int slow5_aux_meta_copy(const struct slow5_hdr *in_hdr,
-                               struct slow5_hdr *out_hdr)
+static inline void slow5_hdr_link(const struct slow5_hdr *in_hdr,
+                                  struct slow5_hdr *out_hdr, int lossy)
 {
-    const char *attr;
-    enum slow5_aux_type type;
-    int ret;
-    uint32_t i;
-
-    i = 0;
-    while (i < in_hdr->aux_meta->num) {
-        attr = in_hdr->aux_meta->attrs[i];
-        type = in_hdr->aux_meta->types[i];
-
-        if (type == SLOW5_ENUM || type == SLOW5_ENUM_ARRAY)
-            ret = slow5_aux_meta_copy_enum(in_hdr, out_hdr, attr, type);
-        else
-            ret = slow5_aux_meta_add(out_hdr->aux_meta, attr, type);
-
-        if (ret) {
-            ERROR("Failed to copy auxiliary attribute '%s'", attr);
-            return -1;
-        }
-        i++;
-    }
-
-    return 0;
+    out_hdr->version = in_hdr->version;
+    out_hdr->num_read_groups = in_hdr->num_read_groups;
+    out_hdr->data = in_hdr->data;
+    if (!lossy)
+        out_hdr->aux_meta = in_hdr->aux_meta;
 }
 
 /*
- * Copy an auxiliary enum attribute from one slow5 header to another.
- * Return -1 on error, 0 on success.
+ * Un-shallow copy a slow5 header.
  */
-static int slow5_aux_meta_copy_enum(const struct slow5_hdr *in_hdr,
-                                    struct slow5_hdr *out_hdr, const char *attr,
-                                    enum slow5_aux_type type)
+static inline void slow5_hdr_unlink(struct slow5_hdr *hdr)
 {
-    const char **p;
-    int ret;
-    uint8_t n;
-
-    p = (const char **) slow5_get_aux_enum_labels(in_hdr, attr, &n);
-    if (!p)
-        return -1;
-    ret = slow5_aux_meta_add_enum(out_hdr->aux_meta, attr, type, p, n);
-    if (ret)
-        return -1;
-
-    return 0;
-}
-
-/*
- * Copy the first read group data from one slow5 header to another. If not
- * lossy, copy the auxiliary metadata as well. Return -1 on error, 0 on success.
- */
-static int slow5_hdr_copy(const struct slow5_hdr *in_hdr,
-                          struct slow5_hdr *out_hdr, int lossy)
-{
-    int ret;
-    khash_t(slow5_s2s) *rg;
-
-    if (!lossy) {
-        out_hdr->aux_meta = slow5_aux_meta_init_empty();
-        ret = slow5_aux_meta_copy(in_hdr, out_hdr);
-        if (ret)
-            return -1;
-    }
-
-    rg = slow5_hdr_get_data(0, in_hdr);
-    ret = slow5_hdr_add_rg_data(out_hdr, rg);
-    if (ret < 0) {
-        ERROR("Failed to copy read group data%s", "");
-        return -1;
-    }
-
-    return 0;
+    (void) memset(&(hdr->data), 0, sizeof (hdr->data));
+    hdr->aux_meta = NULL;
 }
 
 /*
@@ -1002,9 +940,10 @@ static struct kvec_u16 *map_svu16_getpush(khash_t(svu16) *m, char *s)
 }
 
 /*
- * Copy the skeleton of a slow5 file to a given path. The header is duplicated,
- * but otherwise no records are copied over. Output options are used to specify
- * the output format, lossy-ness and compression used. Return NULL on error.
+ * Shallow copy the skeleton of a slow5 file to a given path. The header is
+ * shallow copied, but otherwise no records are copied over. Output options are
+ * used to specify the output format, lossy-ness and compression used.
+ * Return NULL on error.
  */
 static struct slow5_file *slow5_birth(const struct slow5_file *in,
                                       const char *path, const opt_t *opt)
@@ -1024,9 +963,7 @@ static struct slow5_file *slow5_birth(const struct slow5_file *in,
     if (!out)
         return NULL;
 
-    ret = slow5_hdr_copy(in->header, out->header, opt->flag_lossy);
-    if (ret)
-        return NULL;
+    slow5_hdr_link(in->header, out->header, opt->flag_lossy);
 
     press_out.record_method = opt->record_press_out;
     press_out.signal_method = opt->signal_press_out;
@@ -1040,7 +977,7 @@ static struct slow5_file *slow5_birth(const struct slow5_file *in,
 }
 
 /*
- * Copy the skeleton of a slow5 file to count new paths appended with an
+ * Shallow copy the skeleton of a slow5 file to count new paths appended with an
  * underscore and name before its extension. Return NULL on error.
  */
 static struct slow5_file **slow5_spawn(const struct slow5_file *in,
