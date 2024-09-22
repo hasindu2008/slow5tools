@@ -339,7 +339,7 @@ static int bsum_close(struct bsum *bs)
 
     ret = fclose(bs->fp);
     if (ret == EOF) {
-        ERROR("Failed to close custom TSV: %s", strerror(errno));
+        ERROR("Failed to close demux TSV: %s", strerror(errno));
         return -1;
     }
     free(bs->line);
@@ -363,7 +363,7 @@ static int bsum_getnext(struct bsum *bs, char **rid, char **code)
     if (nread == -1) {
         if (feof(bs->fp))
             return 1;
-        ERROR("Failed to read custom TSV line: %s", strerror(errno));
+        ERROR("Failed to read demux TSV line: %s", strerror(errno));
         return -1;
     }
 
@@ -405,7 +405,7 @@ static int bsum_parsehdr(struct bsum *bs)
 
     nread = getline(&bs->line, &bs->n, bs->fp);
     if (nread == -1) {
-        ERROR("Failed to read custom TSV header: %s", strerror(errno));
+        ERROR("Failed to read demux TSV header: %s", strerror(errno));
         return -1;
     }
 
@@ -430,10 +430,10 @@ static int bsum_parsehdr(struct bsum *bs)
         i++;
     }
     if (!bs->rid_pos) {
-        ERROR("Invalid custom TSV header: missing '%s'", bs->meta.rid_hdr);
+        ERROR("Invalid demux TSV header: missing '%s'", bs->meta.rid_hdr);
         return -1;
     } else if (!bs->code_pos) {
-        ERROR("Invalid custom TSV header: missing '%s'", bs->meta.code_hdr);
+        ERROR("Invalid demux TSV header: missing '%s'", bs->meta.code_hdr);
         return -1;
     }
 
@@ -517,7 +517,7 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
     }
 
     if (n < kh_size(rid_map)) {
-        ERROR("Extra read(s) in custom TSV%s", "");
+        ERROR("Extra read(s) in demux TSV%s", "");
         return -1;
     }
 
@@ -784,7 +784,7 @@ static int update_maps(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
     uint16_t i;
 
     if (multi && !strcmp(code, multi)) {
-        ERROR("Multi-category '%s' already exists in custom TSV file", multi);
+        ERROR("Multi-category '%s' already exists in demux TSV", multi);
         return -1;
     }
 
@@ -1099,7 +1099,7 @@ static void demux_setup(core_t *core, db_t *db, int i)
 
     k = kh_get(svu16, rid_map, rec->read_id);
     if (k == kh_end(rid_map)) {
-        WARNING("Read ID '%s' is missing from custom TSV",
+        WARNING("Read ID '%s' is missing from demux TSV",
                 rec->read_id);
         (void) memset(rec_codes + i, 0, sizeof (*rec_codes));
         (void) memset(db->read_record + i, 0, sizeof (*db->read_record));

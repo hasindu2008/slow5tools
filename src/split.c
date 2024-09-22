@@ -30,7 +30,7 @@
     "    -g, --groups                  split multi read group file into single read group files\n" \
     "    -r, --reads [INT]             split into n reads, i.e., each file will have n reads\n"    \
     "    -f, --files [INT]             split reads into n files evenly \n"              \
-    "    -x, --demux [TSV_PATH]        split reads according to custom TSV\n" \
+    "    -x, --demux [TSV_PATH]        split reads according to TSV file\n" \
     "        --demux-code [STR]        specify categories column name ['barcode_arrangement']\n" \
     "        --demux-rid [STR]         specify read IDs column name ['parent_read_id']\n" \
     "    -u, --demux-uniq [STR]        multi-category reads to category named STR\n" \
