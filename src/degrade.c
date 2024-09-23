@@ -125,10 +125,10 @@ static int slow5_hdr_get_dataset(const struct slow5_hdr *h, struct dataset *d)
 {
     uint i;
     const struct dataset ds[] = {
-        DATASET_MINION_R10_DNA,
-        DATASET_PROMETHION_R10_DNA_4KHZ,
-        DATASET_PROMETHION_R10_DNA_5KHZ,
-        DATASET_PROMETHION_R10_RNA,
+        DATASET_MINION_LSK114,
+        DATASET_PROMETHION_LSK114_4KHZ,
+        DATASET_PROMETHION_LSK114_5KHZ,
+        DATASET_PROMETHION_RNA004,
     };
 
     if (!h) {
