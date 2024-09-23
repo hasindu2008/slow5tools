@@ -94,7 +94,7 @@ $(BUILD_DIR)/misc.o: src/misc.c src/error.h
 $(BUILD_DIR)/demux.o: src/demux.c src/demux.h src/error.h src/khash.h src/kvec.h src/misc.h src/thread.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/degrade.o: src/degrade.c src/cmd.h src/error.h src/misc.h src/thread.h
+$(BUILD_DIR)/degrade.o: src/degrade.c src/cmd.h src/degrade.h src/error.h src/misc.h src/thread.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 slow5lib/lib/libslow5.a:

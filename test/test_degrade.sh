@@ -128,4 +128,18 @@ name="testcase $i: promethion r10 dna: bad record"
 ! $SLOW5TOOLS degrade "$RAW_DIR/promr10dna_badrec.slow5" > /dev/null || die "$name: slow5tools failed"
 info "$name"
 
+if [ -z "$bigend" ]; then
+    i=$((i + 1))
+    name="testcase $i: promethion lsk109 4khz"
+    $SLOW5TOOLS degrade "$RAW_DIR/na12878_prom_merged_r9.4.1_chr22_read1.blow5" -o "$OUT_DIR/promlsk109_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/promlsk109_auto.blow5" "$EXP_DIR/na12878_prom_merged_r9.4.1_chr22_read1_b2.blow5" > /dev/null || die "$name: diff failed"
+    info "$name"
+
+    i=$((i + 1))
+    name="testcase $i: promethion rna002 3khz"
+    $SLOW5TOOLS degrade "$RAW_DIR/PRPN119035_read1.blow5" -o "$OUT_DIR/promrna002_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/promrna002_auto.blow5" "$EXP_DIR/PRPN119035_read1_b2.blow5" > /dev/null || die "$name: diff failed"
+    info "$name"
+fi
+
 exit 0
