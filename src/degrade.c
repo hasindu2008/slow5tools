@@ -225,8 +225,8 @@ static int8_t parse_bits(const char *s)
 
     b = strtol(s, &p, 10);
     if (!*p) {
-        if (b < 0 || b > 16) {
-            ERROR("Invalid bits argument '%ld': outside of range 0-16", b);
+        if (b < 1 || b > 16) {
+            ERROR("Invalid bits argument '%ld': outside of range 1-16", b);
             return -2;
         }
     } else if (!strcmp(s, "auto")) {
@@ -351,8 +351,8 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
                 if (b == -2) {
                     EXIT_MSG(EXIT_FAILURE, argv, meta);
                     return EXIT_FAILURE;
-                } else if (b > 5) {
-                    WARNING("%s", "bits > 5: basecalling accuracy may be adversely affected!");
+                } else if (b > 4) {
+                    WARNING("%s", "bits > 4: basecalling accuracy may be adversely affected!");
                 }
                 break;
             default: // case '?'

@@ -291,7 +291,7 @@ chosen lossy compression algorithm.
 See below for documentation on `degrade`-specific options. For documentation on all other options see the `view` subtool.
 
 *  `-s, --sig-compress compression_type`:<br/>
-   Specifies the raw signal compression method used for BLOW5 output [default value: ex-zd].
+   Specifies the raw signal compression method used for BLOW5 output. Note: the default value is ex-zd which differs in `view`.
 *  `-b, --bits INT`:<br/>
    The number of least significant bits to zero then round for each raw signal data point [default value: "auto" (autodetected based on the file header and data)].
 
