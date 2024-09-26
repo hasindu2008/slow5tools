@@ -42,7 +42,8 @@ An NA24385 R10.4.1 LSK114 dataset with ~20X coverage sequenced on a PromethION a
 
 ### A few more R10.4.1 5kHz
 
-- An NA24385 R10.4.1 LSK114 dataset sequenced on a MinION at 5KHz is available through ENA at [RR12997169](https://www.ebi.ac.uk/ena/browser/view/ERR12997169)
+- An NA24385 R10.4.1 LSK114 dataset sequenced on a MinION at 5KHz is available through ENA at [ERR12997169](https://www.ebi.ac.uk/ena/browser/view/ERR12997169)
+- An NA24385 R10.4.1 duplex dataset sequenced on a PromethION at 5KHz is available through ENA at [ERR13475640](https://www.ebi.ac.uk/ena/browser/view/ERR13475640)
 
 ## RNA004 - RNA
 
