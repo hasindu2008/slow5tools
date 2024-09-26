@@ -31,7 +31,7 @@ See [this post](https://github.com/nanoporetech/vbz_compression/issues/5) for tr
 
 **Q4:** Are there any small example datasets that can be used for testing slow5tools?
 
-A tiny subset (~20K reads) of the original NA12878 R9.4.1 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.page.link/na12878_prom_subsub). A tiny subset (~20K reads) of a NA24385 R10.4.1 PromethION dataset is available [here](https://slow5.page.link/hg2_prom_subsub). Links and information on complete datasets of those samples as well as additional datasets can be found [here](https://hasindu2008.github.io/slow5tools/datasets.html).
+A tiny subset (~20K reads) of the original NA12878 R9.4.1 PromethION dataset used for benchmaking in the [SLOW5 paper](https://www.nature.com/articles/s41587-021-01147-4) is available [here](https://slow5.bioinf.science/na12878_prom_subsub). A tiny subset (~20K reads) of a NA24385 R10.4.1 PromethION dataset is available [here](https://slow5.bioinf.science/hg2_prom_subsub). Links and information on complete datasets of those samples as well as additional datasets can be found [here](https://hasindu2008.github.io/slow5tools/datasets.html).
 
 **Q5:** How can I make SLOW5 to FAST5 conversion fast?
 

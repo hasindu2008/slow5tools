@@ -27,6 +27,7 @@
 cmake-build-debug/
 prebuilt-hdf5/
 test/data/out
+/*.slow5.idx
 
 # OS generated files #
 ######################

@@ -329,7 +329,7 @@ int split_func(std::vector<std::string> slow5_files_input, opt_t user_opts, meta
         if (read_group_count_i > 1 &&
             meta_split_method_object.splitMethod != GROUP_SPLIT &&
             meta_split_method_object.splitMethod != DEMUX_SPLIT) {
-            ERROR("The file %s contains multiple read groups. You must first separate the read groups using -g. See https://slow5.page.link/faq for more info.", slow5_files_input[i].c_str());
+            ERROR("The file %s contains multiple read groups. You must first separate the read groups using -g. See https://slow5.bioinf.science/faq for more info.", slow5_files_input[i].c_str());
             return -1;
         }
         if(user_opts.flag_lossy==0 && input_slow5_file_i->header->aux_meta == NULL){

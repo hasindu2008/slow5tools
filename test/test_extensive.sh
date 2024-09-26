@@ -49,7 +49,7 @@ guppy_basecaller --version > /dev/null || die "guppy_basecaller not in path"
 
 echo "*******************************NA12878_prom_subsubsample**************************************"
 DATA_NA12878_SUBSUB=/data/slow5-testdata/NA12878_prom_subsubsample
-test -d $DATA_NA12878_SUBSUB || die "ERROR: $DATA_NA12878_SUBSUB not found. Download from https://slow5.page.link/na12878_prom_subsub and extract"
+test -d $DATA_NA12878_SUBSUB || die "ERROR: $DATA_NA12878_SUBSUB not found. Download from https://slow5.bioinf.science/na12878_prom_subsub and extract"
 mkdir $TMP_DIR || die "Creating $TMP_DIR failed"
 test/test_with_guppy.sh $DATA_NA12878_SUBSUB/fast5 $TMP_DIR ./slow5tools guppy_basecaller &> test_s2f_with_guppy_subsub.log || die "test_s2f_with_guppy failed"
 rm -r $TMP_DIR
@@ -58,7 +58,7 @@ echo ""
 
 echo "********************************NA12878_prom_subsample****************************************"
 DATA_NA12878=/data/slow5-testdata/NA12878_prom_subsample
-test -d $DATA_NA12878 || die "ERROR: $DATA_NA12878 not found. Download from https://slow5.page.link/na12878_prom_sub and extract"
+test -d $DATA_NA12878 || die "ERROR: $DATA_NA12878 not found. Download from https://slow5.bioinf.science/na12878_prom_sub and extract"
 mkdir $TMP_DIR || die "Creating $TMP_DIR failed"
 test/test_with_guppy.sh $DATA_NA12878/fast5 $TMP_DIR ./slow5tools guppy_basecaller &> test_s2f_with_guppy_sub.log || die "test_s2f_with_guppy failed"
 rm -r $TMP_DIR
@@ -71,7 +71,7 @@ echo ""
 
 echo "**************************************fast5-soup**********************************************"
 DATA_MISC=/data/slow5-testdata/fast5-soup/
-test -d $DATA_MISC || die "ERROR: $DATA_MISC not found. Download from https://slow5.page.link/fast5-soup and extract"
+test -d $DATA_MISC || die "ERROR: $DATA_MISC not found. Download from https://slow5.bioinf.science/fast5-soup and extract"
 mkdir $TMP_DIR || die "Creating $TMP_DIR failed"
 test/test_with_guppy.sh $DATA_MISC $TMP_DIR ./slow5tools guppy_basecaller &> test_s2f_with_guppy_soup.log || die "test_s2f_with_guppy failed for fast5 soup"
 rm -r $TMP_DIR

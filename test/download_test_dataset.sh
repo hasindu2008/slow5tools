@@ -13,10 +13,10 @@ download (){
 
 download_dir=test/
 # test -d $download_dir/NA12878_prom_subsubsample && rm -r $download_dir/NA12878_prom_subsubsample
-# link="https://slow5.page.link/na12878_prom_subsub"
+# link="https://slow5.bioinf.science/na12878_prom_subsub"
 # download
 
 test -d $download_dir/fast5_soup && rm -r $download_dir/fast5_soup
-link="https://slow5.page.link/fast5-soup"
+link="https://slow5.bioinf.science/fast5-soup"
 download
 
