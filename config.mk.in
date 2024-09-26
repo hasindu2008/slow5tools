@@ -1,6 +1,7 @@
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
 CPPFLAGS = @CPPFLAGS@
+PREFIX = @prefix@
 
 HDF5 = @hdf_tar_install@
 

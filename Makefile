@@ -38,7 +38,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/degrade.o \
 
 
-PREFIX = /usr/local
+PREFIX ?= /usr/local
 VERSION = `git describe --tags`
 
 .PHONY: clean distclean format test install uninstall slow5lib
