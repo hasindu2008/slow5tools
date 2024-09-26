@@ -96,9 +96,9 @@ static inline void slow5_hdrcmp_log(const char *a, uint32_t i, const char *x,
                                     const char *v)
 {
     if (!v) {
-        INFO("Header at '%s' differs: missing but expected '%s'", a, x);
+        DEBUG("Header at '%s' differs: missing but expected '%s'", a, x);
     } else {
-        INFO("Header at '%s' differs (read group %" PRIu32 "): '%s' but expected '%s'",
+        DEBUG("Header at '%s' differs (read group %" PRIu32 "): '%s' but expected '%s'",
              a, i, v, x);
     }
 }
@@ -140,7 +140,7 @@ static int slow5_hdr_get_dataset(const struct slow5_hdr *h, struct dataset *d)
 
     i = 0;
     while (i < SLOW5_LENGTH(ds) && !slow5_hdr_is_dataset(h, ds + i)) {
-        INFO("Not detected: %s", ds[i].name);
+        VERBOSE("Not detected: %s", ds[i].name);
         i++;
     }
 
