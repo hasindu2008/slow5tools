@@ -83,7 +83,8 @@ else
     $SLOW5TOOLS merge -c zlib -s none $F2S_OUTPUT_DIR -o $OUTPUT_DIR/merged.blow5 -t $IOP || die "slow5tools merge failed"
     $SLOW5TOOLS view  -c zstd -s svb-zd $OUTPUT_DIR/merged.blow5 -o $OUTPUT_DIR/zstd_svb.blow5 -t $IOP || die "slow5tools view failed"
     $SLOW5TOOLS view  -c none -s none $OUTPUT_DIR/zstd_svb.blow5  -o $OUTPUT_DIR/binary.blow5 -t $IOP || die "slow5tools view failed"
-    $SLOW5TOOLS split -c zstd -s none $OUTPUT_DIR/binary.blow5  -d $OUTPUT_DIR/split -r 4000 || die "slow5tools split failed"
+    $SLOW5TOOLS view  -c zlib -s ex-zd $OUTPUT_DIR/binary.blow5  -o $OUTPUT_DIR/zlib_ex-zd.blow5 -t $IOP || die "slow5tools view failed"
+    $SLOW5TOOLS split -c zstd -s none $OUTPUT_DIR/zlib_ex-zd.blow5  -d $OUTPUT_DIR/split -r 4000 || die "slow5tools split failed"
     CONFIG=dna_r9.4.1_450bps_fast_prom.cfg
 fi
 
