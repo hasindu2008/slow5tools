@@ -29,7 +29,7 @@
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
     "        --from FORMAT             specify input file format [auto]\n" \
-    "    -b, --bits INT                specify the number of LSB to zero then round [auto]\n" \
+    "    -b, --bits INT                specify the number of least significant bits to eliminate [auto]\n" \
     HELP_MSG_HELP \
     HELP_FORMATS_METHODS
 
@@ -421,6 +421,8 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
         }
     }
 
+    WARNING("This tool performs lossy compression which is an irreversible operation. Just making sure it is intended. %s", "");
+
     // Do the conversion
     if ((user_opts.fmt_in == SLOW5_FORMAT_ASCII || user_opts.fmt_in == SLOW5_FORMAT_BINARY) &&
             (user_opts.fmt_out == SLOW5_FORMAT_ASCII || user_opts.fmt_out == SLOW5_FORMAT_BINARY)) {
@@ -441,7 +443,7 @@ int degrade_main(int argc, char **argv, struct program_meta *meta) {
                 goto err;
             }
             dp = &d;
-            INFO("Using %" PRId8 " bits", b);
+            INFO("Eliminating %" PRId8 " bits", b);
         }
 
         // TODO if output is the same format just duplicate file
