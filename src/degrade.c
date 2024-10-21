@@ -124,14 +124,7 @@ static int slow5_get_dataset(const struct slow5_file *p, struct dataset *d)
 static int slow5_hdr_get_dataset(const struct slow5_hdr *h, struct dataset *d)
 {
     uint i;
-    const struct dataset ds[] = {
-        DATASET_MINION_LSK114,
-        DATASET_PROMETHION_LSK109,
-        DATASET_PROMETHION_LSK114_4KHZ,
-        DATASET_PROMETHION_LSK114_5KHZ,
-        DATASET_PROMETHION_RNA002,
-        DATASET_PROMETHION_RNA004,
-    };
+    const struct dataset ds[] = DATASETS;
 
     if (!h) {
         ERROR("Argument '%s' cannot be NULL", SLOW5_TO_STR(h));
