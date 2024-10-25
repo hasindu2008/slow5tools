@@ -85,6 +85,12 @@ if [ -z "$bigend" ]; then
     info "$name"
 
     i=$((i + 1))
+    name="testcase $i: gridion r10 dna"
+    $SLOW5TOOLS degrade "$RAW_DIR/gridr10dna.blow5" -o "$OUT_DIR/gridr10dna_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/gridr10dna_auto.blow5" "$EXP_DIR/gridr10dna_b3.blow5" > /dev/null || die "$name: diff failed"
+    info "$name"
+
+    i=$((i + 1))
     name="testcase $i: promethion r10 dna 4khz"
     $SLOW5TOOLS degrade "$RAW_DIR/promr10dna4khz.blow5" -s svb-zd -o "$OUT_DIR/promr10dna4khz_auto.blow5" || die "$name: slow5tools failed"
     diff "$OUT_DIR/promr10dna4khz_auto.blow5" "$EXP_DIR/promr10dna4khz_b3.blow5" > /dev/null || die "$name: diff failed"
@@ -139,6 +145,12 @@ if [ -z "$bigend" ]; then
     name="testcase $i: promethion rna002 3khz"
     $SLOW5TOOLS degrade "$RAW_DIR/PRPN119035_read1.blow5" -o "$OUT_DIR/promrna002_auto.blow5" || die "$name: slow5tools failed"
     diff "$OUT_DIR/promrna002_auto.blow5" "$EXP_DIR/PRPN119035_read1_b2.blow5" > /dev/null || die "$name: diff failed"
+    info "$name"
+
+    i=$((i + 1))
+    name="testcase $i: p2solo ulk114 5khz"
+    $SLOW5TOOLS degrade "$RAW_DIR/p2solo_ulk114_dna.blow5" -o "$OUT_DIR/p2solo_ulk114_dna_auto.blow5" || die "$name: slow5tools failed"
+    diff "$OUT_DIR/p2solo_ulk114_dna_auto.blow5" "$EXP_DIR/p2solo_ulk114_dna_b3.blow5" > /dev/null || die "$name: diff failed"
     info "$name"
 fi
 
