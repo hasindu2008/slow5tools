@@ -783,11 +783,6 @@ static int update_maps(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
     struct kvec_u16 *rid_codes;
     uint16_t i;
 
-    if (multi && !strcmp(code, multi)) {
-        ERROR("Multi-category '%s' already exists in demux TSV", multi);
-        return -1;
-    }
-
     rid_codes = map_svu16_getpush(rid_map, rid);
     if (!rid_codes)
         return -1;
@@ -801,10 +796,14 @@ static int update_maps(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
     }
 
     ret = map_su16_getpush(code_map, code, &i);
-    if (!ret)
+    if (!ret) {
         free(code);
-    else if (ret == -1)
+    } else if (ret == -1) {
         return -1;
+    } else if (multi && !strcmp(code, multi)) { /* ret == 1 */
+        ERROR("Multi-category '%s' already exists in demux TSV", multi);
+        return -1;
+    }
 
     vec_chkpush(rid_codes, i);
 
