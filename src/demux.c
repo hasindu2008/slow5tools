@@ -87,6 +87,7 @@ static uint8_t *getocc(uint16_t n, const khash_t(svu16) *rid_map);
 static void demux_db_destroy(db_t *db);
 static void demux_info_destroy(struct demux_info *d);
 static void demux_setup(core_t *core, db_t *db, int i);
+static void fillcodes(char **c, khash_t(su16) *code_map, const uint8_t *occ);
 static void map_svu16_destroy(khash_t(svu16) *m);
 static void underscore_prepend(const char *s, char **out, size_t *n);
 static void vec_chkpush(struct kvec_u16 *v, uint16_t x);
@@ -207,44 +208,32 @@ static char *path_move_append(const char *path, const char *dir,
 
 /*
  * Get the array of barcode arrangements given the barcode arrangement to index
- * and read ID to indices hash maps and the multi-category name. Skip unoccupied
- * barcode arrangements. Set *n to size of the array.
+ * and read ID to indices hash maps and the multi-category name. Skip and free
+ * unoccupied barcode arrangements. Set *n to size of the array.
  * Return NULL on error, the array to be freed on success.
  */
 static char **getcodes(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
                        const char *multi, uint16_t *n)
 {
     char **c;
-    khint_t k;
-    uint16_t i;
     uint8_t *occ;
 
     if (kh_size(code_map) > UINT16_MAX) {
         ERROR("Too many categories (%d)", kh_size(code_map));
         return NULL;
     }
-    *n = kh_size(code_map);
 
     if (multi)
-        occ = getocc(*n, rid_map);
+        occ = getocc(kh_size(code_map), rid_map);
     else
         occ = NULL;
 
-    c = (char **) malloc(*n * sizeof (*c));
+    c = (char **) malloc(kh_size(code_map) * sizeof (*c));
     MALLOC_CHK(c);
-    for (k = kh_begin(code_map); k != kh_end(code_map); k++) {
-        if (kh_exist(code_map, k)) {
-            i = kh_val(code_map, k);
-            if (!occ || occ[i]) {
-                c[i] = (char *) kh_key(code_map, k);
-            } else {
-                free((void *) kh_key(code_map, k));
-                c[i] = NULL;
-            }
-        }
-    }
+    fillcodes(c, code_map, occ);
 
     free(occ);
+    *n = kh_size(code_map);
     return c;
 }
 
@@ -1117,6 +1106,29 @@ static void demux_setup(core_t *core, db_t *db, int i)
         slow5_press_free(press);
     }
     slow5_rec_free(rec);
+}
+
+/*
+ * Fill the array of occupied barcode arrangements and free unoccupied barcode
+ * arrangements, given the barcode arrangement to index hash map and the array
+ * of barcode arrangement occupied flags.
+ */
+static void fillcodes(char **c, khash_t(su16) *code_map, const uint8_t *occ)
+{
+    khint_t k;
+    uint16_t i;
+
+    for (k = kh_begin(code_map); k != kh_end(code_map); k++) {
+        if (kh_exist(code_map, k)) {
+            i = kh_val(code_map, k);
+            if (!occ || occ[i]) {
+                c[i] = (char *) kh_key(code_map, k);
+            } else {
+                free((void *) kh_key(code_map, k));
+                c[i] = NULL;
+            }
+        }
+    }
 }
 
 /*
