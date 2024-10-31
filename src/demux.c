@@ -14,6 +14,9 @@
 #include "slow5_extra.h"
 #include "thread.h"
 
+#define MULTI_INDEX(n) (n - 1)
+#define MULTI(d) ((d)->codes[MULTI_INDEX((d)->count)])
+
 extern int slow5tools_verbosity_level;
 
 struct kvec_u16 {
@@ -37,19 +40,19 @@ struct demux_info {
     char **codes;            // Barcode arrangements
     khash_t(svu16) *rid_map; // Hash map of read ID to barcode indices
     uint16_t count;          // Number of unique barcode arrangements
+    uint32_t nofile;         // Number of open file descriptors
 };
 
 static char *path_append(const char *path, const char *suf);
 static char *path_move(const char *path, const char *dir);
 static char *path_move_append(const char *path, const char *dir,
                               const char *suf);
-static char **getcodes(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
-                       const char *multi, uint16_t *n);
-static char **paths_spawn(const char *in_path, const char **names,
-                          uint16_t count, const opt_t *opt);
-static core_t *demux_core_init(struct slow5_file *in,
-                               struct slow5_aux_meta *aux_meta,
-                               khash_t(svu16) *rid_map, const opt_t *opt);
+static char **getcodes(khash_t(su16) *code_map, struct bsum_meta *bs_meta,
+                       uint16_t *n);
+static char *path_spawn(const char *in_path, const char *name,
+                        const opt_t *opt);
+static core_t *demux_core_init(struct slow5_file *in, struct demux_info *d,
+                               const opt_t *opt);
 static db_t *demux_db_init(int n);
 static inline void slow5_hdr_link(const struct slow5_hdr *in_hdr,
                                   struct slow5_hdr *out_hdr, int lossy);
@@ -57,39 +60,44 @@ static inline void slow5_hdr_unlink(struct slow5_hdr *hdr);
 static int bsum_close(struct bsum *bs);
 static int bsum_getnext(struct bsum *bs, char **rid, char **code);
 static int bsum_parsehdr(struct bsum *bs);
-static int demux2(struct slow5_file *in, const struct demux_info *d,
+static int demux2(struct slow5_file *in, struct demux_info *d,
                   const opt_t *opt);
 static int demux3(struct slow5_file *in, struct slow5_file **out,
-                  khash_t(svu16) *rid_map, const opt_t *opt);
+                  struct demux_info *d, const opt_t *opt);
 static int demux_db_setup(db_t *db, const struct slow5_file *in, int max);
 static int demux_write(struct slow5_file **out, const db_t *db,
-                       const struct kvec_u16 *rec_codes);
+                       struct slow5_file *in, struct demux_info *d,
+                       const opt_t *opt);
+static int exist(char *const *a, int n, const char *s);
 static int extmod(char *path, enum slow5_fmt fmt);
 static int map_su16_getpush(khash_t(su16) *m, char *s, uint16_t *v);
-static int map_su16_getpushdup(khash_t(su16) *m, const char *s, uint16_t *v);
 static int map_su16_push(khash_t(su16) *m, char *s, khint_t *k);
-static int setmulti(struct kvec_u16 *rid_codes, khash_t(su16) *code_map,
-                    const char *multi);
 static int setnofile(rlim_t n);
+static int slow5_unbirth(struct slow5_file *s);
 static int update_maps(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
-                       char *code, char *rid, const char *multi);
+                       char *code, char *rid);
 static struct bsum *bsum_open(const struct bsum_meta *bs_meta);
 static struct demux_info *demux_info_init(void);
 static struct demux_info *demux_info_get(const struct bsum_meta *bs_meta);
 static struct demux_info *demux_info_get2(struct bsum *bs);
 static struct kvec_u16 *map_svu16_getpush(khash_t(svu16) *m, char *s);
+static struct slow5_file *demux_spawn(const struct slow5_file *in,
+                                      const char *name, uint32_t nofile,
+                                      const opt_t *opt);
 static struct slow5_file *slow5_birth(const struct slow5_file *in,
                                       const char *path, const opt_t *opt);
-static struct slow5_file **slow5_spawn(const struct slow5_file *in,
-                                       const char **names, uint16_t count,
-                                       const opt_t *opt);
-static uint8_t *getocc(uint16_t n, const khash_t(svu16) *rid_map);
+static struct slow5_file *slow5_spawn(const struct slow5_file *in,
+                                      const char *name, const opt_t *opt);
 static void demux_db_destroy(db_t *db);
 static void demux_info_destroy(struct demux_info *d);
 static void demux_setup(core_t *core, db_t *db, int i);
-static void fillcodes(char **c, khash_t(su16) *code_map, const uint8_t *occ);
+static void fillcodes(char **c, khash_t(su16) *code_map);
 static void map_svu16_destroy(khash_t(svu16) *m);
 static void underscore_prepend(const char *s, char **out, size_t *n);
+static void update_db(core_t *core, db_t *db, struct slow5_rec *rec, int i);
+static void update_db_missing(db_t *db, int i);
+static void update_db_multi(db_t *db, const struct demux_info *d, int i);
+static void update_db_rec(core_t *core, db_t *db, struct slow5_rec *rec, int i);
 static void vec_chkpush(struct kvec_u16 *v, uint16_t x);
 
 /*
@@ -208,74 +216,72 @@ static char *path_move_append(const char *path, const char *dir,
 
 /*
  * Get the array of barcode arrangements given the barcode arrangement to index
- * and read ID to indices hash maps and the multi-category name. Skip and free
- * unoccupied barcode arrangements. Set *n to size of the array.
+ * hash map and the barcode summary metadata. Set *n to size of the array.
  * Return NULL on error, the array to be freed on success.
  */
-static char **getcodes(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
-                       const char *multi, uint16_t *n)
+static char **getcodes(khash_t(su16) *code_map, struct bsum_meta *bs_meta,
+                       uint16_t *n)
 {
     char **c;
-    uint8_t *occ;
+    char *multi;
+    const uint16_t m = kh_size(code_map) + 1; // +1 for multi-category
 
-    if (kh_size(code_map) > UINT16_MAX) {
-        ERROR("Too many categories (%d)", kh_size(code_map));
+    if (m > UINT16_MAX) {
+        ERROR("Too many categories (%d)", m);
         return NULL;
     }
 
-    if (multi)
-        occ = getocc(kh_size(code_map), rid_map);
-    else
-        occ = NULL;
-
-    c = (char **) malloc(kh_size(code_map) * sizeof (*c));
+    c = (char **) calloc(m, sizeof (*c));
     MALLOC_CHK(c);
-    fillcodes(c, code_map, occ);
 
-    free(occ);
-    *n = kh_size(code_map);
+    fillcodes(c, code_map);
+
+    if (bs_meta->multi) {
+        if (exist(c, MULTI_INDEX(m), bs_meta->multi)) {
+            ERROR("Multi-category '%s' already exists in demux TSV",
+                  bs_meta->multi);
+            return NULL;
+        }
+        multi = strdup(bs_meta->multi);
+        if (!multi) {
+            perror("strdup");
+            return NULL;
+        }
+        c[MULTI_INDEX(m)] = multi;
+    }
+
+    *n = m;
     return c;
 }
 
 /*
- * Get count new paths appended with an underscore and name before its
- * extension. Return NULL on error.
+ * Get a path appended with an underscore and name before its extension.
+ * Return NULL on error.
  */
-static char **paths_spawn(const char *in_path, const char **names,
-                          uint16_t count, const opt_t *opt)
+static char *path_spawn(const char *in_path, const char *name,
+                        const opt_t *opt)
 {
-    char **paths;
+    char *path;
     char *suf;
     int ret;
     size_t len;
-    uint16_t i;
-
-    paths = (char **) malloc(count * sizeof (*paths));
-    MALLOC_CHK(paths);
 
     suf = NULL;
-    for (i = 0; i < count; i++) {
-        if (names[i]) {
-            underscore_prepend(names[i], &suf, &len);
-            paths[i] = path_move_append(in_path, opt->arg_dir_out, suf);
-            ret = extmod(paths[i], opt->fmt_out);
-            if (ret)
-                return NULL;
-        } else {
-            paths[i] = NULL;
-        }
-    }
+    underscore_prepend(name, &suf, &len);
+    path = path_move_append(in_path, opt->arg_dir_out, suf);
+    ret = extmod(path, opt->fmt_out);
+    if (ret)
+        return NULL;
     free(suf);
 
-    return paths;
+    return path;
 }
 
 /*
  * Initialise the demultiplexing multi-threading core.
  */
-static core_t *demux_core_init(struct slow5_file *in,
-                               struct slow5_aux_meta *aux_meta,
-                               khash_t(svu16) *rid_map, const opt_t *opt)
+static core_t *demux_core_init(struct slow5_file *in, struct demux_info *d,
+                               const opt_t *opt)
 {
     core_t *c;
 
@@ -283,12 +289,12 @@ static core_t *demux_core_init(struct slow5_file *in,
     MALLOC_CHK(c);
 
     if (!opt->flag_lossy)
-        c->aux_meta = aux_meta;
+        c->aux_meta = in->header->aux_meta;
     c->format_out = opt->fmt_out;
     c->fp = in;
     c->lossy = opt->flag_lossy;
     c->num_thread = opt->num_threads;
-    c->param = (void *) rid_map;
+    c->param = (void *) d;
     c->press_method.record_method = opt->record_press_out;
     c->press_method.signal_method = opt->signal_press_out;
 
@@ -433,34 +439,23 @@ static int bsum_parsehdr(struct bsum *bs)
  * Demultiplex a slow5 file given the demultiplexing information and user
  * options. Return -1 on error, 0 on success.
  */
-static int demux2(struct slow5_file *in, const struct demux_info *d,
-                  const opt_t *opt)
+static int demux2(struct slow5_file *in, struct demux_info *d, const opt_t *opt)
 {
     int ret;
-    ssize_t n;
     struct slow5_file **out;
     uint16_t i;
 
-    out = slow5_spawn(in, (const char **) d->codes, d->count, opt);
-    if (!out)
-        return -1;
+    out = (struct slow5_file **) calloc(d->count, sizeof (*out));
+    MALLOC_CHK(out);
 
-    ret = demux3(in, out, d->rid_map, opt);
+    ret = demux3(in, out, d, opt);
     if (ret)
         return -1;
 
     for (i = 0; i < d->count; i++) {
-        if (out[i]) {
-            if (out[i]->format == SLOW5_FORMAT_BINARY) {
-                n = slow5_eof_fwrite(out[i]->fp);
-                if (n == SLOW5_ERR_IO)
-                    return -1;
-            }
-            slow5_hdr_unlink(out[i]->header);
-            ret = slow5_close(out[i]);
-            if (ret)
-                return -1;
-        }
+        ret = slow5_unbirth(out[i]);
+        if (ret)
+            return -1;
     }
     free(out);
 
@@ -472,21 +467,16 @@ static int demux2(struct slow5_file *in, const struct demux_info *d,
  * and user options. Return -1 on error, 0 on success.
  */
 static int demux3(struct slow5_file *in, struct slow5_file **out,
-                  khash_t(svu16) *rid_map, const opt_t *opt)
+                  struct demux_info *d, const opt_t *opt)
 {
     core_t *core;
     db_t *db;
     int iseof;
     int ret;
     khint_t n;
-    struct kvec_u16 *rec_codes;
-    uint16_t i;
 
-    for (i = 0; !out[i]; i++); // Get the first non-NULL output file
-
-    core = demux_core_init(in, out[i]->header->aux_meta, rid_map, opt);
+    core = demux_core_init(in, d, opt);
     db = demux_db_init(opt->read_id_batch_capacity);
-    rec_codes = (struct kvec_u16 *) db->read_group_vector;
 
     iseof = 0;
     n = 0;
@@ -500,12 +490,12 @@ static int demux3(struct slow5_file *in, struct slow5_file **out,
         work_db(core, db, demux_setup);
         n += db->n_batch;
 
-        ret = demux_write(out, db, rec_codes);
+        ret = demux_write(out, db, in, d, opt);
         if (ret)
             return -1;
     }
 
-    if (n < kh_size(rid_map)) {
+    if (n < kh_size(d->rid_map)) {
         ERROR("Extra read(s) in demux TSV%s", "");
         return -1;
     }
@@ -549,25 +539,55 @@ static int demux_db_setup(db_t *db, const struct slow5_file *in, int max)
 
 /*
  * Write the demultiplexing multi-threading database records to their
- * corresponding barcode files. Return -1 on error, 0 on success.
+ * corresponding barcode files given the input slow5 file.
+ * Return -1 on error, 0 on success.
  */
 static int demux_write(struct slow5_file **out, const db_t *db,
-                       const struct kvec_u16 *rec_codes)
+                       struct slow5_file *in, struct demux_info *d,
+                       const opt_t *opt)
 {
+    const struct kvec_u16 *rec_codes;
     int i;
     size_t len;
     uint16_t j;
+    uint16_t k;
+
+    rec_codes = (const struct kvec_u16 *) db->read_group_vector;
 
     for (i = 0; i < (int) db->n_batch; i++) {
         for (j = 0; j < kv_size(rec_codes[i]); j++) {
+            k = kv_A(rec_codes[i], j);
+
+            if (!out[k]) {
+                out[k] = demux_spawn(in, d->codes[k], d->nofile, opt);
+                if (!out[k])
+                    return -1;
+                d->nofile++;
+            }
+
             len = fwrite(db->read_record[i].buffer, 1, db->read_record[i].len,
-                         out[kv_A(rec_codes[i], j)]->fp);
+                         out[k]->fp);
             if (len != (size_t) db->read_record[i].len) {
-                ERROR("Failed to write slow5 record%s", "");
+                ERROR("%s", "Failed to write slow5 record");
                 return -1;
             }
         }
         free(db->read_record[i].buffer);
+    }
+    return 0;
+}
+
+/*
+ * Does string s exist in array a of length n?
+ * Return 1 if exists, 0 if does not exist.
+ */
+static int exist(char *const *a, int n, const char *s)
+{
+    int i;
+
+    for (i = 0; i < n; i++) {
+        if (!strcmp(a[i], s))
+            return 1;
     }
     return 0;
 }
@@ -631,37 +651,6 @@ static int map_su16_getpush(khash_t(su16) *m, char *s, uint16_t *v)
 }
 
 /*
- * Get the value of map m at key s. Set *v to the value. If s does not exist,
- * duplicate it and add it to m with the number of elements - 1 as its value.
- * Return -1 on error, 0 on key already exists, 1 on key was added.
- */
-static int map_su16_getpushdup(khash_t(su16) *m, const char *s, uint16_t *v)
-{
-    char *s1;
-    int err;
-    int ret;
-    khint_t k;
-
-    ret = 0;
-    k = kh_get(su16, m, s);
-
-    if (k == kh_end(m)) {
-        s1 = strdup(s);
-        if (!s1) {
-            perror("strdup");
-            return -1;
-        }
-        err = map_su16_push(m, s1, &k);
-        if (err)
-            return -1;
-        ret = 1;
-    }
-
-    *v = kh_val(m, k);
-    return ret;
-}
-
-/*
  * Add s to m with the number of elements - 1 as its value.
  * Return -1 on error, 0 on success.
  */
@@ -676,30 +665,6 @@ static int map_su16_push(khash_t(su16) *m, char *s, khint_t *k)
     }
 
     kh_val(m, *k) = kh_size(m) - 1;
-    return 0;
-}
-
-/*
- * Set the read to the multi-category if not already set. Update its barcode
- * arrangements vector and the barcode arrangement to index hash map given the
- * multi-category name.
- * rid_codes must be non-empty. Return -1 on error, 0 on success.
- */
-static int setmulti(struct kvec_u16 *rid_codes, khash_t(su16) *code_map,
-                    const char *multi)
-{
-    int ret;
-    uint16_t i;
-
-    ret = map_su16_getpushdup(code_map, multi, &i);
-    if (ret == -1)
-        return -1;
-
-    if (kv_A(*rid_codes, 0) != i) {
-        kv_size(*rid_codes) = 1;
-        kv_A(*rid_codes, 0) = i;
-    }
-
     return 0;
 }
 
@@ -739,6 +704,30 @@ static int setnofile(rlim_t n)
 }
 
 /*
+ * Write the binary eof, unlink the header and close the slow5 file.
+ * Return -1 on error, 0 on success.
+ */
+static int slow5_unbirth(struct slow5_file *s)
+{
+    int ret;
+    ssize_t n;
+
+    if (!s)
+        return 0;
+
+    if (s->format == SLOW5_FORMAT_BINARY) {
+        n = slow5_eof_fwrite(s->fp);
+        if (n == SLOW5_ERR_IO)
+            return -1;
+    }
+    slow5_hdr_unlink(s->header);
+    ret = slow5_close(s);
+    if (ret)
+        return -1;
+    return 0;
+}
+
+/*
  * Shallow copy a slow5 header. If lossy, do not copy the auxiliary metadata.
  */
 static inline void slow5_hdr_link(const struct slow5_hdr *in_hdr,
@@ -762,11 +751,11 @@ static inline void slow5_hdr_unlink(struct slow5_hdr *hdr)
 
 /*
  * Update the barcode arrangement to index and read ID to barcode indices hash
- * maps given a read ID, one of its barcode arrangements and the multi-category
- * name. Return -1 on error, 0 on success.
+ * maps given a read ID and one of its barcode arrangements.
+ * Return -1 on error, 0 on success.
  */
 static int update_maps(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
-                       char *code, char *rid, const char *multi)
+                       char *code, char *rid)
 {
     int ret;
     struct kvec_u16 *rid_codes;
@@ -775,24 +764,14 @@ static int update_maps(khash_t(su16) *code_map, khash_t(svu16) *rid_map,
     rid_codes = map_svu16_getpush(rid_map, rid);
     if (!rid_codes)
         return -1;
-    if (kv_size(*rid_codes)) {
+    if (kv_size(*rid_codes))
         free(rid);
 
-        if (multi) {
-            free(code);
-            return setmulti(rid_codes, code_map, multi);
-        }
-    }
-
     ret = map_su16_getpush(code_map, code, &i);
-    if (!ret) {
+    if (!ret)
         free(code);
-    } else if (ret == -1) {
+    else if (ret == -1)
         return -1;
-    } else if (multi && !strcmp(code, multi)) { /* ret == 1 */
-        ERROR("Multi-category '%s' already exists in demux TSV", multi);
-        return -1;
-    }
 
     vec_chkpush(rid_codes, i);
 
@@ -838,6 +817,7 @@ static struct demux_info *demux_info_init(void)
     MALLOC_CHK(d);
     d->rid_map = kh_init(svu16);
     MALLOC_CHK(d->rid_map);
+    d->nofile = SLOW5_SPAWN_NOFILE;
 
     return d;
 }
@@ -887,7 +867,7 @@ static struct demux_info *demux_info_get2(struct bsum *bs)
 
     ret = bsum_getnext(bs, &rid, &code);
     while (!ret) {
-        ret = update_maps(code_map, d->rid_map, code, rid, bs->meta.multi);
+        ret = update_maps(code_map, d->rid_map, code, rid);
         if (ret)
             return NULL;
         ret = bsum_getnext(bs, &rid, &code);
@@ -895,7 +875,7 @@ static struct demux_info *demux_info_get2(struct bsum *bs)
     if (ret == -1)
         return NULL;
 
-    d->codes = getcodes(code_map, d->rid_map, bs->meta.multi, &(d->count));
+    d->codes = getcodes(code_map, &(bs->meta), &(d->count));
     if (!d->codes)
         return NULL;
 
@@ -925,6 +905,23 @@ static struct kvec_u16 *map_svu16_getpush(khash_t(svu16) *m, char *s)
     }
 
     return &kh_val(m, k);
+}
+
+/*
+ * Increment the maximum file descriptor number then shallow copy a slow5 file.
+ * Return NULL on error.
+ */
+static struct slow5_file *demux_spawn(const struct slow5_file *in,
+                                      const char *name, uint32_t nofile,
+                                      const opt_t *opt)
+{
+    int ret;
+
+    ret = setnofile((rlim_t) nofile + 1);
+    if (ret)
+        return NULL;
+
+    return slow5_spawn(in, name, opt);
 }
 
 /*
@@ -965,73 +962,25 @@ static struct slow5_file *slow5_birth(const struct slow5_file *in,
 }
 
 /*
- * Shallow copy the skeleton of a slow5 file to count new paths appended with an
+ * Shallow copy the skeleton of a slow5 file to a new path appended with an
  * underscore and name before its extension. Return NULL on error.
  */
-static struct slow5_file **slow5_spawn(const struct slow5_file *in,
-                                       const char **names, uint16_t count,
-                                       const opt_t *opt)
+static struct slow5_file *slow5_spawn(const struct slow5_file *in,
+                                      const char *name, const opt_t *opt)
 {
-    char **paths;
-    int ret;
-    struct slow5_file **out;
-    uint16_t i;
+    char *path;
+    struct slow5_file *out;
 
-    ret = setnofile((rlim_t) count + SLOW5_SPAWN_NOFILE);
-    if (ret)
+    path = path_spawn(in->meta.pathname, name, opt);
+    if (!path)
         return NULL;
 
-    paths = paths_spawn(in->meta.pathname, names, count, opt);
-    if (!paths)
+    out = slow5_birth(in, path, opt);
+    free(path);
+    if (!out)
         return NULL;
 
-    out = (struct slow5_file **) malloc(count * sizeof (*out));
-    MALLOC_CHK(out);
-
-    for (i = 0; i < count; i++) {
-        if (paths[i]) {
-            out[i] = slow5_birth(in, paths[i], opt);
-            free(paths[i]);
-            if (!out[i])
-                return NULL;
-        } else {
-            out[i] = NULL;
-        }
-    }
-
-    free(paths);
     return out;
-}
-
-/*
- * Get the array which flags whether a barcode arrangement is occupied or not
- * given the number of barcodes and the read ID to barcode indices hash map.
- * This is only meaningful when the multi-category is in use.
- * Return the array to be freed.
- */
-static uint8_t *getocc(uint16_t n, const khash_t(svu16) *rid_map)
-{
-    khint_t k;
-    struct kvec_u16 v;
-    uint16_t i;
-    uint16_t j;
-    uint8_t *occ;
-
-    occ = (uint8_t *) calloc(n, sizeof (*occ));
-    MALLOC_CHK(occ);
-
-    for (k = kh_begin(rid_map); k != kh_end(rid_map); k++) {
-        if (kh_exist(rid_map, k)) {
-            v = kh_val(rid_map, k);
-            for (i = 0; i < kv_size(v); i++) {
-                j = kv_A(v, i);
-                if (!occ[j])
-                    occ[j] = 1;
-            }
-        }
-    }
-
-    return occ;
 }
 
 /*
@@ -1067,12 +1016,7 @@ static void demux_info_destroy(struct demux_info *d)
  */
 static void demux_setup(core_t *core, db_t *db, int i)
 {
-    const khash_t(svu16) *rid_map;
     int ret;
-    khint_t k;
-    size_t len;
-    struct kvec_u16 *rec_codes;
-    struct slow5_press *press;
     struct slow5_rec *rec;
 
     rec = NULL;
@@ -1082,38 +1026,15 @@ static void demux_setup(core_t *core, db_t *db, int i)
     if (ret)
         exit(EXIT_FAILURE);
 
-    rid_map = (const khash_t(svu16) *) core->param;
-    rec_codes = (struct kvec_u16 *) db->read_group_vector;
-
-    k = kh_get(svu16, rid_map, rec->read_id);
-    if (k == kh_end(rid_map)) {
-        WARNING("Read ID '%s' is missing from demux TSV",
-                rec->read_id);
-        (void) memset(rec_codes + i, 0, sizeof (*rec_codes));
-        (void) memset(db->read_record + i, 0, sizeof (*db->read_record));
-    } else {
-        rec_codes[i] = kh_val(rid_map, k);
-
-        press = slow5_press_init(core->press_method);
-        if (!press)
-            exit(EXIT_FAILURE);
-        db->read_record[i].buffer = slow5_rec_to_mem(rec, core->aux_meta,
-                                                     core->format_out, press,
-                                                     &len);
-        if (!db->read_record[i].buffer)
-            exit(EXIT_FAILURE);
-        db->read_record[i].len = (int) len; // TODO should be size_t or uint32_t
-        slow5_press_free(press);
-    }
+    update_db(core, db, rec, i);
     slow5_rec_free(rec);
 }
 
 /*
- * Fill the array of occupied barcode arrangements and free unoccupied barcode
- * arrangements, given the barcode arrangement to index hash map and the array
- * of barcode arrangement occupied flags.
+ * Fill the array of barcode arrangements given the barcode arrangement to index
+ * hash map.
  */
-static void fillcodes(char **c, khash_t(su16) *code_map, const uint8_t *occ)
+static void fillcodes(char **c, khash_t(su16) *code_map)
 {
     khint_t k;
     uint16_t i;
@@ -1121,12 +1042,7 @@ static void fillcodes(char **c, khash_t(su16) *code_map, const uint8_t *occ)
     for (k = kh_begin(code_map); k != kh_end(code_map); k++) {
         if (kh_exist(code_map, k)) {
             i = kh_val(code_map, k);
-            if (!occ || occ[i]) {
-                c[i] = (char *) kh_key(code_map, k);
-            } else {
-                free((void *) kh_key(code_map, k));
-                c[i] = NULL;
-            }
+            c[i] = (char *) kh_key(code_map, k);
         }
     }
 }
@@ -1165,6 +1081,78 @@ static void underscore_prepend(const char *s, char **out, size_t *n)
 
     *out[0] = '_';
     (void) memcpy(*out + 1, s, len + 1);
+}
+
+/*
+ * Wrapper around update_db_rec which checks if the record is missing or if the
+ * multi-category should be used.
+ */
+static void update_db(core_t *core, db_t *db, struct slow5_rec *rec, int i)
+{
+    const struct demux_info *d;
+    khint_t k;
+    struct kvec_u16 *rec_codes;
+
+    d = (const struct demux_info *) core->param;
+    rec_codes = (struct kvec_u16 *) db->read_group_vector;
+
+    k = kh_get(svu16, d->rid_map, rec->read_id);
+    if (k == kh_end(d->rid_map)) {
+        WARNING("Read ID '%s' is missing from demux TSV", rec->read_id);
+        update_db_missing(db, i);
+    } else {
+        rec_codes[i] = kh_val(d->rid_map, k);
+        if (MULTI(d) && kv_size(rec_codes[i]) > 1)
+            update_db_multi(db, d, i);
+        update_db_rec(core, db, rec, i);
+    }
+}
+
+/*
+ * Zero the database's output buffer at index i.
+ */
+static void update_db_missing(db_t *db, int i)
+{
+    struct kvec_u16 *rec_codes;
+
+    rec_codes = (struct kvec_u16 *) db->read_group_vector;
+    (void) memset(rec_codes + i, 0, sizeof (*rec_codes));
+    (void) memset(db->read_record + i, 0, sizeof (*db->read_record));
+}
+
+/*
+ * Update the database's barcode indices array at index i to hold only the
+ * multi-category.
+ */
+static void update_db_multi(db_t *db, const struct demux_info *d, int i)
+{
+    struct kvec_u16 *rec_codes;
+
+    rec_codes = (struct kvec_u16 *) db->read_group_vector;
+    kv_size(rec_codes[i]) = 1;
+    kv_A(rec_codes[i], 0) = MULTI_INDEX(d->count);
+}
+
+/*
+ * Convert a slow5 record to its desired output format given the core metadata.
+ * Update the database's output buffer at index i.
+ */
+static void update_db_rec(core_t *core, db_t *db, struct slow5_rec *rec, int i)
+{
+    size_t len;
+    struct slow5_press *press;
+
+    press = slow5_press_init(core->press_method);
+    if (!press)
+        exit(EXIT_FAILURE);
+
+    db->read_record[i].buffer = slow5_rec_to_mem(rec, core->aux_meta,
+                                                 core->format_out, press,
+                                                 &len);
+    if (!db->read_record[i].buffer)
+        exit(EXIT_FAILURE);
+    db->read_record[i].len = (int) len; // TODO should be size_t or uint32_t
+    slow5_press_free(press);
 }
 
 /*
