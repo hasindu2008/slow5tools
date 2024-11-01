@@ -317,6 +317,22 @@ info "-------------------$name-------"
 $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux9/barcode_summary.txt $REL_PATH/data/raw/split/demux10/example2_0_multi.slow5 -d $OUTPUT_DIR/demux10-uniq-lossy --to slow5 --demux-rid rid --demux-code code -u vmixed --lossless false || die "$name"
 check "$name" $REL_PATH/data/exp/split/demux10-uniq-lossy $OUTPUT_DIR/demux10-uniq-lossy
 
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex one missing"
+info "-------------------$name-------"
+$SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux11/onemissing.txt $REL_PATH/data/raw/split/demux10/example2_0_multi.slow5 -d $OUTPUT_DIR/demux11 --to slow5 --demux-rid rid --demux-code code -m missing || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux11 $OUTPUT_DIR/demux11
+
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex missing category exists"
+info "-------------------$name-------"
+! $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux1/barcode_summary.txt $REL_PATH/data/raw/split/demux1/example2_0.slow5 -d $OUTPUT_DIR/demux8 --to slow5 -m unclassified || die "$name"
+
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex missing category exists 2"
+info "-------------------$name-------"
+! $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux1/barcode_summary.txt $REL_PATH/data/raw/split/demux1/example2_0.slow5 -d $OUTPUT_DIR/demux8 --to slow5 -u mixed -m mixed || die "$name"
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
