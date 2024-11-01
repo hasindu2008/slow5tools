@@ -2,7 +2,7 @@
  * @file demux.c
  * @brief demultiplex a slow5 file
  * @author Sasha Jenner (me AT sjenner DOT com)
- * @date 30/08/2024
+ * @date 01/11/2024
  */
 #include <stdint.h>
 #include <string.h>

@@ -3,7 +3,7 @@
  * @brief split a SLOW5 in different ways
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
  * @author Sasha Jenner (me AT sjenner DOT com)
- * @date 30/08/2024
+ * @date 01/11/2024
  */
 
 #include <getopt.h>
