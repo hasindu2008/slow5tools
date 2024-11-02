@@ -208,6 +208,8 @@ This tool is useful for parallelising across array jobs / distributed systems.
     The categories column header in the demux TSV file [default value: 'barcode_arrangement']. Use with option `--demux`.
 *  `--demux-rid STR`:<br/>
     The read IDs column header in the demux TSV file [default value: 'parent_read_id']. Use with option `--demux`.
+*  `-m, --demux-missing STR`:<br/>
+    Reads not found in the demux TSV file are placed in a new category named STR. Use with option `--demux`.
 *  `-u, --demux-uniq STR`:<br/>
     Multi-category reads are only recorded once and are placed in a new category named STR. Use with option `--demux`.
 *   `--lossless STR`:<br/>

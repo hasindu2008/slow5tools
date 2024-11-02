@@ -3,7 +3,7 @@
  * @brief split a SLOW5 in different ways
  * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au)
  * @author Sasha Jenner (me AT sjenner DOT com)
- * @date 30/08/2024
+ * @date 01/11/2024
  */
 
 #include <getopt.h>
@@ -33,6 +33,7 @@
     "    -x, --demux [TSV_PATH]        split reads according to TSV file\n" \
     "        --demux-code [STR]        specify categories column name ['barcode_arrangement']\n" \
     "        --demux-rid [STR]         specify read IDs column name ['parent_read_id']\n" \
+    "    -m, --demux-missing [STR]     uncategorised reads to category named STR\n" \
     "    -u, --demux-uniq [STR]        multi-category reads to category named STR\n" \
     HELP_MSG_THREADS \
     HELP_MSG_BATCH \
@@ -123,22 +124,23 @@ int split_main(int argc, char **argv, struct program_meta *meta){
 
     // Default options
     static struct option long_opts[] = {
-            {"help",        no_argument, NULL, 'h' }, //0
-            {"to",          required_argument, NULL, 'b'},    //1
-            {"compress",    no_argument, NULL, 'c'},  //2
-            {"sig-compress",required_argument,  NULL, 's'}, //3
-            {"out-dir",     required_argument, NULL, 'd' },  //4
-            {"threads",     required_argument, NULL, 't'},   //5
-            { "iop",        required_argument, NULL, 'p'},   //6
-            {"lossless",    required_argument, NULL, 'l'}, //7
-            {"groups",      no_argument, NULL, 'g'},       //8
-            {"files",       required_argument, NULL, 'f'}, //9
-            {"reads",       required_argument, NULL, 'r'}, //10
-            {"batchsize",   required_argument, NULL, 'K'}, //11
-            {"demux",       required_argument, NULL, 'x'}, //12
-            {"demux-code",  required_argument, NULL, 0}, //13
-            {"demux-rid",   required_argument, NULL, 0}, //14
-            {"demux-uniq",  required_argument, NULL, 'u'}, //15
+            {"help",          no_argument, NULL, 'h' }, //0
+            {"to",            required_argument, NULL, 'b'},    //1
+            {"compress",      no_argument, NULL, 'c'},  //2
+            {"sig-compress",  required_argument,  NULL, 's'}, //3
+            {"out-dir",       required_argument, NULL, 'd' },  //4
+            {"threads",       required_argument, NULL, 't'},   //5
+            { "iop",          required_argument, NULL, 'p'},   //6
+            {"lossless",      required_argument, NULL, 'l'}, //7
+            {"groups",        no_argument, NULL, 'g'},       //8
+            {"files",         required_argument, NULL, 'f'}, //9
+            {"reads",         required_argument, NULL, 'r'}, //10
+            {"batchsize",     required_argument, NULL, 'K'}, //11
+            {"demux",         required_argument, NULL, 'x'}, //12
+            {"demux-code",    required_argument, NULL, 0}, //13
+            {"demux-rid",     required_argument, NULL, 0}, //14
+            {"demux-uniq",    required_argument, NULL, 'u'}, //15
+            {"demux-missing", required_argument, NULL, 'm'}, //16
             {NULL, 0, NULL, 0 }
     };
 
@@ -148,6 +150,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     meta_split_method_object.bs_meta.path = NULL;
     meta_split_method_object.bs_meta.code_hdr = BSUM_HEADER_BARCODE;
     meta_split_method_object.bs_meta.rid_hdr = BSUM_HEADER_READID;
+    meta_split_method_object.bs_meta.missing = NULL;
     meta_split_method_object.bs_meta.multi = NULL;
 
     opt_t user_opts;
@@ -157,7 +160,7 @@ int split_main(int argc, char **argv, struct program_meta *meta){
     int opt;
     int longindex = 0;
     // Parse options
-    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:x:u:", long_opts, &longindex)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hb:c:s:gl:f:r:d:t:p:K:x:u:m:", long_opts, &longindex)) != -1) {
         DEBUG("opt='%c', optarg=\"%s\", optind=%d, opterr=%d, optopt='%c'",
                   opt, optarg, optind, opterr, optopt);
         switch (opt) {
@@ -195,6 +198,9 @@ int split_main(int argc, char **argv, struct program_meta *meta){
                 break;
             case 'u':
                 meta_split_method_object.bs_meta.multi = optarg;
+                break;
+            case 'm':
+                meta_split_method_object.bs_meta.missing = optarg;
                 break;
             case 'l':
                 user_opts.arg_lossless = optarg;
