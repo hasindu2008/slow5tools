@@ -155,6 +155,6 @@ done
 From slow5tools v1.3.0 onwards, you can split BLOW5 files using a custom TSV file. For example, to split by channel number:
 
 ```
-slow5tools skim reads.blow5 | cut -f1,9 > split.tsv
+slow5tools skim reads.blow5 > split.tsv
 slow5tools split reads.blow5 -d blow5_dir -x split.tsv --demux-rid '#read_id' --demux-code channel_number
 ```
