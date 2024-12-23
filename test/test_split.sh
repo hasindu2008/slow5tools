@@ -333,6 +333,12 @@ name="testcase ${TESTCASE}: demultiplex missing category exists 2"
 info "-------------------$name-------"
 ! $SLOW5_EXEC split -x $REL_PATH/data/raw/split/demux1/barcode_summary.txt $REL_PATH/data/raw/split/demux1/example2_0.slow5 -d $OUTPUT_DIR/demux8 --to slow5 -u mixed -m mixed || die "$name"
 
+TESTCASE=$((TESTCASE + 1))
+name="testcase ${TESTCASE}: demultiplex custom header reversed"
+info "-------------------$name-------"
+$SLOW5_EXEC split --to slow5 $REL_PATH/data/raw/split/demux5/example2_0.blow5 -d $OUTPUT_DIR/demux5-rev --demux $REL_PATH/data/raw/split/demux5/custom_rev --demux-code 'BC0D35!' --demux-rid=MyCustomId || die "$name"
+check "$name" $REL_PATH/data/exp/split/demux5 $OUTPUT_DIR/demux5-rev
+
 rm -r $OUTPUT_DIR || die "Removing $OUTPUT_DIR failed"
 
 exit 0
