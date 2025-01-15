@@ -63,20 +63,111 @@ shell pipeline:
 
 Basecalling
 -----------
-The most important sanity check is to ensure that the basecalling accuracy has
-not been adversely affected.
+The most important sanity check is to ensure that basecalling accuracy has not
+been adversely affected.
 
-After obtaining the identity scores of the original and lossy compressed data,
-check that both satisfy the following inequalities:
+First, basecall the data and obtain the BAM files. For example, using
+slow5-dorado:
+
+	MODEL=dna_r9.4.1_e8_hac@v3.3 # path to basecalling model
+	BAM=data.bam # path to bam output
+	BAM_LOSSY=lossy.bam # path to lossy bam output
+
+	slow5-dorado basecaller "$MODEL" "$BLOW5" > "$BAM"
+	slow5-dorado basecaller "$MODEL" "$BLOW5_LOSSY" > "$BAM_LOSSY"
+
+Next, obtain the identity scores using the following shell script for DNA
+
+<https://github.com/hasindu2008/biorand/blob/master/bin/identitydna.sh>
+
+and
+
+<https://github.com/hasindu2008/biorand/blob/master/bin/identityrna.sh>
+
+for RNA. For example:
+
+	SCORE=score.tsv # path to score output
+	SCORE_LOSSY=score_lossy.tsv # path to lossy score output
+
+	identitydna.sh "$BAM" > "$SCORE"
+	identitydna.sh "$BAM_LOSSY" > "$SCORE_LOSSY"
+
+Check that both identity scores satisfy the following inequalities:
 
 - mean >= 0.93,
 - median >= 0.97,
 - read count >= NUM_SLOW5_READS, and
 - read count <= 1.2 * NUM_SLOW5_READS.
 
-Next, check that the following pairwise inequalities are satisfied:
+This can be achieved using the following shell snippet:
+
+	die() {
+		echo "$1" >&2
+		exit 1
+	}
+
+	assert() {
+		x=$(echo "if ($1) 1" | bc)
+		if [ "$x" != 1 ]
+		then
+			die "failed: $x"
+		fi
+	}
+
+	score_chk() {
+		SCORE_HEADER='sample	mean	sstdev	q1	median	q3	n'
+		path=$1
+
+		hdr=$(head -n1 "$path")
+		if [ "$hdr" != "$SCORE_HEADER" ]
+		then
+			die 'invalid header'
+		fi
+
+		data=$(tail -n1 "$path")
+		mean=$(echo "$data" | cut -f2)
+		med=$(echo "$data" | cut -f5)
+		n=$(echo "$data" | cut -f7)
+
+		assert "$mean >= 0.93"
+		assert "$med >= 0.97"
+		assert "$n >= $NUM_SLOW5_READS"
+		assert "$n <= (1.2 * $NUM_SLOW5_READS)"
+	}
+
+	# Alternative quicker method as compared to Section "Read Count"
+	NUM_SLOW5_READS=$(slow5tools skim --rid "$BLOW5_LOSSY" | wc -l)
+
+	score_chk "$SCORE"
+	score_chk "$SCORE_LOSSY"
+
+Finally, check that the following pairwise inequalities are satisfied:
 
 - mean (original) - mean (lossy) <= 0.001,
 - median (original) - median (lossy) <= 0.001,
 - read count (original) - read count (lossy) >= 0, and
-- read count (original) - read count (lossy) <= 0.001 * NUM_SLOW5_READS.
+- read count (original) - read count (lossy) <= 0.001 * read count (original).
+
+Continuing from the previous shell snippet:
+
+	score_pair_chk() {
+		path=$1
+		path_lossy=$2
+
+		data=$(tail -n1 "$path")
+		mean=$(echo "$data" | cut -f2)
+		med=$(echo "$data" | cut -f5)
+		n=$(echo "$data" | cut -f7)
+
+		data_lossy=$(tail -n1 "$path_lossy")
+		mean_lossy=$(echo "$data_lossy" | cut -f2)
+		med_lossy=$(echo "$data_lossy" | cut -f5)
+		n_lossy=$(echo "$data_lossy" | cut -f7)
+
+		assert "($mean - $mean_lossy) <= 0.001"
+		assert "($med - $med_lossy) <= 0.001"
+		assert "($n - $n_lossy) >= 0"
+		assert "($n - $n_lossy) <= (0.001 * $n)"
+	}
+
+	score_pair_chk "$SCORE" "$SCORE_LOSSY"
