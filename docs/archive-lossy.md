@@ -1,5 +1,4 @@
-Archiving Lossy Data
-====================
+# A Guide for Archiving Lossy Data
 
 Lossy compression of raw nanopore signal data can be a great way to save disk
 space without significantly impacting basecalling accuracy. This makes it
@@ -8,29 +7,34 @@ conversion would significantly deteriorate the quality of their data. To remedy
 such concerns, this guide outlines a number of sanity checks which when
 successful give confidence in the lossy conversion.
 
-The Conversion
---------------
+## The Conversion
+
 To lossy compress your data, set the following variables
 
+```bash
 	SLOW5_FILE=data.blow5 # path to original data
 	SLOW5_LOSSY_FILE=lossy.blow5 # path to lossy output
 	NUM_THREADS=8
+```
 
 and run:
 
+```bash
 	slow5tools degrade "$SLOW5_FILE" -o "$SLOW5_LOSSY_FILE" -t "$NUM_THREADS"
+```
 
 If the command fails with the message "No suitable bits suggestion", this is
 because your dataset type has not yet been profiled by our team. Submit an issue
 on GitHub <https://github.com/hasindu2008/slow5tools/issues> with your dataset
 attached.
 
-Read Count
-----------
+## Read Count
+
 The simplest sanity check is to ensure that the number of reads is the same for
 the original and lossy compressed data. The following shell snippet does the
 check:
 
+```bash
 	get_num_reads() {
 		slow5tools stats "$1" | grep 'number of records' | awk '{print $NF}'
 	}
@@ -45,13 +49,16 @@ check:
 		echo 'Failed sanity check: Read count differs' >&2
 		exit 1
 	fi
+```
 
-Uniqueness
-----------
+## Uniqueness
+
 Next, we should ensure that there are no duplicate read IDs in the lossy data.
 The simplest method is to index the lossy file:
 
+```bash
 	slow5tools index "$SLOW5_LOSSY_FILE"
+```
 
 This will fail if a duplicate read ID is encountered, or additionally if the file
 is corrupted or truncated. However, a more comprehensive method is to use `slow5tools
@@ -59,39 +66,37 @@ view` which decompresses and parses the entire file, and thus does a more
 detailed check for data corruption. You can achieve this using the following
 shell pipeline:
 
+```bash
 	slow5tools view -t "$NUM_THREADS" -K 20000 "$SLOW5_LOSSY_FILE" | awk '{print $1}' | grep -v '^\#\|^\@' | sort | uniq -c | awk '{if($1!=1){print "Duplicate read ID found",$2; exit 1}}'
+```
 
-Basecalling
------------
+## Basecalling
+
 The most important sanity check is to ensure that basecalling accuracy has not
 been adversely affected.
 
 First, basecall the data and obtain the BAM files. For example, using
-slow5-dorado <https://github.com/hiruna72/slow5-dorado> :
+[slow5-dorado](https://github.com/hiruna72/slow5-dorado/releases/) :
 
+```bash
 	MODEL=dna_r9.4.1_e8_hac@v3.3 # path to basecalling model
 	BAM=data.bam # path to bam output
 	BAM_LOSSY=lossy.bam # path to lossy bam output
 
 	slow5-dorado basecaller "$MODEL" "$SLOW5_FILE" > "$BAM"
 	slow5-dorado basecaller "$MODEL" "$SLOW5_LOSSY_FILE" > "$BAM_LOSSY"
+```
 
-Next, obtain the identity scores using the following shell script for DNA
+Next, obtain the identity scores using this [identitydna.sh](https://github.com/hasindu2008/biorand/blob/master/bin/identitydna.sh) shell script for DNA and [identityrna.sh](https://github.com/hasindu2008/biorand/blob/master/bin/identityrna.sh). For example:
 
-<https://github.com/hasindu2008/biorand/blob/master/bin/identitydna.sh>
-
-and
-
-<https://github.com/hasindu2008/biorand/blob/master/bin/identityrna.sh>
-
-for RNA. For example:
-
+```bash
 	GENOME=hg38noAlt.idx # path to fasta/idx genome
 	SCORE=score.tsv # path to score output
 	SCORE_LOSSY=score_lossy.tsv # path to lossy score output
 
 	identitydna.sh "$GENOME" "$BAM" > "$SCORE"
 	identitydna.sh "$GENOME" "$BAM_LOSSY" > "$SCORE_LOSSY"
+```
 
 Check that both identity scores satisfy the following inequalities:
 
@@ -102,6 +107,7 @@ Check that both identity scores satisfy the following inequalities:
 
 This can be achieved using the following shell snippet:
 
+```bash
 	die() {
 		echo "$1" >&2
 		exit 1
@@ -141,6 +147,7 @@ This can be achieved using the following shell snippet:
 
 	score_chk "$SCORE"
 	score_chk "$SCORE_LOSSY"
+```
 
 Finally, check that the following pairwise inequalities are satisfied:
 
@@ -151,6 +158,7 @@ Finally, check that the following pairwise inequalities are satisfied:
 
 Continuing from the previous shell snippet:
 
+```bash
 	score_pair_chk() {
 		path=$1
 		path_lossy=$2
@@ -172,9 +180,10 @@ Continuing from the previous shell snippet:
 	}
 
 	score_pair_chk "$SCORE" "$SCORE_LOSSY"
+```
 
-Methylation
------------
+## Methylation
+
 Another related sanity check is to see whether the methylation frequencies have
 been adversely affected. We can achieve this by obtaining their Pearson
 correlation coefficient and making sure that it is above a certain threshold.
@@ -182,6 +191,7 @@ correlation coefficient and making sure that it is above a certain threshold.
 Again, basecall the data, but this time use modification calling. For example,
 using slow5-dorado:
 
+```bash
 	MODEL=dna_r9.4.1_e8_hac@v3.3 # path to basecalling model
 	BASES=5mCG_5hmCG # modified base codes (m6A_DRACH for rna)
 	BAM=meth.bam # path to bam output
@@ -189,9 +199,11 @@ using slow5-dorado:
 
 	slow5-dorado basecaller "$MODEL" "$SLOW5_FILE" --modified-bases "$BASES" > "$BAM"
 	slow5-dorado basecaller "$MODEL" "$SLOW5_LOSSY_FILE" --modified-bases "$BASES" > "$BAM_LOSSY"
+```
 
 Then map the BAM files to the reference genome and index them:
 
+```bash
 	map() {
 		bam=$1
 		genome=$2
@@ -208,28 +220,33 @@ Then map the BAM files to the reference genome and index them:
 
 	samtools index "$BAM_MAP"
 	samtools index "$BAM_LOSSY_MAP"
+```
 
-Acquire the methylation frequencies using minimod
-<https://github.com/warp9seq/minimod> :
+Acquire the methylation frequencies using [minimod](https://github.com/warp9seq/minimod):
 
+```bash
 	MODS=mods.mm.tsv # path to meth frequencies output
 	MODS_LOSSY=mods_lossy.mm.tsv # path to lossy meth frequencies output
 
 	minimod mod-freq "$GENOME" "$BAM_MAP" > "$MODS"
 	minimod mod-freq "$GENOME" "$BAM_LOSSY_MAP" > "$MODS_LOSSY"
+```
 
-Finally, obtain the Pearson correlation coefficient using this Python script
+Finally, obtain the Pearson correlation coefficient using [this Python script](https://github.com/warp9seq/minimod/blob/main/test/compare.py)
 
-<https://github.com/warp9seq/minimod/blob/main/test/compare.py>
 
+```bash
 	corr=$(python3 compare.py "$MODS" "$MODS_LOSSY")
+```
 
 and ensure that it is above a chosen threshold (say 0.95):
 
+```bash
 	assert "$corr >= 0.95" # using function from section "Basecalling"
+```
 
-Subsetting
-----------
+## Subsetting
+
 For the sections which deal with basecalling, a significant time saving can be
 made at the expense of completeness by taking a random subset of the SLOW5 reads
 from the original and lossy data, and then proceeding with the relevant sanity
@@ -237,6 +254,7 @@ checks.
 
 To obtain a random subset of the original and lossy data:
 
+```bash
 	SIZE=500000 # subset size
 	READID_SUB=rids # path to read ids subset output
 	SLOW5_SUB=subset.blow5 # path to subset output
@@ -245,8 +263,11 @@ To obtain a random subset of the original and lossy data:
 	slow5tools skim --rid "$SLOW5_LOSSY_FILE" | sort -R | head -n "$SIZE" > "$READID_SUB"
 	slow5tools get -l "$READID_SUB" -o "$SLOW5_SUB" -t "$NUM_THREADS" "$SLOW5_FILE"
 	slow5tools get -l "$READID_SUB" -o "$SLOW5_LOSSY_SUB" -t "$NUM_THREADS" "$SLOW5_LOSSY_FILE"
+```
 
 Then proceed as normal, using
 
+```bash
 	SLOW5_FILE=SLOW5_SUB
 	SLOW5_LOSSY_FILE=SLOW5_LOSSY_SUB
+```

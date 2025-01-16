@@ -65,7 +65,7 @@ Universal human reference RNA (300 ng polyA enriched RNA) sequenced on a Prometh
 ### A few more RNA004 direct-RNA
 
 - Another PromethION universal human reference RNA sample (1.5 ug of total RNA, done without polyA enrichment) is available through ENA at [ERR12997171](https://www.ebi.ac.uk/ena/browser/view/ERR12997171)
-- Universal human reference RNA (294 ng polyA enriched RNA) with 2% SIRV spiked in (6 ng) sample sequenced on a MinION is available through ENA at [ERR12997172](https://www.ebi.ac.uk/ena/browser/view/ERR12997172)
+- Universal human reference RNA (294 ng polyA enriched RNA) ~with 2% SIRV spiked in (6 ng)~ sample sequenced on a MinION is available through ENA at [ERR12997172](https://www.ebi.ac.uk/ena/browser/view/ERR12997172)
 
 ## R10.4.1 4kHz - DNA
 
