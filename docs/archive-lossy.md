@@ -67,14 +67,14 @@ The most important sanity check is to ensure that basecalling accuracy has not
 been adversely affected.
 
 First, basecall the data and obtain the BAM files. For example, using
-slow5-dorado:
+slow5-dorado <https://github.com/hiruna72/slow5-dorado> :
 
 	MODEL=dna_r9.4.1_e8_hac@v3.3 # path to basecalling model
 	BAM=data.bam # path to bam output
 	BAM_LOSSY=lossy.bam # path to lossy bam output
 
-	slow5-dorado basecaller "$MODEL" "$BLOW5" > "$BAM"
-	slow5-dorado basecaller "$MODEL" "$BLOW5_LOSSY" > "$BAM_LOSSY"
+	slow5-dorado basecaller "$MODEL" "$SLOW5_FILE" > "$BAM"
+	slow5-dorado basecaller "$MODEL" "$SLOW5_LOSSY_FILE" > "$BAM_LOSSY"
 
 Next, obtain the identity scores using the following shell script for DNA
 
@@ -86,11 +86,12 @@ and
 
 for RNA. For example:
 
+	GENOME=hg38noAlt.idx # path to fasta/idx genome
 	SCORE=score.tsv # path to score output
 	SCORE_LOSSY=score_lossy.tsv # path to lossy score output
 
-	identitydna.sh "$BAM" > "$SCORE"
-	identitydna.sh "$BAM_LOSSY" > "$SCORE_LOSSY"
+	identitydna.sh "$GENOME" "$BAM" > "$SCORE"
+	identitydna.sh "$GENOME" "$BAM_LOSSY" > "$SCORE_LOSSY"
 
 Check that both identity scores satisfy the following inequalities:
 
@@ -135,8 +136,8 @@ This can be achieved using the following shell snippet:
 		assert "$n <= (1.2 * $NUM_SLOW5_READS)"
 	}
 
-	# Alternative quicker method as compared to Section "Read Count"
-	NUM_SLOW5_READS=$(slow5tools skim --rid "$BLOW5_LOSSY" | wc -l)
+	# quicker than section "Read Count"
+	NUM_SLOW5_READS=$(slow5tools skim --rid "$SLOW5_LOSSY_FILE" | wc -l)
 
 	score_chk "$SCORE"
 	score_chk "$SCORE_LOSSY"
@@ -171,3 +172,58 @@ Continuing from the previous shell snippet:
 	}
 
 	score_pair_chk "$SCORE" "$SCORE_LOSSY"
+
+Methylation
+-----------
+Another related sanity check is to see whether the methylation frequencies have
+been adversely affected. We can achieve this by obtaining their Pearson
+correlation coefficient and making sure that it is above a certain threshold.
+
+Again, basecall the data, but this time use modification calling. For example,
+using slow5-dorado:
+
+	MODEL=dna_r9.4.1_e8_hac@v3.3 # path to basecalling model
+	BASES=5mCG_5hmCG # or m6A_DRACH for rna
+	BAM=meth.bam # path to bam output
+	BAM_LOSSY=meth_lossy.bam # path to lossy bam output
+
+	slow5-dorado basecaller "$MODEL" "$SLOW5_FILE" --modified-bases "$BASES" > "$BAM"
+	slow5-dorado basecaller "$MODEL" "$SLOW5_LOSSY_FILE" --modified-bases "$BASES" > "$BAM_LOSSY"
+
+Then map the BAM files to the reference genome and index them:
+
+	map() {
+		bam=$1
+		genome=$2
+
+		samtools fastq -TMM,ML "$bam" | minimap2 -x map-ont -a -y -Y --secondary=no "$genome" - | samtools sort -@32 -
+	}
+
+	GENOME=hg38noAlt.fa # path to genome fasta/idx
+	BAM_MAP=meth_map.bam # path to mapped bam output
+	BAM_LOSSY_MAP=meth_lossy_map.bam # path to mapped lossy bam output
+
+	map "$BAM" "$GENOME" > "$BAM_MAP"
+	map "$BAM_LOSSY" "$GENOME" > "$BAM_LOSSY_MAP"
+
+	samtools index "$BAM_MAP"
+	samtools index "$BAM_LOSSY_MAP"
+
+Acquire the methylation frequencies using minimod
+<https://github.com/warp9seq/minimod> :
+
+	MODS=mods.mm.tsv # path to meth frequencies output
+	MODS_LOSSY=mods_lossy.mm.tsv # path to lossy meth frequencies output
+
+	minimod mod-freq "$GENOME" "$BAM_MAP" > "$MODS"
+	minimod mod-freq "$GENOME" "$BAM_LOSSY_MAP" > "$MODS_LOSSY"
+
+Finally, obtain the Pearson correlation coefficient using this Python script
+
+<https://github.com/warp9seq/minimod/blob/main/test/compare.py>
+
+	corr=$(python3 compare.py "$MODS" "$MODS_LOSSY")
+
+and ensure that it is above a chosen threshold (say 0.95):
+
+	assert "$corr >= 0.95" # using function from section "Basecalling"
