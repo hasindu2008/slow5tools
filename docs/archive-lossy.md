@@ -183,7 +183,7 @@ Again, basecall the data, but this time use modification calling. For example,
 using slow5-dorado:
 
 	MODEL=dna_r9.4.1_e8_hac@v3.3 # path to basecalling model
-	BASES=5mCG_5hmCG # or m6A_DRACH for rna
+	BASES=5mCG_5hmCG # modified base codes (m6A_DRACH for rna)
 	BAM=meth.bam # path to bam output
 	BAM_LOSSY=meth_lossy.bam # path to lossy bam output
 
@@ -227,3 +227,26 @@ Finally, obtain the Pearson correlation coefficient using this Python script
 and ensure that it is above a chosen threshold (say 0.95):
 
 	assert "$corr >= 0.95" # using function from section "Basecalling"
+
+Subsetting
+----------
+For the sections which deal with basecalling, a significant time saving can be
+made at the expense of completeness by taking a random subset of the SLOW5 reads
+from the original and lossy data, and then proceeding with the relevant sanity
+checks.
+
+To obtain a random subset of the original and lossy data:
+
+	SIZE=500000 # subset size
+	READID_SUB=rids # path to read ids subset output
+	SLOW5_SUB=subset.blow5 # path to subset output
+	SLOW5_LOSSY_SUB=lossy_subset.blow5 # path to lossy subset output
+
+	slow5tools skim --rid "$SLOW5_LOSSY_FILE" | sort -R | head -n "$SIZE" > "$READID_SUB"
+	slow5tools get -l "$READID_SUB" -o "$SLOW5_SUB" -t "$NUM_THREADS" "$SLOW5_FILE"
+	slow5tools get -l "$READID_SUB" -o "$SLOW5_LOSSY_SUB" -t "$NUM_THREADS" "$SLOW5_LOSSY_FILE"
+
+Then proceed as normal, using
+
+	SLOW5_FILE=SLOW5_SUB
+	SLOW5_LOSSY_FILE=SLOW5_LOSSY_SUB
