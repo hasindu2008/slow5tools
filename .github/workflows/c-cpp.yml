@@ -69,10 +69,19 @@ jobs:
   ubuntu_18:
     name: Ubuntu 18 hdf5 install script
     runs-on: ubuntu-20.04
-    container: ubuntu:18.04
+    container:
+      image: ubuntu:18.04
+      volumes:
+        - /node20217:/node20217:rw,rshared
+        - /node20217:/__e/node20:ro,rshared
     steps:
     - name: install git
       run: apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:git-core/ppa && apt-get update -y && apt-get install git -y
+    - name: nodejs
+      run: |
+        apt-get install -y wget xz-utils
+        wget https://unofficial-builds.nodejs.org/download/release/v20.9.0/node-v20.9.0-linux-x64-glibc-217.tar.xz
+        tar -xf node-v20.9.0-linux-x64-glibc-217.tar.xz --strip-components 1 -C /node20217
     - uses: actions/checkout@v2
       with:
         submodules: recursive
@@ -158,9 +167,9 @@ jobs:
       run: make clean && make CC=icc CXX=icpc -j8 zstd=1
     - name: test zstd
       run: export zstd=1 && make test
-  # os_x_11:
-  #   name: OSX 11
-  #   runs-on: macos-11
+  # os_x_12:
+  #   name: OSX 12
+  #   runs-on: macos-12
   #   steps:
   #   - uses: actions/checkout@v2
   #     with:
@@ -171,32 +180,6 @@ jobs:
   #     run: autoreconf --install  && ./configure && make -j8
   #   - name: test
   #     run: make test
-  os_x_12:
-    name: OSX 12
-    runs-on: macos-12
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: install packages
-      run: brew install hdf5 autoconf automake
-    - name: build
-      run: autoreconf --install  && ./configure && make -j8
-    - name: test
-      run: make test
-  os_x_12_zstd:
-    name: OSX 12 zstd
-    runs-on: macos-12
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-    - name: install packages
-      run: brew install hdf5 autoconf automake zstd
-    - name: build
-      run: autoreconf --install  && ./configure && make -j8 zstd=1
-    - name: test
-      run: export zstd=1 && make test
   os_x_13:
     name: OSX 13
     runs-on: macos-13
@@ -210,6 +193,19 @@ jobs:
       run: autoreconf --install  && ./configure && make -j8
     - name: test
       run: make test
+  os_x_13_zstd:
+    name: OSX 13 zstd
+    runs-on: macos-13
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: install packages
+      run: brew install hdf5 autoconf automake zstd
+    - name: build
+      run: autoreconf --install  && ./configure && make -j8 zstd=1
+    - name: test
+      run: export zstd=1 && make test
   os_x_14:
     name: OSX 14
     runs-on: macos-14
