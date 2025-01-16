@@ -421,7 +421,6 @@ static int bsum_getnext(struct bsum *bs, char **rid, char **code)
 static int bsum_parsehdr(struct bsum *bs)
 {
     char *tok;
-    int ret;
     uint16_t i;
     ssize_t nread;
 
@@ -439,14 +438,10 @@ static int bsum_parsehdr(struct bsum *bs)
 
     tok = strtok(bs->line, BSUM_DELIM);
     while (tok && BSUM_HEADER_MISSING(bs)) {
-        if (!bs->rid_pos) {
-            ret = strcmp(tok, bs->meta.rid_hdr);
-            if (!ret)
-                bs->rid_pos = i;
-        } else if (!bs->code_pos) {
-            ret = strcmp(tok, bs->meta.code_hdr);
-            if (!ret)
-                bs->code_pos = i;
+        if (!bs->rid_pos && !strcmp(tok, bs->meta.rid_hdr)) {
+            bs->rid_pos = i;
+        } else if (!bs->code_pos && !strcmp(tok, bs->meta.code_hdr)) {
+            bs->code_pos = i;
         }
         tok = strtok(NULL, BSUM_DELIM);
         i++;
