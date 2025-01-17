@@ -1,15 +1,15 @@
 # A Guide for Archiving Lossy Data
 
-Lossy compression of raw nanopore signal data can be a great way to save disk space without significantly impacting basecalling accuracy. This makes it particularly suitable for archiving. Naturally, one may be concerned that this conversion would significantly deteriorate the quality of their data. To remedy such concerns, this guide outlines a number of sanity checks which when successful give confidence in the lossy conversion.
+Lossy compression of raw nanopore signal data can be a great way to save disk space without significantly impacting basecalling and modification calling accuracy. This makes it particularly suitable for archiving, especially if you are running short of available disk space. Naturally, one may be concerned that this conversion would significantly deteriorate the quality of their data. To remedy such concerns, this guide outlines a number of sanity checks which when successful give confidence in the lossy conversion.
 
 ## The Conversion
 
-To lossy compress your data, set the following variables
+To lossy compress your data, set the following variables on the shell.
 
 ```bash
 SLOW5_FILE=data.blow5 # path to original data
 SLOW5_LOSSY_FILE=lossy.blow5 # path to lossy output
-NUM_THREADS=8
+NUM_THREADS=8 # number of threads depending on your system
 ```
 
 and run:
@@ -18,7 +18,7 @@ and run:
 slow5tools degrade "$SLOW5_FILE" -o "$SLOW5_LOSSY_FILE" -t "$NUM_THREADS"
 ```
 
-If the command fails with the message "No suitable bits suggestion", this is because your dataset type has not yet been profiled by our team. Submit an issue on GitHub <https://github.com/hasindu2008/slow5tools/issues> with your dataset attached.
+If the command fails with the message "No suitable bits suggestion", this is because your dataset type has not yet been profiled by our team. Submit an [issue on GitHub](https://github.com/hasindu2008/slow5tools/issues) with a subset of your dataset attached.
 
 ## Read Count
 
@@ -219,10 +219,10 @@ Finally, obtain the Pearson correlation coefficient using [this Python script](h
 corr=$(python3 compare.py "$MODS" "$MODS_LOSSY")
 ```
 
-and ensure that it is above a chosen threshold (say 0.95):
+and ensure that it is above a chosen threshold (say 0.97):
 
 ```bash
-assert "$corr >= 0.95" # using function from section "Basecalling"
+assert "$corr >= 0.97" # using function from section "Basecalling"
 ```
 
 ## Subsetting
