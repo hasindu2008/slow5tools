@@ -45,6 +45,9 @@ static inline void slow5_hdrcmp_log(const char *a, uint32_t i, const char *x,
                                     const char *v);
 static int slow5_convert_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, uint8_t b, const struct dataset *d);
 static int slow5_get_dataset(const struct slow5_file *p, struct dataset *d);
+static int slow5_hdr_attr_fprint(FILE *fp, const struct slow5_hdr *h,
+                                 const char *a);
+static int slow5_hdr_fprint(FILE *fp, const struct slow5_hdr *h);
 static int slow5_hdr_get_dataset(const struct slow5_hdr *h, struct dataset *d);
 static int slow5_hdrcmp(const struct slow5_hdr *h, const char *a,
                         const char *x);
@@ -118,6 +121,61 @@ static int slow5_get_dataset(const struct slow5_file *p, struct dataset *d)
 }
 
 /*
+ * Print the header attribute to a file.
+ * fp, h and a must not be NULL. Return -1 on error, 0 on success.
+ */
+static int slow5_hdr_attr_fprint(FILE *fp, const struct slow5_hdr *h,
+                                 const char *a)
+{
+    char *v;
+    int ret;
+    uint32_t i;
+
+    ret = fprintf(fp, "%s:", a);
+    if (ret < 0) {
+        return -1;
+    }
+
+    for (i = 0; i < h->num_read_groups; i++) {
+        v = slow5_hdr_get(a, i, h);
+        ret = fprintf(fp, "\t%s", v);
+        if (ret < 0) {
+            return -1;
+        }
+    }
+    ret = fputs("\n", fp);
+    if (ret < 0) {
+        return -1;
+    }
+    return 0;
+}
+
+/*
+ * Print the dataset-relevant header attributes to a file.
+ * fp and h must not be NULL. Return -1 on error, 0 on success.
+ */
+static int slow5_hdr_fprint(FILE *fp, const struct slow5_hdr *h)
+{
+    const char *attrs[] = {
+        SLOW5_HEADER_DEVICE_TYPE,
+        SLOW5_HEADER_SEQUENCING_KIT,
+        SLOW5_HEADER_EXPERIMENT_TYPE,
+        SLOW5_HEADER_SAMPLE_FREQUENCY,
+        SLOW5_HEADER_SAMPLE_RATE,
+    };
+    int i;
+    int ret;
+
+    for (i = 0; i < (int) (SLOW5_LENGTH(attrs)); i++) {
+        ret = slow5_hdr_attr_fprint(fp, h, attrs[i]);
+        if (ret == -1)
+            return -1;
+    }
+
+    return 0;
+}
+
+/*
  * Get the dataset which matches the slow5 header.
  * d must not be NULL. Return -1 on error, 0 on success and set d.
  */
@@ -138,7 +196,8 @@ static int slow5_hdr_get_dataset(const struct slow5_hdr *h, struct dataset *d)
     }
 
     if (i == SLOW5_LENGTH(ds)) {
-        ERROR("No suitable bits suggestion%s", "");
+        ERROR("No suitable bits suggestion for the following header combination:%s", "");
+        (void) slow5_hdr_fprint(stderr, h);
         return -1;
     }
 
