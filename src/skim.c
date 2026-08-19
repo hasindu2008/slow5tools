@@ -254,6 +254,10 @@ static void (*aux_print_func(char *field))(struct aux_print_param *p){
         aux_func = start_time_num_minknow_events_print;
     } else if (strcmp(field,"open_pore_level")==0){ //float
         aux_func = float_print;
+    } else if (strcmp(field,"expected_open_pore_level")==0){ //float
+        aux_func = float_print;
+    } else if (strcmp(field,"selected_read_level")==0){ //float
+        aux_func = float_print;
     } else{
         aux_func = just_the_dot;
         WARNING("Field '%s' is not yet handled or not present in the input file. A '.' will be printed\n",field);
