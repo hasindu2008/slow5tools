@@ -36,6 +36,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/misc.o \
 	  $(BUILD_DIR)/demux.o \
 	  $(BUILD_DIR)/degrade.o \
+	  $(BUILD_DIR)/filter.o \
 
 
 PREFIX ?= /usr/local
@@ -96,6 +97,10 @@ $(BUILD_DIR)/demux.o: src/demux.c src/demux.h src/error.h src/khash.h src/kvec.h
 
 $(BUILD_DIR)/degrade.o: src/degrade.c src/cmd.h src/degrade.h src/error.h src/misc.h src/thread.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
+$(BUILD_DIR)/filter.o: src/filter.c src/error.h src/misc.h src/thread.h
+	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
+
 
 slow5lib/lib/libslow5.a:
 	$(MAKE) -C slow5lib zstd=$(zstd) no_simd=$(no_simd) zstd_local=$(zstd_local) lib/libslow5.a

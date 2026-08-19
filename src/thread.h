@@ -38,7 +38,7 @@ typedef struct {
     int lossy;
     int slow5_file_index;
     slow5_aux_meta_t* aux_meta;
-    //skim
+    //skim and filter
     void *param;
 } core_t;
 
