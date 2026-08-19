@@ -1,7 +1,7 @@
 /**
- * @file filter.c
- * @brief filter SLOW5 records
- * @author Hiruna Samarakoon (h.samarakoon@garvan.org.au), Sasha Jenner (me AT sjenner DOT com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
+ * @file sift.c
+ * @brief sift SLOW5 records
+ * @author Sasha Jenner (me AT sjenner DOT com), Hasindu Gamaarachchi (hasindu@garvan.org.au)
  * @date 15/08/2024
  */
 #include "slow5_misc.h"
@@ -15,7 +15,7 @@
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [FILE]\n"
 #define HELP_LARGE_MSG \
-    "Filter SLOW5 records.\n" \
+    "Sift SLOW5 records.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
@@ -26,32 +26,33 @@
     HELP_MSG_BATCH \
     "        --from FORMAT             specify input file format [auto]\n" \
     HELP_MSG_HELP \
+    "        --min-len INT                 specify minimum raw signal length [37500]\n" \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
 
 typedef struct{
     int64_t min;
-} filter_param_t;
+} sift_param_t;
 
-int slow5_filter_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, filter_param_t *filter_param);
+int slow5_sift_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, sift_param_t *sift_param);
 
 
-int filter(filter_param_t *filter_param, struct slow5_rec *read){
+int sift(sift_param_t *sift_param, struct slow5_rec *read){
     uint64_t len_raw_signal = read->len_raw_signal;
-    uint64_t min_len = filter_param->min;
+    uint64_t min_len = sift_param->min;
 
     if(len_raw_signal<min_len){
-        return 0; // filtered
+        return 0; // sifted
     } else {
-        return 1; // unfiltered
+        return 1; // unsifted
     }
 }
 
 
 static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
 
-    filter_param_t *filter_param = (filter_param_t *) core->param;
+    sift_param_t *sift_param = (sift_param_t *) core->param;
 
     struct slow5_rec *read = NULL;
     if (slow5_rec_depress_parse(&db->mem_records[i], &db->mem_bytes[i], NULL, &read, core->fp) != 0) {
@@ -60,7 +61,7 @@ static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
         free(db->mem_records[i]);
     }
 
-    if (filter(filter_param, read) == 0 ){
+    if (sift(sift_param, read) == 0 ){
         db->read_record[i].len = 0;
         db->read_record[i].buffer = NULL;
     } else {
@@ -83,12 +84,12 @@ static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
     slow5_rec_free(read);
 }
 
-static void init_filter_param(filter_param_t *param){
+static void init_sift_param(sift_param_t *param){
     param->min = 37500;
 }
 
-int filter_main(int argc, char **argv, struct program_meta *meta) {
-    int filter_ret = EXIT_SUCCESS;
+int sift_main(int argc, char **argv, struct program_meta *meta) {
+    int sift_ret = EXIT_SUCCESS;
 
     // Debug: print arguments
     print_args(argc,argv);
@@ -109,15 +110,15 @@ int filter_main(int argc, char **argv, struct program_meta *meta) {
         {"to",              required_argument,  NULL, 'b'}, //5
         {"threads",         required_argument,  NULL, 't' },//6
         {"batchsize",       required_argument, NULL, 'K'},  //7
-        {"min",             required_argument, NULL, 0},    //8
+        {"min-len",         required_argument, NULL, 0},    //8
         {NULL, 0, NULL, 0}
     };
 
     opt_t user_opts;
     init_opt(&user_opts);
 
-    filter_param_t filter_param;
-    init_filter_param(&filter_param);
+    sift_param_t sift_param;
+    init_sift_param(&sift_param);
 
     int opt;
     int longindex = 0;
@@ -157,7 +158,7 @@ int filter_main(int argc, char **argv, struct program_meta *meta) {
             case 0  :
                 switch (longindex) {
                     case 8:
-                        filter_param.min = atoll(optarg);
+                        sift_param.min = atoll(optarg);
                         break;
                     default:
                         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
@@ -240,24 +241,24 @@ int filter_main(int argc, char **argv, struct program_meta *meta) {
         if (s5p == NULL) {
             ERROR("File '%s' could not be opened - %s.",
                   user_opts.arg_fname_in, strerror(errno));
-            filter_ret = EXIT_FAILURE;
+            sift_ret = EXIT_FAILURE;
         }
 
         // TODO if output is the same format just duplicate file
         slow5_press_method_t press_out = {user_opts.record_press_out,user_opts.signal_press_out};
-        if (slow5_filter_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta, &filter_param) != 0) {
-            ERROR("File filtering failed.%s", "");
-            filter_ret = EXIT_FAILURE;
+        if (slow5_sift_parallel(s5p, user_opts.f_out, (enum slow5_fmt) user_opts.fmt_out, press_out, user_opts.num_threads, user_opts.read_id_batch_capacity, meta, &sift_param) != 0) {
+            ERROR("File sifting failed.%s", "");
+            sift_ret = EXIT_FAILURE;
         }
 
         if (slow5_close(s5p) == EOF) {
             ERROR("File '%s' failed on closing - %s.",
                   user_opts.arg_fname_in, strerror(errno));
-            filter_ret = EXIT_FAILURE;
+            sift_ret = EXIT_FAILURE;
         }
 
     } else {
-        filter_ret = EXIT_FAILURE;
+        sift_ret = EXIT_FAILURE;
     }
 
     // Close output file
@@ -268,17 +269,17 @@ int filter_main(int argc, char **argv, struct program_meta *meta) {
             ERROR("File '%s' failed on closing - %s.",
                   user_opts.arg_fname_out, strerror(errno));
 
-            filter_ret = EXIT_FAILURE;
+            sift_ret = EXIT_FAILURE;
         }
     }
 
-    if (filter_ret == EXIT_FAILURE) {
+    if (sift_ret == EXIT_FAILURE) {
         EXIT_MSG(EXIT_FAILURE, argv, meta);
     }
-    return filter_ret;
+    return sift_ret;
 }
 
-int slow5_filter_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, filter_param_t *filter_param) {
+int slow5_sift_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, sift_param_t *sift_param) {
     if (from == NULL || to_fp == NULL || to_format == SLOW5_FORMAT_UNKNOWN) {
         return -1;
     }
@@ -325,7 +326,7 @@ int slow5_filter_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt t
         core.fp = from;
         core.format_out = to_format;
         core.press_method = to_compress;
-        core.param = filter_param;
+        core.param = sift_param;
 
         db.n_batch = record_count;
         db.read_record = (raw_record_t*) malloc(record_count * sizeof *db.read_record);

@@ -36,7 +36,7 @@ OBJ_BIN = $(BUILD_DIR)/main.o \
 	  $(BUILD_DIR)/misc.o \
 	  $(BUILD_DIR)/demux.o \
 	  $(BUILD_DIR)/degrade.o \
-	  $(BUILD_DIR)/filter.o \
+	  $(BUILD_DIR)/sift.o \
 
 
 PREFIX ?= /usr/local
@@ -98,7 +98,7 @@ $(BUILD_DIR)/demux.o: src/demux.c src/demux.h src/error.h src/khash.h src/kvec.h
 $(BUILD_DIR)/degrade.o: src/degrade.c src/cmd.h src/degrade.h src/error.h src/misc.h src/thread.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
-$(BUILD_DIR)/filter.o: src/filter.c src/error.h src/misc.h src/thread.h
+$(BUILD_DIR)/sift.o: src/sift.c src/error.h src/misc.h src/thread.h
 	$(CXX) $(LANGFLAG) $(CFLAGS) $(CPPFLAGS) $< -c -o $@
 
 

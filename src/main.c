@@ -91,7 +91,7 @@ int (cat_main)(int argc, char **argv, struct program_meta *meta);
 int (quickcheck_main)(int, char **, struct program_meta *);
 int (skim_main)(int, char **, struct program_meta *);
 int (degrade_main)(int, char **, struct program_meta *);
-int (filter_main)(int, char **, struct program_meta *);
+int (sift_main)(int, char **, struct program_meta *);
 
 // Segmentation fault handler
 void segv_handler(int sig) {
@@ -153,7 +153,7 @@ int main(const int argc, char **argv){
             {"cat",          cat_main},
             {"quickcheck",   quickcheck_main},
             {"degrade",      degrade_main},
-            {"filter",       filter_main},
+            {"sift",         sift_main},
         };
         const size_t num_cmds = sizeof (cmds) / sizeof (*cmds);
 
