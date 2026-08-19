@@ -15,7 +15,7 @@
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [FILE]\n"
 #define HELP_LARGE_MSG \
-    "Sift SLOW5 records.\n" \
+    "Sift SLOW5 records [Experimental].\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
@@ -26,7 +26,7 @@
     HELP_MSG_BATCH \
     "        --from FORMAT             specify input file format [auto]\n" \
     HELP_MSG_HELP \
-    "        --min-len INT                 specify minimum raw signal length [37500]\n" \
+    "        --min-len INT             specify minimum raw signal length [37500]\n" \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
