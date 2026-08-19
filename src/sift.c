@@ -15,7 +15,7 @@
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [FILE]\n"
 #define HELP_LARGE_MSG \
-    "Sift SLOW5 records [Experimental].\n" \
+    "Sift SLOW5 records [Experimental]. Currently extracts reads based on their raw signal length. May be extended forother filtering criteria based on users' need.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
@@ -26,13 +26,13 @@
     HELP_MSG_BATCH \
     "        --from FORMAT             specify input file format [auto]\n" \
     HELP_MSG_HELP \
-    "        --min-len INT             specify minimum raw signal length [37500]\n" \
+    "        --min-len INT             minimum raw signal length [37500]\n" \
     HELP_FORMATS_METHODS
 
 extern int slow5tools_verbosity_level;
 
 typedef struct{
-    int64_t min;
+    int64_t min_len;
 } sift_param_t;
 
 int slow5_sift_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_format, slow5_press_method_t to_compress, size_t num_threads, int64_t batch_size, struct program_meta *meta, sift_param_t *sift_param);
@@ -40,7 +40,7 @@ int slow5_sift_parallel(struct slow5_file *from, FILE *to_fp, enum slow5_fmt to_
 
 int sift(sift_param_t *sift_param, struct slow5_rec *read){
     uint64_t len_raw_signal = read->len_raw_signal;
-    uint64_t min_len = sift_param->min;
+    uint64_t min_len = sift_param->min_len;
 
     if(len_raw_signal<min_len){
         return 0; // sifted
@@ -85,7 +85,7 @@ static void depress_parse_rec_to_mem(core_t *core, db_t *db, int32_t i) {
 }
 
 static void init_sift_param(sift_param_t *param){
-    param->min = 37500;
+    param->min_len = 37500;
 }
 
 int sift_main(int argc, char **argv, struct program_meta *meta) {
@@ -158,7 +158,11 @@ int sift_main(int argc, char **argv, struct program_meta *meta) {
             case 0  :
                 switch (longindex) {
                     case 8:
-                        sift_param.min = atoll(optarg);
+                        sift_param.min_len = atoll(optarg);
+                    if (sift_param.min_len < 1) {
+                        ERROR("Minimum read length should larger than 0. You entered %ld", sift_param.min_len);
+                        exit(EXIT_FAILURE);
+                    }
                         break;
                     default:
                         fprintf(stderr, HELP_SMALL_MSG, argv[0]);
