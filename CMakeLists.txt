@@ -64,7 +64,7 @@ set(sift src/sift.c)
 
 set(hdf5-static "${PROJECT_SOURCE_DIR}/prebuilt-hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
-add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc} ${skim})
+add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc} ${skim} ${degrade} ${sift})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/slow5lib)
 
