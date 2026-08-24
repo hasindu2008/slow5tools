@@ -15,7 +15,9 @@
 
 #define USAGE_MSG "Usage: %s [OPTIONS] [FILE]\n"
 #define HELP_LARGE_MSG \
-    "Sift SLOW5 records [Experimental]. Currently extracts reads based on their raw signal length. May be extended forother filtering criteria based on users' need.\n" \
+    "Sift through a SLOW5/BLOW5 file to extract reads of interest [experimental].\n" \
+    "Currently extracts reads with raw signal length >= min-len parameter. \n" \
+    "May be extended for other filtering criteria based on users' need.\n" \
     USAGE_MSG \
     "\n" \
     "OPTIONS:\n" \
@@ -43,9 +45,9 @@ int sift(sift_param_t *sift_param, struct slow5_rec *read){
     uint64_t min_len = sift_param->min_len;
 
     if(len_raw_signal<min_len){
-        return 0; // sifted
+        return 0; // remove
     } else {
-        return 1; // unsifted
+        return 1; // output
     }
 }
 

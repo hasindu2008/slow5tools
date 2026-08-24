@@ -42,6 +42,7 @@
     "    quickcheck            quickly checks if a SLOW5/BLOW5 file is intact\n" \
     "    skim                  skims through requested components in a SLOW5/BLOW5 file\n" \
     "    degrade               irreversibly degrade a SLOW5/BLOW5 file\n" \
+    "    sift                  sift through a SLOW5/BLOW5 file to extract reads of interest [experimental]\n" \
     "\n" \
     "ARGS:    Try '%s [COMMAND] --help' for more information.\n" \
 
