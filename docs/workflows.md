@@ -115,7 +115,7 @@ slow5tools get reads.blow5 --list rand_20000_rid.txt -o reads_subsubsample.blow5
 From slow5tools v1.3.0 onwards, you can use the buttery-eel barcode summary file `barcode_summary.txt` to demultiplex a BLOW5 file.
 
 ```
-slow5tools split -d blow5_dir -x barcode_summary.txt
+slow5tools split file.blow5 -d blow5_dir -x barcode_summary.txt
 ```
 
 BASH with slow5tools is an easy way to demultiplex a BLOW5 file. Say you have demultiplexed your run and have one FASTQ file per each barcode, namely barcode_0.fastq, barcode_1.fastq, barcode_2.fastq and barcode_3.fastq. If your merged BLOW5 file for the whole run is reads.blow5, you can create separate BLOW5 files for each barcode by using a bash loop as below:

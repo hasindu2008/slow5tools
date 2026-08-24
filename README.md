@@ -16,7 +16,7 @@ Publication (slow5tools): https://genomebiology.biomedcentral.com/articles/10.11
 SLOW5 specification: https://hasindu2008.github.io/slow5specs<br/>
 slow5 ecosystem: https://hasindu2008.github.io/slow5<br/>
 
-To convert to and from ONT's new POD5 format, you use [blue_crab](https://github.com/Psy-Fer/blue-crab). If POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is strictly adhering to C++11 standard for wider compatibility.
+To convert to and from ONT's new POD5 format, you can use [blue_crab](https://github.com/Psy-Fer/blue-crab). If POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is strictly adhering to C++11 standard for wider compatibility.
 
 ## Quick start
 
@@ -113,7 +113,7 @@ make
 	```
 	git clone https://github.com/hasindu2008/slow5tools && cd slow5tools
 	docker build .
-	docker run -v /path/to/local/data/data/:/data/ -it :image_id  ./slow5tools
+	docker run -v /path/to/local/data/:/data/ -it image_id  ./slow5tools
 	```
 
 - To support large files on 32-bit systems use: `CFLAGS="-D_FILE_OFFSET_BITS=64"  make`.
@@ -134,7 +134,7 @@ slow5tools f2s file.fast5 -o file.slow5
 # convert a directory of fast5 files into BLOW5 files with zstd+svb-zd compression (similar to ONT's vbz compression)
 slow5tools f2s fast5_dir -d blow5_dir -c zstd -s svb-zd
 
-# concatenate all BLOW5 fils in a directory into a single BLOW5 file (works only if all the BLOW5 files have the same header, otherwise use merge)
+# concatenate all BLOW5 files in a directory into a single BLOW5 file (works only if all the BLOW5 files have the same header, otherwise use merge)
 slow5tools cat blow5_dir -o file.blow5
 
 # merge all BLOW5 files in a directory into a single BLOW5 file (default compression: zlib+svb-zd)

@@ -12,7 +12,7 @@ Publication (slow5tools): https://genomebiology.biomedcentral.com/articles/10.11
 SLOW5 specification: https://hasindu2008.github.io/slow5specs<br/>
 slow5 ecosystem: https://hasindu2008.github.io/slow5<br/>
 
-To convert to and from ONT's new POD5 format, you use [blue_crab](https://github.com/Psy-Fer/blue-crab). If POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is strictly adhering to C++11 standard for wider compatibility.
+To convert to and from ONT's new POD5 format, you can use [blue_crab](https://github.com/Psy-Fer/blue-crab). If POD5 format and the associated POD5 C/C++ API reaches maturity/stability and adheres to C++11 standard, capabilities for POD5 <-> SLOW5 conversion will be added to slow5tools. slow5tools is strictly adhering to C++11 standard for wider compatibility.
 
 ## Quick start
 
@@ -69,7 +69,7 @@ On OS X : brew install hdf5 zlib
 
 **WARNING: Building from GitHub is meant for advanced users to test latest features. For production purposes, use the latest release version that is thoroughly tested.**
 
-Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake`.
+Building from the Github repository additionally requires `autoreconf` which can be installed on Ubuntu using `sudo apt-get install autoconf automake` (`brew install autoconf automake` on macOS).
 
 To build from GitHub:
 
@@ -77,7 +77,7 @@ To build from GitHub:
 sudo apt-get install libhdf5-dev zlib1g-dev autoconf automake  #install HDF5 and zlib development libraries and autotools
 git clone --recursive https://github.com/hasindu2008/slow5tools
 cd slow5tools
-autoreconf
+autoreconf	# autoreconf --install for macos
 ./configure
 make
 ```
@@ -86,7 +86,7 @@ make
 
 - If you only want to manipulate S/BLOW5 files, you can disable FAST5/HDF5 for even easier compilation. Call `./configure --disable-hdf5 && make` or completely bypass the configure step and just call `make disable_hdf5=1`.
 
-- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.3 or higher development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable' (also see [notes](https://github.com/hasindu2008/slow5tools#notes)).  For enabling *zstd* on Apple Silicon (e.g., Mac M1) also see [faq](https://hasindu2008.github.io/slow5tools/faq.html). If you cannot install the zstd library system wide you can locally build zstd and build slow5tools against that:
+- You can optionally enable [*zstd* compression](https://facebook.github.io/zstd) support when building *slow5lib* by invoking `make zstd=1`. This requires __zstd 1.3 or higher development libraries__ installed on your system (*libzstd1-dev* package for *apt*, *libzstd-devel* for *yum/dnf* and *zstd* for *homebrew*). SLOW5 files compressed with *zstd* offer smaller file size and better performance compared to the default *zlib*. However, *zlib* runtime library is available by default on almost all distributions unlike *zstd* and thus files compressed with *zlib* will be more 'portable' (also see [notes](#notes)).  For enabling *zstd* on Apple Silicon (e.g., Mac M1) also see [faq](https://hasindu2008.github.io/slow5tools/faq.html). If you cannot install the zstd library system wide you can locally build zstd and build slow5tools against that:
     ```
     scripts/install-zstd.sh        # download and compiles zstd in the current folder
     ./configure --enable-localzstd
@@ -109,7 +109,7 @@ make
 	```
 	git clone https://github.com/hasindu2008/slow5tools && cd slow5tools
 	docker build .
-	docker run -v /path/to/local/data/data/:/data/ -it :image_id  ./slow5tools
+	docker run -v /path/to/local/data/:/data/ -it image_id  ./slow5tools
 	```
 
 - To support large files on 32-bit systems use: `CFLAGS="-D_FILE_OFFSET_BITS=64"  make`.
@@ -130,7 +130,7 @@ slow5tools f2s file.fast5 -o file.slow5
 # convert a directory of fast5 files into BLOW5 files with zstd+svb-zd compression (similar to ONT's vbz compression)
 slow5tools f2s fast5_dir -d blow5_dir -c zstd -s svb-zd
 
-# concatenate all BLOW5 fils in a directory into a single BLOW5 file (works only if all the BLOW5 files have the same header, otherwise use merge)
+# concatenate all BLOW5 files in a directory into a single BLOW5 file (works only if all the BLOW5 files have the same header, otherwise use merge)
 slow5tools cat blow5_dir -o file.blow5
 
 # merge all BLOW5 files in a directory into a single BLOW5 file (default compression: zlib+svb-zd)
@@ -157,6 +157,10 @@ slow5tools get file.blow5 -l readids_list.txt -o output.slow5
 slow5tools split file.blow5 -d blow5_dir -g
 # split a BLOW5 file (single read group) into separate BLOW5 files such that there are 4000 reads in one file
 slow5tools split file.blow5 -d blow5_dir -r 4000
+# split a BLOW5 file into separate BLOW5 files by barcode given the buttery-eel barcode summary file
+slow5tools split file.blow5 -d blow5_dir -x barcode_summary.txt
+# split a BLOW5 file into separate BLOW5 files based on a custom TSV file
+slow5tools split file.blow5 -d blow5_dir -x custom.tsv --demux-rid readid --demux-code category
 
 # convert a directory of blow5 files to fast5
 slow5tools s2f blow5_dir -d fast5
