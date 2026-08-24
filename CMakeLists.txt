@@ -41,6 +41,8 @@ set_source_files_properties(src/cat.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/quickcheck.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/misc.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/skim.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/degrade.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/sift.c PROPERTIES LANGUAGE CXX)
 
 set(f2s src/f2s.c)
 set(get src/get.c)
@@ -57,6 +59,8 @@ set(cat src/cat.c)
 set(quickcheck src/quickcheck.c)
 set(misc src/misc.c)
 set(skim src/skim.c)
+set(degrade src/degrade.c)
+set(sift src/sift.c)
 
 set(hdf5-static "${PROJECT_SOURCE_DIR}/prebuilt-hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
