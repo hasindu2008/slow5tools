@@ -43,6 +43,7 @@ set_source_files_properties(src/misc.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/skim.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/degrade.c PROPERTIES LANGUAGE CXX)
 set_source_files_properties(src/sift.c PROPERTIES LANGUAGE CXX)
+set_source_files_properties(src/demux.c PROPERTIES LANGUAGE CXX)
 
 set(f2s src/f2s.c)
 set(get src/get.c)
@@ -61,10 +62,11 @@ set(misc src/misc.c)
 set(skim src/skim.c)
 set(degrade src/degrade.c)
 set(sift src/sift.c)
+set(demux src/demux.c)
 
 set(hdf5-static "${PROJECT_SOURCE_DIR}/prebuilt-hdf5/${DEPLOY_PLATFORM}/libhdf5.a")
 
-add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc} ${skim} ${degrade} ${sift})
+add_executable(slow5tools ${f2s} ${get} ${index} ${main} ${merge} ${read_fast5} ${s2f} ${split} ${thread} ${view} ${stats} ${cat} ${quickcheck} ${misc} ${skim} ${degrade} ${sift} ${demux})
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/slow5lib)
 
